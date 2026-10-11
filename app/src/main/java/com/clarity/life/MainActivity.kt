@@ -42,11 +42,13 @@ class MainActivity : ComponentActivity() {
         // A turn of the phone recreates the screen; that is not leaving the app, so it does not lock again.
         // The unlock lives in this process only: when the phone killed the app in the background, a saved
         // screen state must never reopen it unlocked.
+        lockOn = com.clarity.life.security.AppLock.lastKnownOn(this)
         locked = needsLock()
         com.clarity.life.security.AppLock.hideInRecents(this, com.clarity.life.settings.DefaultSettings.HIDE_IN_RECENTS_ON)
         lifecycleScope.launch {
             try {
                 lockOn = settings.getBool(com.clarity.life.settings.SettingsRepository.Keys.APP_LOCK_ON, com.clarity.life.settings.DefaultSettings.APP_LOCK_ON)
+                com.clarity.life.security.AppLock.rememberOn(this@MainActivity, lockOn)
                 if (!lockOn) locked = false
                 com.clarity.life.security.AppLock.hideInRecents(
                     this@MainActivity,
@@ -107,6 +109,7 @@ class MainActivity : ComponentActivity() {
         // The lock setting may have changed in Settings while the app was open.
         lifecycleScope.launch {
             lockOn = settings.getBool(com.clarity.life.settings.SettingsRepository.Keys.APP_LOCK_ON, com.clarity.life.settings.DefaultSettings.APP_LOCK_ON)
+            com.clarity.life.security.AppLock.rememberOn(this@MainActivity, lockOn)
             if (!lockOn) locked = false
         }
     }

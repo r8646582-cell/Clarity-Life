@@ -115,6 +115,7 @@ class SettingsViewModel @Inject constructor(
 
     fun setAppLock(on: Boolean) = viewModelScope.launch {
         settings.setBool(SettingsRepository.Keys.APP_LOCK_ON, on)
+        com.clarity.life.security.AppLock.rememberOn(context, on)
         _state.value = _state.value.copy(appLock = on)
     }
 

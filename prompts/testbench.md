@@ -622,3 +622,13 @@ Check: no_card
 Check: no_list
 Check: no_banned
 Check: not_contains=streak
+
+## Asked who it is
+Type: free
+User: who are you and what can you do
+Expect: A short answer in simple English: short sentences, everyday words, no idioms or fine phrases. Says it is their coach, what it can help with, and that it is honest. No long list of limits. At most one question.
+Check: max_words=90
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned

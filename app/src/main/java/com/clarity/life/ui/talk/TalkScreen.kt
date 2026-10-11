@@ -154,8 +154,19 @@ fun TalkScreen(
     LaunchedEffect(listState) {
         androidx.compose.runtime.snapshotFlow { listState.canScrollForward }.collect { more -> if (!more) follow = true }
     }
-    val toBottom: () -> Unit = {
-        if (follow) scope.launch { listState.scrollBy(100_000f) }
+    // A long reply is followed only until its first line reaches the top of the screen. After that the
+    // list stays still, so the start of the reply is never pushed out of sight while the rest is written.
+    val toBottom: (Long) -> Unit = { replyId ->
+        if (follow) scope.launch {
+            val info = listState.layoutInfo
+            val reply = info.visibleItemsInfo.firstOrNull { it.key == replyId }
+            if (reply == null) {
+                listState.scrollBy(100_000f)
+            } else {
+                val room = reply.offset - info.viewportStartOffset
+                if (room > 0) listState.scrollBy(room.toFloat())
+            }
+        }
     }
     LaunchedEffect(state.messages.size) {
         val last = state.messages.size
@@ -260,7 +271,7 @@ fun TalkScreen(
                     row = row,
                     live = model.live,
                     isLive = state.live?.messageId == row.id,
-                    onGrow = toBottom,
+                    onGrow = { toBottom(row.id) },
                     cards = state.cards[row.id].orEmpty(),
                     receipts = state.receipts,
                     cardLines = state.cardLines,
@@ -510,11 +521,14 @@ private fun MessageBubble(
                 ) {
                     if (writing) {
                         ReplyText(row, live, onGrow)
+                    } else if (row.content.isNotEmpty() && his) {
+                        Text(row.content, style = MaterialTheme.typography.bodyLarge, color = clarity.ground)
                     } else if (row.content.isNotEmpty()) {
+                        // The coach may mark a few words bold or write a short list; his own text is never changed.
                         Text(
-                            row.content,
+                            remember(row.content) { styled(row.content) },
                             style = MaterialTheme.typography.bodyLarge,
-                            color = if (his) clarity.ground else clarity.text,
+                            color = clarity.text,
                         )
                     }
                 }
@@ -549,6 +563,21 @@ private fun MessageBubble(
         cards.forEach { card -> SuggestionCard(card, receipts[card.id], cardLines[card.id], previews[card.id], actions) }
     }
     if (details) MessageDetails(row, onClose = { details = false })
+}
+
+/** A coach reply with its bold words and list lines drawn; the parsing is in [com.clarity.life.core.RichText]. */
+private fun styled(text: String): androidx.compose.ui.text.AnnotatedString {
+    val rich = com.clarity.life.core.RichText.parse(text)
+    return androidx.compose.ui.text.buildAnnotatedString {
+        append(rich.text)
+        rich.bold.forEach { range ->
+            addStyle(
+                androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                range.first,
+                range.last + 1,
+            )
+        }
+    }
 }
 
 /**
@@ -590,7 +619,7 @@ private fun ReplyText(
     if (full.isEmpty()) {
         if (row.status == "streaming") ThinkingLine()
     } else {
-        Text(full.take(shown), style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+        Text(styled(full.take(shown)), style = MaterialTheme.typography.bodyLarge, color = clarity.text)
     }
 }
 

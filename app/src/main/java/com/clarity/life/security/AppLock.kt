@@ -21,6 +21,19 @@ object AppLock {
     const val GRACE_MS = 60_000L
     const val CONFIRM_REQUEST = 4_201
 
+    /**
+     * The lock setting as it was last read, kept where it can be read at once. The real setting is in the
+     * encrypted database, which takes a moment to open; without this copy the app showed the lock screen for
+     * that moment even when the lock was off. It holds only on or off. Unknown counts as on (fail closed).
+     */
+    fun lastKnownOn(context: Context): Boolean =
+        context.getSharedPreferences("clarity_lock", Context.MODE_PRIVATE)
+            .getBoolean("app_lock_on", com.clarity.life.settings.DefaultSettings.APP_LOCK_ON)
+
+    fun rememberOn(context: Context, on: Boolean) {
+        context.getSharedPreferences("clarity_lock", Context.MODE_PRIVATE).edit().putBoolean("app_lock_on", on).apply()
+    }
+
     /** True when the phone has a PIN, pattern, password or biometric set up. */
     fun canLock(context: Context): Boolean =
         context.getSystemService(KeyguardManager::class.java)?.isDeviceSecure == true
