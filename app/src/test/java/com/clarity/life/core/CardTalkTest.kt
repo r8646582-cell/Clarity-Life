@@ -19,6 +19,14 @@ class CardTalkTest {
     }
 
     @Test
+    fun theCoachIsToldWhyACardWasThrownAway() {
+        val line = CardTalk.dropLine("review_date is not one of the review options")
+        assertTrue(line.contains("Reason: review_date is not one of the review options."))
+        assertTrue(line.contains("Review options in PLAN_STATE"))
+        assertTrue(CardTalk.dropLine("too long title").contains("check that field"))
+    }
+
+    @Test
     fun aLineIsShownOnlyWhenNoButtonArrived() {
         assertNull(CardTalk.missingLine("Tap it below.", offered = 1, dropped = 0))
         assertNull(CardTalk.missingLine("How was today?", offered = 0, dropped = 0))

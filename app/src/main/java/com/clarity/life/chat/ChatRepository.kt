@@ -210,6 +210,8 @@ class ChatRepository @Inject constructor(
                 ),
             )
         }
+        // Kept for the next turn only (in memory, never stored): the coach is told why its card was thrown away.
+        if (parsed.dropped.isNotEmpty()) lastDrops[messageId] = parsed.dropped.distinct().take(3) else lastDrops.remove(messageId)
         if (parsed.dropped.isNotEmpty()) {
             db.diagnostics().log(
                 ErrorLogRow(at = now, area = "card", code = "card_dropped", detail = "n=${parsed.dropped.size}"),
@@ -482,10 +484,17 @@ class ChatRepository @Inject constructor(
      * What he did with the cards under the coach's last reply (contracts/context.md), and only those: older
      * cards were reported with the turn after them, and repeating them every turn only costs tokens.
      */
+    /** The parser's reasons for the cards it threw away, by coach message id. In memory only; rule names, no content. */
+    private val lastDrops = java.util.concurrent.ConcurrentHashMap<Long, List<String>>()
+
     private suspend fun cardResultLines(conversationId: Long): List<String> {
         val last = messages.ofConversation(conversationId).lastOrNull { it.role == "coach" && it.status == "complete" }
             ?: return emptyList()
         val rows = cards.ofMessage(last.id)
+        val drops = lastDrops[last.id].orEmpty().map { com.clarity.life.core.CardTalk.dropLine(it) }
+        if (drops.isNotEmpty()) {
+            return drops + rows.map { row -> Blocks.cardResultLine(row.type, cardLabel(row), row.status) }
+        }
         // The coach spoke of a button and none was shown: tell it, so it can send the card instead of guessing.
         if (rows.isEmpty() && com.clarity.life.core.CardTalk.pointsAtAButton(last.content)) {
             return listOf("No button was shown under your last reply, though your words pointed at one. If you still mean to offer it, send the card now as the last line.")
