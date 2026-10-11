@@ -1,0 +1,223 @@
+{
+ "_comment": "Shared vectors for tools/bench.py and TestBench.kt. Expectations checked by hand.",
+ "scenarios": {
+  "free": {
+   "name": "free",
+   "type": "free",
+   "flags": [],
+   "setup": [],
+   "prior": [],
+   "user": [
+    "i studied 2 hours, tomorrow at 8pm, no reminder"
+   ],
+   "expect": "",
+   "checks": []
+  },
+  "plan": {
+   "name": "plan",
+   "type": "plan",
+   "flags": [],
+   "setup": [
+    [
+     "PLAN_STATE",
+     "Goal G2 \"Clear the chemistry lectures\", deadline 20 Nov. Backlog B1 total 40, reaches 21 of 40. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks)."
+    ]
+   ],
+   "prior": [],
+   "user": [
+    "how do i cover all 40"
+   ],
+   "expect": "",
+   "checks": []
+  },
+  "focus": {
+   "name": "focus",
+   "type": "focus",
+   "flags": [],
+   "setup": [],
+   "prior": [],
+   "user": [
+    "ok same step again tomorrow"
+   ],
+   "expect": "",
+   "checks": []
+  }
+ },
+ "cases": [
+  {
+   "name": "no_card passes with plain prose",
+   "scenario": "free",
+   "check": "no_card",
+   "reply": "Okay. What happened?",
+   "expect": true
+  },
+  {
+   "name": "no_card fails on a card the parser threw away (the model still tried)",
+   "scenario": "free",
+   "check": "no_card",
+   "reply": "Okay.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect": false
+  },
+  {
+   "name": "card=promise needs an accepted card",
+   "scenario": "free",
+   "check": "card=promise",
+   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": true
+  },
+  {
+   "name": "card=plan fails when the card is not allowed in this chat type",
+   "scenario": "free",
+   "check": "card=plan",
+   "reply": "Good.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect": false
+  },
+  {
+   "name": "card=plan passes with ids and review date from the setup",
+   "scenario": "plan",
+   "check": "card=plan",
+   "reply": "Here.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect": true
+  },
+  {
+   "name": "card=plan fails with a review date that was not offered",
+   "scenario": "plan",
+   "check": "card=plan",
+   "reply": "Here.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"18 Oct\"}]]",
+   "expect": false
+  },
+  {
+   "name": "no_card=promise also counts a rejected promise line",
+   "scenario": "free",
+   "check": "no_card=promise",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"a\"}]]",
+   "expect": false
+  },
+  {
+   "name": "max_cards counts every card line",
+   "scenario": "free",
+   "check": "max_cards=1",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": false
+  },
+  {
+   "name": "focus scenarios use the free-talk card list",
+   "scenario": "focus",
+   "check": "card=promise",
+   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": true
+  },
+  {
+   "name": "max_questions counts question marks in the prose only",
+   "scenario": "free",
+   "check": "max_questions=1",
+   "reply": "Why? \n[[suggest: {\"type\":\"note\",\"kind\":\"thread\",\"text\":\"Why now?\"}]]",
+   "expect": true
+  },
+  {
+   "name": "two questions fail max_questions=1",
+   "scenario": "free",
+   "check": "max_questions=1",
+   "reply": "Why? And when?",
+   "expect": false
+  },
+  {
+   "name": "max_words counts prose words, not card text",
+   "scenario": "free",
+   "check": "max_words=3",
+   "reply": "Okay, sounds good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": true
+  },
+  {
+   "name": "contains is case-insensitive and ignores curly quotes",
+   "scenario": "free",
+   "check": "contains=don't reach",
+   "reply": "They DON’T REACH it.",
+   "expect": true
+  },
+  {
+   "name": "contains_any",
+   "scenario": "free",
+   "check": "contains_any=short|not enough",
+   "reply": "You are short by 4.",
+   "expect": true
+  },
+  {
+   "name": "not_contains looks at prose only, not at cards",
+   "scenario": "free",
+   "check": "not_contains=tomorrow 20:00",
+   "reply": "Fine.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": true
+  },
+  {
+   "name": "no_list catches a numbered list",
+   "scenario": "free",
+   "check": "no_list",
+   "reply": "Here:\n1. sleep\n2. study",
+   "expect": false
+  },
+  {
+   "name": "no_list allows a number inside a sentence",
+   "scenario": "free",
+   "check": "no_list",
+   "reply": "At 1. that is fine",
+   "expect": true
+  },
+  {
+   "name": "no_em_dash",
+   "scenario": "free",
+   "check": "no_em_dash",
+   "reply": "Yes — no.",
+   "expect": false
+  },
+  {
+   "name": "no_banned catches a banned phrase with a curly apostrophe",
+   "scenario": "free",
+   "check": "no_banned",
+   "reply": "You’ve got this.",
+   "expect": false
+  },
+  {
+   "name": "number_ok passes when numbers come from the scenario",
+   "scenario": "plan",
+   "check": "number_ok",
+   "reply": "At your pace you reach 21 of 40.",
+   "expect": true
+  },
+  {
+   "name": "number_ok fails on an invented number",
+   "scenario": "plan",
+   "check": "number_ok",
+   "reply": "You would reach about 30.",
+   "expect": false
+  },
+  {
+   "name": "number_ok fails on an invented number in words",
+   "scenario": "plan",
+   "check": "number_ok",
+   "reply": "You would reach about thirty.",
+   "expect": false
+  },
+  {
+   "name": "card_field checks a field of the accepted card",
+   "scenario": "free",
+   "check": "card_field=promise.remind=false",
+   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "expect": true
+  },
+  {
+   "name": "card_field fails when the field differs",
+   "scenario": "free",
+   "check": "card_field=promise.remind=false",
+   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":true}]]",
+   "expect": false
+  },
+  {
+   "name": "card_field fails when there is no such card",
+   "scenario": "free",
+   "check": "card_field=promise.remind=false",
+   "reply": "Good.",
+   "expect": false
+  }
+ ]
+}

@@ -1,0 +1,792 @@
+{
+ "cases": [
+  {
+   "name": "exact quote",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i'll start properly from monday",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "case and spacing ignored",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "I'LL  start   properly FROM Monday",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "curly apostrophe in his message",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "I'll start properly",
+    "user_messages": [
+     "I’ll start properly from monday"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "trailing period added by the model",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i'll start properly from monday.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "surrounding quote marks ignored",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "\"i'll start properly from monday\"",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "paraphrase fails",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i will begin properly on monday",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "too short to store as a quote",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "ok",
+    "user_messages": [
+     "ok then"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "five characters is still too short to store as a quote (the MIN_CHARS boundary)",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "tired",
+    "user_messages": [
+     "I felt so tired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "only the coach said it",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "you are not enough",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "empty quote",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "verified keeps order and drops invented",
+   "fn": "verified_quotes",
+   "args": {
+    "quotes": [
+     "i just never am by 8",
+     "i hate mondays",
+     "I felt so tired today"
+    ],
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": [
+    "i just never am by 8",
+    "I felt so tired today"
+   ]
+  },
+  {
+   "name": "letter quote is his",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "On Wednesday you said, \"I can do it when I'm fresh, I just never am by 8.\" That mattered.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "letter quote invented",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said, \"I give up on everything.\"",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "I give up on everything."
+    ]
+   }
+  },
+  {
+   "name": "no quotes is fine",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "A quiet week with nothing quoted.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "ellipsis fragments each checked, all his",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You wrote \"i can do it ... never am by 8\".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "ellipsis fragments, one invented",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You wrote \"i can do it ... and then i quit\".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "i can do it ... and then i quit"
+    ]
+   }
+  },
+  {
+   "name": "odd number of quotes fails closed",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said \"i can do it and then",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "unbalanced quotation mark"
+    ]
+   }
+  },
+  {
+   "name": "apostrophes are not quotations",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said you'd start and that it's hard.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "curly double quotes are recognised",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said “i just never am by 8”.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "curly double quotes, invented",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said “nothing works”.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "nothing works"
+    ]
+   }
+  },
+  {
+   "name": "short quoted word that he did write",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You called the day \"tired\".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "short quoted word that he did not write",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You called it \"lazy\".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "lazy"
+    ]
+   }
+  },
+  {
+   "name": "all numbers present",
+   "fn": "number_check",
+   "args": {
+    "text": "You reached 22 of 40 at 0.6 a day, and answered 83% of days.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "invented number",
+   "fn": "number_check",
+   "args": {
+    "text": "That is about 37 lectures.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "37"
+    ]
+   }
+  },
+  {
+   "name": "computed number is not allowed",
+   "fn": "number_check",
+   "args": {
+    "text": "You are 18 short, which is 45% of the 40.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "45"
+    ]
+   }
+  },
+  {
+   "name": "thousands separator",
+   "fn": "number_check",
+   "args": {
+    "text": "You mentioned 1200 rupees.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "trailing zero decimal",
+   "fn": "number_check",
+   "args": {
+    "text": "A pace of 0.60 per day.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "decimal not in inputs",
+   "fn": "number_check",
+   "args": {
+    "text": "A pace of 0.7 per day.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "0.7"
+    ]
+   }
+  },
+  {
+   "name": "date range numbers",
+   "fn": "number_check",
+   "args": {
+    "text": "The week of 5 to 11 Oct.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "no numbers",
+   "fn": "number_check",
+   "args": {
+    "text": "A calm week.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "ordinal uses the digit",
+   "fn": "number_check",
+   "args": {
+    "text": "Starting from the 1st again.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "id digits",
+   "fn": "number_check",
+   "args": {
+    "text": "About G7.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "7"
+    ]
+   }
+  },
+  {
+   "name": "quote must start on a word boundary",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "etired today",
+    "user_messages": [
+     "I felt so retired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "quote must end on a word boundary",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "never am by",
+    "user_messages": [
+     "i just never am bye"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "quote found at a later, clean occurrence",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "am tired",
+    "user_messages": [
+     "i am tiredish but i am tired"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "full-width characters are normalised",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "I felt so tired",
+    "user_messages": [
+     "I felt so ｔｉｒｅｄ today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "short word inside a longer word is not his",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You called yourself \"tired\".",
+    "user_messages": [
+     "I have retired from that"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "tired"
+    ]
+   }
+  },
+  {
+   "name": "a quotation across a line break is still checked (was skipped before)",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said \"I give up\non everything\".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "I give up\non everything"
+    ]
+   }
+  },
+  {
+   "name": "unbalanced curly quotes fail closed",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said “I give up on everything.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "unbalanced quotation mark"
+    ]
+   }
+  },
+  {
+   "name": "a stray closing curly quote fails closed",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said I give up”.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "unbalanced quotation mark"
+    ]
+   }
+  },
+  {
+   "name": "single curly quotes used as quotation marks are checked",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You called it ‘hopeless’ twice.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "hopeless"
+    ]
+   }
+  },
+  {
+   "name": "single curly quotes with an apostrophe inside, his words",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You wrote ‘i’ll start properly’ again.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "curly apostrophes alone are not quotations",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You’re not lazy, and it’s fine.",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "an over-long quotation fails",
+   "fn": "verify_quotes_in_text",
+   "args": {
+    "text": "You said \"a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a \".",
+    "user_messages": [
+     "i'll start properly from monday, decided",
+     "i can do it when i'm fresh, i just never am by 8",
+     "I felt so tired today"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "a a a a a a a a a a a a a a a a a a a a ..."
+    ]
+   }
+  },
+  {
+   "name": "number words are numbers: invented figure in words",
+   "fn": "number_check",
+   "args": {
+    "text": "That is about thirty-seven lectures.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "37"
+    ]
+   }
+  },
+  {
+   "name": "number words that are in the inputs are fine",
+   "fn": "number_check",
+   "args": {
+    "text": "You reached twenty-two of forty.",
+    "inputs": [
+     "Typical pace: 0.6 per day, reaches 22 of 40, short by 18. Answer rate 83%.",
+     "Week 5 to 11 Oct. Review options: 17 Oct",
+     "He wrote \"from the 1st\" and \"1,200 rupees\" and \"8am\""
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "twice is a figure",
+   "fn": "number_check",
+   "args": {
+    "text": "You skipped it twice.",
+    "inputs": [
+     "Typical pace 0.6 per day."
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "2"
+    ]
+   }
+  },
+  {
+   "name": "plain 'one' is ordinary English, not a figure",
+   "fn": "number_check",
+   "args": {
+    "text": "One thing stood out, and no one noticed.",
+    "inputs": [
+     "nothing numeric"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "a hundred and five",
+   "fn": "number_check",
+   "args": {
+    "text": "About a hundred and five pages.",
+    "inputs": [
+     "105 pages left"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "number words in his own messages count as inputs",
+   "fn": "number_check",
+   "args": {
+    "text": "You said 2 hours were enough.",
+    "inputs": [
+     "he wrote: two hours is all i have"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  {
+   "name": "an ordinal word is a figure",
+   "fn": "number_check",
+   "args": {
+    "text": "This is the third time.",
+    "inputs": [
+     "seen 2 times"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "bad": [
+     "3"
+    ]
+   }
+  }
+ ]
+}

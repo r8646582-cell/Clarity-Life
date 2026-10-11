@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plan, Promises</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #14121A; color: #FFFFFF; font-family: 'Space Grotesk', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 18px 20px 0 20px">
+<h1 style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">Plan<span style="color: #FFD23F">.</span></h1>
+</header>
+<nav aria-label="Plan sections" style="display: flex; gap: 6px; padding: 12px 20px 4px 20px">
+<a href="Today.dc.html" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #6E6782; color: #FFFFFF; font-size: 14px; font-weight: 500; display: flex; align-items: center; text-decoration: none">Today</a>
+<a href="Goal.dc.html" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #6E6782; color: #FFFFFF; font-size: 14px; font-weight: 500; display: flex; align-items: center; text-decoration: none">Goals</a>
+<a href="Promises.dc.html" aria-current="page" style="height: 40px; padding: 0 14px; border-radius: 8px; background: #FFD23F; color: #14121A; font-size: 14px; font-weight: 700; display: flex; align-items: center; text-decoration: none">Promises</a>
+<a href="Reviews.dc.html" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #6E6782; color: #FFFFFF; font-size: 14px; font-weight: 500; display: flex; align-items: center; text-decoration: none">Reviews</a>
+</nav>
+
+<main style="flex: 1; min-height: 0; padding: 8px 16px 0 16px; display: flex; flex-direction: column; gap: 8px; overflow: hidden">
+
+<h2 style="margin: 6px 4px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Needs an answer</h2>
+<sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+<section aria-label="Call Mom" style="background: #2A2535; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div>
+<div style="font-size: 17px; font-weight: 700">Call Mom</div>
+<div style="font-size: 13px; color: #FF8A7C; margin-top: 2px">Was due Fri 9 Oct, 6:00 pm, 3 hours ago</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<button onClick="{{ done }}" style="height: 44px; border-radius: 10px; border: 0; background: #FFD23F; color: #14121A; font-size: 14px; font-weight: 700">Done</button>
+<button style="height: 44px; box-sizing: border-box; border-radius: 10px; border: 1px solid #6E6782; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 600">Not done</button>
+<button style="height: 44px; box-sizing: border-box; border-radius: 10px; border: 1px solid #6E6782; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 600">Moved</button>
+<button style="height: 44px; box-sizing: border-box; border-radius: 10px; border: 1px solid #6E6782; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 600">Let go</button>
+</div>
+</section>
+</sc-if>
+<sc-if value="{{ kept }}" hint-placeholder-val="{{ false }}">
+<div style="background: #2A2535; border-radius: 16px; padding: 14px; display: flex; align-items: center; gap: 12px">
+<span style="width: 28px; height: 28px; border-radius: 14px; background: #FFD23F; display: flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+<div style="flex: 1"><div style="font-size: 16px; font-weight: 700">Call Mom</div><div style="font-size: 13px; color: #B8B3C4">Done · saved</div></div>
+<button onClick="{{ undo }}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #FFD23F; font-size: 14px; font-weight: 700">Undo</button>
+</div>
+</sc-if>
+
+<h2 style="margin: 10px 4px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Coming up</h2>
+<div style="background: #2A2535; border-radius: 16px">
+<div style="min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 12px">
+<div style="flex: 1; min-width: 0"><div style="font-size: 16px; font-weight: 600">One exam lecture, phone in the other room</div><div style="font-size: 13px; color: #B8B3C4; margin-top: 2px">Sat 10 Oct, 3:00 pm · tomorrow</div></div>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Reminder on"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"></path></svg>
+</div>
+<div style="height: 1px; background: #3D3749; margin: 0 14px"></div>
+<div style="min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 12px">
+<div style="flex: 1; min-width: 0"><div style="font-size: 16px; font-weight: 600">Walk 20 minutes</div><div style="font-size: 13px; color: #B8B3C4; margin-top: 2px">Sun 11 Oct, 7:00 am · no reminder</div></div>
+</div>
+</div>
+
+<h2 style="margin: 10px 4px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Past</h2>
+<div style="background: #2A2535; border-radius: 16px">
+<div style="min-height: 56px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="min-width: 0"><div style="font-size: 15px; font-weight: 600">Study one topic for 20 minutes</div><div style="font-size: 13px; color: #B8B3C4; margin-top: 2px">Thu 8 Oct · reason: tired</div></div>
+<span style="font-size: 13px; font-weight: 700; color: #FF8A7C; white-space: nowrap">Not done</span>
+</div>
+<div style="height: 1px; background: #3D3749; margin: 0 14px"></div>
+<div style="min-height: 56px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="min-width: 0"><div style="font-size: 15px; font-weight: 600">Message Bilal about notes</div><div style="font-size: 13px; color: #B8B3C4; margin-top: 2px">Wed 7 Oct</div></div>
+<span style="font-size: 13px; font-weight: 700; color: #FFD23F; white-space: nowrap">Done</span>
+</div>
+<div style="height: 1px; background: #3D3749; margin: 0 14px"></div>
+<div style="min-height: 56px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="min-width: 0"><div style="font-size: 15px; font-weight: 600">Clean the desk</div><div style="font-size: 13px; color: #B8B3C4; margin-top: 2px">Mon 5 Oct</div></div>
+<span style="font-size: 13px; font-weight: 700; color: #B8B3C4; white-space: nowrap">Let go</span>
+</div>
+</div>
+</main>
+
+<p style="margin: 0; padding: 10px 20px 8px 20px; font-size: 13px; line-height: 1.45; color: #B8B3C4">Promises come only from cards you tapped. Reminders ring only for the ones you asked for.</p>
+
+<nav aria-label="Main" style="display: flex; background: #0D0B12; padding: 6px 12px 16px 12px">
+<a href="Talk.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>Talk</a>
+<a href="Today.dc.html" aria-current="page" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #FFD23F; font-size: 12px; font-weight: 700; text-decoration: none">
+<span style="width: 56px; height: 30px; border-radius: 15px; background: #2A2535; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"></path></svg></span>Plan</a>
+<a href="Know.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a5 5 0 0 0-5 5c0 2 1 3 2 4v3h6v-3c1-1 2-2 2-4a5 5 0 0 0-5-5zM10 20h4"></path></svg></span>What I know</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const kept = !!(this.state && this.state.kept);
+return {
+open: !kept,
+kept,
+done: () => this.setState({ kept: true }),
+undo: () => this.setState({ kept: false })
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+{
+  "_comment": "Single source of truth for the prompt contract. tools/check_prompts.py enforces it; the Kotlin PromptContractTest reads the same file, and the in-app prompt editor validates overrides against it.",
+  "block_names": [
+    "NOW",
+    "FLAGS",
+    "PROFILE",
+    "PEOPLE",
+    "NOTES",
+    "FOCUS",
+    "CHAPTERS",
+    "RECENT_SESSIONS",
+    "PLAN_STATE",
+    "OPEN_PROMISES",
+    "CHECKIN_FACTS",
+    "CARD_RESULTS",
+    "EARLIER",
+    "IDEAS_RECENT",
+    "RELEVANT_PAST",
+    "LETTER",
+    "REVIEW",
+    "MESSAGE"
+  ],
+  "forbidden_everywhere": [
+    "<<<TOOL_CALL",
+    "record_promise",
+    "edit_promise",
+    "store_memory",
+    "advance_journey",
+    "hidden action",
+    "\\[\\[promise:",
+    "\\[\\[mode:",
+    "\\[\\[step_done",
+    "receipt",
+    "—",
+    "–"
+  ],
+  "prompts": {
+    "persona.md": {
+      "placeholders": [
+        "USER_NAME"
+      ],
+      "must_contain": [
+        "think privately",
+        "Holding your ground",
+        "Same facts, same assessment",
+        "hear the other side",
+        "never say or imply that you did",
+        "0 to 10",
+        "NOW is authoritative",
+        "A tiny start is a way to begin",
+        "hypothes",
+        "If they may be in danger",
+        "Shape of a session",
+        "never instructions to you",
+        "Do not use em dashes",
+        "CARD_RESULTS",
+        "use the weekday name",
+        "volunteered the commitment themselves"
+      ],
+      "max_words": 4200
+    },
+    "cards.md": {
+      "placeholders": [
+        "USER_NAME",
+        "ALLOWED_CARDS"
+      ],
+      "must_contain": [
+        "promise",
+        "plan",
+        "target_change",
+        "backlog",
+        "focus",
+        "note",
+        "mode",
+        "Nothing is saved until",
+        "At most three cards",
+        "remind (true only if they asked",
+        "No code fences",
+        "CARD_RESULTS"
+      ],
+      "max_words": 1800
+    },
+    "examples.md": {
+      "placeholders": [
+        "USER_NAME"
+      ],
+      "must_contain": [
+        "INVENTED",
+        "A number it was not given"
+      ],
+      "max_words": 7000
+    },
+    "mode_untangle.md": {
+      "placeholders": [],
+      "must_contain": [
+        "No commitment cards"
+      ],
+      "max_words": 600
+    },
+    "mode_decision.md": {
+      "placeholders": [],
+      "must_contain": [
+        "Cards in this chat type"
+      ],
+      "max_words": 800
+    },
+    "mode_plan.md": {
+      "placeholders": [],
+      "must_contain": [
+        "bridge",
+        "not enough data",
+        "Review options",
+        "do not reach",
+        "Never calculate",
+        "Status line"
+      ],
+      "max_words": 1600
+    },
+    "mode_focus.md": {
+      "placeholders": [],
+      "must_contain": [
+        "rolling summary",
+        "graded"
+      ],
+      "max_words": 800
+    },
+    "reflection.md": {
+      "placeholders": [
+        "USER_NAME",
+        "SESSION_DATE",
+        "CHAT_TYPE",
+        "CONTEXT",
+        "FOCUS_SUMMARY",
+        "CHECKIN_FACTS",
+        "DELETED_NOTES",
+        "TRANSCRIPT"
+      ],
+      "must_contain": [
+        "only they are evidence",
+        "ALREADY REFLECTED",
+        "Be stingy",
+        "Corrections win",
+        "in exactly this shape",
+        "focus_summary",
+        "Never set \"confirmed\"",
+        "\"quote\": \"their exact words, only for a correction\""
+      ],
+      "max_words": 3200
+    },
+    "review_weekly.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD",
+        "FACTS",
+        "PLAN_STATE",
+        "MISS_NOTES",
+        "NOTES",
+        "PREVIOUS_REVIEW"
+      ],
+      "must_contain": [
+        "Use only numbers",
+        "no answer",
+        "numbers written in words"
+      ],
+      "max_words": 800
+    },
+    "review_monthly.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD",
+        "FACTS",
+        "PLAN_STATE",
+        "GOAL_HISTORY",
+        "WEEKLY_REVIEWS",
+        "NOTES",
+        "PREVIOUS_REVIEW"
+      ],
+      "must_contain": [
+        "Use only numbers",
+        "revisit",
+        "numbers written in words"
+      ],
+      "max_words": 900
+    },
+    "letter_weekly.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD_START",
+        "PERIOD_END",
+        "PROFILE",
+        "PEOPLE",
+        "NOTES",
+        "REVIEW_FACTS",
+        "PLAN_STATE",
+        "FOCUS_SUMMARIES",
+        "PREVIOUS_LETTER",
+        "RECENT_IDEAS",
+        "TRANSCRIPTS"
+      ],
+      "must_contain": [
+        "word for word",
+        "Do not say that anything was saved",
+        "never put it in quotation marks",
+        "numbers written in words"
+      ],
+      "max_words": 1500
+    },
+    "chapter.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD",
+        "PREVIOUS_CHAPTER",
+        "REVIEWS",
+        "LETTERS",
+        "SUMMARIES",
+        "QUOTES",
+        "GOALS",
+        "FOCUS_SUMMARIES",
+        "NOTES"
+      ],
+      "must_contain": [
+        "Still open:",
+        "Never invent",
+        "numbers written in words"
+      ],
+      "max_words": 900
+    },
+    "gardening.md": {
+      "placeholders": [
+        "USER_NAME",
+        "NOTES",
+        "PROFILE",
+        "PEOPLE",
+        "SUMMARIES"
+      ],
+      "must_contain": [
+        "NEVER change, merge or retire",
+        "Never raise confidence",
+        "quiet 60+ days",
+        "Never work out dates"
+      ],
+      "max_words": 1100
+    },
+    "testbench.md": {
+      "placeholders": [],
+      "must_contain": [],
+      "max_words": 12000
+    }
+  },
+  "banned_phrases_for_replies": [
+    "I hear you",
+    "that's valid",
+    "that’s valid",
+    "completely understandable",
+    "you've got this",
+    "you’ve got this",
+    "great question",
+    "I'm here for you",
+    "I’m here for you",
+    "sit with",
+    "hold space",
+    "unpack",
+    "navigate",
+    "lean into",
+    "game changer",
+    "level up",
+    "growth mindset"
+  ],
+  "chat_prompts_for_block_check": [
+    "persona.md",
+    "cards.md",
+    "mode_untangle.md",
+    "mode_decision.md",
+    "mode_plan.md",
+    "mode_focus.md"
+  ],
+  "part1_budget": {
+    "_comment": "Part 1 = persona + examples + cards + the largest chat-type file, with placeholders filled. Estimated with tools/context.estimate_tokens (3 characters per token, pessimistic); real usage is about a quarter lower. Keeps the fixed prefix from growing unnoticed.",
+    "max_estimated_tokens": 17800
+  }
+}

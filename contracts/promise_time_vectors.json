@@ -1,0 +1,666 @@
+{
+ "_comment": "Shared cases for PromiseTimes: tools/promise_times.py (test_promise_times.py) and PromiseTimes.kt (PromiseTimesTest) must give exactly these results. 2026-10-10 is a Saturday. Each expectation was checked by hand against the rules in tools/promise_times.py.",
+ "cases": [
+  {
+   "name": "plain tomorrow with a 24-hour time",
+   "args": {
+    "phrase": "tomorrow 17:00",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "17:00"
+   }
+  },
+  {
+   "name": "weekday name with am",
+   "args": {
+    "phrase": "Sunday 8am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "08:00"
+   }
+  },
+  {
+   "name": "today, later the same evening",
+   "args": {
+    "phrase": "today 22:30",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "22:30"
+   }
+  },
+  {
+   "name": "today, a time that has passed: picker with the time only",
+   "args": {
+    "phrase": "today 21:00",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": "21:00"
+   }
+  },
+  {
+   "name": "test bench: tomorrow at 8pm in the evening",
+   "args": {
+    "phrase": "tomorrow 20:00",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "20:00"
+   }
+  },
+  {
+   "name": "after midnight, tomorrow is ambiguous: the coming day preselected",
+   "args": {
+    "phrase": "tomorrow at 10",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "10:00"
+   }
+  },
+  {
+   "name": "after midnight, a weekday name is exact",
+   "args": {
+    "phrase": "Sunday 10:00",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "10:00"
+   }
+  },
+  {
+   "name": "after midnight, the next weekday",
+   "args": {
+    "phrase": "Monday 10:00",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "10:00"
+   }
+  },
+  {
+   "name": "after midnight, today is ambiguous",
+   "args": {
+    "phrase": "today 18:00",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "18:00"
+   }
+  },
+  {
+   "name": "after midnight, a bare time is ambiguous",
+   "args": {
+    "phrase": "09:00",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "after midnight, tonight is ambiguous",
+   "args": {
+    "phrase": "tonight 9pm",
+    "now": "2026-10-11T00:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "21:00"
+   }
+  },
+  {
+   "name": "boundary hour itself is no longer late night",
+   "args": {
+    "phrase": "tomorrow 9am",
+    "now": "2026-10-11T04:00"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "boundary set to 6 am makes 5 am late night",
+   "args": {
+    "phrase": "tomorrow 9am",
+    "now": "2026-10-11T05:00",
+    "boundary_hour": 6
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "tonight with a bare hour means the evening",
+   "args": {
+    "phrase": "tonight 10",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "22:00"
+   }
+  },
+  {
+   "name": "tonight with minutes and pm",
+   "args": {
+    "phrase": "tonight at 10:30 pm",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "22:30"
+   }
+  },
+  {
+   "name": "tonight with am contradicts itself",
+   "args": {
+    "phrase": "tonight 8am",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "weekday that is today, time already passed: next week",
+   "args": {
+    "phrase": "Saturday 8am",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-17",
+    "time": "08:00"
+   }
+  },
+  {
+   "name": "weekday that is today, time still ahead: today",
+   "args": {
+    "phrase": "Saturday 15:00",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "15:00"
+   }
+  },
+  {
+   "name": "next weekday is ambiguous English",
+   "args": {
+    "phrase": "next Monday 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-12",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "weekday before a matching date",
+   "args": {
+    "phrase": "Sat 10 Oct 3pm",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "15:00"
+   }
+  },
+  {
+   "name": "weekday that disagrees with the date",
+   "args": {
+    "phrase": "Fri 10 Oct 3pm",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "a date and time already past",
+   "args": {
+    "phrase": "10 Oct 5 pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": "17:00"
+   }
+  },
+  {
+   "name": "month first, comma, am with minutes",
+   "args": {
+    "phrase": "Oct 12, 7:30am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "07:30"
+   }
+  },
+  {
+   "name": "a date that does not exist",
+   "args": {
+    "phrase": "31 Feb 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "a day with no time",
+   "args": {
+    "phrase": "tomorrow",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": null
+   }
+  },
+  {
+   "name": "part of the day with no hour",
+   "args": {
+    "phrase": "tomorrow morning",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": null
+   }
+  },
+  {
+   "name": "morning with a bare hour",
+   "args": {
+    "phrase": "tomorrow morning 7",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "07:00"
+   }
+  },
+  {
+   "name": "evening with a bare hour",
+   "args": {
+    "phrase": "tomorrow evening 7",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "19:00"
+   }
+  },
+  {
+   "name": "a bare hour with no half of the day",
+   "args": {
+    "phrase": "Sunday 8",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "08:00"
+   }
+  },
+  {
+   "name": "now is not a time",
+   "args": {
+    "phrase": "now",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "midnight is never guessed",
+   "args": {
+    "phrase": "midnight",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "p.m. with dots",
+   "args": {
+    "phrase": "tomorrow 5:30 p.m.",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "17:30"
+   }
+  },
+  {
+   "name": "noon",
+   "args": {
+    "phrase": "tomorrow noon",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "12:00"
+   }
+  },
+  {
+   "name": "hour out of range",
+   "args": {
+    "phrase": "tomorrow 25:00",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "13pm is not a time",
+   "args": {
+    "phrase": "tomorrow 13pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "minutes out of range",
+   "args": {
+    "phrase": "tomorrow 9:75",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "two days named",
+   "args": {
+    "phrase": "Sunday tomorrow 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "relative durations are not in the grammar",
+   "args": {
+    "phrase": "in 2 hours",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "a date earlier in the year means next year",
+   "args": {
+    "phrase": "5 Jan 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2027-01-05",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "more than a year ahead",
+   "args": {
+    "phrase": "5 Jan 2028 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "a 24-hour bare hour of 13 or more is sure",
+   "args": {
+    "phrase": "tomorrow 17",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "17:00"
+   }
+  },
+  {
+   "name": "a time alone, later today",
+   "args": {
+    "phrase": "17:00",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-10",
+    "time": "17:00"
+   }
+  },
+  {
+   "name": "a time alone that has passed",
+   "args": {
+    "phrase": "08:00",
+    "now": "2026-10-10T09:15"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": "08:00"
+   }
+  },
+  {
+   "name": "empty",
+   "args": {
+    "phrase": "",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "short weekday names",
+   "args": {
+    "phrase": "Tues 9:00",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-13",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "upper case and extra words are ignored only if filler",
+   "args": {
+    "phrase": "On SUNDAY at 8 AM",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-11",
+    "time": "08:00"
+   }
+  },
+  {
+   "name": "an unknown word fails closed",
+   "args": {
+    "phrase": "sunday after asr 5pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "two times",
+   "args": {
+    "phrase": "tomorrow 8am 9am",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "ordinal day",
+   "args": {
+    "phrase": "12th Oct 7pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "19:00"
+   }
+  },
+  {
+   "name": "explicit year",
+   "args": {
+    "phrase": "12 Oct 2026 7pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "19:00"
+   }
+  },
+  {
+   "name": "explicit year in the past",
+   "args": {
+    "phrase": "12 Oct 2025 7pm",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "next without a weekday",
+   "args": {
+    "phrase": "next week",
+    "now": "2026-10-10T21:40"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "leap day in a leap year",
+   "args": {
+    "phrase": "29 Feb 2028 9am",
+    "now": "2027-12-01T10:00"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2028-02-29",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "leap day in a common year",
+   "args": {
+    "phrase": "29 Feb 2027 9am",
+    "now": "2026-12-01T10:00"
+   },
+   "expect": {
+    "status": "pick",
+    "date": null,
+    "time": null
+   }
+  },
+  {
+   "name": "year end: tomorrow is next year",
+   "args": {
+    "phrase": "tomorrow 9am",
+    "now": "2026-12-31T22:00"
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2027-01-01",
+    "time": "09:00"
+   }
+  }
+ ]
+}

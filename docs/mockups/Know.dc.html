@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What I know</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+button,input{font-family:inherit}
+button{cursor:pointer}
+input::placeholder{color:#B8B3C4}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #14121A; color: #FFFFFF; font-family: 'Space Grotesk', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 18px 20px 4px 20px">
+<h1 style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">What I know<span style="color: #FFD23F">.</span></h1>
+<p style="margin: 8px 0 0 0; font-size: 14px; color: #B8B3C4; line-height: 1.4">Only what you said or did. Edit or delete anything; a deletion is final.</p>
+</header>
+
+<div style="margin: 10px 20px 8px 20px; position: relative">
+<label for="know-search" class="sr">Search what I know</label>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 14px; top: 14px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input id="know-search" type="search" placeholder="Search" style="width: 100%; height: 46px; box-sizing: border-box; border-radius: 12px; border: 1px solid #3D3749; background: #2A2535; color: #FFFFFF; padding: 0 14px 0 40px; font-size: 15px">
+</div>
+
+<main style="flex: 1; min-height: 0; padding: 0 20px; overflow: hidden; display: flex; flex-direction: column">
+
+<button aria-expanded="false" style="min-height: 52px; border: 0; border-bottom: 1px solid #3D3749; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>Profile</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">24</span></button>
+
+<div style="border-bottom: 1px solid #3D3749; padding-bottom: 12px">
+<button aria-expanded="true" style="width: 100%; min-height: 52px; border: 0; background: transparent; color: #FFD23F; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 700; padding: 0"><span>Patterns</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">9</span></button>
+
+<article style="background: #2A2535; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px">
+<sc-if value="{{ confirmed }}" hint-placeholder-val="{{ false }}">
+<span style="height: 24px; padding: 0 8px; border-radius: 6px; background: #FFD23F; color: #14121A; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Confirmed by you</span>
+</sc-if>
+<sc-if value="{{ unconfirmed }}" hint-placeholder-val="{{ true }}">
+<span style="height: 24px; box-sizing: border-box; padding: 0 8px; border-radius: 6px; border: 1px solid #FFD23F; color: #FFD23F; font-size: 12px; font-weight: 700; display: flex; align-items: center">Likely</span>
+</sc-if>
+<span style="font-size: 12px; color: #B8B3C4">seen 4 times · Sep to Oct</span>
+</div>
+<div style="font-size: 16px; line-height: 1.4; font-weight: 600">On evening targets you miss, the reason you pick is usually "tired".</div>
+<div style="border-top: 1px solid #3D3749; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; color: #B8B3C4">
+<div><b style="color: #FFFFFF">Counted by the app:</b> tired on 9 of 12 missed evening targets, 14 Sep to 10 Oct.</div>
+<div><b style="color: #FFFFFF">You said, 7 Oct:</b> "I can do it when I'm fresh, I just never am by 8."</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #6E6782; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 600">Edit</button>
+<button style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #6E6782; background: transparent; color: #FF8A7C; font-size: 14px; font-weight: 600">Delete</button>
+<sc-if value="{{ unconfirmed }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ confirm }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #FFD23F; color: #14121A; font-size: 14px; font-weight: 700; margin-left: auto">That's right</button>
+</sc-if>
+</div>
+</article>
+
+<article style="margin-top: 8px; background: #2A2535; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 6px">
+<span style="height: 24px; box-sizing: border-box; padding: 0 8px; border-radius: 6px; border: 1px dashed #8A8498; color: #B8B3C4; font-size: 12px; font-weight: 700; display: flex; align-items: center">Guess</span>
+<span style="font-size: 12px; color: #B8B3C4">seen 2 times</span>
+</div>
+<div style="font-size: 15px; line-height: 1.4">When a start feels heavy, you say "from Monday".</div>
+</article>
+</div>
+
+<button aria-expanded="false" style="min-height: 52px; border: 0; border-bottom: 1px solid #3D3749; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>What helps</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">7</span></button>
+<button aria-expanded="false" style="min-height: 52px; border: 0; border-bottom: 1px solid #3D3749; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>What does not help</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">5</span></button>
+<button aria-expanded="false" style="min-height: 52px; border: 0; border-bottom: 1px solid #3D3749; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>Open threads</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">3</span></button>
+<button aria-expanded="false" style="min-height: 52px; border: 0; border-bottom: 1px solid #3D3749; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>People</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">6</span></button>
+<a href="Focus.dc.html" style="min-height: 52px; border-bottom: 1px solid #3D3749; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; text-decoration: none"><span>Focuses</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">2</span></a>
+<button aria-expanded="false" style="min-height: 52px; border: 0; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; padding: 0"><span>Chapters</span><span style="font-size: 14px; color: #B8B3C4; font-weight: 400">1</span></button>
+</main>
+
+<nav aria-label="Main" style="display: flex; background: #0D0B12; padding: 6px 12px 16px 12px">
+<a href="Talk.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>Talk</a>
+<a href="Today.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"></path></svg></span>Plan</a>
+<a href="Know.dc.html" aria-current="page" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #FFD23F; font-size: 12px; font-weight: 700; text-decoration: none">
+<span style="width: 56px; height: 30px; border-radius: 15px; background: #2A2535; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a5 5 0 0 0-5 5c0 2 1 3 2 4v3h6v-3c1-1 2-2 2-4a5 5 0 0 0-5-5zM10 20h4"></path></svg></span>What I know</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const c = !!(this.state && this.state.confirmed);
+return {
+confirmed: c,
+unconfirmed: !c,
+confirm: () => this.setState({ confirmed: true })
+};
+}
+}
+</script>
+</body>
+</html>

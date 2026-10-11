@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings, Coach</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+button,input{font-family:inherit}
+button{cursor:pointer}
+input::placeholder{color:#8A8498}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #14121A; color: #FFFFFF; font-family: 'Space Grotesk', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<div style="display: flex; align-items: center; padding: 14px 8px 0 8px">
+<a href="Settings.dc.html" aria-label="Back to Settings" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+</div>
+<h1 style="margin: 0; padding: 0 20px 14px 20px; font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">Coach<span style="color: #FFD23F">.</span></h1>
+
+<form style="flex: 1; min-height: 0; overflow: hidden; padding: 0 20px; margin: 0; display: flex; flex-direction: column; gap: 14px">
+
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0 0 8px 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Main provider</legend>
+<div role="radiogroup" aria-label="Provider" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: #2A2535; border-radius: 12px; padding: 4px">
+<sc-for list="{{ providers }}" as="p" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{ p.on }}" onClick="{{ p.pick }}" style="height: 44px; border: 0; border-radius: 9px; background: {{ p.bg }}; color: {{ p.fg }}; font-size: 13px; font-weight: 700">{{ p.label }}</button>
+</sc-for>
+</div>
+</fieldset>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="sc-url" style="font-size: 14px; font-weight: 600">Base URL</label>
+<input id="sc-url" type="url" value="{{ url }}" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1px solid #6E6782; background: #2A2535; color: #FFFFFF; padding: 0 14px; font-size: 15px">
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="sc-key" style="font-size: 14px; font-weight: 600">API key</label>
+<div style="display: flex; gap: 8px">
+<input id="sc-key" type="password" value="sk-0000000000000000" autocomplete="off" style="flex: 1; min-width: 0; height: 48px; box-sizing: border-box; border-radius: 12px; border: 1px solid #6E6782; background: #2A2535; color: #FFFFFF; padding: 0 14px; font-size: 15px">
+<button type="button" style="height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid #6E6782; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 600">Paste</button>
+</div>
+<span style="font-size: 12px; color: #B8B3C4">Kept in the phone's secure keystore. Never shown again in full, never logged.</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="sc-chat" style="font-size: 14px; font-weight: 600">Chat model</label>
+<input id="sc-chat" type="text" value="deepseek-reasoner" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1px solid #6E6782; background: #2A2535; color: #FFFFFF; padding: 0 12px; font-size: 14px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="sc-bg" style="font-size: 14px; font-weight: 600">Background model</label>
+<input id="sc-bg" type="text" placeholder="Same as chat" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1px solid #6E6782; background: #2A2535; color: #FFFFFF; padding: 0 12px; font-size: 14px">
+</div>
+</div>
+<span style="font-size: 12px; color: #B8B3C4; margin-top: -6px">Typed freely, so a retired model never needs a new app. Check names in the provider's docs.</span>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<button type="button" onClick="{{ test }}" style="height: 48px; border-radius: 12px; border: 0; background: #FFD23F; color: #14121A; font-size: 15px; font-weight: 700">Test connection</button>
+<sc-if value="{{ tested }}" hint-placeholder-val="{{ true }}">
+<div role="status" style="display: flex; align-items: center; gap: 10px; background: #2A2535; border-radius: 12px; padding: 10px 12px">
+<span style="width: 26px; height: 26px; border-radius: 13px; background: #FFD23F; display: flex; align-items: center; justify-content: center; flex: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+<span style="font-size: 14px; line-height: 1.35">Connected. The model answered and streamed its thinking.</span>
+</div>
+</sc-if>
+</div>
+
+<div style="border: 1px solid #3D3749; border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: flex-start">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16.5v.5"></path></svg>
+<span style="font-size: 13px; line-height: 1.45; color: #B8B3C4">Changed the model? Run the test bench before you rely on it. Results are kept per model so you can compare.</span>
+</div>
+
+<a href="Settings.dc.html" style="min-height: 52px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #3D3749; color: #FFFFFF; text-decoration: none">
+<span><span style="display: block; font-size: 16px; font-weight: 600">Backup provider</span><span style="display: block; font-size: 13px; color: #B8B3C4">Anthropic · key set · after 3 failures in a row</span></span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+</form>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const st = Object.assign({ prov: 'deepseek', tested: true }, this.state || {});
+const urls = { deepseek: 'https://api.deepseek.com', compat: 'https://', anthropic: 'https://api.anthropic.com' };
+const p = (id, label) => {
+const on = st.prov === id;
+return { label, on: on ? 'true' : 'false', bg: on ? '#FFD23F' : 'transparent', fg: on ? '#14121A' : '#FFFFFF', pick: () => this.setState({ prov: id, tested: false }) };
+};
+return {
+providers: [p('deepseek', 'DeepSeek'), p('compat', 'OpenAI-style'), p('anthropic', 'Anthropic')],
+url: urls[st.prov],
+tested: st.tested,
+test: () => this.setState({ tested: true })
+};
+}
+}
+</script>
+</body>
+</html>

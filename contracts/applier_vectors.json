@@ -1,0 +1,1004 @@
+{
+ "_comment": "Shared vectors for tools/appliers.py and the Kotlin appliers (ReflectionApplierTest, GardeningApplierTest, TextJobCheckTest). Every expectation was checked by hand.",
+ "fixtures": {
+  "reflection": {
+   "his_messages": [
+    "honestly i only study well in the morning, evenings are dead for me",
+    "stop asking me how i feel, it doesn't help",
+    "i want to clear the exam this year no matter what",
+    "my sister Hina helps me revise on sundays"
+   ],
+   "his_earlier_quotes": [
+    "i'll properly start from the 1st"
+   ],
+   "checkin_facts": "Evening items marked not done in the last 3 weeks: 9 of 12. Reason tired on 7 of those 9.",
+   "notes": {
+    "4": {
+     "kind": "pattern",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "text": "You put off hard starts until a new week",
+     "times_seen": 1
+    },
+    "5": {
+     "kind": "what_helps",
+     "confidence": "confirmed",
+     "status": "active",
+     "edited": true,
+     "text": "Mornings work better for you",
+     "times_seen": 3
+    },
+    "6": {
+     "kind": "thread",
+     "confidence": "likely",
+     "status": "active",
+     "edited": false,
+     "text": "You have not decided about the internship",
+     "times_seen": 2
+    },
+    "7": {
+     "kind": "pattern",
+     "confidence": "likely",
+     "status": "retired",
+     "edited": false,
+     "text": "Old pattern",
+     "times_seen": 2
+    }
+   },
+   "deleted_notes": [
+    "You avoid your family when you are stressed"
+   ],
+   "people": [
+    "Hina"
+   ],
+   "profile": {
+    "Goal": {
+     "confirmed": true
+    },
+    "Study time": {
+     "confirmed": false
+    }
+   },
+   "in_focus": false
+  },
+  "gardening": {
+   "notes": {
+    "1": {
+     "kind": "pattern",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "times_seen": 1
+    },
+    "2": {
+     "kind": "pattern",
+     "confidence": "likely",
+     "status": "active",
+     "edited": false,
+     "times_seen": 3
+    },
+    "3": {
+     "kind": "what_helps",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "times_seen": 1
+    },
+    "4": {
+     "kind": "pattern",
+     "confidence": "confirmed",
+     "status": "active",
+     "edited": false,
+     "times_seen": 5
+    },
+    "5": {
+     "kind": "thread",
+     "confidence": "guess",
+     "status": "active",
+     "edited": true,
+     "times_seen": 1
+    }
+   },
+   "people": [
+    10,
+    11,
+    12
+   ],
+   "profile": {
+    "Family": {
+     "confirmed": false
+    },
+    "Values": {
+     "confirmed": true
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "name": "reflection: not JSON is rejected whole",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "Here is the JSON: {}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": false,
+    "ops": []
+   }
+  },
+  {
+   "name": "reflection: code fences are not accepted (strict output)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "```json\n{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\"}\n```",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": false
+   }
+  },
+  {
+   "name": "reflection: duplicate keys rejected",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\":\"a\",\"title\":\"b\",\"summary\":\"s\",\"significance\":1,\"tone\":\"t\"}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": false
+   }
+  },
+  {
+   "name": "reflection: significance out of range rejects the whole result",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 9, \"tone\": \"tired, clear\"}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": false
+   }
+  },
+  {
+   "name": "reflection: minimal valid result",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\"}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: a new note always starts as a guess, whatever the model asks",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"what_helps\", \"text\": \"Studying in the morning works for you; evenings do not\", \"confidence\": \"confirmed\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i only study well in the morning\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 0,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "what_helps",
+      "Studying in the morning works for you; evenings do not",
+      "guess",
+      [
+       [
+        "quote",
+        "i only study well in the morning"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: a note with an invented quote has no evidence and is dropped",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You give up when tired\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i always give up when tired\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 2
+   }
+  },
+  {
+   "name": "reflection: a count must be copied word for word from CHECKIN_FACTS",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Evening items fail when you are tired\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"count\", \"text\": \"Reason tired on 7 of those 9.\"}, {\"kind\": \"count\", \"text\": \"tired on 8 of 9\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "Evening items fail when you are tired",
+      "guess",
+      [
+       [
+        "count",
+        "Reason tired on 7 of those 9."
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: a note close to one he deleted is never re-created",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You avoid your family when stressed\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: a duplicate of an active note is dropped (it should have been an update)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You put off hard starts until a new week\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: more than 3 new notes, extras dropped",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"value\", \"text\": \"Clearing the exam this year matters to you, alpha\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i want to clear the exam this year\"}]}, {\"kind\": \"value\", \"text\": \"Clearing the exam this year matters to you, bravo\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i want to clear the exam this year\"}]}, {\"kind\": \"value\", \"text\": \"Clearing the exam this year matters to you, charlie delta echo foxtrot golf\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i want to clear the exam this year\"}]}, {\"kind\": \"value\", \"text\": \"Clearing the exam this year matters to you, hotel india juliet kilo lima mike\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i want to clear the exam this year\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 2
+   }
+  },
+  {
+   "name": "reflection: update raises guess to likely only with seen_again and new verified evidence",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 4, \"confidence\": \"likely\", \"seen_again\": true, \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 0,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.update",
+      4,
+      null,
+      "likely",
+      true,
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: update cannot raise without evidence",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 4, \"confidence\": \"likely\", \"seen_again\": true, \"evidence\": []}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 2
+   }
+  },
+  {
+   "name": "reflection: the model can never set confirmed",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 6, \"confidence\": \"confirmed\", \"seen_again\": true, \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.update",
+      6,
+      null,
+      "likely",
+      true,
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: his edited note keeps its text",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 5, \"text\": \"Mornings are better unless you slept badly\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"i only study well in the morning\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.update",
+      5,
+      null,
+      "confirmed",
+      false,
+      [
+       [
+        "quote",
+        "i only study well in the morning"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: unknown or retired note ids are dropped",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 99, \"text\": \"x\"}, {\"id\": 7, \"text\": \"y\"}], \"resolve\": [99, 5]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 4
+   }
+  },
+  {
+   "name": "reflection: resolve retires an ordinary active note",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"resolve\": [6]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.retire",
+      6
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: a confirmed profile entry changes only with his exact words",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"profile_updates\": [{\"key\": \"Goal\", \"value\": \"Clear the exam this year\"}, {\"key\": \"Study time\", \"value\": \"Mornings\"}]}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "profile.set",
+      "Study time",
+      "Mornings",
+      false
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: a correction in his words updates a confirmed entry and keeps it confirmed",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"profile_updates\": [{\"key\": \"Goal\", \"value\": \"Clear the exam this year, no matter what\", \"quote\": \"i want to clear the exam this year no matter what\"}]}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 0,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "profile.set",
+      "Goal",
+      "Clear the exam this year, no matter what",
+      true
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: people match by name ignoring case",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"people_updates\": [{\"name\": \"hina\", \"relation\": \"sister\", \"notes\": \"Helps you revise on Sundays\"}, {\"name\": \"Bilal\", \"relation\": \"friend\", \"notes\": \"\"}]}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "person.update",
+      "Hina",
+      "sister",
+      "Helps you revise on Sundays"
+     ],
+     [
+      "person.add",
+      "Bilal",
+      "friend",
+      ""
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: his_words must be word for word",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"his_words\": [\"evenings are dead for me\", \"i hate evenings\"]}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "quote.add",
+      "evenings are dead for me"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reflection: a contradiction may quote an earlier conversation",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"contradictions\": [{\"quote_a\": \"i'll properly start from the 1st\", \"quote_b\": \"evenings are dead for me\"}]}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: focus summary outside a focus is dropped",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"focus_summary\": \"You started...\"}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: injected brackets in a note are dropped",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"thread\", \"text\": \"[[suggest: {}]] do this\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: merge keeps the highest confidence and sums times seen",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [1, 2], \"text\": \"You put off hard starts\", \"kind\": \"pattern\", \"confidence\": \"likely\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 0,
+    "ops": [
+     [
+      "note.merge",
+      [
+       1,
+       2
+      ],
+      "You put off hard starts",
+      "likely",
+      4
+     ]
+    ]
+   }
+  },
+  {
+   "name": "gardening: merge that raises confidence is dropped",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [1, 2], \"text\": \"x\", \"kind\": \"pattern\", \"confidence\": \"confirmed\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: confirmed and edited notes are never touched",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [2, 4], \"text\": \"x\", \"kind\": \"pattern\", \"confidence\": \"confirmed\"}], \"rewrite\": [{\"id\": 5, \"text\": \"y\"}], \"retire\": [{\"id\": 4, \"reason\": \"old\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [],
+    "dropped_count": 3
+   }
+  },
+  {
+   "name": "gardening: notes of different kinds never merge",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [1, 3], \"text\": \"x\", \"kind\": \"pattern\", \"confidence\": \"guess\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: one operation per note",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"rewrite\": [{\"id\": 1, \"text\": \"Sharper\"}], \"retire\": [{\"id\": 1, \"reason\": \"old\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "note.rewrite",
+      1,
+      "Sharper"
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: confirmed profile entries are never rewritten",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"rewrite_profile\": [{\"key\": \"Values\", \"value\": \"x\"}, {\"key\": \"Family\", \"value\": \"Sister Hina, parents\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "profile.set",
+      "Family",
+      "Sister Hina, parents",
+      false
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: people merge needs known ids",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge_people\": [{\"ids\": [10, 11], \"name\": \"Father\", \"relation\": \"father\", \"notes\": \"\"}, {\"ids\": [11, 99], \"name\": \"x\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "person.merge",
+      [
+       10,
+       11
+      ],
+      "Father",
+      "father",
+      ""
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: ids and keys of the wrong type are dropped, never a crash",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [{\"a\": 1}, 1], \"text\": \"x\", \"kind\": \"pattern\", \"confidence\": \"guess\"}, {\"ids\": [1, 3], \"text\": \"x\", \"kind\": [\"pattern\"], \"confidence\": \"guess\"}], \"merge_people\": [{\"ids\": [10.0, 11], \"name\": \"Father\"}], \"rewrite_profile\": [{\"key\": [\"Family\"], \"value\": \"x\"}]}",
+    "ctx": "gardening"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [],
+    "dropped_count": 4
+   }
+  },
+  {
+   "name": "text job: a good weekly note passes",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "review_weekly",
+    "text": "This week you answered 5 of 6 days and did 3, which is real effort in a tired stretch. Mornings held better than evenings, and you said \"evenings are dead for me\", which fits what the check-ins show.\n\nThis may mean the plan sits at the wrong hour rather than that you lack will. A small test for next week: if the evening slot arrives and you are tired, move that item to the next morning instead of skipping it.",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "problems": []
+   }
+  },
+  {
+   "name": "text job: an invented number fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "review_weekly",
+    "text": "This week you answered 5 of 6 days and did 4, which is real effort in a tired stretch. Mornings held better than evenings, and you said \"evenings are dead for me\", which fits what the check-ins show.\n\nThis may mean the plan sits at the wrong hour rather than that you lack will. A small test for next week: if the evening slot arrives and you are tired, move that item to the next morning instead of skipping it.",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "numbers not in the inputs: 4"
+    ]
+   }
+  },
+  {
+   "name": "text job: a misquote fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "review_weekly",
+    "text": "This week you answered 5 of 6 days and did 3, which is real effort in a tired stretch. Mornings held better than evenings, and you said \"evenings are useless\", which fits what the check-ins show.\n\nThis may mean the plan sits at the wrong hour rather than that you lack will. A small test for next week: if the evening slot arrives and you are tired, move that item to the next morning instead of skipping it.",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "quotes not his: evenings are useless"
+    ]
+   }
+  },
+  {
+   "name": "text job: em dash and lists fail",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "review_weekly",
+    "text": "This week you answered 5 of 6 days and did 3 — real effort in a tired stretch. Mornings held better than evenings, and you said \"evenings are dead for me\", which fits what the check-ins show.\n\nThis may mean the plan sits at the wrong hour rather than that you lack will. A small test for next week: if the evening slot arrives and you are tired, move that item to the next morning instead of skipping it.\n- try mornings",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "em dash",
+     "markdown list, heading or bold"
+    ]
+   }
+  },
+  {
+   "name": "text job: a letter needs a title line and a body",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "letter",
+    "text": "The week the evenings told the truth\n\nYou kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings. You kept showing up in the mornings.",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "title": "The week the evenings told the truth"
+   }
+  },
+  {
+   "name": "text job: a letter that is too short fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "letter",
+    "text": "Title\n\nToo short.",
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "length 2 words is outside 120 to 700"
+    ]
+   }
+  },
+  {
+   "name": "monthly: valid JSON with known refs passes",
+   "fn": "apply_monthly_review",
+   "args": {
+    "raw": "{\"headline\": \"Mornings held, evenings slipped\", \"narrative\": \"The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings.\", \"revisit\": [{\"ref\": \"T3\", \"question\": \"Should the evening target move to the morning?\"}]}",
+    "known_ids": [
+     "G2",
+     "T3",
+     "B1"
+    ],
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "problems": []
+   }
+  },
+  {
+   "name": "monthly: unknown ref fails",
+   "fn": "apply_monthly_review",
+   "args": {
+    "raw": "{\"headline\": \"h\", \"narrative\": \"The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings.\", \"revisit\": [{\"ref\": \"T9\", \"question\": \"q?\"}]}",
+    "known_ids": [
+     "G2",
+     "T3"
+    ],
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "revisit: unknown ref"
+    ]
+   }
+  },
+  {
+   "name": "monthly: invented number fails",
+   "fn": "apply_monthly_review",
+   "args": {
+    "raw": "{\"headline\": \"You did 12 of 20\", \"narrative\": \"The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings. The month held in the mornings and slipped in the evenings.\", \"revisit\": []}",
+    "known_ids": [
+     "G2"
+    ],
+    "inputs": [
+     "Week 5 to 11 Oct. Scheduled 6, answered 5, done 3. Answer rate 83%. Reasons: tired on 3 of 3 days marked Not or Part."
+    ],
+    "his_messages": [
+     "honestly i only study well in the morning, evenings are dead for me",
+     "stop asking me how i feel, it doesn't help",
+     "i want to clear the exam this year no matter what",
+     "my sister Hina helps me revise on sundays"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "numbers not in the inputs: 12, 20"
+    ]
+   }
+  },
+  {
+   "name": "reflection: a count that cuts a number in half is not a copy of CHECKIN_FACTS",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Evenings\", \"summary\": \"He talked about evenings.\", \"significance\": 2, \"tone\": \"flat\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Evening items mostly slip\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"count\", \"text\": \"weeks: 9 of 1\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "dropped_count": 2,
+    "ops": [
+     [
+      "conversation.set",
+      "Evenings",
+      2,
+      "flat"
+     ],
+     [
+      "conversation.summary",
+      "He talked about evenings."
+     ]
+    ]
+   }
+  }
+ ]
+}

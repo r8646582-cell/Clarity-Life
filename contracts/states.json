@@ -1,0 +1,40 @@
+{
+  "_comment": "Allowed state transitions. Code must reject any other move; startup repair maps stuck states to safe ones. Checked against db/schema.sql by tools/check_schema.py.",
+  "machines": {
+    "message": {
+      "table": "message", "column": "status",
+      "states": ["streaming","complete","interrupted","failed"],
+      "start": ["streaming","complete"],
+      "transitions": {"streaming": ["complete","interrupted","failed"], "interrupted": ["streaming"], "failed": ["streaming"], "complete": []},
+      "repair_on_start": {"streaming": "interrupted"}
+    },
+    "job": {
+      "table": "job", "column": "status",
+      "states": ["pending","running","succeeded","failed","skipped"],
+      "start": ["pending"],
+      "transitions": {"pending": ["running","skipped"], "running": ["succeeded","failed","pending"], "failed": ["pending"], "succeeded": [], "skipped": []},
+      "repair_on_start": {"running": "pending"}
+    },
+    "card": {
+      "table": "card", "column": "status",
+      "states": ["offered","saved","dismissed"],
+      "start": ["offered"],
+      "transitions": {"offered": ["saved","dismissed"], "saved": [], "dismissed": []},
+      "repair_on_start": {}
+    },
+    "promise": {
+      "table": "promise", "column": "status",
+      "states": ["open","kept","not_done","moved","let_go"],
+      "start": ["open"],
+      "transitions": {"open": ["kept","not_done","moved","let_go"], "kept": ["open"], "not_done": ["open"], "moved": [], "let_go": ["open"]},
+      "repair_on_start": {}
+    },
+    "note": {
+      "table": "note", "column": "status",
+      "states": ["active","retired","deleted_by_user"],
+      "start": ["active"],
+      "transitions": {"active": ["retired","deleted_by_user"], "retired": ["active","deleted_by_user"], "deleted_by_user": []},
+      "repair_on_start": {}
+    }
+  }
+}

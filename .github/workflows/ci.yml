@@ -1,0 +1,143 @@
+name: CI
+on:
+  push:
+    # Claude Code works on ccr-* and claude/* branches; run there too so every push is checked.
+    branches: [main, 'ccr-*', 'claude/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege by default; only the release job may write (to attach the APK).
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  contracts:
+    # Prompts, cards, planner math, text checks, context packet, appliers, bench checks, schema, mutation check.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: bash tools/check_all.sh
+      - run: bash tools/forbidden_patterns.sh
+
+  android:
+    # Skipped until the Gradle project exists (stage A of the build order).
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      has_app: ${{ steps.has.outputs.yes }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Is there an Android project yet?
+        id: has
+        run: |
+          if [ -f gradlew ]; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "yes=false" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/setup-java@v4
+        if: steps.has.outputs.yes == 'true'
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.has.outputs.yes == 'true'
+      - name: Lint, unit tests (includes the contract tests that read contracts/*.json)
+        if: steps.has.outputs.yes == 'true'
+        run: ./gradlew --no-daemon lintDebug testDebugUnitTest
+      - name: The database schema Room exported must be committed (prints it when it is not)
+        if: always() && steps.has.outputs.yes == 'true'
+        run: |
+          changed=$(git ls-files --others --modified --exclude-standard app/schemas)
+          if [ -n "$changed" ]; then
+            echo "::error::Room exported a database schema that is not committed: $changed"
+            for f in $changed; do echo "===== $f"; cat "$f"; echo; echo "===== end"; done
+            exit 1
+          fi
+      - name: Build the debug APK (the one the owner installs while testing)
+        if: steps.has.outputs.yes == 'true'
+        run: ./gradlew --no-daemon assembleDebug
+      - name: Upload the debug APK so it can be downloaded from this run's page
+        if: steps.has.outputs.yes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clarity-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Release build with minification (unsigned; proves R8 does not break Room, Hilt or serialization)
+        if: steps.has.outputs.yes == 'true'
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Enable KVM for the emulator
+        if: steps.has.outputs.yes == 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Database tests and a walk through the real app (emulator)
+        if: steps.has.outputs.yes == 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          script: |
+            ./gradlew --no-daemon connectedDebugAndroidTest
+            bash tools/emulator_smoke.sh
+      - name: Keep test reports when something fails
+        if: failure() && steps.has.outputs.yes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: app/build/reports/
+          retention-days: 14
+
+  release:
+    # Only for version tags, only when everything above passed, and only when the app exists.
+    if: startsWith(github.ref, 'refs/tags/v') && needs.android.outputs.has_app == 'true'
+    needs: [contracts, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check that the signing secrets exist
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::GitHub secret $v is missing (see CLAUDE.md, Git and release)"; exit 1; fi
+          done
+      - name: Decode the signing key
+        env: { KEYSTORE_BASE64: "${{ secrets.KEYSTORE_BASE64 }}" }
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+      - name: Build the signed release APK
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Remove the signing key from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+      - name: Checksum, so the downloaded APK can be verified
+        run: |
+          cd app/build/outputs/apk/release
+          sha256sum *.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          # Release notes are written by hand in docs/release-notes/<tag>.md before the tag is pushed.
+          body_path: docs/release-notes/${{ github.ref_name }}.md
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/release/SHA256SUMS.txt

@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- A full stop: "Talk." -->
+    <path android:fillColor="#FFD23F"
+        android:pathData="M54,38m-12,0a12,12 0 1,0 24,0a12,12 0 1,0 -24,0" />
+    <path android:fillColor="#FF6B5B"
+        android:pathData="M36,62h36a4,4 0 0,1 4,4v4a4,4 0 0,1 -4,4h-36a4,4 0 0,1 -4,-4v-4a4,4 0 0,1 4,-4z" />
+</vector>

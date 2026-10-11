@@ -1,0 +1,137 @@
+package com.clarity.life
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
+import com.clarity.life.data.StartupRepair
+import com.clarity.life.ui.ClarityRoot
+import com.clarity.life.ui.theme.ClarityTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.launch
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var startupRepair: StartupRepair
+
+    @Inject lateinit var reflections: com.clarity.life.memory.ReflectionScheduler
+
+    @Inject lateinit var search: com.clarity.life.memory.SearchIndex
+
+    @Inject lateinit var indexer: com.clarity.life.memory.EmbeddingIndexer
+
+    @Inject lateinit var reminders: com.clarity.life.promise.Reminders
+
+    @Inject lateinit var writing: com.clarity.life.writing.WritingScheduler
+
+    @Inject lateinit var settings: com.clarity.life.settings.SettingsRepository
+
+    /** App lock (spec section 9): locked until he unlocks, again after more than a minute away. */
+    private var locked by mutableStateOf(false)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        // Locked from the first frame when the lock may be on; the setting is read straight after.
+        // A turn of the phone recreates the screen; that is not leaving the app, so it does not lock again.
+        // The unlock lives in this process only: when the phone killed the app in the background, a saved
+        // screen state must never reopen it unlocked.
+        locked = needsLock()
+        com.clarity.life.security.AppLock.hideInRecents(this, com.clarity.life.settings.DefaultSettings.HIDE_IN_RECENTS_ON)
+        lifecycleScope.launch {
+            try {
+                lockOn = settings.getBool(com.clarity.life.settings.SettingsRepository.Keys.APP_LOCK_ON, com.clarity.life.settings.DefaultSettings.APP_LOCK_ON)
+                if (!lockOn) locked = false
+                com.clarity.life.security.AppLock.hideInRecents(
+                    this@MainActivity,
+                    settings.getBool(com.clarity.life.settings.SettingsRepository.Keys.HIDE_IN_RECENTS_ON, com.clarity.life.settings.DefaultSettings.HIDE_IN_RECENTS_ON),
+                )
+                if (locked) com.clarity.life.security.AppLock.ask(this@MainActivity) { unlock() }
+            } catch (e: Exception) {
+                CrashLog.record(this@MainActivity, e)
+                // Fail closed, but never shut out: the phone's own lock screen always opens it.
+                if (locked) com.clarity.life.security.AppLock.ask(this@MainActivity) { unlock() }
+            }
+        }
+        // The repair sweep (spec section 18, point 6): a reply the process died in the middle of becomes
+        // interrupted, with a Try again button, and a job left running goes back to pending.
+        // Then anything he said that was never reflected (the phone was off, the job was stopped) is picked up.
+        // Once per process, not on every turn of the phone: a reply or a job running right now is not stale.
+        if (startupDone.compareAndSet(false, true)) lifecycleScope.launch {
+            try {
+                // A saved deepseek-reasoner or deepseek-chat becomes the faster default (10 Oct 2026).
+                settings.moveRetiredModels()
+                startupRepair.run(System.currentTimeMillis())
+                // Alarms can be lost (a force stop, a phone that killed the app); set every reminder again.
+                reminders.syncAll()
+                reflections.sweep(System.currentTimeMillis())
+                search.rebuildIfEmpty()
+                indexer.schedule()
+                // Reviews and the weekly letter: catch up on anything missed, and keep next Sunday scheduled.
+                writing.onStart(System.currentTimeMillis())
+                // The weekly encrypted backup (it does nothing until a folder and a passphrase are set).
+                com.clarity.life.backup.BackupWorker.schedule(this@MainActivity)
+            } catch (e: Exception) {
+                CrashLog.record(this@MainActivity, e)
+            }
+        }
+        setContent {
+            ClarityTheme {
+                if (locked) {
+                    com.clarity.life.ui.LockScreen(onUnlock = { com.clarity.life.security.AppLock.ask(this) { unlock() } })
+                } else {
+                    ClarityRoot()
+                }
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        leftAt = System.currentTimeMillis()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        // Decided at once from the last known setting, so the conversation never shows for a frame first.
+        if (needsLock()) {
+            locked = true
+            com.clarity.life.security.AppLock.ask(this) { unlock() }
+        }
+        // The lock setting may have changed in Settings while the app was open.
+        lifecycleScope.launch {
+            lockOn = settings.getBool(com.clarity.life.settings.SettingsRepository.Keys.APP_LOCK_ON, com.clarity.life.settings.DefaultSettings.APP_LOCK_ON)
+            if (!lockOn) locked = false
+        }
+    }
+
+    private fun needsLock(): Boolean =
+        lockOn && com.clarity.life.security.AppLock.canLock(this) &&
+            !(unlockedInProcess && System.currentTimeMillis() - leftAt <= com.clarity.life.security.AppLock.GRACE_MS)
+
+    private fun unlock() {
+        locked = false
+        unlockedInProcess = true
+    }
+
+    @Deprecated("Only used on Android 8 and 9, where the screen-lock confirm screen answers here.")
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == com.clarity.life.security.AppLock.CONFIRM_REQUEST && resultCode == RESULT_OK) unlock()
+    }
+
+    private companion object {
+        /** Process-wide, so a new screen in the same process (a turn of the phone) keeps them. */
+        val startupDone = java.util.concurrent.atomic.AtomicBoolean(false)
+        @Volatile var lockOn = com.clarity.life.settings.DefaultSettings.APP_LOCK_ON
+        @Volatile var unlockedInProcess = false
+        @Volatile var leftAt = 0L
+    }
+}

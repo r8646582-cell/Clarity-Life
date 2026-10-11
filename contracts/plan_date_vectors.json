@@ -1,0 +1,611 @@
+{
+ "_comment": "Shared cases for PlanDates: tools/plan_dates.py (test_plan_dates.py) and PlanDates.kt (PlanDatesTest) must give exactly these results. 2026-10-09 is a Friday. Each expectation was checked by hand against the rules in tools/plan_dates.py.",
+ "cases": [
+  {
+   "name": "today is the day key",
+   "fn": "read_day",
+   "args": {
+    "phrase": "today",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-09"
+  },
+  {
+   "name": "tomorrow",
+   "fn": "read_day",
+   "args": {
+    "phrase": "tomorrow",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-10"
+  },
+  {
+   "name": "tmrw",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Tmrw",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-10"
+  },
+  {
+   "name": "a weekday later this week",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Sat",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-10"
+  },
+  {
+   "name": "a weekday that is today means today",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Friday",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-09"
+  },
+  {
+   "name": "a weekday earlier in the week means next week",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Mon",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-12"
+  },
+  {
+   "name": "day and short month",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20 Nov",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-11-20"
+  },
+  {
+   "name": "month first, with filler",
+   "fn": "read_day",
+   "args": {
+    "phrase": "by Nov 20",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-11-20"
+  },
+  {
+   "name": "ordinal day and long month",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20th November",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-11-20"
+  },
+  {
+   "name": "weekday before a date that agrees",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Sat 17 Oct",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-17"
+  },
+  {
+   "name": "weekday before a date that disagrees",
+   "fn": "read_day",
+   "args": {
+    "phrase": "Fri 17 Oct",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "a date already past this year means next year",
+   "fn": "read_day",
+   "args": {
+    "phrase": "15 Mar",
+    "today": "2026-10-09"
+   },
+   "expect": "2027-03-15"
+  },
+  {
+   "name": "today's date without a year is today",
+   "fn": "read_day",
+   "args": {
+    "phrase": "9 Oct",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-10-09"
+  },
+  {
+   "name": "yesterday's date without a year rolls to next year",
+   "fn": "read_day",
+   "args": {
+    "phrase": "8 Oct",
+    "today": "2026-10-09"
+   },
+   "expect": "2027-10-08"
+  },
+  {
+   "name": "explicit year",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20 Nov 2026",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-11-20"
+  },
+  {
+   "name": "explicit year in the past",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20 Nov 2025",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "ISO date",
+   "fn": "read_day",
+   "args": {
+    "phrase": "2026-11-20",
+    "today": "2026-10-09"
+   },
+   "expect": "2026-11-20"
+  },
+  {
+   "name": "ISO date in the past",
+   "fn": "read_day",
+   "args": {
+    "phrase": "2026-10-08",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "a date that does not exist",
+   "fn": "read_day",
+   "args": {
+    "phrase": "31 Nov",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "ISO date that does not exist",
+   "fn": "read_day",
+   "args": {
+    "phrase": "2026-02-30",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "29 Feb without a year skips to a leap year only if within the next year",
+   "fn": "read_day",
+   "args": {
+    "phrase": "29 Feb",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "29 Feb with the year it exists",
+   "fn": "read_day",
+   "args": {
+    "phrase": "29 Feb 2028",
+    "today": "2026-10-09"
+   },
+   "expect": "2028-02-29"
+  },
+  {
+   "name": "unknown word",
+   "fn": "read_day",
+   "args": {
+    "phrase": "end of month",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "relative phrases are not guessed",
+   "fn": "read_day",
+   "args": {
+    "phrase": "next week",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "two dates",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20 Nov 21 Nov",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "empty",
+   "fn": "read_day",
+   "args": {
+    "phrase": "  ",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "a number alone",
+   "fn": "read_day",
+   "args": {
+    "phrase": "20",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "too far ahead",
+   "fn": "read_day",
+   "args": {
+    "phrase": "2032-01-01",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "five years ahead is allowed",
+   "fn": "read_day",
+   "args": {
+    "phrase": "2031-10-09",
+    "today": "2026-10-09"
+   },
+   "expect": "2031-10-09"
+  },
+  {
+   "name": "tomorrow at the end of a year",
+   "fn": "read_day",
+   "args": {
+    "phrase": "tomorrow",
+    "today": "2026-12-31"
+   },
+   "expect": "2027-01-01"
+  },
+  {
+   "name": "a month name alone",
+   "fn": "read_day",
+   "args": {
+    "phrase": "November",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "the syllabus plan card",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "Clear the chemistry lectures",
+     "goal": "G2",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Chemistry lectures",
+       "unit": "lectures",
+       "min": 1,
+       "target": 2,
+       "schedule": "Sat-Thu",
+       "start": "tomorrow",
+       "end": "20 Nov"
+      }
+     ],
+     "backlog": [
+      {
+       "name": "Chemistry lectures",
+       "total": 40,
+       "unit": "lectures",
+       "deadline": "20 Nov"
+      }
+     ],
+     "review_date": "17 Oct"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-10",
+      "end": "2026-11-20"
+     }
+    ],
+    "backlog": [
+     {
+      "deadline": "2026-11-20"
+     }
+    ],
+    "review": "2026-10-17"
+   }
+  },
+  {
+   "name": "a target with no start starts today and with no end stays open",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "16 Oct"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-09",
+      "end": null
+     }
+    ],
+    "backlog": [],
+    "review": "2026-10-16"
+   }
+  },
+  {
+   "name": "an end before the start",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily",
+       "start": "20 Oct",
+       "end": "15 Oct"
+      }
+     ],
+     "backlog": [],
+     "review_date": "16 Oct"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": false,
+    "why": "end before start"
+   }
+  },
+  {
+   "name": "an unreadable deadline drops the whole card",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [],
+     "backlog": [
+      {
+       "name": "Papers",
+       "total": 12,
+       "unit": "papers",
+       "deadline": "end of term"
+      }
+     ],
+     "review_date": "16 Oct"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": false,
+    "why": "unreadable deadline"
+   }
+  },
+  {
+   "name": "a review date of today is not a review",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "9 Oct"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": false,
+    "why": "review not after today"
+   }
+  },
+  {
+   "name": "tapped after the review day: a weekday that no longer agrees is unreadable",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "Sat 17 Oct"
+    },
+    "today": "2026-10-20"
+   },
+   "expect": {
+    "ok": false,
+    "why": "unreadable review_date"
+   }
+  },
+  {
+   "name": "target_change with a new end",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "target_change",
+     "target": "T3",
+     "end": "30 Nov",
+     "reason": "r"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "end": "2026-11-30"
+   }
+  },
+  {
+   "name": "target_change with no end",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "target_change",
+     "target": "T3",
+     "min": 1,
+     "reason": "r"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "end": null
+   }
+  },
+  {
+   "name": "target_change with an end in the past",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "target_change",
+     "target": "T3",
+     "end": "2026-10-01",
+     "reason": "r"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": false,
+    "why": "unreadable end"
+   }
+  },
+  {
+   "name": "a new backlog",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "backlog",
+     "name": "Past papers",
+     "total": 12,
+     "unit": "papers",
+     "deadline": "30 Nov",
+     "reason": "r"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "deadline": "2026-11-30"
+   }
+  },
+  {
+   "name": "a backlog change of the total only",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "backlog",
+     "backlog": "B1",
+     "total": 44,
+     "reason": "r"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "deadline": null
+   }
+  },
+  {
+   "name": "tapped after the review day: a bare date would be next year, so it is refused",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "17 Oct"
+    },
+    "today": "2026-10-20"
+   },
+   "expect": {
+    "ok": false,
+    "why": "review too far ahead"
+   }
+  },
+  {
+   "name": "a review 28 days out is still accepted",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "Walk",
+       "target": 1,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "6 Nov"
+    },
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-09",
+      "end": null
+     }
+    ],
+    "backlog": [],
+    "review": "2026-11-06"
+   }
+  }
+ ]
+}

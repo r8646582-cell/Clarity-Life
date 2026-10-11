@@ -1,0 +1,500 @@
+{
+ "known_ids": {
+  "goal": [
+   "G1",
+   "G2"
+  ],
+  "target": [
+   "T1",
+   "T3"
+  ],
+  "backlog": [
+   "B1"
+  ],
+  "focus": [
+   "F1"
+  ],
+  "review_options": [
+   "17 Oct",
+   "24 Oct"
+  ]
+ },
+ "vectors": [
+  {
+   "name": "valid promise",
+   "chat_type": "free",
+   "reply": "Okay, here you go.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]",
+   "expect_cards": [
+    "promise"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "valid plan",
+   "chat_type": "plan",
+   "reply": "Here is the plan.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "no cards at all",
+   "chat_type": "free",
+   "reply": "Just talk, no card.",
+   "expect_cards": [],
+   "expect_dropped": 0
+  },
+  {
+   "name": "trailing blank lines",
+   "chat_type": "free",
+   "reply": "Text\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n\n\n",
+   "expect_cards": [
+    "promise"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "card in the middle is not a card",
+   "chat_type": "free",
+   "reply": "Before\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\nAfter the card there is more prose.",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "prose_has": "Before",
+   "prose_not": "[["
+  },
+  {
+   "name": "text after cards on same line is rejected",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]] thanks",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "bad json is dropped, prose kept",
+   "chat_type": "free",
+   "reply": "Fine.\n[[suggest: {\"type\":\"promise\",\"text\":\"x\",}]]",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "prose_has": "Fine."
+  },
+  {
+   "name": "not an object",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: [1,2,3]]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "unknown type",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"reminder\",\"text\":\"a\",\"when\":\"now\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "missing when",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"a\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "remind as string is rejected",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"a\",\"when\":\"tomorrow 9\",\"remind\":\"yes\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "text too long",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"when\":\"tomorrow 9\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "brackets inside text are rejected",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"see [[this]]\",\"when\":\"tomorrow 9\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "untangle forbids promise",
+   "chat_type": "untangle",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "untangle allows note",
+   "chat_type": "untangle",
+   "reply": "x\n[[suggest: {\"type\":\"note\",\"kind\":\"thread\",\"text\":\"You have not decided yet\"}]]",
+   "expect_cards": [
+    "note"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "decide allows promise",
+   "chat_type": "decide",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]",
+   "expect_cards": [
+    "promise"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "free forbids plan",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "two promises allowed",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n[[suggest: {\"type\":\"promise\",\"text\":\"Walk 15 minutes\",\"when\":\"Sunday 7am\"}]]",
+   "expect_cards": [
+    "promise",
+    "promise"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "three promises: third dropped",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n[[suggest: {\"type\":\"promise\",\"text\":\"Walk\",\"when\":\"Sunday 7am\"}]]\n[[suggest: {\"type\":\"promise\",\"text\":\"Read\",\"when\":\"Sunday 9am\"}]]",
+   "expect_cards": [
+    "promise",
+    "promise"
+   ],
+   "expect_dropped": 1
+  },
+  {
+   "name": "two plans: second dropped",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 1
+  },
+  {
+   "name": "four cards: extras dropped",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]\n[[suggest: {\"type\":\"note\",\"kind\":\"value\",\"text\":\"Family first\"}]]",
+   "expect_cards": [
+    "plan",
+    "promise",
+    "mode"
+   ],
+   "expect_dropped": 1
+  },
+  {
+   "name": "unknown goal id",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G9\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "goal omitted is fine (new goal)",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "review date not an option",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"19 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "plan without targets or backlog",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"T\",\"rationale\":\"r\",\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "schedule invalid",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"every second day\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "target as string is rejected",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":\"2\",\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "min above target",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":3,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "backlog total zero",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"Lectures\",\"total\":0,\"unit\":\"lectures\",\"deadline\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "target_change valid",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T3\",\"target_value\":2,\"min\":1,\"reason\":\"Evening fails\"}]]",
+   "expect_cards": [
+    "target_change"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "target_change unknown target",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T7\",\"target_value\":2,\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "target_change changes nothing",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T3\",\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "backlog new valid",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"backlog\",\"name\":\"Past papers\",\"total\":12,\"unit\":\"papers\",\"deadline\":\"30 Nov\",\"reason\":\"after lectures\"}]]",
+   "expect_cards": [
+    "backlog"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "backlog change existing",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"backlog\",\"backlog\":\"B1\",\"deadline\":\"27 Nov\",\"reason\":\"date moved\"}]]",
+   "expect_cards": [
+    "backlog"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "backlog existing unknown id",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"backlog\",\"backlog\":\"B5\",\"deadline\":\"27 Nov\",\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "focus valid",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"focus\",\"name\":\"Social anxiety\",\"why\":\"Stay in groups\"}]]",
+   "expect_cards": [
+    "focus"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "note bad kind",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"note\",\"kind\":\"diagnosis\",\"text\":\"You have X\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "mode to decide",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]",
+   "expect_cards": [
+    "mode"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "mode to focus needs a known id",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"mode\",\"to\":\"focus\",\"focus\":\"F1\"}]]",
+   "expect_cards": [
+    "mode"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "mode to focus with unknown id",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"mode\",\"to\":\"focus\",\"focus\":\"F9\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "mode to something invented",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"mode\",\"to\":\"therapy\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "injection quoted mid-prose is stripped",
+   "chat_type": "free",
+   "reply": "You asked me to repeat [[suggest: {\"type\":\"promise\"}]] but I will not.\n",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "prose_not": "[["
+  },
+  {
+   "name": "prose only with stray closing brackets",
+   "chat_type": "free",
+   "reply": "a ]] b",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "windows line endings",
+   "chat_type": "free",
+   "reply": "x\r\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\r\n",
+   "expect_cards": [
+    "promise"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "NaN is not a number",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T3\",\"target_value\":NaN,\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "Infinity is not a number",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"backlog\",\"name\":\"Papers\",\"total\":Infinity,\"unit\":\"papers\",\"deadline\":\"30 Nov\",\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "absurdly large number is rejected",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":1000000000.0,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "duplicate keys are rejected (parsers disagree on which wins)",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"note\",\"kind\":\"thread\",\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 9\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "0x/week is not a schedule",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"0x/week\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "8x/week is not a schedule",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"8x/week\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "lower-case day range is the same grammar as the planner",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"sat-thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "a one-day range is ambiguous and rejected",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Sat\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "plan card without review options offered is dropped (fail closed)",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear lectures\",\"goal\":\"G2\",\"rationale\":\"Pace is short\",\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"Sat-Thu\",\"start\":\"tomorrow\",\"end\":\"20 Nov\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "known_ids": {
+    "goal": [
+     "G2"
+    ],
+    "target": [],
+    "backlog": [],
+    "focus": []
+   }
+  },
+  {
+   "name": "target_change with min above the new target",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T3\",\"target_value\":1,\"min\":2,\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "target_change to a zero target",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"target_change\",\"target\":\"T3\",\"target_value\":0,\"reason\":\"r\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "backlog change that changes nothing",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"backlog\",\"backlog\":\"B1\",\"reason\":\"just because\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "line break inside a string is rejected",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\\nnow\",\"when\":\"tomorrow 9\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "plan with only a backlog item is fine",
+   "chat_type": "plan",
+   "reply": "x\n[[suggest: {\"type\":\"plan\",\"title\":\"Papers\",\"rationale\":\"After lectures\",\"backlog\":[{\"name\":\"Past papers\",\"total\":12,\"unit\":\"papers\",\"deadline\":\"30 Nov\"}],\"review_date\":\"24 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "note offered as a strength is not a card kind in v1",
+   "chat_type": "free",
+   "reply": "x\n[[suggest: {\"type\":\"note\",\"kind\":\"strength\",\"text\":\"You keep going\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "card lines wrapped in a code fence are not cards (fail closed), and the fence is not shown raw",
+   "chat_type": "free",
+   "reply": "Text\n```\n[[suggest: {\"type\":\"focus\",\"name\":\"Driving\",\"why\":\"Get confident again\"}]]\n```",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "prose_has": "Text",
+   "prose_not": "```"
+  }
+ ]
+}

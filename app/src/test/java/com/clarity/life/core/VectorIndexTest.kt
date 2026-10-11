@@ -1,0 +1,73 @@
+package com.clarity.life.core
+
+import kotlin.random.Random
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class VectorIndexTest {
+
+    private val dim = 384
+
+    private fun unit(r: Random) = VectorMath.normalize(FloatArray(dim) { (r.nextDouble() * 2 - 1).toFloat() })
+
+    /** A vector that is [cos] alike to [base] (base mixed with fresh noise). */
+    private fun near(base: FloatArray, r: Random, mix: Double): FloatArray {
+        val noise = unit(r)
+        return VectorMath.normalize(FloatArray(dim) { (base[it] * (1 - mix) + noise[it] * mix).toFloat() })
+    }
+
+    @Test
+    fun approximateScoresStayWithinTheMargin() {
+        val r = Random(7)
+        val index = VectorIndex(dim)
+        val q = unit(r)
+        val vectors = List(2000) { i -> if (i % 3 == 0) near(q, r, r.nextDouble()) else unit(r) }
+        vectors.forEachIndexed { i, v -> index.add(VectorIndex.Entry("message", i.toLong(), 1, i + 1L), v) }
+        val hits = index.search(q, -1.0, vectors.size) { true }
+        assertEquals(vectors.size, hits.size)
+        var worst = 0.0
+        for (h in hits) worst = maxOf(worst, kotlin.math.abs(h.approx - VectorMath.dot(q, vectors[h.entry.docId.toInt()])))
+        assertTrue("worst error $worst", worst < VectorIndex.MARGIN / 3)
+    }
+
+    @Test
+    fun nothingAboveTheThresholdIsMissedWithTheMargin() {
+        val r = Random(11)
+        val index = VectorIndex(dim)
+        val q = unit(r)
+        val vectors = List(3000) { near(q, r, r.nextDouble()) }
+        vectors.forEachIndexed { i, v -> index.add(VectorIndex.Entry("summary", i.toLong(), i.toLong(), i + 1L), v) }
+        val exact = vectors.indices.filter { VectorMath.dot(q, vectors[it]) >= Retrieval.SEMANTIC_MIN }.toSet()
+        assertTrue("the test needs matches", exact.size > 50)
+        val found = index.search(q, Retrieval.SEMANTIC_MIN - VectorIndex.MARGIN, vectors.size) { true }
+            .map { it.entry.docId.toInt() }.toSet()
+        assertTrue(found.containsAll(exact))
+    }
+
+    @Test
+    fun theFilterTheLimitAndTheRowsWork() {
+        val r = Random(3)
+        val index = VectorIndex(dim)
+        val q = unit(r)
+        index.add(VectorIndex.Entry("message", 1, 5, 10), q)
+        index.add(VectorIndex.Entry("message", 2, 6, 12), q)
+        index.add(VectorIndex.Entry("quote", 3, -1, 11), near(q, r, 0.2))
+        assertEquals(12, index.maxRowId)
+        assertEquals(3, index.size)
+        // The open conversation (5) is left out.
+        assertEquals(listOf(2L, 3L), index.search(q, 0.0, 10) { it.conversationId != 5L }.map { it.entry.docId })
+        assertEquals(1, index.search(q, 0.0, 1) { true }.size)
+        index.clear()
+        assertEquals(0, index.size)
+        assertEquals(0, index.maxRowId)
+    }
+
+    @Test
+    fun itGrowsPastItsFirstSize() {
+        val r = Random(5)
+        val index = VectorIndex(dim)
+        repeat(500) { index.add(VectorIndex.Entry("event", it.toLong(), -1, it + 1L), unit(r)) }
+        assertEquals(500, index.size)
+    }
+}

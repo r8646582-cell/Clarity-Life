@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The real theme is the Compose Bold theme (ui/theme). This is only the window background,
+         so the app never flashes white before Compose draws. -->
+    <style name="Theme.Clarity" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ground</item>
+        <item name="android:statusBarColor">@color/ground</item>
+        <item name="android:navigationBarColor">@color/tab_bar</item>
+    </style>
+</resources>

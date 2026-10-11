@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Conversations drawer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+button,input{font-family:inherit}
+button{cursor:pointer}
+input::placeholder{color:#B8B3C4}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #14121A; color: #FFFFFF; font-family: 'Space Grotesk', system-ui, sans-serif; position: relative; overflow: hidden">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; opacity: 0.3">
+<div style="font-size: 34px; font-weight: 700; padding-left: 44px">Talk<span style="color: #FFD23F">.</span></div>
+<div style="height: 120px; border-radius: 16px; background: #FFD23F"></div>
+</div>
+<a href="Talk.dc.html" aria-label="Close conversations" style="position: absolute; inset: 0; background: rgba(8,7,12,0.72)"></a>
+
+<nav aria-label="Conversations" style="position: absolute; left: 0; top: 0; bottom: 0; width: 330px; box-sizing: border-box; background: #1C1924; border-right: 1px solid #3D3749; display: flex; flex-direction: column; padding: 18px 0 16px 0">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 20px">
+<h2 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">Conversations</h2>
+<a href="Talk.dc.html" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+</div>
+
+<div style="display: flex; gap: 8px; padding: 12px 20px 10px 20px">
+<a href="Talk.dc.html" style="flex: 1; height: 46px; border-radius: 12px; background: #FFD23F; color: #14121A; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New</a>
+<a href="Talk.dc.html" style="flex: 1.4; height: 46px; box-sizing: border-box; border-radius: 12px; border: 1px solid #6E6782; color: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3 3.8M6.6 6.6A17 17 0 0 0 2.5 12s3.5 7 9.5 7a9.6 9.6 0 0 0 4.2-1"></path></svg>Off the record</a>
+</div>
+
+<div style="margin: 0 20px 6px 20px; position: relative">
+<label for="conv-search" class="sr">Search conversations</label>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 14px; top: 14px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input id="conv-search" type="search" placeholder="Search everything you said" style="width: 100%; height: 46px; box-sizing: border-box; border-radius: 12px; border: 1px solid #3D3749; background: #2A2535; color: #FFFFFF; padding: 0 14px 0 40px; font-size: 15px">
+</div>
+
+<div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column">
+<div style="padding: 12px 20px 4px 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Today</div>
+<a href="Talk.dc.html" aria-current="page" style="min-height: 60px; padding: 8px 20px; background: #2A2535; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 700">Tomorrow keeps winning</span>
+<span style="font-size: 13px; color: #B8B3C4">Free talk · 9:40 pm</span></a>
+
+<div style="padding: 14px 20px 4px 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">This week</div>
+<div style="display: flex; align-items: center">
+<a href="PlanChat.dc.html" style="flex: 1; min-height: 60px; padding: 8px 0 8px 20px; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 600">The exam deadline, honestly</span>
+<span style="font-size: 13px; color: #B8B3C4">Plan and track · Thu</span></a>
+<button aria-label="More for The exam deadline, honestly" aria-expanded="{{ menuOpen }}" onClick="{{ toggle }}" style="width: 44px; height: 44px; margin-right: 8px; border: 0; border-radius: 10px; background: {{ moreBg }}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg></button>
+</div>
+<sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+<div role="menu" style="margin: 0 20px 6px 20px; background: #2A2535; border: 1px solid #3D3749; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden">
+<button role="menuitem" style="min-height: 48px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font-size: 15px; font-weight: 600; text-align: left">Rename</button>
+<div style="height: 1px; background: #3D3749"></div>
+<button role="menuitem" style="min-height: 48px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font-size: 15px; font-weight: 600; text-align: left">Delete conversation</button>
+<div style="height: 1px; background: #3D3749"></div>
+<button role="menuitem" style="min-height: 56px; padding: 8px 16px; border: 0; background: transparent; color: #FF8A7C; text-align: left"><span style="display: block; font-size: 15px; font-weight: 700">Forget this conversation</span><span style="display: block; font-size: 12px; color: #B8B3C4; margin-top: 2px; line-height: 1.35">Also removes anything learned only from it</span></button>
+</div>
+</sc-if>
+<a href="Focus.dc.html" style="min-height: 60px; padding: 8px 20px; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 600">Freezing at the gathering</span>
+<span style="font-size: 13px; color: #B8B3C4">Focus: Social anxiety · Tue</span></a>
+<a href="Letter.dc.html" style="min-height: 60px; padding: 8px 20px; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 600">About last week's letter</span>
+<span style="font-size: 13px; color: #B8B3C4">Free talk · Mon</span></a>
+
+<div style="padding: 14px 20px 4px 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #FFD23F">Earlier</div>
+<a href="Talk.dc.html" style="min-height: 60px; padding: 8px 20px; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 600">Dad and the comparison</span>
+<span style="font-size: 13px; color: #B8B3C4">Untangle · 29 Sep</span></a>
+</div>
+
+<p style="margin: 8px 20px 0 20px; font-size: 12px; line-height: 1.45; color: #B8B3C4">Off the record: nothing from that chat is saved or learned.</p>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const open = !(this.state && this.state.closed);
+return {
+open,
+menuOpen: open ? 'true' : 'false',
+moreBg: open ? '#353044' : 'transparent',
+toggle: () => this.setState({ closed: open })
+};
+}
+}
+</script>
+</body>
+</html>

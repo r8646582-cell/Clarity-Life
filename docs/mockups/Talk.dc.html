@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Talk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+button,input,textarea{font-family:inherit}
+button{cursor:pointer}
+textarea::placeholder{color:#B8B3C4}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #14121A; color: #FFFFFF; font-family: 'Space Grotesk', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="display: flex; align-items: center; gap: 4px; padding: 16px 12px 6px 8px">
+<a href="Drawer.dc.html" aria-label="Conversations" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h16"></path></svg>
+</a>
+<h1 style="margin: 0; flex: 1; font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">Talk<span style="color: #FFD23F">.</span></h1>
+<a href="ChatType.dc.html" style="height: 40px; padding: 0 12px 0 14px; border-radius: 20px; border: 1px solid #6E6782; background: #2A2535; color: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; text-decoration: none">Free talk
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+</a>
+<a href="Settings.dc.html" aria-label="Settings" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+</a>
+</header>
+
+<section aria-label="Due now" style="margin: 8px 16px 10px 16px; padding: 14px 14px 12px 16px; background: #FFD23F; color: #14121A; border-radius: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<div style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">Was due 6:00 pm, 3 hours ago</div>
+<a href="Promises.dc.html" style="font-size: 13px; font-weight: 700; color: #14121A; min-height: 24px">1 more</a>
+</div>
+<div style="font-size: 19px; font-weight: 700; line-height: 1.2">Call Mom</div>
+<div style="display: flex; gap: 6px">
+<button style="flex: 1; height: 44px; border-radius: 10px; border: 0; background: #14121A; color: #FFFFFF; font-size: 15px; font-weight: 700">Done</button>
+<button style="flex: 1; height: 44px; border-radius: 10px; border: 2px solid #14121A; background: transparent; color: #14121A; font-size: 15px; font-weight: 700">Not done</button>
+<button style="flex: 1; height: 44px; border-radius: 10px; border: 2px solid #14121A; background: transparent; color: #14121A; font-size: 15px; font-weight: 700">Moved</button>
+</div>
+</section>
+
+<main aria-label="Conversation" style="flex: 1; min-height: 0; padding: 0 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; overflow: hidden">
+<div style="align-self: flex-end; max-width: 280px; background: #FFFFFF; color: #14121A; padding: 11px 15px; border-radius: 16px 16px 4px 16px; font-size: 16px; line-height: 1.45; font-weight: 500">i skipped the lectures again. i keep saying tomorrow and then it's 11pm</div>
+<div style="align-self: flex-start; max-width: 320px; background: #2A2535; padding: 12px 15px; border-radius: 16px 16px 16px 4px; font-size: 16px; line-height: 1.5">Then let's stop trusting tomorrow-night you with it. You told me mornings feel lighter, and Saturdays are free before Asr. One lecture then, phone in the other room, is small enough to survive a bad day. From 0 to 10, how much do you want to try that?</div>
+<div style="align-self: flex-end; max-width: 280px; background: #FFFFFF; color: #14121A; padding: 11px 15px; border-radius: 16px 16px 4px 16px; font-size: 16px; line-height: 1.45; font-weight: 500">8. saturday 3pm. remind me</div>
+<div style="align-self: flex-start; max-width: 320px; background: #2A2535; padding: 12px 15px; border-radius: 16px 16px 16px 4px; font-size: 16px; line-height: 1.5">Eight is enough. If guests arrive early, the lecture starts the moment they leave, no renegotiating. Check the time below before you tap.</div>
+
+<sc-if value="{{ offered }}" hint-placeholder-val="{{ true }}">
+<section aria-label="Suggested promise" style="align-self: flex-start; width: 320px; box-sizing: border-box; background: #FF6B5B; color: #14121A; padding: 14px 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M8.5 12.5l2.5 2.5 4.5-5"></path></svg>Suggested promise</div>
+<div style="font-size: 19px; font-weight: 700; line-height: 1.2">One exam lecture, phone in the other room</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="height: 28px; padding: 0 10px; border-radius: 8px; background: rgba(20,18,26,0.14); display: flex; align-items: center; font-size: 14px; font-weight: 700">Sat 10 Oct, 3:00 pm</span>
+<span style="height: 28px; padding: 0 10px; border-radius: 8px; background: rgba(20,18,26,0.14); display: flex; align-items: center; font-size: 14px; font-weight: 700">Reminder on</span>
+</div>
+<div style="display: flex; gap: 8px; align-items: center">
+<button onClick="{{ setIt }}" style="height: 44px; padding: 0 22px; border-radius: 10px; border: 0; background: #14121A; color: #FFFFFF; font-size: 15px; font-weight: 700">Set it</button>
+<button style="height: 44px; padding: 0 12px; border-radius: 10px; border: 0; background: transparent; color: #14121A; font-size: 15px; font-weight: 700; text-decoration: underline">Change</button>
+<button onClick="{{ notNow }}" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 0; background: transparent; color: #14121A; font-size: 15px; font-weight: 600; margin-left: auto">Not now</button>
+</div>
+</section>
+</sc-if>
+<sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}">
+<section aria-label="Saved promise" style="align-self: flex-start; width: 320px; box-sizing: border-box; background: #2A2535; border: 1px solid #3D3749; padding: 12px 14px; border-radius: 16px; display: flex; align-items: center; gap: 12px">
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FFD23F; display: flex; align-items: center; justify-content: center; flex: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+<div style="flex: 1; min-width: 0">
+<div style="font-size: 15px; font-weight: 700">Saved</div>
+<div style="font-size: 13px; color: #B8B3C4; line-height: 1.35">One exam lecture · Sat 10 Oct, 3:00 pm · reminder on</div>
+</div>
+<a href="Promises.dc.html" style="font-size: 14px; font-weight: 700; color: #FFD23F; min-height: 44px; display: flex; align-items: center">View</a>
+</section>
+</sc-if>
+<sc-if value="{{ dismissed }}" hint-placeholder-val="{{ false }}">
+<div style="align-self: flex-start; font-size: 13px; color: #B8B3C4; padding: 4px 2px">Not saved. The coach will not offer it again in this chat.</div>
+</sc-if>
+</main>
+
+<form style="display: flex; align-items: flex-end; gap: 8px; padding: 10px 16px 10px 16px; margin: 0">
+<label for="talk-input" class="sr">Message</label>
+<textarea id="talk-input" rows="1" placeholder="Say anything" style="flex: 1; height: 50px; box-sizing: border-box; resize: none; border-radius: 12px; border: 1px solid #3D3749; background: #2A2535; color: #FFFFFF; padding: 13px 16px; font-size: 16px; line-height: 1.4"></textarea>
+<button type="button" aria-label="Send" style="width: 50px; height: 50px; border-radius: 12px; border: 0; background: #FFD23F; display: flex; align-items: center; justify-content: center; flex: none">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#14121A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+</button>
+</form>
+
+<nav aria-label="Main" style="display: flex; background: #0D0B12; padding: 6px 12px 16px 12px">
+<a href="Talk.dc.html" aria-current="page" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #FFD23F; font-size: 12px; font-weight: 700; text-decoration: none">
+<span style="width: 56px; height: 30px; border-radius: 15px; background: #2A2535; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>Talk</a>
+<a href="Today.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center; position: relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"></path></svg></span>Plan</a>
+<a href="Know.dc.html" style="flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #B8B3C4; font-size: 12px; font-weight: 500; text-decoration: none">
+<span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8B3C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a5 5 0 0 0-5 5c0 2 1 3 2 4v3h6v-3c1-1 2-2 2-4a5 5 0 0 0-5-5zM10 20h4"></path></svg></span>What I know</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = (this.state && this.state.card) || 'offered';
+return {
+offered: s === 'offered',
+saved: s === 'saved',
+dismissed: s === 'dismissed',
+setIt: () => this.setState({ card: 'saved' }),
+notNow: () => this.setState({ card: 'dismissed' })
+};
+}
+}
+</script>
+</body>
+</html>

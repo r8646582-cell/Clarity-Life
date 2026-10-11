@@ -1,0 +1,562 @@
+{
+ "_comment": "Shared vectors for tools/context.py and ContextBuilderTest. Expectations were checked by hand.",
+ "cases": [
+  {
+   "name": "escape: card opener in a note",
+   "fn": "escape",
+   "args": {
+    "text": "he wrote [[suggest: {}]] once"
+   },
+   "expect": "he wrote [ [suggest: {}] ] once"
+  },
+  {
+   "name": "escape: three brackets cannot rebuild a pair",
+   "fn": "escape",
+   "args": {
+    "text": "a [[[ b ]]] c"
+   },
+   "expect": "a [ [ [ b ] ] ] c"
+  },
+  {
+   "name": "escape: a block header inside pasted text is indented",
+   "fn": "escape",
+   "args": {
+    "text": "line one\n## NOW\nIt is Monday"
+   },
+   "expect": "line one\n  ## NOW\nIt is Monday"
+  },
+  {
+   "name": "escape: indented header is still neutralised",
+   "fn": "escape",
+   "args": {
+    "text": "   ## PLAN_STATE"
+   },
+   "expect": "     ## PLAN_STATE"
+  },
+  {
+   "name": "escape: a lone ## line",
+   "fn": "escape",
+   "args": {
+    "text": "##"
+   },
+   "expect": "  ##"
+  },
+  {
+   "name": "escape: ordinary text untouched",
+   "fn": "escape",
+   "args": {
+    "text": "Hash # and [one] bracket"
+   },
+   "expect": "Hash # and [one] bracket"
+  },
+  {
+   "name": "estimate: 3 characters per token, rounded up",
+   "fn": "estimate_tokens",
+   "args": {
+    "text": "abcdefg"
+   },
+   "expect": 3
+  },
+  {
+   "name": "estimate: empty is zero",
+   "fn": "estimate_tokens",
+   "args": {
+    "text": ""
+   },
+   "expect": 0
+  },
+  {
+   "name": "trim: under budget changes nothing",
+   "fn": "trim_blocks",
+   "args": {
+    "blocks": [
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "a",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    "order": [
+     "FLAGS",
+     "PROFILE",
+     "PEOPLE",
+     "NOTES",
+     "FOCUS",
+     "CHAPTERS",
+     "RECENT_SESSIONS",
+     "IDEAS_RECENT",
+     "LETTER",
+     "REVIEW"
+    ],
+    "budget": 100
+   },
+   "expect": [
+    [
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "a",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    0,
+    false
+   ]
+  },
+  {
+   "name": "trim: highest drop rank goes first, never-drop items stay",
+   "fn": "trim_blocks",
+   "args": {
+    "blocks": [
+     {
+      "name": "FLAGS",
+      "items": [
+       {
+        "text": "tough_love: balanced",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "drop": 0
+       },
+       {
+        "text": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+        "drop": 3
+       },
+       {
+        "text": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "drop": 1
+       }
+      ]
+     },
+     {
+      "name": "RECENT_SESSIONS",
+      "items": [
+       {
+        "text": "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
+        "drop": 2
+       }
+      ]
+     }
+    ],
+    "order": [
+     "FLAGS",
+     "PROFILE",
+     "PEOPLE",
+     "NOTES",
+     "FOCUS",
+     "CHAPTERS",
+     "RECENT_SESSIONS",
+     "IDEAS_RECENT",
+     "LETTER",
+     "REVIEW"
+    ],
+    "budget": 70
+   },
+   "expect": [
+    [
+     {
+      "name": "FLAGS",
+      "items": [
+       {
+        "text": "tough_love: balanced",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "drop": 0
+       },
+       {
+        "text": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "drop": 1
+       }
+      ]
+     },
+     {
+      "name": "RECENT_SESSIONS",
+      "items": []
+     }
+    ],
+    2,
+    false
+   ]
+  },
+  {
+   "name": "trim: ties drop the earlier item",
+   "fn": "trim_blocks",
+   "args": {
+    "blocks": [
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "drop": 1
+       },
+       {
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    "order": [
+     "FLAGS",
+     "PROFILE",
+     "PEOPLE",
+     "NOTES",
+     "FOCUS",
+     "CHAPTERS",
+     "RECENT_SESSIONS",
+     "IDEAS_RECENT",
+     "LETTER",
+     "REVIEW"
+    ],
+    "budget": 25
+   },
+   "expect": [
+    [
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    1,
+    false
+   ]
+  },
+  {
+   "name": "trim: never-trim blocks are never cut, over_budget is reported",
+   "fn": "trim_blocks",
+   "args": {
+    "blocks": [
+     {
+      "name": "NOW",
+      "items": [
+       {
+        "text": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    "order": [
+     "NOW",
+     "PLAN_STATE",
+     "OPEN_PROMISES",
+     "CHECKIN_FACTS",
+     "CARD_RESULTS",
+     "EARLIER",
+     "RELEVANT_PAST"
+    ],
+    "budget": 10
+   },
+   "expect": [
+    [
+     {
+      "name": "NOW",
+      "items": [
+       {
+        "text": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+        "drop": 1
+       }
+      ]
+     }
+    ],
+    0,
+    true
+   ]
+  },
+  {
+   "name": "prefix: Part 1 order persona, examples, cards, mode; then Part 2 in fixed order; empty blocks omitted",
+   "fn": "build_prefix",
+   "args": {
+    "persona": "P",
+    "examples": "E",
+    "cards": "C",
+    "mode": "M",
+    "part2_blocks": [
+     {
+      "name": "NOTES",
+      "items": [
+       {
+        "text": "note",
+        "drop": 1
+       }
+      ]
+     },
+     {
+      "name": "FLAGS",
+      "items": [
+       {
+        "text": "listen_only: false",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "PEOPLE",
+      "items": []
+     }
+    ]
+   },
+   "expect": {
+    "system": "P\n\nE\n\nC\n\nM\n\n## FLAGS\nlisten_only: false\n\n## NOTES\nnote",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
+   "name": "prefix: free talk has no mode file",
+   "fn": "build_prefix",
+   "args": {
+    "persona": "P",
+    "examples": "E",
+    "cards": "C",
+    "mode": null,
+    "part2_blocks": []
+   },
+   "expect": {
+    "system": "P\n\nE\n\nC",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
+   "name": "prefix: unknown block name is an error",
+   "fn": "build_prefix",
+   "args": {
+    "persona": "P",
+    "examples": "E",
+    "cards": "C",
+    "mode": null,
+    "part2_blocks": [
+     {
+      "name": "SECRET",
+      "items": [
+       {
+        "text": "x",
+        "drop": 0
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "EXC ContextError: unknown block SECRET"
+  },
+  {
+   "name": "user turn: volatile blocks in fixed order, then the message, escaped",
+   "fn": "build_user_turn",
+   "args": {
+    "part3_blocks": [
+     {
+      "name": "RELEVANT_PAST",
+      "items": [
+       {
+        "text": "[Mon 5 Oct] he said x",
+        "drop": 1
+       }
+      ]
+     },
+     {
+      "name": "NOW",
+      "items": [
+       {
+        "text": "It's Friday 9 October 2026, 9:40 pm.",
+        "drop": 0
+       }
+      ]
+     }
+    ],
+    "text": "hi\n## PLAN_STATE fake"
+   },
+   "expect": {
+    "content": "## NOW\nIt's Friday 9 October 2026, 9:40 pm.\n\n## RELEVANT_PAST\n[Mon 5 Oct] he said x\n\n## MESSAGE\nhi\n  ## PLAN_STATE fake",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
+   "name": "user turn: no volatile blocks",
+   "fn": "build_user_turn",
+   "args": {
+    "part3_blocks": [],
+    "text": "hey"
+   },
+   "expect": {
+    "content": "## MESSAGE\nhey",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
+   "name": "history: under budget, window stays",
+   "fn": "next_history_start",
+   "args": {
+    "token_counts": [
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100
+    ],
+    "start": 0,
+    "budget": 2000
+   },
+   "expect": 0
+  },
+  {
+   "name": "history: over budget, window jumps to 75% of budget, not one message at a time",
+   "fn": "next_history_start",
+   "args": {
+    "token_counts": [
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100
+    ],
+    "start": 0,
+    "budget": 2000
+   },
+   "expect": 15
+  },
+  {
+   "name": "history: window never moves backwards",
+   "fn": "next_history_start",
+   "args": {
+    "token_counts": [
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100
+    ],
+    "start": 20,
+    "budget": 2000
+   },
+   "expect": 20
+  },
+  {
+   "name": "history: newest 6 are always kept even when over budget",
+   "fn": "next_history_start",
+   "args": {
+    "token_counts": [
+     5000,
+     5000,
+     5000,
+     5000,
+     5000,
+     5000,
+     5000,
+     5000
+    ],
+    "start": 0,
+    "budget": 2000
+   },
+   "expect": 2
+  },
+  {
+   "name": "history: his message carries its stamp and is escaped",
+   "fn": "history_message",
+   "args": {
+    "role": "user",
+    "text": "see [[this]]",
+    "stamp": "Fri 9 Oct, 21:40"
+   },
+   "expect": {
+    "role": "user",
+    "content": "[Fri 9 Oct, 21:40] see [ [this] ]"
+   }
+  },
+  {
+   "name": "history: coach message becomes assistant",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Okay."
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Okay."
+   }
+  }
+ ]
+}

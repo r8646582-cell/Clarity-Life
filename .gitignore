@@ -1,0 +1,12 @@
+local.properties
+*.jks
+*.keystore
+.env
+.gradle/
+build/
+.idea/
+*.apk
+__pycache__/
+.DS_Store
+.kotlin/
+app/schemas/*.tmp

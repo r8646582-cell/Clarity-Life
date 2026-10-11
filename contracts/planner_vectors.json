@@ -1,0 +1,1342 @@
+{
+ "history_note": "syllabus history: 10 answered days all done Sep 12 to 22, then 10 answered days with 6 done Sep 26 to Oct 8. All expectations were checked by hand; see the comments in tools/planner.py for the rounding rules.",
+ "cases": [
+  {
+   "name": "Sat-Thu, Fri 9 Oct to Fri 20 Nov, Fridays off = 36",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "Sat-Thu",
+    "start": "2026-10-10",
+    "end": "2026-11-20"
+   },
+   "expect": 36
+  },
+  {
+   "name": "leap year: daily 27 Feb to 2 Mar 2028 = 5",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "daily",
+    "start": "2028-02-27",
+    "end": "2028-03-02"
+   },
+   "expect": 5
+  },
+  {
+   "name": "non leap year: daily 27 Feb to 2 Mar 2027 = 4",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "daily",
+    "start": "2027-02-27",
+    "end": "2027-03-02"
+   },
+   "expect": 4
+  },
+  {
+   "name": "weekdays Fri 9 Oct to Tue 13 Oct = Fri Mon Tue",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "weekdays",
+    "start": "2026-10-09",
+    "end": "2026-10-13"
+   },
+   "expect": 3
+  },
+  {
+   "name": "Mon Wed Fri over one week",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "Mon,Wed,Fri",
+    "start": "2026-10-12",
+    "end": "2026-10-18"
+   },
+   "expect": 3
+  },
+  {
+   "name": "3x/week, one full week plus Mon to Wed = 6",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "3x/week",
+    "start": "2026-10-12",
+    "end": "2026-10-21"
+   },
+   "expect": 6
+  },
+  {
+   "name": "3x/week, one full week plus Mon Tue = 5",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "3x/week",
+    "start": "2026-10-12",
+    "end": "2026-10-20"
+   },
+   "expect": 5
+  },
+  {
+   "name": "planned rest date removes a day",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "daily",
+    "start": "2026-10-12",
+    "end": "2026-10-14",
+    "rest_dates": [
+     "2026-10-13"
+    ]
+   },
+   "expect": 2
+  },
+  {
+   "name": "deadline before start = 0",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "daily",
+    "start": "2026-10-14",
+    "end": "2026-10-12"
+   },
+   "expect": 0
+  },
+  {
+   "name": "month end: Sat-Thu 29 Oct to 3 Nov",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "Sat-Thu",
+    "start": "2026-10-29",
+    "end": "2026-11-03"
+   },
+   "expect": 5
+  },
+  {
+   "name": "days_left today rest day (Fri) not counted",
+   "fn": "days_left",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09",
+    "deadline": "2026-11-20"
+   },
+   "expect": 36
+  },
+  {
+   "name": "days_left today scheduled and unanswered counts",
+   "fn": "days_left",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-10",
+    "deadline": "2026-11-20"
+   },
+   "expect": 36
+  },
+  {
+   "name": "days_left today scheduled and answered does not count",
+   "fn": "days_left",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-10",
+    "deadline": "2026-11-20",
+    "today_answered": true
+   },
+   "expect": 35
+  },
+  {
+   "name": "00:30 Karachi belongs to the day before",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T19:30:00Z",
+    "tz": "Asia/Karachi"
+   },
+   "expect": "2026-10-10"
+  },
+  {
+   "name": "04:30 Karachi belongs to its own day",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T23:30:00Z",
+    "tz": "Asia/Karachi"
+   },
+   "expect": "2026-10-11"
+  },
+  {
+   "name": "exactly 04:00 starts the new day",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T23:00:00Z",
+    "tz": "Asia/Karachi"
+   },
+   "expect": "2026-10-11"
+  },
+  {
+   "name": "03:59 is still the old day",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T22:59:00Z",
+    "tz": "Asia/Karachi"
+   },
+   "expect": "2026-10-10"
+  },
+  {
+   "name": "New York clocks go back: 01:30 EDT",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-11-01T05:30:00Z",
+    "tz": "America/New_York"
+   },
+   "expect": "2026-10-31"
+  },
+  {
+   "name": "New York clocks go back: 01:30 EST (second time)",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-11-01T06:30:00Z",
+    "tz": "America/New_York"
+   },
+   "expect": "2026-10-31"
+  },
+  {
+   "name": "boundary 0 means plain midnight",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T19:30:00Z",
+    "tz": "Asia/Karachi",
+    "boundary_hour": 0
+   },
+   "expect": "2026-10-11"
+  },
+  {
+   "name": "typical pace window Sep 25 to Oct 8",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-12",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-13",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-14",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-15",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-16",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-17",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-19",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-20",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-21",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-22",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-26",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-27",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-09-29",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-30",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-04",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-05",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-07",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-08",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     }
+    ],
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "answered": 10,
+    "scheduled": 12,
+    "amount": 6,
+    "done": 6,
+    "pace": 0.6,
+    "answer_rate": 83
+   }
+  },
+  {
+   "name": "best fortnight is the earlier window",
+   "fn": "best_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-12",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-13",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-14",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-15",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-16",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-17",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-19",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-20",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-21",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-22",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-26",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-27",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-09-29",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-30",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-04",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-05",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-07",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-08",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     }
+    ],
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09"
+   },
+   "expect": 1.0
+  },
+  {
+   "name": "fewer than 7 answered days: no pace",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-12",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-13",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-09-14",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     }
+    ],
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "answered": 1,
+    "scheduled": 12,
+    "amount": 1,
+    "done": 1,
+    "pace": null,
+    "answer_rate": 8
+   }
+  },
+  {
+   "name": "rest rows are not answers",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-05",
+      "level": "rest",
+      "amount": 0,
+      "reason": null
+     }
+    ],
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09"
+   },
+   "expect": {
+    "answered": 0,
+    "scheduled": 12,
+    "amount": 0,
+    "done": 0,
+    "pace": null,
+    "answer_rate": 0
+   }
+  },
+  {
+   "name": "syllabus gap: does not reach even at best (reaches rounded down: 21.6 shows as 21)",
+   "fn": "project",
+   "args": {
+    "remaining": 40,
+    "left": 36,
+    "typical": 0.6,
+    "best": 1.0
+   },
+   "expect": {
+    "remaining": 40,
+    "days_left": 36,
+    "required_per_day": 1.1111111111111112,
+    "typical_per_day": 0.6,
+    "reaches_typical": 21,
+    "short_typical": 19,
+    "best_per_day": 1.0,
+    "reaches_best": 36,
+    "short_best": 4,
+    "status": "short"
+   }
+  },
+  {
+   "name": "reachable only at best pace",
+   "fn": "project",
+   "args": {
+    "remaining": 30,
+    "left": 30,
+    "typical": 0.8,
+    "best": 1.1
+   },
+   "expect": {
+    "remaining": 30,
+    "days_left": 30,
+    "required_per_day": 1.0,
+    "typical_per_day": 0.8,
+    "reaches_typical": 24,
+    "short_typical": 6,
+    "best_per_day": 1.1,
+    "reaches_best": 30,
+    "short_best": 0,
+    "status": "needs_best"
+   }
+  },
+  {
+   "name": "ok when typical reaches exactly",
+   "fn": "project",
+   "args": {
+    "remaining": 30,
+    "left": 30,
+    "typical": 1.0,
+    "best": 1.0
+   },
+   "expect": {
+    "remaining": 30,
+    "days_left": 30,
+    "required_per_day": 1.0,
+    "typical_per_day": 1.0,
+    "reaches_typical": 30,
+    "short_typical": 0,
+    "best_per_day": 1.0,
+    "reaches_best": 30,
+    "short_best": 0,
+    "status": "ok"
+   }
+  },
+  {
+   "name": "no data",
+   "fn": "project",
+   "args": {
+    "remaining": 30,
+    "left": 30,
+    "typical": null,
+    "best": null
+   },
+   "expect": {
+    "remaining": 30,
+    "days_left": 30,
+    "required_per_day": 1.0,
+    "status": "no_data"
+   }
+  },
+  {
+   "name": "deadline passed with work left",
+   "fn": "project",
+   "args": {
+    "remaining": 5,
+    "left": 0,
+    "typical": 1.0,
+    "best": 1.0
+   },
+   "expect": {
+    "remaining": 5,
+    "days_left": 0,
+    "status": "past_deadline"
+   }
+  },
+  {
+   "name": "nothing remaining is done",
+   "fn": "project",
+   "args": {
+    "remaining": 0,
+    "left": 10,
+    "typical": 1.0,
+    "best": 1.0
+   },
+   "expect": {
+    "remaining": 0,
+    "days_left": 10,
+    "status": "done"
+   }
+  },
+  {
+   "name": "reaches never exceeds remaining",
+   "fn": "project",
+   "args": {
+    "remaining": 10,
+    "left": 20,
+    "typical": 2.0,
+    "best": 3.0
+   },
+   "expect": {
+    "remaining": 10,
+    "days_left": 20,
+    "required_per_day": 0.5,
+    "typical_per_day": 2.0,
+    "reaches_typical": 10,
+    "short_typical": 0,
+    "best_per_day": 3.0,
+    "reaches_best": 10,
+    "short_best": 0,
+    "status": "ok"
+   }
+  },
+  {
+   "name": "replan: two bad reviews in a row",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 33,
+      "remaining": 40,
+      "answered_days": 9
+     }
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "replan: exactly 85 percent is fine",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 34,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 34,
+      "remaining": 40,
+      "answered_days": 9
+     }
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "replan: only one bad review",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 40,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 9
+     }
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "replan: bad but too little data",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 6
+     }
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "replan: older bad ones do not count",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 30,
+      "remaining": 40,
+      "answered_days": 9
+     },
+     {
+      "projected_done": 40,
+      "remaining": 40,
+      "answered_days": 9
+     }
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "replan: single review",
+   "fn": "replan_flag",
+   "args": {
+    "reviews": [
+     {
+      "projected_done": 1,
+      "remaining": 40,
+      "answered_days": 9
+     }
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "review options from Fri 9 Oct, Sat-Thu",
+   "fn": "review_options",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-09"
+   },
+   "expect": [
+    {
+     "date": "17 Oct",
+     "weekday": "Saturday",
+     "after": "after one week"
+    },
+    {
+     "date": "24 Oct",
+     "weekday": "Saturday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "review options from Sat 10 Oct",
+   "fn": "review_options",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-10"
+   },
+   "expect": [
+    {
+     "date": "17 Oct",
+     "weekday": "Saturday",
+     "after": "after one week"
+    },
+    {
+     "date": "24 Oct",
+     "weekday": "Saturday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "review options skip a rest day: Thu 8 Oct +7 = Thu 15, +14 = Thu 22",
+   "fn": "review_options",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-08"
+   },
+   "expect": [
+    {
+     "date": "15 Oct",
+     "weekday": "Thursday",
+     "after": "after one week"
+    },
+    {
+     "date": "22 Oct",
+     "weekday": "Thursday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "review options skip the Friday: Fri 2 Oct +7 = Fri 9 -> Sat 10",
+   "fn": "review_options",
+   "args": {
+    "schedule": "Sat-Thu",
+    "today": "2026-10-02"
+   },
+   "expect": [
+    {
+     "date": "10 Oct",
+     "weekday": "Saturday",
+     "after": "after one week"
+    },
+    {
+     "date": "17 Oct",
+     "weekday": "Saturday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "weekly facts (reasons come from Not and Part days: 2 missed + 1 part, tired on all 3)",
+   "fn": "weekly_facts",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     },
+     {
+      "day": "2026-10-06",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-07",
+      "level": "minimum",
+      "amount": 1,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-08",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-09",
+      "level": "rest",
+      "amount": 0,
+      "reason": null
+     },
+     {
+      "day": "2026-10-10",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     }
+    ],
+    "schedule": "Sat-Thu",
+    "week_start": "2026-10-05"
+   },
+   "expect": {
+    "scheduled": 6,
+    "answered": 5,
+    "done": 3,
+    "missed": 2,
+    "part": 1,
+    "done_rate": 60,
+    "answer_rate": 83,
+    "minimum": 1,
+    "target": 2,
+    "top_reasons": [
+     [
+      "tired",
+      3
+     ]
+    ],
+    "missed_by_weekday": {
+     "Tue": 1,
+     "Thu": 1
+    }
+   }
+  },
+  {
+   "name": "reason lines need 3 items behind them",
+   "fn": "reason_lines",
+   "args": {
+    "reasons": [
+     [
+      "tired",
+      2
+     ],
+     [
+      "avoided it",
+      1
+     ]
+    ],
+    "short_days": 3
+   },
+   "expect": []
+  },
+  {
+   "name": "reason lines shown at 3",
+   "fn": "reason_lines",
+   "args": {
+    "reasons": [
+     [
+      "tired",
+      3
+     ],
+     [
+      "avoided it",
+      1
+     ]
+    ],
+    "short_days": 5
+   },
+   "expect": [
+    "tired on 3 of 5 days marked Not or Part"
+   ]
+  },
+  {
+   "name": "schedule grammar: 0x/week rejected",
+   "fn": "parse_schedule",
+   "args": {
+    "s": "0x/week"
+   },
+   "expect": "EXC PlannerError: bad schedule"
+  },
+  {
+   "name": "schedule grammar: 8x/week rejected",
+   "fn": "parse_schedule",
+   "args": {
+    "s": "8x/week"
+   },
+   "expect": "EXC PlannerError: bad schedule"
+  },
+  {
+   "name": "schedule grammar: spaces in a day list rejected (fail closed, same as the card parser)",
+   "fn": "parse_schedule",
+   "args": {
+    "s": "Mon, Wed"
+   },
+   "expect": "EXC PlannerError: bad schedule"
+  },
+  {
+   "name": "schedule grammar: free text rejected",
+   "fn": "parse_schedule",
+   "args": {
+    "s": "every second day"
+   },
+   "expect": "EXC PlannerError: bad schedule"
+  },
+  {
+   "name": "schedule grammar: a range of one day is ambiguous and rejected",
+   "fn": "parse_schedule",
+   "args": {
+    "s": "Sat-Sat"
+   },
+   "expect": "EXC PlannerError: a range needs two different days"
+  },
+  {
+   "name": "schedule grammar: case does not matter",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "sat-THU",
+    "start": "2026-10-10",
+    "end": "2026-10-16"
+   },
+   "expect": 6
+  },
+  {
+   "name": "schedule grammar: range wraps over the week end (Fri-Mon)",
+   "fn": "scheduled_count",
+   "args": {
+    "schedule": "Fri-Mon",
+    "start": "2026-10-12",
+    "end": "2026-10-18"
+   },
+   "expect": 4
+  },
+  {
+   "name": "level: amount above target is beyond",
+   "fn": "level_for",
+   "args": {
+    "amount": 3,
+    "minimum": 1,
+    "target": 2
+   },
+   "expect": "beyond"
+  },
+  {
+   "name": "level: amount equal to target",
+   "fn": "level_for",
+   "args": {
+    "amount": 2,
+    "minimum": 1,
+    "target": 2
+   },
+   "expect": "target"
+  },
+  {
+   "name": "level: between minimum and target is part (minimum)",
+   "fn": "level_for",
+   "args": {
+    "amount": 1.5,
+    "minimum": 1,
+    "target": 2
+   },
+   "expect": "minimum"
+  },
+  {
+   "name": "level: below the minimum is not done",
+   "fn": "level_for",
+   "args": {
+    "amount": 0.5,
+    "minimum": 1,
+    "target": 2
+   },
+   "expect": "not"
+  },
+  {
+   "name": "level: zero with minimum 0 is not done",
+   "fn": "level_for",
+   "args": {
+    "amount": 0,
+    "minimum": 0,
+    "target": 2
+   },
+   "expect": "not"
+  },
+  {
+   "name": "level: any amount with minimum 0 is part",
+   "fn": "level_for",
+   "args": {
+    "amount": 0.25,
+    "minimum": 0,
+    "target": 2
+   },
+   "expect": "minimum"
+  },
+  {
+   "name": "level: negative amount rejected",
+   "fn": "level_for",
+   "args": {
+    "amount": -1,
+    "minimum": 0,
+    "target": 2
+   },
+   "expect": "EXC PlannerError: bad amount or levels"
+  },
+  {
+   "name": "best fortnight exists when all history is younger than 14 days (best is never below typical)",
+   "fn": "best_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-03",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-04",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-07",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     },
+     {
+      "day": "2026-10-08",
+      "level": "target",
+      "amount": 1,
+      "reason": null
+     }
+    ],
+    "schedule": "daily",
+    "today": "2026-10-09"
+   },
+   "expect": 1.0
+  },
+  {
+   "name": "best fortnight ignores check-ins dated today or later",
+   "fn": "best_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-09",
+      "level": "target",
+      "amount": 5,
+      "reason": null
+     }
+    ],
+    "schedule": "daily",
+    "today": "2026-10-09"
+   },
+   "expect": null
+  },
+  {
+   "name": "projection never rounds up to success: 0.99 a day for 40 days reaches 39, not 40",
+   "fn": "project",
+   "args": {
+    "remaining": 40,
+    "left": 40,
+    "typical": 0.99,
+    "best": 0.99
+   },
+   "expect": {
+    "remaining": 40,
+    "days_left": 40,
+    "required_per_day": 1.0,
+    "typical_per_day": 0.99,
+    "reaches_typical": 39,
+    "short_typical": 1,
+    "best_per_day": 0.99,
+    "reaches_best": 39,
+    "short_best": 1,
+    "status": "short"
+   }
+  },
+  {
+   "name": "projection with a fractional remaining that is reached exactly",
+   "fn": "project",
+   "args": {
+    "remaining": 12.5,
+    "left": 5,
+    "typical": 2.5,
+    "best": 3
+   },
+   "expect": {
+    "remaining": 12.5,
+    "days_left": 5,
+    "required_per_day": 2.5,
+    "typical_per_day": 2.5,
+    "reaches_typical": 12.5,
+    "short_typical": 0,
+    "best_per_day": 3,
+    "reaches_best": 12.5,
+    "short_best": 0,
+    "status": "ok"
+   }
+  },
+  {
+   "name": "review options for a count schedule are plain week offsets",
+   "fn": "review_options",
+   "args": {
+    "schedule": "3x/week",
+    "today": "2026-10-09"
+   },
+   "expect": [
+    {
+     "date": "16 Oct",
+     "weekday": "Friday",
+     "after": "after one week"
+    },
+    {
+     "date": "23 Oct",
+     "weekday": "Friday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "review options skip a planned rest date",
+   "fn": "review_options",
+   "args": {
+    "schedule": "daily",
+    "today": "2026-10-09",
+    "rest_dates": [
+     "2026-10-16"
+    ]
+   },
+   "expect": [
+    {
+     "date": "17 Oct",
+     "weekday": "Saturday",
+     "after": "after one week"
+    },
+    {
+     "date": "23 Oct",
+     "weekday": "Friday",
+     "after": "after two weeks"
+    }
+   ]
+  },
+  {
+   "name": "reason lines never show a count above the number of short days",
+   "fn": "reason_lines",
+   "args": {
+    "reasons": [
+     [
+      "tired",
+      4
+     ]
+    ],
+    "short_days": 3
+   },
+   "expect": []
+  },
+  {
+   "name": "day boundary outside 0 to 23 is rejected",
+   "fn": "day_key",
+   "args": {
+    "utc_iso": "2026-10-10T19:30:00Z",
+    "tz": "Asia/Karachi",
+    "boundary_hour": 24
+   },
+   "expect": "EXC PlannerError: boundary hour must be 0 to 23"
+  },
+  {
+   "name": "PLAN_STATE text: the syllabus backlog, exactly as the coach sees it",
+   "fn": "backlog_lines",
+   "args": {
+    "bid": "B1",
+    "name": "Chemistry lectures",
+    "total": 40,
+    "done": 0,
+    "schedule": "Sat-Thu",
+    "p": {
+     "remaining": 40,
+     "days_left": 36,
+     "required_per_day": 1.1111111111111112,
+     "typical_per_day": 0.6,
+     "reaches_typical": 21,
+     "short_typical": 19,
+     "best_per_day": 1.0,
+     "reaches_best": 36,
+     "short_best": 4,
+     "status": "short"
+    },
+    "window_answered": 10,
+    "answer_rate": 83
+   },
+   "expect": [
+    "Backlog B1 \"Chemistry lectures\": total 40, done 0, remaining 40, scheduled days left 36 (Fridays off), required 1.2 per day.",
+    "  Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 40, short by 19.",
+    "  Best fortnight so far: 1.0 per day, reaches 36 of 40, short by 4.",
+    "  Status: does not reach the total, not even at the best-fortnight pace.",
+    "  Answer rate 83%. Availability: not set."
+   ]
+  },
+  {
+   "name": "PLAN_STATE text: a slow required pace never shows as 0.0, and a reached total has no 'short by 0'",
+   "fn": "backlog_lines",
+   "args": {
+    "bid": "B4",
+    "name": "Books",
+    "total": 3,
+    "done": 0,
+    "schedule": "daily",
+    "p": {
+     "remaining": 3,
+     "days_left": 100,
+     "required_per_day": 0.03,
+     "typical_per_day": 0.1,
+     "reaches_typical": 3,
+     "short_typical": 0,
+     "status": "ok"
+    },
+    "window_answered": 14,
+    "answer_rate": 100
+   },
+   "expect": [
+    "Backlog B4 \"Books\": total 3, done 0, remaining 3, scheduled days left 100, required 0.03 per day.",
+    "  Typical pace (last 14 days, 14 answered days): 0.1 per day, reaches 3 of 3.",
+    "  Status: reaches the total at the typical pace.",
+    "  Answer rate 100%. Availability: not set."
+   ]
+  }
+ ]
+}

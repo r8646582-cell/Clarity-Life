@@ -1,0 +1,101 @@
+package com.clarity.life.core
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class MemoryBlocksTest {
+
+    private fun note(id: Long, confidence: String, seen: Int) = MemoryBlocks.Note(
+        id, "pattern", confidence, seen, "2026-09-14", "2026-10-10", "Note $id",
+        listOf(
+            MemoryBlocks.Evidence("quote", "old words", "2026-09-14"),
+            MemoryBlocks.Evidence("count", "tired on 9 of 12 missed evening targets", "2026-10-01"),
+            MemoryBlocks.Evidence("quote", "I just never am by 8", "2026-10-07"),
+        ),
+    )
+
+    @Test
+    fun aNoteShowsIdKindGradeSeenAndTwoEvidenceLines() {
+        val text = MemoryBlocks.notes(listOf(note(4, "likely", 3))).items.single().text
+        assertEquals(
+            "note 4, pattern, likely, seen 3 times · Sep to Oct: Note 4\n" +
+                "  counted by the app: tired on 9 of 12 missed evening targets\n" +
+                "  their words, 7 Oct: \"I just never am by 8\"",
+            text,
+        )
+    }
+
+    @Test
+    fun underPressureSessionsGoFirstThenTheWeakestNotesAndConfirmedLast() {
+        val blocks = listOf(
+            MemoryBlocks.profile(listOf(MemoryBlocks.Profile("Goal", "Clear the exam", true))),
+            MemoryBlocks.notes(listOf(note(1, "confirmed", 1), note(2, "guess", 5), note(3, "guess", 1), note(4, "likely", 1))),
+            MemoryBlocks.recentSessions(
+                listOf(
+                    MemoryBlocks.Session("2026-10-09", "Newest", "b".repeat(200)),
+                    MemoryBlocks.Session("2026-10-01", "Oldest", "a".repeat(200)),
+                ),
+            ),
+        )
+        val order = mutableListOf<String>()
+        var current = blocks
+        // Shrink the budget step by step and record what goes, in order.
+        for (budget in generateSequence(ContextBuilder.estimateTokens(ContextBuilderRender.render(blocks))) { it - 5 }.take(200)) {
+            val kept = ContextBuilder.trimBlocks(current, ContextBuilder.PART2_ORDER, budget).blocks
+            val before = current.flatMap { b -> b.items.map { b.name + ":" + it.text.lineSequence().first() } }
+            val after = kept.flatMap { b -> b.items.map { b.name + ":" + it.text.lineSequence().first() } }
+            order += before - after.toSet()
+            current = kept
+        }
+        assertEquals(
+            listOf(
+                "RECENT_SESSIONS:1 Oct \"Oldest\": ${"a".repeat(200)}",
+                "RECENT_SESSIONS:9 Oct \"Newest\": ${"b".repeat(200)}",
+                "NOTES:note 3, pattern, guess, seen once · Sep to Oct: Note 3",
+                "NOTES:note 2, pattern, guess, seen 5 times · Sep to Oct: Note 2",
+                "NOTES:note 4, pattern, likely, seen once · Sep to Oct: Note 4",
+                "NOTES:note 1, pattern, confirmed, seen once · Sep to Oct: Note 1",
+                "PROFILE:Goal (confirmed): Clear the exam",
+            ),
+            order,
+        )
+    }
+
+    @Test
+    fun peopleAndProfileLines() {
+        val people = MemoryBlocks.people(
+            listOf(
+                MemoryBlocks.Person("Hina", "sister", "helps you revise on Sundays", 2),
+                MemoryBlocks.Person("Bilal", "", "", 1),
+            ),
+        )
+        assertEquals(listOf("Hina (sister): helps you revise on Sundays", "Bilal"), people.items.map { it.text })
+        assertTrue("the least recently mentioned drops first", people.items[1].drop > people.items[0].drop)
+        val profile = MemoryBlocks.profile(listOf(MemoryBlocks.Profile("Study time", "Mornings", false)))
+        assertEquals("Study time (guess): Mornings", profile.items.single().text)
+    }
+
+    @Test
+    fun ideasAreDistinctNewestTwentyShownOldestFirst() {
+        val tags = (1..25).map { "idea $it" } + "IDEA 1"
+        val block = MemoryBlocks.ideas(tags)
+        assertEquals(20, block.items.size)
+        assertEquals("idea 20", block.items.first().text)
+        assertEquals("idea 1", block.items.last().text)
+        assertFalse(block.items.any { it.text == "IDEA 1" })
+    }
+
+    @Test
+    fun sessionsWithoutASummaryAreLeftOut() {
+        val block = MemoryBlocks.recentSessions(listOf(MemoryBlocks.Session("2026-10-09", "t", "")))
+        assertTrue(block.items.isEmpty())
+    }
+}
+
+/** Renders blocks the way the prefix does, to measure them. */
+private object ContextBuilderRender {
+    fun render(blocks: List<Block>): String =
+        blocks.filter { it.items.isNotEmpty() }.joinToString("\n\n") { ContextBuilder.renderBlock(it.name, it.items) }
+}
