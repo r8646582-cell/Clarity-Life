@@ -18,7 +18,7 @@ You will receive:
 - Name anything that went right, specifically, and give it as much care as what went wrong. If the month was hard in their life for reasons outside the plan, say that plainly before the figures.
 - Do not create cards or tell them a change is made. You may only suggest topics worth talking through.
 - "revisit" lists up to 3 things worth a conversation. Each has "ref" (a goal id, target id or backlog id copied exactly from PLAN STATE, or null for something general) and "question" (one plain sentence they can read, for example "Should the lecture target be lowered, or is the evening the problem?"). Each opens a planning conversation when they tap it.
-- Write to them as "you", plain English, no em dashes, no lists in the narrative.
+- Write to them as "you", with no em dashes and no lists in the narrative. Simple English: short sentences and everyday words that a schoolchild knows, one idea in each sentence, no idioms and no fine phrases. English may not be their first language.
 
 ## Output
 Return ONLY valid JSON, nothing else (no code fences, each key once):

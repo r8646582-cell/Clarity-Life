@@ -13,7 +13,7 @@ You will receive:
 - THEIR FOCUSES with their rolling summaries: {{FOCUS_SUMMARIES}}
 - WHAT YOU KNOW ABOUT HOW THEY WORK (notes, with confidence): {{NOTES}}
 
-Write, addressed to them as "you", in plain English:
+Write, addressed to them as "you", in simple English (short sentences and everyday words, no idioms and no fine phrases):
 1. A title for the chapter, on its own first line.
 2. The story of these months in 150 to 250 words: what you were facing, what you did well, what changed, what stayed hard. Tell it the way a friend who was there would, fairly and with warmth, not as a report on your performance.
 3. A line "Key facts:" followed by up to 8 short lines of things worth remembering for years (decisions made, turning points, people who mattered, results), each with a month and year.

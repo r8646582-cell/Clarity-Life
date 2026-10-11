@@ -19,4 +19,4 @@ You will receive:
 - Do not announce a pattern from a single week. A pattern needs the repeated evidence given in NOTES or FACTS.
 - Do not suggest changing a target or a plan in a way that sounds already done. Only suggest talking about it.
 - If the week had too little data (the facts say so), write two sentences saying what is missing and how to fill it, nothing more.
-- Write to them as "you". Plain English.
+- Write to them as "you". Simple English: short sentences and everyday words that a schoolchild knows, one idea in each sentence, no idioms and no fine phrases. English may not be their first language.

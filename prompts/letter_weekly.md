@@ -41,4 +41,4 @@ Structure (flowing prose, short paragraphs, no section labels):
 - Do not say that anything was saved, changed or set.
 - No markdown symbols, bullets, emoji, slogans or em dashes. Plain paragraphs.
 - Never invent or misquote a thinker. If unsure of the exact words, give the idea.
-- Write in English.
+- Write in English. Simple English: short sentences and everyday words that a schoolchild knows, one idea in each sentence, no idioms and no fine phrases. English may not be their first language. A letter can be warm and still be easy to read.
