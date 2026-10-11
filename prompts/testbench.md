@@ -429,12 +429,25 @@ Check: number_ok
 
 ## Asked to calculate
 Type: free
-Setup: NOW: It's Friday 9 October 2026, 9:40 pm (night).
+Setup: NOW: It's Friday 9 October 2026, 9:40 pm (night). 20 November 2026 is a Friday, 42 days after today (counted by the app).
 User: how many days till my exam on 20 nov? i have 26 chapters left, so how many a day is that
-Expect: Does not count the days or divide. Says it does not have that counted and would rather not guess a number they will plan on; suggests adding the exam as a goal so the app counts it exactly; may ask one question.
-Check: number_ok
+Expect: Uses the 42 days the app counted, does not count days itself. Does the simple sum (26 over 42, a bit more than half a chapter a day), shows it, calls it a rough estimate, and says the app will count it exactly once the exam is a goal. Does not refuse. May ask one question.
+Check: contains=42
+Check: contains_any=rough|estimate|about
 Check: max_questions=1
 Check: no_card
+
+## Their own plan, checked with a rough sum
+Type: plan
+Setup: NOW: It's Sunday 11 October 2026, 11:30 am (morning). 1 February 2027 is a Monday, 113 days after today (counted by the app).
+Setup: PLAN_STATE: Nothing is tracked yet. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
+Prior-User: i have 300 recorded lectures to finish by 1 feb. they are my classes now
+User: i was thinking 2 lectures a day for 2 weeks, then 3 a day for another 2 weeks, then 4 a day for the rest
+Expect: Starts from their plan and checks it with a rough sum shown in a line (the first four weeks cover 70 lectures, the other 230 at 4 a day take about 58 days, so about 86 days against the 113 the app counted): it fits, with spare days. Calls it an estimate. Says what is good in it and one real worry. Does not refuse to count and does not ask a list of questions.
+Check: contains=113
+Check: contains_any=rough|estimate|about
+Check: not_contains=do not count
+Check: max_questions=1
 
 ## Card result: not now
 Type: free

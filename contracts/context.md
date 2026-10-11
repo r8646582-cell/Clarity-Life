@@ -49,7 +49,7 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 
 | Block | Content | Trim |
 |---|---|---|
-| NOW | one code-written sentence, see below | never |
+| NOW | one code-written sentence, see below; then, for up to 4 dates they mentioned in their recent messages, one line each with the weekday and the number of days after today, counted in code | never |
 | PLAN_STATE | goals (G1...), targets (T1...), backlogs (B1...) with the computed facts, review options, re-plan flag | never |
 | OPEN_PROMISES | open items with ids and code-written due phrases ("due Monday 5 October, 8:00 am (in 1 day 7 hours)", "was due Friday 5:00 pm, 2 days ago") | never |
 | CHECKIN_FACTS | counted by the app: today's check-in state, reason counts per target, weekday and time band, answer rate, last-14-day summary; only lines with at least 3 items behind a number | never |

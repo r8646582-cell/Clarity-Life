@@ -9,7 +9,7 @@ A lifetime life system: goals, plans, daily check-ins, patterns, conversations, 
 
 ## Rules that never break (details in spec section 0 and 18)
 1. No hidden actions. AI output reaches the database only through (a) the owner tapping a card button, which runs a repository command, or (b) a validated background applier (reflection, gardening). Background jobs never create cards and never change goals, plans, targets or promises.
-2. Code does all dates, counts, pace and math. The AI receives finished facts. Never ask the model to calculate.
+2. Code does all dates, day counts, pace and every number that is saved or shown as a fact. The AI receives finished facts and never replaces them. In conversation the coach may do simple rough sums on numbers it was given, shown and called an estimate (the owner's decision, 11 Oct 2026); it never counts days on a calendar or works out a date (the app gives day counts in NOW), and no number the model worked out is saved as an app fact.
 3. Fail closed at every AI boundary: bad cards, bad JSON, unverified quotes and numbers are dropped and logged without content; the prose still shows.
 4. Only their own words and actions are evidence. A coach claim never raises a note's confidence.
 5. Their deletions are final. A deleted note is never recreated.
@@ -80,4 +80,4 @@ F. **Freeze:** the owner uses it for two weeks; the bench passes; the restore te
 Repo is private. A version tag (`v1.0.0`) builds the signed release APK in GitHub Actions and attaches it to a release. Signing material lives only in GitHub Secrets (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`); give the owner step-by-step instructions to create the keystore and add the secrets on the GitHub website, and remind them to store the keystore and passwords safely outside the repo. They update by installing over the old app, never by uninstalling. Bump `versionCode` and `versionName` each release and show the version in Settings, Advanced.
 
 ## What you must not do
-Do not add features that are not in the spec. Do not write AI-side arithmetic or date logic. Do not make prompts or contracts "more flexible" without being asked. Do not hide failures: show a quiet, honest line and log a content-free error. Do not weaken a check to make a build pass.
+Do not add features that are not in the spec. Do not write AI-side date logic, or arithmetic beyond the rough conversational sums rule 2 allows. Do not make prompts or contracts "more flexible" without being asked. Do not hide failures: show a quiet, honest line and log a content-free error. Do not weaken a check to make a build pass.

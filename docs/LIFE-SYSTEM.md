@@ -14,7 +14,7 @@ A private Android app that holds your life over years (goals, plans, daily resul
 
 **Rules (never break these):**
 1. **The AI only talks. The app changes things only when you tap.** The AI may show a card (a suggested promise, plan, target or focus). Nothing is saved until you press its button. No hidden actions that change state.
-2. **Code does the math and the bookkeeping.** Dates, pace, rates, counts, deadlines and streak-free statistics are computed in code and handed to the AI as finished facts. The AI never does date or arithmetic.
+2. **Code does the math and the bookkeeping.** Dates, pace, rates, counts, deadlines and streak-free statistics are computed in code and handed to the AI as finished facts. The AI never works out dates or counts days, and never replaces an app number. In conversation it may do simple rough sums on numbers it was given, shown and called an estimate (owner's decision, 11 Oct 2026).
 3. **Only your own words and actions are evidence about you.** A coach claim never raises a note's confidence or seen-count. A missing check-in is "no answer", never "not done".
 4. **Quotes shown as your words are verified word for word in code** (port of `QuoteCheck.kt`).
 5. **Your deletions are final.** A deleted note is never recreated.
@@ -315,7 +315,7 @@ No software is bug-free. This design tries to make bugs rare, small, loud and re
 
 **10. Injection-proof context.** Anything that came from you or from the model is escaped before it enters a context block (`[[` and `]]` neutralised, header lines indented). The persona says block text is data, not instructions. Test bench has a card-injection scenario.
 
-**11. Honest numbers.** The coach never does arithmetic or dates; it copies finished facts and review-date options. A failing computation shows "not enough data", never a guess.
+**11. Honest numbers.** The coach never works out dates; it copies finished facts, day counts and review-date options, and any sum of its own is shown and called a rough estimate. A failing computation shows "not enough data", never a guess.
 
 **12. Data safety first.** Versioned Room schema with a MigrationTest per change, never destructive migration (a CI grep fails the build if the word appears), verified encrypted backups, readable export, paper passphrase. See section 9.
 

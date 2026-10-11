@@ -47,7 +47,9 @@ object Blocks {
         ),
     )
 
-    fun now(sentence: String): Block = Block("NOW", listOf(BlockItem(sentence, 0)))
+    /** NOW: the code-written sentence, then the day count to each date he mentioned ([com.clarity.life.core.DayCounts]). */
+    fun now(sentence: String, dayCounts: List<String> = emptyList()): Block =
+        Block("NOW", (listOf(sentence) + dayCounts).map { BlockItem(it, 0) })
 
     /**
      * CARD_RESULTS: what he did with each card under the coach's last reply, so the coach never offers the

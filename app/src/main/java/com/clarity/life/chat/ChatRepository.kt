@@ -313,7 +313,9 @@ class ChatRepository @Inject constructor(
         val tracker = planner.tracker(dayKey)
         val tracking = tracker.goals.isNotEmpty() || tracker.targets.isNotEmpty() || tracker.backlogs.isNotEmpty()
         val part3 = buildList {
-            add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary)))
+            // Day counts to the dates he mentioned, newest message first: the coach never counts days itself.
+            val said = listOf(newText) + stored.filter { it.role == "user" }.takeLast(20).reversed().map { it.content }
+            add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary), com.clarity.life.core.DayCounts.lines(said, dayKey)))
             // In a plan chat PLAN_STATE is always there, so even with nothing tracked yet the coach has the
             // review options a first plan card needs; elsewhere it comes only once something is tracked.
             if (tracking || conversation.chatType == "plan") add(PlanBlocks.planState(tracker, dayKey))
