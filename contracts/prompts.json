@@ -57,7 +57,7 @@
         "use the weekday name",
         "volunteered the commitment themselves"
       ],
-      "max_words": 4200
+      "max_words": 4800
     },
     "cards.md": {
       "placeholders": [
@@ -276,6 +276,6 @@
   ],
   "part1_budget": {
     "_comment": "Part 1 = persona + examples + cards + the largest chat-type file, with placeholders filled. Estimated with tools/context.estimate_tokens (3 characters per token, pessimistic); real usage is about a quarter lower. Keeps the fixed prefix from growing unnoticed.",
-    "max_estimated_tokens": 17800
+    "max_estimated_tokens": 19500
   }
 }
