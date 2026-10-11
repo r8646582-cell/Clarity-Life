@@ -53,7 +53,7 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 | PLAN_STATE | goals (G1...), targets (T1...), backlogs (B1...) with the computed facts, review options, re-plan flag | never |
 | OPEN_PROMISES | open items with ids and code-written due phrases ("due Monday 5 October, 8:00 am (in 1 day 7 hours)", "was due Friday 5:00 pm, 2 days ago") | never |
 | CHECKIN_FACTS | counted by the app: today's check-in state, reason counts per target, weekday and time band, answer rate, last-14-day summary; only lines with at least 3 items behind a number | never |
-| CARD_RESULTS | what they did with each card under the coach's last reply: saved, not now, or no answer yet | never |
+| CARD_RESULTS | what they did with each card under the coach's last reply: saved, not now, or no answer yet; or one line saying no button was shown, when that reply spoke of one and had no card | never |
 | EARLIER | the running summary of the part of this conversation that is no longer in the history window | never |
 | RELEVANT_PAST | top matches (max 5) from keyword plus meaning search, each with a date and conversation title; omitted when nothing is strong | lowest score first |
 

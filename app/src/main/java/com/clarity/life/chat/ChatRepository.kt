@@ -483,7 +483,12 @@ class ChatRepository @Inject constructor(
     private suspend fun cardResultLines(conversationId: Long): List<String> {
         val last = messages.ofConversation(conversationId).lastOrNull { it.role == "coach" && it.status == "complete" }
             ?: return emptyList()
-        return cards.ofMessage(last.id).map { row ->
+        val rows = cards.ofMessage(last.id)
+        // The coach spoke of a button and none was shown: tell it, so it can send the card instead of guessing.
+        if (rows.isEmpty() && com.clarity.life.core.CardTalk.pointsAtAButton(last.content)) {
+            return listOf("No button was shown under your last reply, though your words pointed at one. If you still mean to offer it, send the card now as the last line.")
+        }
+        return rows.map { row ->
             val text = cardLabel(row)
             Blocks.cardResultLine(row.type, text, row.status)
         }

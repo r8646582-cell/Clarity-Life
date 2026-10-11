@@ -140,7 +140,7 @@ class ReplyService : Service() {
                     }
                 }
             }
-            chat.closeCoachReply(
+            val outcome = chat.closeCoachReply(
                 conversationId = conversationId,
                 messageId = messageId,
                 raw = partial.toString(),
@@ -151,6 +151,9 @@ class ReplyService : Service() {
                 now = System.currentTimeMillis(),
                 modelLabel = endpoint.label,
             )
+            // The coach said "tap below" and no button is there: say so, instead of leaving him to look for it.
+            com.clarity.life.core.CardTalk.missingLine(outcome.prose, outcome.cardsOffered, outcome.cardsDropped)
+                ?.let { bus.fail(it) }
         } catch (e: AiFailure) {
             if (partial.isNotEmpty()) {
                 chat.interruptCoachReply(messageId, partial.toString(), System.currentTimeMillis())

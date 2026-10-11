@@ -632,3 +632,12 @@ Check: max_questions=1
 Check: no_list
 Check: no_card
 Check: no_banned
+
+## Asks for a year plan in free talk
+Type: free
+User: hey man. i want to make a blueprint for my whole life for the next year
+Expect: Says in simple words that this needs the planning conversation and offers the switch, with the mode card as the last line so the Switch button is really there. Does not start planning here, does not use the word card, and does not ask a question after the offer.
+Check: card=mode
+Check: max_cards=1
+Check: max_questions=1
+Check: not_contains=card
