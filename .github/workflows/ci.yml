@@ -71,6 +71,15 @@ jobs:
       - name: Release build with minification (unsigned; proves R8 does not break Room, Hilt or serialization)
         if: steps.has.outputs.yes == 'true'
         run: ./gradlew --no-daemon assembleRelease
+      - name: Free disk space for the emulator
+        # The emulator needs about 7.4 GB for its data partition; after the builds above the runner had 7.2 GB
+        # left, so it never booted. These preinstalled tools are not used by this project.
+        if: steps.has.outputs.yes == 'true'
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /usr/local/lib/node_modules \
+            /usr/share/swift /usr/local/share/powershell /usr/local/share/chromium "$AGENT_TOOLSDIRECTORY/CodeQL"
+          df -h /
       - name: Enable KVM for the emulator
         if: steps.has.outputs.yes == 'true'
         run: |
