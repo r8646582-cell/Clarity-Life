@@ -14,7 +14,13 @@ class CardTalkTest {
         assertTrue(CardTalk.pointsAtAButton("If you want, we can switch. You choose by tapping below."))
         assertTrue(CardTalk.pointsAtAButton("I put it below with a reminder at 5."))
         assertTrue(CardTalk.pointsAtAButton("The plan is below. Read it first."))
+        assertTrue(CardTalk.pointsAtAButton("Here is your card."))
+        assertTrue(CardTalk.pointsAtAButton("Here’s the plan card with the review on Saturday."))
+        assertTrue(CardTalk.pointsAtAButton("I've added a card for it."))
+        assertTrue(CardTalk.pointsAtAButton("If that matches, tap Save plan."))
+        assertTrue(CardTalk.pointsAtAButton("Tap Set it if you want the reminder."))
         assertFalse(CardTalk.pointsAtAButton("That sounds like a hard evening. What happened?"))
+        assertFalse(CardTalk.pointsAtAButton("Here is what I noticed: you studied best after dinner."))
         assertFalse(CardTalk.pointsAtAButton("You tapped Not now earlier, and that is fine."))
     }
 
@@ -23,7 +29,8 @@ class CardTalkTest {
         val line = CardTalk.dropLine("review_date is not one of the review options")
         assertTrue(line.contains("Reason: review_date is not one of the review options."))
         assertTrue(line.contains("Review options in PLAN_STATE"))
-        assertTrue(CardTalk.dropLine("too long title").contains("check that field"))
+        assertTrue(CardTalk.dropLine("too long rationale").contains("much shorter"))
+        assertTrue(CardTalk.dropLine("bad note kind").contains("check that field"))
     }
 
     @Test

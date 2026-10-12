@@ -557,6 +557,67 @@
     "role": "assistant",
     "content": "Okay."
    }
+  },
+  {
+   "name": "history: a coach reply gets its cards back as card lines, in order, after the escaped prose",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "If that fits, tap Set it. [[x]]",
+    "cards": [
+     "{\"type\":\"promise\",\"text\":\"Walk 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":false}",
+     "{\"type\":\"mode\",\"to\":\"decide\"}"
+    ]
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "If that fits, tap Set it. [ [x] ]\n[[suggest: {\"type\":\"promise\",\"text\":\"Walk 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":false}]]\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
+   }
+  },
+  {
+   "name": "history: a stored card holding a bracket pair or a line break is left out, never escaped into a broken card line",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Okay.",
+    "cards": [
+     "{\"type\":\"note\",\"kind\":\"value\",\"text\":\"a ]] b\"}",
+     "{\"type\":\"note\",\n\"kind\":\"value\",\"text\":\"x\"}",
+     "{\"type\":\"mode\",\"to\":\"decide\"}"
+    ]
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Okay.\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
+   }
+  },
+  {
+   "name": "history: a reply that was only a card is sent as the card line alone",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "  ",
+    "cards": [
+     "{\"type\":\"mode\",\"to\":\"decide\"}"
+    ]
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
+   }
+  },
+  {
+   "name": "history: his message never gets card lines",
+   "fn": "history_message",
+   "args": {
+    "role": "user",
+    "text": "ok",
+    "stamp": "Fri 9 Oct, 21:40"
+   },
+   "expect": {
+    "role": "user",
+    "content": "[Fri 9 Oct, 21:40] ok"
+   }
   }
  ]
 }

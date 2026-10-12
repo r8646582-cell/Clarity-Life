@@ -135,15 +135,21 @@ for sec in sections:
 
 
 # 7b: the sample cards inside cards.md must also pass the real card parser
-for m in re.finditer(r"`(\[\[suggest: .*?\]\])`", texts.get("cards.md", "")):
-    if ", ...}" in m.group(1):
-        continue  # the format template, not a sample
+# (they are bare lines, exactly as the coach must write them; a backtick-wrapped sample would teach a form
+# the parser throws away, so one is an error)
+cards_md = texts.get("cards.md", "")
+if re.search(r"`\[\[suggest:", cards_md):
+    err("cards.md", "a sample card is wrapped in backticks; the parser throws that form away")
+samples = re.findall(r"(?m)^\[\[suggest: .*\]\]$", cards_md)
+if len(samples) < len(CARD_TYPES):
+    err("cards.md", "%d sample card lines, expected one per type (%d)" % (len(samples), len(CARD_TYPES)))
+for sample in samples:
     ok = False
     for ct in ("free", "untangle", "decide", "plan"):
-        _, got, dropped = parse_reply(m.group(1), ct, known)
+        _, got, dropped = parse_reply(sample, ct, known)
         ok = ok or (not dropped and len(got) == 1)
     if not ok:
-        err("cards.md", "sample card rejected: %s" % m.group(1)[:60])
+        err("cards.md", "sample card rejected: %s" % sample[:60])
 
 # 8: testbench structure
 tb = texts.get("testbench.md", "")

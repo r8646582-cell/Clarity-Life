@@ -109,11 +109,19 @@ def build_user_turn(part3_blocks, text):
     return {"content": (blocks + "\n\n" if blocks else "") + body, "dropped": dropped, "over_budget": over}
 
 
-def history_message(role, text, stamp=None):
+def history_message(role, text, stamp=None, cards=None):
     """A stored message as it is sent again later. His messages carry the stamp the app wrote, for example
-    [Fri 9 Oct, 21:40]; coach messages are sent as they were shown (cards already removed). Both are escaped."""
+    [Fri 9 Oct, 21:40]. Coach messages go as they were shown, escaped, and then the cards that reply offered
+    are put back as card lines, from the stored, already validated card JSON. Without them the coach reads its
+    own past replies as "tap it below" with no card line, copies that, and stops sending cards. A stored card
+    that holds a bracket pair is left out rather than escaped, so a card line is never mangled."""
     if role == "user":
         return {"role": "user", "content": "[%s] %s" % (stamp, escape(text)) if stamp else escape(text)}
     if role == "coach":
-        return {"role": "assistant", "content": escape(text)}
+        lines = [escape(text)] if text.strip() else []
+        for payload in cards or []:
+            if "[[" in payload or "]]" in payload or "\n" in payload or "\r" in payload:
+                continue
+            lines.append("[[suggest: %s]]" % payload)
+        return {"role": "assistant", "content": "\n".join(lines)}
     raise ContextError("bad role")

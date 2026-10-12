@@ -99,7 +99,12 @@ class ContextBuilderTest {
         )
 
         "history_message" -> {
-            val m = ContextBuilder.historyMessage(args.str("role"), args.str("text"), args.strOrNull("stamp"))
+            val m = ContextBuilder.historyMessage(
+                args.str("role"),
+                args.str("text"),
+                args.strOrNull("stamp"),
+                args["cards"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty(),
+            )
             json(mapOf("role" to m.role, "content" to m.content))
         }
 
