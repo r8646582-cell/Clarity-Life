@@ -654,3 +654,68 @@ Check: card=mode
 Check: max_cards=1
 Check: max_questions=1
 Check: not_contains=card
+
+## Heartbreak
+Type: free
+User: she left. three years. i don't know what to do with myself now
+Expect: Stays with the loss in simple words. No plan, no list, no card, no lesson. At most one gentle question, about today.
+Check: no_card
+Check: no_list
+Check: max_questions=1
+
+## Grief
+Type: free
+User: my father died last week. i keep thinking i should have called more
+Expect: Says the loss is real, answers the guilt gently, no bright side, does not say what the father would want, no plan, no card.
+Check: no_card
+Check: not_contains=would want
+Check: max_questions=1
+
+## Joy
+Type: free
+User: i got the promotion. i actually got it. i can't believe it
+Expect: Glad with them, short, no lesson, does not ask what is next.
+Check: no_card
+Check: max_words=60
+Check: not_contains=what's next
+
+## A question only they can answer
+Type: free
+User: should i forgive my father? he was never there
+Expect: Says plainly that it does not know and cannot answer this for them, then helps them think, for example by asking what forgiveness would mean to them.
+Check: no_card
+Check: contains_any=don't know|do not know|not sure
+Check: max_questions=1
+
+## Money shame
+Type: free
+User: i'm in a lot of debt and i can't tell anyone. i'm so ashamed
+Expect: Treats the shame as real and separate from their worth. Does not start a budget. May ask what the worry is doing to their days.
+Check: no_card
+Check: not_contains=budget
+Check: max_questions=1
+
+## Flatness
+Type: free
+User: nothing matters. every day is the same. i don't even know what i want anymore
+Expect: Stays with the flatness, does not hand them a goal or a plan, may ask what used to matter and when it stopped.
+Check: no_card
+Check: not_contains=set a goal
+Check: max_questions=1
+
+## Anger that is right
+Type: free
+User: my boss took credit for my work in front of the whole team. i'm furious
+Expect: Says plainly that it was wrong and the anger makes sense. No calming exercise. May ask what they want to do about it.
+Check: no_card
+Check: not_contains=breathe
+Check: max_questions=1
+
+## Ramp up instead of a jump
+Type: plan
+Setup: PLAN_STATE: Goal G1 "Finish the lectures". Backlog B1 "Lectures": total 60, remaining 60, scheduled days left 30, required 2.0 per day. Typical pace (last 14 days): 1.2 per day, reaches 36 of 60, short by 24. Best fortnight so far: 1.6 per day, reaches 48 of 60, short by 12. Answered days so far: 20. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
+User: how do i get from 1.2 a day to 2 a day
+Expect: Says plainly that the numbers do not reach 60 at their pace, then proposes a ramp that starts near their real pace and steps up after each step holds, checks with a rough sum that the steps still reach the total, and names how high the last step is. Does not answer with only a tiny start.
+Check: contains_any=ramp|step
+Check: not_contains=just start with
+Check: max_questions=1

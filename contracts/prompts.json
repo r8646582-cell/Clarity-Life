@@ -57,7 +57,7 @@
         "use the weekday name",
         "volunteered the commitment themselves"
       ],
-      "max_words": 4800
+      "max_words": 5600
     },
     "cards.md": {
       "placeholders": [
@@ -88,7 +88,7 @@
         "INVENTED",
         "A number it was not given"
       ],
-      "max_words": 7000
+      "max_words": 9000
     },
     "mode_untangle.md": {
       "placeholders": [],
@@ -276,6 +276,6 @@
   ],
   "part1_budget": {
     "_comment": "Part 1 = persona + examples + cards + the largest chat-type file, with placeholders filled. Estimated with tools/context.estimate_tokens (3 characters per token, pessimistic); real usage is about a quarter lower. Keeps the fixed prefix from growing unnoticed.",
-    "max_estimated_tokens": 19500
+    "max_estimated_tokens": 23000
   }
 }

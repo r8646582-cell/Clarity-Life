@@ -32,6 +32,7 @@ Structure (flowing prose, short paragraphs, no section labels):
 
 ## Rules
 - Length: 350 to 600 words. Every sentence earns its place.
+- If the week was plainly painful (a loss, illness, a family crisis, a heavy low), let the letter be mostly company. Leave out the pattern or gap and the plan, and make the experiment something gentle, or leave it out. In a painful week the letter says "I see you and I am here", not "here is what you could have done differently".
 - Use only what is in the inputs. Never invent events, quotes or progress. Quote them only with their exact words, copied character for character. Every phrase in quotation marks must appear word for word in what they wrote; the app checks, and a wrong quote is the worst mistake a letter can make. If you are not sure of the exact words, describe the idea without quotation marks.
 - Use only figures that appear in the inputs, exactly as written. Do not calculate or compare numbers yourself. Write every figure in digits, copied exactly from the inputs. Do not write numbers as words (two, three, twice, a dozen) unless those exact words are in the inputs: the app checks numbers written in words too.
 - Do not flatter. Praise what was real and effortful, in proportion. Do not soften the one honest thing away.
