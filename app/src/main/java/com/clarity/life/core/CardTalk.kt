@@ -9,7 +9,13 @@ object CardTalk {
 
     private val POINTS = Regex(
         "\\b(tap|tapping)\\b[^.?!\\n]*\\bbelow\\b|\\bbelow\\b[^.?!\\n]*\\b(tap|tapping)\\b|" +
-            "\\b(put|placed) (it|that|this) below\\b|\\b(is|are) below\\b",
+            "\\b(put|placed) (it|that|this) below\\b|\\b(is|are) below\\b|" +
+            // "here is your card", "here's the button", "I've added a card", "I'll attach the plan card"
+            "\\bhere(?:'s|’s| is| are)\\b[^.?!\\n]*\\b(card|cards|button|buttons)\\b|" +
+            "\\b(add|added|attach|attached|sent|included|made|put)\\b[^.?!\\n]*\\b(card|cards|button|buttons)\\b|" +
+            "\\b(card|cards|button|buttons)\\b[^.?!\\n]*\\b(below|attached|added|ready)\\b|" +
+            // "tap Set it", "tap Save plan", "tap Switch": the buttons by name
+            "\\b(tap|tapping|press|hit)\\b[^.?!\\n]*\\b(set it|save plan|save it|switch|keep it)\\b",
         RegexOption.IGNORE_CASE,
     )
 
@@ -29,6 +35,8 @@ object CardTalk {
                 "PLAN_STATE gives no Review options, so a plan card cannot be shown now; say that plainly and do not send one"
             reason.startsWith("not allowed in") -> "this type of card is not allowed in this chat type; offer a switch of conversation with a mode card"
             reason.startsWith("unknown id") -> "copy goal, target and backlog ids exactly from PLAN_STATE, or leave the goal out to start a new one"
+            reason.startsWith("too long") ->
+                "that text is over its length limit; write it much shorter (a title in a few words, a rationale or reason in one short sentence)"
             reason == "bad schedule" -> "schedule must be daily, weekdays, a day list such as Mon,Wed,Fri, a range such as Sat-Thu, or a count such as 3x/week"
             reason.startsWith("too many") || reason.startsWith("duplicate") -> "send fewer cards: one of each type"
             else -> "check that field against the card rules"

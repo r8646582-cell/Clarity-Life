@@ -162,11 +162,23 @@ object ContextBuilder {
 
     /**
      * A stored message as it is sent again later. His messages carry the stamp the app wrote when he sent it
-     * ([Fri 9 Oct, 21:40]); coach messages go as they were shown, with the card lines already removed.
+     * ([Fri 9 Oct, 21:40]). Coach messages go as they were shown, escaped, and then the cards that reply offered
+     * are put back as card lines, from the stored, already validated card JSON ([cards], in order). Without them
+     * the coach reads its own past replies as "tap it below" with no card line, copies that, and stops sending
+     * cards. A stored card that holds a bracket pair or a line break is left out, so a card line is never mangled.
      */
-    fun historyMessage(role: String, text: String, stamp: String? = null): HistoryMessage = when (role) {
-        "user" -> HistoryMessage("user", if (stamp != null) "[$stamp] ${escape(text)}" else escape(text))
-        "coach" -> HistoryMessage("assistant", escape(text))
-        else -> throw ContextError("bad role")
-    }
+    fun historyMessage(role: String, text: String, stamp: String? = null, cards: List<String> = emptyList()): HistoryMessage =
+        when (role) {
+            "user" -> HistoryMessage("user", if (stamp != null) "[$stamp] ${escape(text)}" else escape(text))
+            "coach" -> {
+                val lines = mutableListOf<String>()
+                if (text.isNotBlank()) lines.add(escape(text))
+                for (payload in cards) {
+                    if (payload.contains("[[") || payload.contains("]]") || payload.contains('\n') || payload.contains('\r')) continue
+                    lines.add("[[suggest: $payload]]")
+                }
+                HistoryMessage("assistant", lines.joinToString("\n"))
+            }
+            else -> throw ContextError("bad role")
+        }
 }

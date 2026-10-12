@@ -293,13 +293,17 @@ class ChatRepository @Inject constructor(
             val last = all.lastOrNull { it.role == "user" || it.content.isNotBlank() }
             if (last?.role == "user" && last.content == newText) all.filter { it.id < last.id } else all
         }
+        // The cards each reply offered go back into the history as card lines (contracts/context.md), so the
+        // coach sees that a reply which pointed at a button really carried one, and keeps sending them.
+        val offered = cards.ofConversation(conversationId).groupBy({ it.messageId }, { it.payloadJson })
         val stored = before
-            .filter { it.role == "user" || (it.role == "coach" && it.content.isNotBlank()) }
+            .filter { it.role == "user" || (it.role == "coach" && (it.content.isNotBlank() || offered[it.id] != null)) }
         val history = stored.map { row ->
             ContextBuilder.historyMessage(
                 role = row.role,
                 text = row.content,
                 stamp = if (row.role == "user") TimeFacts.stamp(Instant.ofEpochMilli(row.createdAt), tz) else null,
+                cards = if (row.role == "coach") offered[row.id].orEmpty() else emptyList(),
             )
         }
         val counts = history.map { ContextBuilder.estimateTokens(it.content) }
