@@ -57,6 +57,7 @@ fun TalkHome(
     latest: ConversationRow?,
     hasKey: Boolean,
     provider: String,
+    userName: String,
     onSetUp: () -> Unit,
     onOpenGuide: () -> Unit,
     focuses: List<FocusRow>,
@@ -69,7 +70,7 @@ fun TalkHome(
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(greeting(java.time.LocalTime.now().hour), style = MaterialTheme.typography.displayLarge, color = clarity.text)
+                Text(greeting(userName), style = MaterialTheme.typography.displayLarge, color = clarity.text)
                 // The very first visit: one line on what this is, gone once there is a conversation.
                 if (latest == null) {
                     Text(
@@ -99,7 +100,8 @@ fun TalkHome(
         } else if (plan.todayRows.isNotEmpty() && !plan.restToday) {
             item(key = "step") { QuietRow(Icons.Outlined.TrackChanges, "Today", "All answered. That is the habit.", onOpenToday) }
         }
-        val next = promises.due.firstOrNull() ?: promises.coming.firstOrNull()
+        // What is due already has its own card above (the due card), so this row shows the next one after it.
+        val next = nextPromise(promises)
         next?.let { p ->
             item(key = "promise") {
                 QuietRow(Icons.Outlined.Schedule, "Next promise · ${p.time}", p.row.text, onOpenPromises)
@@ -178,12 +180,26 @@ internal fun openPage(context: android.content.Context, url: String) {
     }
 }
 
-/** By the phone's clock: morning before 12, afternoon before 17, evening otherwise. */
-fun greeting(hour: Int): String = when {
-    hour in 4..11 -> "Good morning."
-    hour in 12..16 -> "Good afternoon."
-    else -> "Good evening."
+/** The "Next promise" row: never one the due card already shows, so a promise is not on Talk home twice. */
+fun nextPromise(promises: PromisesViewModel.State): PromisesViewModel.Item? = promises.coming.firstOrNull()
+
+/**
+ * The words after today's number: "2 lectures · Reading", but just "2 CAF lectures" when the name already says
+ * the unit, so it never reads "2 lectures · CAF lectures".
+ */
+fun stepLabel(unit: String, name: String): String {
+    val u = unit.trim().lowercase()
+    if (u.isEmpty()) return name
+    val saysUnit = name.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).any { w -> w == u || w == u + "s" || u == w + "s" }
+    return if (saysUnit) name else "$unit · $name"
 }
+
+/**
+ * "Hello, Sam." with the name from Settings, Coach, or just "Hello." until one is set. The same at any hour:
+ * the date sits above it and the plan line below, so a time-of-day greeting only added a way to be wrong
+ * (it said "Good evening." at 12:30 am).
+ */
+fun greeting(name: String): String = name.trim().let { if (it.isEmpty()) "Hello." else "Hello, $it." }
 
 @Composable
 private fun StepCard(row: PlanViewModel.TodayRow, plan: PlanViewModel.State, model: PlanViewModel, onOpenToday: () -> Unit) {
@@ -198,7 +214,7 @@ private fun StepCard(row: PlanViewModel.TodayRow, plan: PlanViewModel.State, mod
                 Text(model.n(t.target), style = MaterialTheme.typography.displayMedium, color = clarity.yellow)
             }
             Text(
-                if (row.quantity && t.unit.isNotBlank()) "${t.unit} · ${t.name}" else t.name,
+                if (row.quantity) stepLabel(t.unit, t.name) else t.name,
                 style = MaterialTheme.typography.titleLarge,
                 color = clarity.text,
                 modifier = Modifier.padding(bottom = 6.dp),

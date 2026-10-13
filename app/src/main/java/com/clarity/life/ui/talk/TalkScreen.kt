@@ -110,6 +110,7 @@ fun TalkScreen(
     }
     val home = state.conversationId == 0L
     val providerName by model.provider.collectAsStateWithLifecycle()
+    val userName by model.userName.collectAsStateWithLifecycle()
     androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
         model.refreshKey()
         onPauseOrDispose { }
@@ -312,6 +313,7 @@ fun TalkScreen(
                     latest = state.conversations.firstOrNull(),
                     hasKey = state.hasKey,
                     provider = providerName,
+                    userName = userName,
                     onSetUp = onOpenSettings,
                     onOpenGuide = onOpenGuide,
                     focuses = state.focuses,
