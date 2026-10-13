@@ -410,8 +410,11 @@ def _plain_text_problems(text):
     return probs
 
 
+BRIEF_WORDS = (15, 90)   # the morning brief: a few lines, never a letter
+
+
 def check_text_job(kind, text, inputs, his_messages):
-    """Verify AI-written text before it is published: weekly review note, letter, chapter.
+    """Verify AI-written text before it is published: weekly review note, letter, chapter, morning brief.
     inputs = every string the model was given (for NumberCheck). Returns {"ok", "problems", "title", "body"}."""
     text = text.strip()
     title, body = "", text
@@ -421,7 +424,7 @@ def check_text_job(kind, text, inputs, his_messages):
         title, body = title.strip(), body.strip()
         if not title or len(title) > 100:
             probs.append("title missing or over 100 characters")
-    lo, hi = {"review_weekly": (30, 230), "letter": (120, 700), "chapter": (120, 700)}[kind]
+    lo, hi = {"review_weekly": (30, 230), "letter": (120, 700), "chapter": (120, 700), "brief": BRIEF_WORDS}[kind]
     n = len(body.split())
     if not lo <= n <= hi:
         probs.append("length %d words is outside %d to %d" % (n, lo, hi))

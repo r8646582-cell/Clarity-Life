@@ -6,7 +6,7 @@ import com.clarity.life.core.JobFields.words
 
 /**
  * Checks AI-written text before it is published: the weekly review note, the letter, the chapter, the
- * monthly review and the monthly story. A 1:1 port of `check_text_job`, `apply_monthly_review` and
+ * morning brief, the monthly review and the monthly story. A 1:1 port of `check_text_job`, `apply_monthly_review` and
  * `apply_story` in tools/appliers.py.
  *
  * Every quotation must be his own words (QuoteCheck), every number must be in the inputs the model was given
@@ -38,11 +38,15 @@ object TextJobCheck {
         return probs
     }
 
-    /** [kind] is review_weekly, letter or chapter. [inputs] = every string the model was given. */
+    /** The morning brief: a few lines, never a letter (BRIEF_WORDS in tools/appliers.py). */
+    val BRIEF_WORDS = 15 to 90
+
+    /** [kind] is review_weekly, letter, chapter or brief. [inputs] = every string the model was given. */
     fun check(kind: String, rawText: String, inputs: List<String>, hisMessages: List<String>): TextResult {
         val (lo, hi) = when (kind) {
             "review_weekly" -> 30 to 230
             "letter", "chapter" -> 120 to 700
+            "brief" -> BRIEF_WORDS
             else -> throw IllegalArgumentException("unknown text job $kind")
         }
         val text = strip(rawText)
