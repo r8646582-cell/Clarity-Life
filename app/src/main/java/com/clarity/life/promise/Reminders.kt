@@ -107,7 +107,7 @@ class Reminders @Inject constructor(
         }
         val p = db.promises().get(promiseId) ?: return
         if (p.status != "open" || p.remind != 1) return
-        // A reminder that arrives more than a day late (the phone was off) is not shown; the due card has it.
+        // A reminder that arrives more than a day late (the phone was off) is not shown; Plan, Promises has it.
         if (now - p.dueAt > LATE_LIMIT_MS) return
         show(p.id, p.text, reminderLine(p))
     }

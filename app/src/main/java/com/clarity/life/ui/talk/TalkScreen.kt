@@ -86,12 +86,10 @@ fun TalkScreen(
     onOpenPromises: () -> Unit = {},
     onOpenPlan: () -> Unit = onOpenPromises,
     model: TalkViewModel = hiltViewModel(),
-    promises: com.clarity.life.ui.plan.PromisesViewModel = hiltViewModel(),
     planner: com.clarity.life.ui.plan.PlanViewModel = hiltViewModel(),
     reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
-    val promiseState by promises.state.collectAsStateWithLifecycle()
     val planState by planner.state.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
     // "Plan with coach" and "Talk about this letter" ask for a new conversation of a given chat type. Only
@@ -308,7 +306,6 @@ fun TalkScreen(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     plan = planState,
                     planModel = planner,
-                    promises = promiseState,
                     latest = state.conversations.firstOrNull(),
                     hasKey = state.hasKey,
                     provider = providerName,
@@ -317,18 +314,12 @@ fun TalkScreen(
                     onOpenGuide = onOpenGuide,
                     focuses = state.focuses,
                     letterCard = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // The letter card, only while a new weekly letter is unread (spec section 2.1).
-                            com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
-                            // Promises due now, written by the app, never the coach (spec section 2.1).
-                            com.clarity.life.ui.plan.DueCard(promiseState, promises, onSeeAll = { reviews.showSection("Promises"); onOpenPromises() })
-                        }
+                        // The letter card, only while a new weekly letter is unread (spec section 2.1). Due promises
+                        // and today's steps are on Plan, with a dot on its tab (the owner's decision, 14 Oct 2026).
+                        com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
                     },
                     onStart = { type, focusId -> follow = true; model.startFromHome(type, focusId) },
                     onOpen = { id -> follow = true; model.open(id) },
-                    // Part and Not are answered on Plan, Today, where the amount and the reasons are.
-                    onOpenToday = { reviews.showSection("Today"); onOpenPromises() },
-                    onOpenPromises = { reviews.showSection("Promises"); onOpenPromises() },
                 )
             } else LazyColumn(
                 state = listState,

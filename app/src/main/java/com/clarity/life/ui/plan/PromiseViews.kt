@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,40 +37,6 @@ import com.clarity.life.ui.theme.Kicker
 import com.clarity.life.ui.theme.OutlineCard
 import com.clarity.life.ui.theme.Quiet
 import com.clarity.life.ui.theme.TextAction
-
-/**
- * The due card at the top of Talk (docs/mockups/Talk.dc.html), written by the app, never by the coach:
- * what is due on his day or earlier and has no answer yet, at most two items, with Done, Not done (then the
- * reason chips) and Moved. "N more" opens Plan, Promises.
- */
-@Composable
-fun DueCard(state: PromisesViewModel.State, model: PromisesViewModel, onSeeAll: () -> Unit) {
-    if (state.due.isEmpty()) return
-    val shown = state.due.take(com.clarity.life.core.PromiseText.DUE_CARD_MAX)
-    Column(
-        Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        shown.forEachIndexed { i, item ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(22.dp))
-                    .border(1.dp, clarity.hairline, RoundedCornerShape(22.dp))
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f)) { Kicker(item.kicker, clarity.yellow) }
-                    val more = state.due.size - shown.size
-                    if (i == 0 && more > 0) TextAction("$more more", onClick = onSeeAll)
-                }
-                Text(item.row.text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
-                Answers(item, model, onYellow = false, withLetGo = false)
-            }
-        }
-    }
-}
 
 /** Done, Not done (then reason chips), Moved and optionally Let go: each one tap, each one command. */
 @Composable

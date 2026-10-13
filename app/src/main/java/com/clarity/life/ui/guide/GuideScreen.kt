@@ -138,8 +138,8 @@ private val GUIDE = listOf(
                 "Small promises, with a reminder",
                 listOf(
                     "A promise is one thing you will do at a time, like \"Watch the first lecture at 8 am\". Ask the coach for one, check the day and time on the card, and tap Set it. Your phone reminds you then.",
-                    "Afterwards, answer it: Did it, Part, or Not. For Part or Not, tap a reason (tired, no time, forgot, felt too big...). Not is never a failure; the reasons help the coach make the next promise fit.",
-                    "All promises are on Plan, Promises, and the next one shows on Talk.",
+                    "Afterwards, answer it: Done, Not done, or Moved to a new time. For Not done, tap a reason (tired, no time, forgot, felt too big...). Not done is never a failure; the reasons help the coach make the next promise fit.",
+                    "All promises are on Plan, Promises. While one is due and not answered, the Plan tab at the bottom shows a dot; it goes once you answer.",
                 ),
             ),
             GuidePart(
@@ -147,7 +147,7 @@ private val GUIDE = listOf(
                 "Plan tab",
                 "Today and your goals",
                 listOf(
-                    "Today: what your plan asks of you today. Tap Did it, Part or Not, or the number you did. You can also answer straight from the card on Talk.",
+                    "Today: what your plan asks of you today. Tap Did it, Part or Not, or the number you did. Until you answer, a dot shows on the Plan tab and on Today.",
                     "A day you skip is just \"no answer\", never a miss. A planned rest day counts as neither.",
                     "Goals: what you are working toward, with targets the app counts for you and a label saying how it is going.",
                 ),

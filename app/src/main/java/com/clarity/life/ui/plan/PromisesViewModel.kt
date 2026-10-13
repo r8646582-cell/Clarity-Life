@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Promises as the due card on Talk and Plan, Promises show them. Every button is a command on
+ * Promises as Plan, Promises shows them. Every button is a command on
  * [PromiseRepository]; this class only reads, and works out the labels in code ([PromiseText]).
  */
 @HiltViewModel
@@ -40,7 +40,7 @@ class PromisesViewModel @Inject constructor(
     data class Item(val row: PromiseRow, val kicker: String, val time: String)
 
     data class State(
-        /** Due on his day or earlier, not answered yet: the due card and "Needs an answer". */
+        /** Due on his day or earlier, not answered yet: "Needs an answer", and the dot on the Plan tab. */
         val due: List<Item> = emptyList(),
         /** Open and later than today: "Coming up". */
         val coming: List<Item> = emptyList(),
