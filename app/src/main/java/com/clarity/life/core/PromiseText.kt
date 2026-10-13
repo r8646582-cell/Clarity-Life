@@ -5,7 +5,7 @@ import java.time.Instant
 
 /**
  * Everything the app writes about a promise, in code (rule 2): the OPEN_PROMISES lines the coach reads, the
- * kicker on the due card at the top of Talk, and which promises that card shows. Pure, so PromiseTextTest
+ * kicker above a promise that needs an answer, and which promises those are. Pure, so PromiseTextTest
  * pins it with fixed times, including after midnight.
  */
 object PromiseText {
@@ -30,9 +30,6 @@ object PromiseText {
 
     /** At most this many answered promises in OPEN_PROMISES (open ones are never cut). */
     const val RECENT_MAX = 8
-
-    /** The due card shows at most two items (spec section 2.1); "See all" opens Plan. */
-    const val DUE_CARD_MAX = 2
 
     /**
      * One open promise: `P4 "Study 1 hour at 8am", due Monday 5 October, 8:00 am (in 1 day 7 hours).`
@@ -75,8 +72,8 @@ object PromiseText {
     }
 
     /**
-     * Which open promises the due card at the top of Talk shows: those due on his day or earlier and not
-     * answered yet, oldest first. A promise later today is shown too, so he can mark it done early.
+     * Which open promises need an answer (Plan, Promises, with a dot on the Plan tab): those due on his day or
+     * earlier and not answered yet, oldest first. A promise later today is shown too, so he can mark it done early.
      */
     fun dueNow(open: List<Promise>, now: Instant, tz: String, boundaryHour: Int): List<Promise> {
         val today = Planner.dayKey(now.toString(), tz, boundaryHour)

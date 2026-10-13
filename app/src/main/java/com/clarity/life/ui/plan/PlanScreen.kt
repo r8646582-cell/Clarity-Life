@@ -68,7 +68,8 @@ fun PlanScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        // The four sections as one segmented control (the 0.1.6 redesign); a coral dot on Reviews while unread.
+        // The four sections as one segmented control (the 0.1.6 redesign). A coral dot on Today or Promises while
+        // something there waits for his answer, and on Reviews while a letter or review is unread ([Waiting]).
         Row(
             Modifier
                 .padding(top = 12.dp, bottom = 6.dp)
@@ -94,7 +95,13 @@ fun PlanScreen(
                         fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (on) clarity.text else clarity.muted,
                     )
-                    if (name == "Reviews" && reviewState.unread) {
+                    val waiting = when (name) {
+                        "Today" -> Waiting.today(planState)
+                        "Promises" -> Waiting.promises(state)
+                        "Reviews" -> reviewState.unread
+                        else -> false
+                    }
+                    if (waiting) {
                         Box(Modifier.padding(start = 6.dp).size(6.dp).background(clarity.coral, CircleShape))
                     }
                 }

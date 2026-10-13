@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Psychology
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.clarity.life.data.entity.ConversationRow
 import com.clarity.life.data.entity.FocusRow
 import com.clarity.life.ui.plan.PlanViewModel
-import com.clarity.life.ui.plan.PromisesViewModel
 import com.clarity.life.ui.theme.Bold
 import com.clarity.life.ui.theme.BoldCard
 import com.clarity.life.ui.theme.Kicker
@@ -44,16 +40,17 @@ import com.clarity.life.ui.theme.clarity
 
 /**
  * Talk home (spec section 2.1, the 0.1.6 redesign): what Talk shows while no conversation is open, so it is
- * never a blank screen. A greeting by the time of day, the letter card when one is unread, today's step with a
- * one-tap check-in, the next promise, and two or three ways to start a conversation. Every line here is written
- * by code. (The morning brief was removed on 13 Oct 2026, the owner's decision.)
+ * never a blank screen. A greeting by name, the letter card when one is unread, and two or three ways to start
+ * a conversation. Every line here is written by code. Today's steps and due promises live on Plan only, with a
+ * dot on the Plan tab while one waits for an answer (the owner's decision, 14 Oct 2026: on Talk home a promise
+ * and the plan step for the same lectures looked like two cards for one task). The morning brief was removed
+ * on 13 Oct 2026, the owner's decision.
  */
 @Composable
 fun TalkHome(
     modifier: Modifier,
     plan: PlanViewModel.State,
     planModel: PlanViewModel,
-    promises: PromisesViewModel.State,
     latest: ConversationRow?,
     hasKey: Boolean,
     provider: String,
@@ -64,8 +61,6 @@ fun TalkHome(
     letterCard: @Composable () -> Unit,
     onStart: (chatType: String, focusId: Long?) -> Unit,
     onOpen: (Long) -> Unit,
-    onOpenToday: () -> Unit,
-    onOpenPromises: () -> Unit,
 ) {
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -94,19 +89,6 @@ fun TalkHome(
         }
         if (!hasKey) item(key = "setup") { SetupCard(provider, onSetUp) }
         item { letterCard() }
-        val open = plan.todayRows.firstOrNull { it.answer == null }
-        if (open != null && !plan.restToday) {
-            item(key = "step") { StepCard(open, plan, planModel, onOpenToday) }
-        } else if (plan.todayRows.isNotEmpty() && !plan.restToday) {
-            item(key = "step") { QuietRow(Icons.Outlined.TrackChanges, "Today", "All answered. That is the habit.", onOpenToday) }
-        }
-        // What is due already has its own card above (the due card), so this row shows the next one after it.
-        val next = nextPromise(promises)
-        next?.let { p ->
-            item(key = "promise") {
-                QuietRow(Icons.Outlined.Schedule, "Next promise · ${p.time}", p.row.text, onOpenPromises)
-            }
-        }
         item {
             Kicker("Start a conversation", modifier = Modifier.padding(start = 8.dp, top = 16.dp))
         }
@@ -180,101 +162,12 @@ internal fun openPage(context: android.content.Context, url: String) {
     }
 }
 
-/** The "Next promise" row: never one the due card already shows, so a promise is not on Talk home twice. */
-fun nextPromise(promises: PromisesViewModel.State): PromisesViewModel.Item? = promises.coming.firstOrNull()
-
-/**
- * The words after today's number: "2 lectures · Reading", but just "2 CAF lectures" when the name already says
- * the unit, so it never reads "2 lectures · CAF lectures".
- */
-fun stepLabel(unit: String, name: String): String {
-    val u = unit.trim().lowercase()
-    if (u.isEmpty()) return name
-    val saysUnit = name.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).any { w -> w == u || w == u + "s" || u == w + "s" }
-    return if (saysUnit) name else "$unit · $name"
-}
-
 /**
  * "Hello, Sam." with the name from Settings, Coach, or just "Hello." until one is set. The same at any hour:
  * the date sits above it and the plan line below, so a time-of-day greeting only added a way to be wrong
  * (it said "Good evening." at 12:30 am).
  */
 fun greeting(name: String): String = name.trim().let { if (it.isEmpty()) "Hello." else "Hello, $it." }
-
-@Composable
-private fun StepCard(row: PlanViewModel.TodayRow, plan: PlanViewModel.State, model: PlanViewModel, onOpenToday: () -> Unit) {
-    val t = row.target
-    BoldCard(gap = 14) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { Kicker("Today") }
-            if (row.steps > 1) Text("Step ${row.step} of ${row.steps}", style = MaterialTheme.typography.bodySmall, color = clarity.muted)
-        }
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (row.quantity) {
-                Text(model.n(t.target), style = MaterialTheme.typography.displayMedium, color = clarity.yellow)
-            }
-            Text(
-                if (row.quantity) stepLabel(t.unit, t.name) else t.name,
-                style = MaterialTheme.typography.titleLarge,
-                color = clarity.text,
-                modifier = Modifier.padding(bottom = 6.dp),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val did = if (row.quantity) "Did ${model.n(t.target)}" else "Did it"
-            HomeButton(did, primary = true, Modifier.weight(2f)) { model.answer(row, "target", plan.today) }
-            HomeButton("Part", primary = false, Modifier.weight(1f), onClick = onOpenToday)
-            HomeButton("Not", primary = false, Modifier.weight(1f), onClick = onOpenToday)
-        }
-    }
-}
-
-@Composable
-private fun HomeButton(label: String, primary: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    Box(
-        modifier
-            .heightIn(min = 50.dp)
-            .then(
-                if (primary) {
-                    Modifier.background(clarity.yellow, Bold.buttonShape)
-                } else {
-                    Modifier.background(clarity.raised, Bold.buttonShape).border(1.dp, clarity.controlOutline, Bold.buttonShape)
-                },
-            )
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (primary) clarity.onYellow else clarity.text,
-        )
-    }
-}
-
-@Composable
-private fun QuietRow(icon: ImageVector, over: String, line: String, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(clarity.surface, Bold.cardShape)
-            .border(1.dp, clarity.hairline, Bold.cardShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Box(Modifier.size(40.dp).background(clarity.raised, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = clarity.yellow)
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(over, style = MaterialTheme.typography.bodySmall, color = clarity.muted)
-            Text(line, style = MaterialTheme.typography.titleMedium, color = clarity.text, maxLines = 2)
-        }
-        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = clarity.muted)
-    }
-}
 
 private data class Start(val icon: ImageVector, val title: String, val kind: String, val onClick: () -> Unit)
 

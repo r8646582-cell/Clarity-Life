@@ -49,14 +49,20 @@ fun ClarityRoot() {
     val current = entry?.destination
     val onTab = Tab.entries.any { tab -> current?.hierarchy?.any { it.route == tab.route } == true }
 
-    // A coral dot on the Plan tab while a letter or a review is unread (spec section 2.2).
+    // A coral dot on the Plan tab while something there waits for him (spec section 2.2): a step for today or a
+    // due promise not answered yet, or a letter or review unread. It goes as soon as he answers.
     val reviews: com.clarity.life.ui.plan.ReviewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
+    val plan: com.clarity.life.ui.plan.PlanViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val planState by plan.state.collectAsStateWithLifecycle()
+    val promises: com.clarity.life.ui.plan.PromisesViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val promiseState by promises.state.collectAsStateWithLifecycle()
+    val planDot = com.clarity.life.ui.plan.Waiting.planTab(planState, promiseState, reviewState.unread)
     Scaffold(
         containerColor = clarity.ground,
         bottomBar = {
             if (onTab) {
-                ClarityTabBar(current?.hierarchy?.firstOrNull()?.route, planDot = reviewState.unread) { route -> nav.switchTab(route) }
+                ClarityTabBar(current?.hierarchy?.firstOrNull()?.route, planDot = planDot) { route -> nav.switchTab(route) }
             }
         },
     ) { padding ->
@@ -118,7 +124,7 @@ private fun ClarityTabBar(currentRoute: String?, planDot: Boolean, onSelect: (St
                     if (tab == Tab.Plan && planDot) {
                         androidx.compose.material3.BadgedBox(
                             badge = { androidx.compose.material3.Badge(containerColor = clarity.coral) },
-                        ) { Icon(tab.icon, contentDescription = null) }
+                        ) { Icon(tab.icon, contentDescription = "Something is waiting for your answer") }
                     } else {
                         Icon(tab.icon, contentDescription = null)
                     }
