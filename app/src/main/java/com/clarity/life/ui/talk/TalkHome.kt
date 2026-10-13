@@ -99,7 +99,8 @@ fun TalkHome(
         } else if (plan.todayRows.isNotEmpty() && !plan.restToday) {
             item(key = "step") { QuietRow(Icons.Outlined.TrackChanges, "Today", "All answered. That is the habit.", onOpenToday) }
         }
-        val next = promises.due.firstOrNull() ?: promises.coming.firstOrNull()
+        // What is due already has its own card above (the due card), so this row shows the next one after it.
+        val next = nextPromise(promises)
         next?.let { p ->
             item(key = "promise") {
                 QuietRow(Icons.Outlined.Schedule, "Next promise · ${p.time}", p.row.text, onOpenPromises)
@@ -178,6 +179,20 @@ internal fun openPage(context: android.content.Context, url: String) {
     }
 }
 
+/** The "Next promise" row: never one the due card already shows, so a promise is not on Talk home twice. */
+fun nextPromise(promises: PromisesViewModel.State): PromisesViewModel.Item? = promises.coming.firstOrNull()
+
+/**
+ * The words after today's number: "2 lectures · Reading", but just "2 CAF lectures" when the name already says
+ * the unit, so it never reads "2 lectures · CAF lectures".
+ */
+fun stepLabel(unit: String, name: String): String {
+    val u = unit.trim().lowercase()
+    if (u.isEmpty()) return name
+    val saysUnit = name.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).any { w -> w == u || w == u + "s" || u == w + "s" }
+    return if (saysUnit) name else "$unit · $name"
+}
+
 /**
  * By the phone's clock: night before 5 (12:30 am is not an evening), morning before 12, afternoon before 17,
  * evening otherwise. Warm, never a nudge to go to bed.
@@ -202,7 +217,7 @@ private fun StepCard(row: PlanViewModel.TodayRow, plan: PlanViewModel.State, mod
                 Text(model.n(t.target), style = MaterialTheme.typography.displayMedium, color = clarity.yellow)
             }
             Text(
-                if (row.quantity && t.unit.isNotBlank()) "${t.unit} · ${t.name}" else t.name,
+                if (row.quantity) stepLabel(t.unit, t.name) else t.name,
                 style = MaterialTheme.typography.titleLarge,
                 color = clarity.text,
                 modifier = Modifier.padding(bottom = 6.dp),
