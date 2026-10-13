@@ -164,14 +164,8 @@ class TalkViewModel @Inject constructor(
                 timeZone = settings.timeZone()
                 boundaryHour = settings.dayBoundaryHour()
                 hasKey.value = settings.chatEndpoint() != null
-                // Open the newest conversation, or start one, so Talk is never an empty screen with no thread.
-                val existing = chat.conversations.searchByTitle("", 1).firstOrNull()
-                if (existing != null) {
-                    chatType.value = existing.chatType
-                    conversationId.value = existing.id
-                } else {
-                    start("free")
-                }
+                // Talk opens on its home (spec section 2.1): no conversation is open until he starts or picks
+                // one, and the home is never blank. The newest conversation is one tap away there.
             } finally {
                 opened.complete(Unit)
             }
@@ -188,8 +182,28 @@ class TalkViewModel @Inject constructor(
     fun takeDoorway() {
         viewModelScope.launch {
             opened.await()
-            requests.take()?.let { r -> start(r.chatType, r.openedFrom, r.openedFromId, r.focusId) }
+            requests.take()?.let { r ->
+                start(r.chatType, r.openedFrom, r.openedFromId, r.focusId)
+                // A message typed for him (the goal page's "Add the ramp"): put in the box, never sent.
+                if (!r.draft.isNullOrBlank()) draft.value = r.draft
+            }
         }
+    }
+
+    /** Text the screen should put in the message box (never sent by itself); taken once. */
+    val draft = MutableStateFlow<String?>(null)
+
+    fun takeDraft(): String? = draft.value.also { draft.value = null }
+
+    /** Back to Talk home: the conversation stays where it is, in the drawer. */
+    fun home() {
+        conversationId.value = 0L
+        chatType.value = "free"
+    }
+
+    /** A way to start from Talk home: a new conversation of [type], inside [focusId] when set. */
+    fun startFromHome(type: String, focusId: Long?) {
+        viewModelScope.launch { start(type, focusId = focusId) }
     }
 
     fun open(id: Long) {
@@ -265,7 +279,7 @@ class TalkViewModel @Inject constructor(
 
     fun forget(id: Long) = viewModelScope.launch {
         chat.forgetConversation(id)
-        if (conversationId.value == id) newConversation("free")
+        if (conversationId.value == id) home()
     }
 
     /** True while a reply is being written; a second one would only be refused, so Send waits. */
@@ -276,8 +290,7 @@ class TalkViewModel @Inject constructor(
     fun send(text: String): Boolean {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return false
-        val id = conversationId.value
-        if (id == 0L) return false
+        val current = conversationId.value
         if (replying()) {
             quietLine.value = "Wait for this reply to finish, then send."
             return false
@@ -290,6 +303,11 @@ class TalkViewModel @Inject constructor(
                 hasKey.value = false
                 quietLine.value = "Add your API key in Settings, Coach, and this will send."
                 return@guarded
+            }
+            // Typed on Talk home: it starts a free-talk conversation (spec section 2.1).
+            val id = if (current != 0L) current else {
+                start("free")
+                conversationId.value
             }
             val now = System.currentTimeMillis()
             chat.addHisMessage(id, trimmed, now)

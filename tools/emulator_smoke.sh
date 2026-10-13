@@ -50,6 +50,9 @@ adb logcat -c
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
+# Talk opens on its home (spec section 2.1): a greeting, never a blank screen.
+dump; grep -q 'Good morning\.\|Good afternoon\.\|Good evening\.' /tmp/ui.xml || { echo "SMOKE: Talk home did not show"; exit 1; }
+echo "SMOKE: Talk home showed"
 
 tap content-desc "Settings" || exit 1; crashed
 # The key box sits in the folded Coach group.
@@ -64,10 +67,14 @@ echo "SMOKE: Save survived"
 dump; grep -q 'content-desc="Back"' /tmp/ui.xml || adb shell input keyevent 111
 for i in 1 2 3 4 5; do dump; grep -q 'content-desc="Back"' /tmp/ui.xml && break; adb shell input swipe 160 200 160 500 300; sleep 1; done
 tap content-desc "Back" || exit 1; crashed
-tap text "Message" || exit 1
+tap text "Talk to your coach" || exit 1
 adb shell input text "hello"; sleep 1
 tap content-desc "Send" || exit 1; sleep 10; crashed
 echo "SMOKE: sending a message survived"
+# Sending from home opened the conversation; Back returns to Talk home.
+tap content-desc "Back to Talk home" || exit 1; sleep 2; crashed
+dump; grep -q 'Start a conversation\|START A CONVERSATION' /tmp/ui.xml || { echo "SMOKE: Back did not return to Talk home"; exit 1; }
+echo "SMOKE: back to Talk home survived"
 tap text "What I know" || exit 1; sleep 3; crashed
 tap text "Open your story" || exit 1; sleep 3; crashed
 dump; grep -q 'Your story starts here\|The first pages\|Your story so far' /tmp/ui.xml || { echo "SMOKE: Your story did not open"; exit 1; }

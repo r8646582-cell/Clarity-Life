@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -28,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.clarity.life.core.PromiseTimes
@@ -77,7 +77,7 @@ private val MODE_NAMES = mapOf(
 )
 
 /**
- * A suggestion card (docs/mockups/Talk.dc.html and TalkStates.dc.html): coral while offered, a dark Saved
+ * A suggestion card (docs/mockups/redesign/TalkChat.dc.html): coral-edged while offered, a dark Saved
  * receipt built from the database row once he taps, one quiet line once he says Not now.
  */
 @Composable
@@ -116,8 +116,9 @@ private fun OfferedCard(card: CardRow, line: String?, preview: com.clarity.life.
         Modifier
             .fillMaxWidth()
             .padding(top = 6.dp)
-            .background(clarity.coral, RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .background(clarity.coralTint, RoundedCornerShape(22.dp))
+            .border(1.dp, clarity.coralEdge, RoundedCornerShape(22.dp))
+            .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         when (card.type) {
@@ -214,11 +215,11 @@ private fun OfferedCard(card: CardRow, line: String?, preview: com.clarity.life.
                 when (preview) {
                     is com.clarity.life.chat.CardSaver.Preview.Ready -> {
                         Column(
-                            Modifier.fillMaxWidth().background(Color(0x2414121A), RoundedCornerShape(10.dp)).padding(10.dp),
+                            Modifier.fillMaxWidth().background(clarity.raised, RoundedCornerShape(12.dp)).padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Text("What will be saved", style = MaterialTheme.typography.labelSmall, color = clarity.ground)
-                            preview.lines.forEach { Text("· $it", style = MaterialTheme.typography.bodyMedium, color = clarity.ground) }
+                            Text("What will be saved", style = MaterialTheme.typography.labelSmall, color = clarity.muted)
+                            preview.lines.forEach { Text("· $it", style = MaterialTheme.typography.bodyMedium, color = clarity.text) }
                         }
                         line?.let { Body(it) }
                         Buttons(
@@ -251,14 +252,14 @@ private fun SavedReceipt(text: String, onView: (() -> Unit)?) {
         Modifier
             .fillMaxWidth()
             .padding(top = 6.dp)
-            .background(clarity.surface, RoundedCornerShape(16.dp))
-            .border(1.dp, clarity.hairline, RoundedCornerShape(16.dp))
+            .background(clarity.surface, RoundedCornerShape(18.dp))
+            .border(1.dp, clarity.hairline, RoundedCornerShape(18.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.size(32.dp).background(clarity.yellow, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(Icons.Outlined.Check, contentDescription = null, tint = clarity.ground, modifier = Modifier.size(18.dp))
+        Box(Modifier.size(30.dp).background(clarity.greenTint, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Outlined.Check, contentDescription = null, tint = clarity.green, modifier = Modifier.size(16.dp))
         }
         Column(Modifier.weight(1f)) {
             Text("Saved", style = MaterialTheme.typography.labelLarge, color = clarity.text)
@@ -274,32 +275,35 @@ private fun SavedReceipt(text: String, onView: (() -> Unit)?) {
 
 @Composable
 private fun Kicker(text: String) =
-    Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, color = clarity.ground)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = clarity.coral, modifier = Modifier.size(14.dp))
+        Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, color = clarity.coral)
+    }
 
 @Composable
 private fun Headline(text: String) =
-    Text(text, style = MaterialTheme.typography.titleLarge, color = clarity.ground)
+    Text(text, style = MaterialTheme.typography.headlineSmall, color = clarity.text)
 
 @Composable
 private fun Body(text: String) =
-    Text(text, style = MaterialTheme.typography.bodySmall, color = clarity.ground)
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = clarity.text)
 
 @Composable
 private fun Chip(text: String) = Text(
     text,
     style = MaterialTheme.typography.labelMedium,
-    color = clarity.ground,
+    color = clarity.text,
     modifier = Modifier
-        .background(Color(0x2414121A), RoundedCornerShape(8.dp))
-        .padding(horizontal = 10.dp, vertical = 5.dp),
+        .background(clarity.raised, RoundedCornerShape(999.dp))
+        .padding(horizontal = 12.dp, vertical = 7.dp),
 )
 
 @Composable
 private fun Primary(label: String, onClick: () -> Unit) = Button(
     onClick = onClick,
     modifier = Modifier.heightIn(min = 44.dp),
-    shape = RoundedCornerShape(10.dp),
-    colors = ButtonDefaults.buttonColors(containerColor = clarity.ground, contentColor = clarity.text),
+    shape = RoundedCornerShape(14.dp),
+    colors = ButtonDefaults.buttonColors(containerColor = clarity.coral, contentColor = clarity.ground),
 ) { Text(label) }
 
 @Composable
@@ -307,7 +311,7 @@ private fun Plain(label: String, underline: Boolean = false, onClick: () -> Unit
     TextButton(onClick = onClick, modifier = Modifier.heightIn(min = 44.dp)) {
         Text(
             label,
-            color = clarity.ground,
+            color = clarity.muted,
             textDecoration = if (underline) TextDecoration.Underline else null,
         )
     }

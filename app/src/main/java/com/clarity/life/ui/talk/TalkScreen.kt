@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,9 +25,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -49,6 +51,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -57,8 +60,10 @@ import com.clarity.life.data.entity.MessageRow
 import com.clarity.life.ui.theme.clarity
 
 /**
- * Talk: the conversation, as the Bold mockup draws it (docs/mockups/Talk.dc.html). Coach replies sit in a
- * dark bubble, his own messages in a white one, and a suggestion card sits under the reply that offered it.
+ * Talk, as the 0.1.6 redesign draws it (docs/mockups/redesign/TalkHome.dc.html and TalkChat.dc.html). With no
+ * conversation open it shows Talk home ([TalkHome]); in a conversation, coach replies are plain text beside the
+ * coach's presence dot, his own messages sit in a white bubble, and a suggestion card sits under the reply that
+ * offered it.
  *
  * Nothing on this screen writes to the database by itself: each card button calls a SaveCard command.
  */
@@ -78,7 +83,9 @@ fun TalkScreen(
     promises: com.clarity.life.ui.plan.PromisesViewModel = hiltViewModel(),
     planner: com.clarity.life.ui.plan.PlanViewModel = hiltViewModel(),
     reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
+    briefs: com.clarity.life.ui.brief.BriefViewModel = hiltViewModel(),
 ) {
+    val brief by briefs.brief.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
     val promiseState by promises.state.collectAsStateWithLifecycle()
     val planState by planner.state.collectAsStateWithLifecycle()
@@ -91,6 +98,12 @@ fun TalkScreen(
     }
     // Kept through a turn of the phone and a trip to another tab.
     var draft by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    // A message typed for him by another screen ("Add the ramp"): into the box, never sent by itself.
+    val typedForHim by model.draft.collectAsStateWithLifecycle()
+    LaunchedEffect(typedForHim) {
+        model.takeDraft()?.let { draft = it }
+    }
+    val home = state.conversationId == 0L
     var typeMenu by remember { mutableStateOf(false) }
     var drawer by remember { mutableStateOf(false) }
     var forgetting by remember { mutableStateOf<Long?>(null) }
@@ -174,57 +187,83 @@ fun TalkScreen(
     }
 
     Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Talk.", style = MaterialTheme.typography.displaySmall, color = clarity.text)
-            Spacer(Modifier.widthIn(min = 12.dp))
-            Box {
-                Row(
-                    Modifier
-                        .border(1.dp, clarity.hairline, RoundedCornerShape(20.dp))
-                        .clickable { typeMenu = true }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+        if (home) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = { drawer = !drawer }) {
+                    Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+                }
+                Text(
+                    if (planState.ready) planner.longDay(planState.today) else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = clarity.muted,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
+                }
+            }
+        } else {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = { drawer = false; model.home() }) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back to Talk home", tint = clarity.text)
+                }
+                Column(Modifier.weight(1f)) {
                     Text(
-                        state.focuses.firstOrNull { it.id == state.focusId }?.name
-                            ?: CHAT_TYPES.firstOrNull { it.first == state.chatType }?.second ?: "Free talk",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = clarity.muted,
+                        state.conversations.firstOrNull { it.id == state.conversationId }?.title?.takeIf { it.isNotBlank() }
+                            ?: "New conversation",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = clarity.text,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
-                    Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
-                }
-                DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
-                    CHAT_TYPES.forEach { (id, label) ->
-                        DropdownMenuItem(
-                            text = { Text(label) },
-                            onClick = {
-                                typeMenu = false
-                                model.switchChatType(id)
-                            },
-                        )
+                    Box {
+                        Row(
+                            Modifier.clickable { typeMenu = true }.padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                state.focuses.firstOrNull { it.id == state.focusId }?.name
+                                    ?: CHAT_TYPES.firstOrNull { it.first == state.chatType }?.second ?: "Free talk",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = clarity.muted,
+                            )
+                            Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
+                        }
+                        DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
+                            CHAT_TYPES.forEach { (id, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        typeMenu = false
+                                        model.switchChatType(id)
+                                    },
+                                )
+                            }
+                            // One entry per active focus (spec section 2.1); the conversation joins it.
+                            state.focuses.forEach { f ->
+                                DropdownMenuItem(
+                                    text = { Text(f.name) },
+                                    onClick = {
+                                        typeMenu = false
+                                        model.switchToFocus(f.id)
+                                    },
+                                )
+                            }
+                        }
                     }
-                    // One entry per active focus (spec section 2.1); the conversation joins it.
-                    state.focuses.forEach { f ->
-                        DropdownMenuItem(
-                            text = { Text(f.name) },
-                            onClick = {
-                                typeMenu = false
-                                model.switchToFocus(f.id)
-                            },
-                        )
-                    }
+                }
+                IconButton(onClick = { drawer = !drawer }) {
+                    Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
                 }
             }
-            Spacer(Modifier.fillMaxWidth(0.1f))
-            IconButton(onClick = { drawer = !drawer }) {
-                Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = "Conversations", tint = clarity.muted)
-            }
-            IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.muted)
-            }
+            androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
         }
 
         if (drawer) {
@@ -239,19 +278,6 @@ fun TalkScreen(
             )
         }
 
-        // The letter card, only while a new weekly letter is unread (spec section 2.1).
-        com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
-        // The due card: written by the app, never the coach (spec section 2.1).
-        com.clarity.life.ui.plan.DueCard(promiseState, promises, onSeeAll = { reviews.showSection("Promises"); onOpenPromises() })
-        // Today's unanswered check-ins share the card's two places with the promises.
-        com.clarity.life.ui.plan.DueCheckins(
-            planState,
-            planner,
-            room = com.clarity.life.core.PromiseText.DUE_CARD_MAX - promiseState.due.size,
-            // Check-ins are answered on Plan, Today (the reason chips are there), not wherever Plan was left.
-            onSeeAll = { reviews.showSection("Today"); onOpenPromises() },
-        )
-
         state.quietLine?.let { line ->
             Text(
                 line,
@@ -261,10 +287,33 @@ fun TalkScreen(
             )
         }
 
-        LazyColumn(
+        if (home) {
+            TalkHome(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                plan = planState,
+                planModel = planner,
+                promises = promiseState,
+                brief = brief,
+                latest = state.conversations.firstOrNull(),
+                focuses = state.focuses,
+                letterCard = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // The letter card, only while a new weekly letter is unread (spec section 2.1).
+                        com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
+                        // Promises due now, written by the app, never the coach (spec section 2.1).
+                        com.clarity.life.ui.plan.DueCard(promiseState, promises, onSeeAll = { reviews.showSection("Promises"); onOpenPromises() })
+                    }
+                },
+                onStart = { type, focusId -> follow = true; model.startFromHome(type, focusId) },
+                onOpen = { id -> follow = true; model.open(id) },
+                // Part and Not are answered on Plan, Today, where the amount and the reasons are.
+                onOpenToday = { reviews.showSection("Today"); onOpenPromises() },
+                onOpenPromises = { reviews.showSection("Promises"); onOpenPromises() },
+            )
+        } else LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             items(state.messages, key = { it.id }) { row ->
                 MessageBubble(
@@ -293,31 +342,36 @@ fun TalkScreen(
         }
 
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Message", color = clarity.muted) },
-                shape = RoundedCornerShape(24.dp),
+                placeholder = { Text(if (home) "Talk to your coach" else "Message", color = clarity.muted) },
+                shape = RoundedCornerShape(27.dp),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = clarity.text,
                     unfocusedTextColor = clarity.text,
                     focusedContainerColor = clarity.surface,
                     unfocusedContainerColor = clarity.surface,
-                    focusedIndicatorColor = clarity.controlOutline,
-                    unfocusedIndicatorColor = clarity.hairline,
+                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                     cursorColor = clarity.yellow,
                 ),
                 keyboardActions = KeyboardActions(onSend = { sendDraft() }),
                 maxLines = 6,
             )
-            IconButton(
-                onClick = { sendDraft() },
+            Box(
+                Modifier
+                    .size(52.dp)
+                    .background(clarity.yellow, androidx.compose.foundation.shape.CircleShape)
+                    .clickable(role = androidx.compose.ui.semantics.Role.Button) { sendDraft() },
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.Send, contentDescription = "Send", tint = clarity.yellow)
+                Icon(Icons.Outlined.ArrowUpward, contentDescription = "Send", tint = clarity.onYellow)
             }
         }
     }
@@ -502,7 +556,7 @@ private fun MessageBubble(
                         if (his) {
                             Modifier
                                 .widthIn(max = 320.dp)
-                                .background(clarity.text, RoundedCornerShape(18.dp))
+                                .background(clarity.text, RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp))
                         } else {
                             Modifier.fillMaxWidth()
                         }
@@ -519,17 +573,27 @@ private fun MessageBubble(
                             vertical = if (his) 10.dp else 6.dp,
                         ),
                 ) {
-                    if (writing) {
-                        ReplyText(row, live, onGrow)
-                    } else if (row.content.isNotEmpty() && his) {
+                    if (his) {
                         Text(row.content, style = MaterialTheme.typography.bodyLarge, color = clarity.ground)
-                    } else if (row.content.isNotEmpty()) {
-                        // The coach may mark a few words bold or write a short list; his own text is never changed.
-                        Text(
-                            remember(row.content) { styled(row.content) },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = clarity.text,
-                        )
+                    } else {
+                        // The coach's presence dot beside its reply; it breathes while the reply is being written.
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            com.clarity.life.ui.theme.CoachDot(alive = writing, modifier = Modifier.padding(top = 1.dp))
+                            Column(Modifier.weight(1f)) {
+                                if (writing) {
+                                    ReplyText(row, live, onGrow)
+                                } else if (row.content.isNotEmpty()) {
+                                    // The coach may mark a few words bold or write a short list; his own text is never changed.
+                                    Text(
+                                        remember(row.content) { styled(row.content) },
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontSize = 17.sp,
+                                        lineHeight = 26.sp,
+                                        color = clarity.text,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
@@ -619,7 +683,7 @@ private fun ReplyText(
     if (full.isEmpty()) {
         if (row.status == "streaming") ThinkingLine()
     } else {
-        Text(styled(full.take(shown)), style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+        Text(styled(full.take(shown)), style = MaterialTheme.typography.bodyLarge, fontSize = 17.sp, lineHeight = 26.sp, color = clarity.text)
     }
 }
 
@@ -639,6 +703,7 @@ private fun ThinkingLine() {
     Text(
         "Thinking$dots",
         style = MaterialTheme.typography.bodyLarge,
+        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
         color = clarity.muted,
     )
 }

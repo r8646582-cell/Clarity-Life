@@ -21,6 +21,8 @@ class TalkRequests @Inject constructor() {
         val openedFromId: Long? = null,
         /** A conversation inside this focus (Talk about this, on a Focus page). */
         val focusId: Long? = null,
+        /** A message typed for him into the box ("Add the ramp" on a goal); he sends it, or not. */
+        val draft: String? = null,
     )
 
     /** What Plan should show: a section, and a letter or review to open in it. */
@@ -32,8 +34,14 @@ class TalkRequests @Inject constructor() {
     val requests: StateFlow<Start?> get() = pending
     val planRequests: StateFlow<Show?> get() = plan
 
-    fun startConversation(chatType: String, openedFrom: String? = null, openedFromId: Long? = null, focusId: Long? = null) {
-        pending.value = Start(chatType, openedFrom, openedFromId, focusId)
+    fun startConversation(
+        chatType: String,
+        openedFrom: String? = null,
+        openedFromId: Long? = null,
+        focusId: Long? = null,
+        draft: String? = null,
+    ) {
+        pending.value = Start(chatType, openedFrom, openedFromId, focusId, draft)
     }
 
     /** Talk took the request. Returns it, or null when there was none. */
