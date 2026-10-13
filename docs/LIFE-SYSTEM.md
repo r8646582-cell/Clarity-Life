@@ -78,7 +78,7 @@ One page, opened from the top of What I know: what he did, what he overcame and 
 - No scores, levels, streaks or badges. Every number is counted by code; the AI writes only the short version and the overcame lines, and both pass the text checks.
 
 ### 2.4 Settings (the simplified Bold mockup, plus the model fields)
-Main level: **Coach** (provider preset, base URL, API key, chat model name typed freely, background model name defaulting to the same, Test connection), **Reminders** (weekly letter on/off, "Sunday alert" on/off (one quiet notification when the letter is ready, no sound), day boundary (default 4:00 am, so a 12:30 am check-in counts for the day before); Keep reliable: battery, autostart, exact alarms), **Your data** (app lock, hide in recents, backup folder and automatic weekly backup, Export everything, Erase everything with type-ERASE). **Advanced** (collapsed): embedding model and Re-index, prompt editor with Reset to built-in, test bench, error log (no content), version.
+Main level: **Coach** (provider preset, base URL, API key, chat model name typed freely, background model name defaulting to the same, Test connection), **Reminders** (weekly letter on/off, "Sunday alert" on/off (one quiet notification when the letter is ready, no sound), day boundary (default midnight, like a calendar, the owner's choice of 13 Oct 2026; a night owl can pick 1 to 6 am so a 12:30 am check-in counts for the day before); Keep reliable: battery, autostart, exact alarms), **Your data** (app lock, hide in recents, backup folder and automatic weekly backup, Export everything, Erase everything with type-ERASE). **Advanced** (collapsed): embedding model and Re-index, prompt editor with Reset to built-in, test bench, error log (no content), version. **Help for a new person** (added 13 Oct 2026 at the owner's request): a read-only guide, "How Clarity works", opens from a ? on Talk home and from the bottom of Settings; it asks nothing and saves nothing. Until a key is saved, Talk home shows a card with the three steps to get one ("Get a key" opens the provider's key page in the browser; the app sends nothing there), and Settings opens on Coach.
 
 ---
 
@@ -94,7 +94,7 @@ Main level: **Coach** (provider preset, base URL, API key, chat model name typed
 1. Fixed prompt (cached across all conversations of a chat type): persona, examples, card rules, chat-type instructions.
 2. Frozen context (cached for the whole conversation): flags, profile, people, active notes (capped), focus summary, latest chapters, recent session summaries, recent ideas, and the letter or review it was opened from.
 3. The messages of this conversation (a window of about 24k tokens that moves forward in jumps, plus a running summary of anything that left the window).
-4. Volatile facts with their new message: the current time sentence (code-written, with the 4 am day boundary), the **planner facts** (section 6) and today's check-in state, open promises with code-written due phrases, what they did with the last reply's cards, and "possibly relevant from the past" (top matches across all conversations, labeled with date and conversation title).
+4. Volatile facts with their new message: the current time sentence (code-written, with the day boundary), the **planner facts** (section 6) and today's check-in state, open promises with code-written due phrases, what they did with the last reply's cards, and "possibly relevant from the past" (top matches across all conversations, labeled with date and conversation title).
 Budgets: frozen context about 9k tokens, volatile facts about 3k, history about 24k. Order of trimming: oldest summaries, then lowest-evidence notes. The planner facts, promises, time and flags are never trimmed. Nothing stored is ever truncated; only what is sent.
 
 ---
@@ -303,7 +303,7 @@ Monthly/yearly letters, growth tree, screen-time tracking, read aloud, onboardin
 Decided by the owner: start clean (no old data import); Claude may rewrite and improve the prompts and anything else in the app; weekly letter on by default; the owner creates the new GitHub repo.
 Still open (not blocking): make the old repo private (it is public today); whether to freeze v1 for two weeks of real use before adding features (recommended, see section 14 step F).
 
-Also decided or recommended on 9 to 10 Oct 2026: letters live under Plan, Reviews with a card on Talk and a dot on Plan (section 2); the optional Sunday alert is a Settings toggle (my recommendation: on, silent; it is one notification a week); day boundary at 4:00 am; the coach has a short safety rule for danger but no help-line screen, matching your earlier removal.
+Also decided or recommended on 9 to 10 Oct 2026: letters live under Plan, Reviews with a card on Talk and a dot on Plan (section 2); the optional Sunday alert is a Settings toggle (my recommendation: on, silent; it is one notification a week); day boundary at 4:00 am (changed to midnight on 13 Oct 2026 at the owner's request; 1 to 6 am stay as choices); the coach has a short safety rule for danger but no help-line screen, matching your earlier removal.
 
 Decided on 13 Oct 2026: **Your story** (section 2.5) and its monthly story job (section 8) are part of v1. It is not the growth tree on the Later list: no scores, levels or badges.
 
@@ -337,7 +337,7 @@ No software is bug-free. This design tries to make bugs rare, small, loud and re
 
 **4. A pure core, thin glue.** Pace math, rest days, day keys, time phrases, card parsing, evidence rules, note caps, context budgeting and the re-plan trigger are plain Kotlin functions with no Android in them, tested on the JVM with fixed fixtures (leap day, month end, rest days, a time-zone change, check-ins after midnight). Android code only connects them to screens, alarms and storage.
 
-**5. Time cannot corrupt history.** Each check-in stores the UTC time and the local day key chosen at write time (day boundary 4:00 am by default). Changing time zone or the system clock never moves old results.
+**5. Time cannot corrupt history.** Each check-in stores the UTC time and the local day key chosen at write time (day boundary midnight by default, a setting). Changing time zone or the system clock never moves old results.
 
 **6. Explicit state machines.** Message (streaming, complete, interrupted, failed), job (pending, running, succeeded, failed, skipped), card (offered, saved, dismissed) and promise (open, kept, not done, moved, let go) each have a written table of allowed transitions, and a test that illegal transitions are rejected. On every start a repair sweep turns stuck states into safe ones (streaming becomes interrupted, running becomes pending). No spinner can stay forever.
 

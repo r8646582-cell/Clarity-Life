@@ -40,6 +40,8 @@ class SettingsViewModel @Inject constructor(
         val letterThinking: String = DefaultSettings.LETTER_THINKING,
         val userName: String = DefaultSettings.USER_NAME,
         val keySet: Boolean = false,
+        /** False until the stored settings are read, so the screen does not act on the defaults. */
+        val loaded: Boolean = false,
         val testing: Boolean = false,
         val testLine: String? = null,
         val testOk: Boolean = false,
@@ -87,6 +89,7 @@ class SettingsViewModel @Inject constructor(
     private suspend fun reload() {
         val provider = settings.get(SettingsRepository.Keys.PROVIDER, DefaultSettings.PROVIDER)
         _state.value = State(
+            loaded = true,
             provider = provider,
             baseUrl = settings.get(SettingsRepository.Keys.BASE_URL, DefaultSettings.BASE_URL),
             chatModel = settings.get(SettingsRepository.Keys.CHAT_MODEL, DefaultSettings.CHAT_MODEL),
@@ -254,6 +257,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun pickProvider(id: String) {
+        if (id == _state.value.provider) return // a second tap on the same preset changes nothing
         viewModelScope.launch {
             settings.set(SettingsRepository.Keys.PROVIDER, id)
             // Each preset has its own address; he can still edit it.
@@ -263,7 +267,25 @@ class SettingsViewModel @Inject constructor(
                 else -> "https://"
             }
             settings.set(SettingsRepository.Keys.BASE_URL, url)
-            _state.value = _state.value.copy(provider = id, baseUrl = url, testLine = null, keySet = settings.hasKey(id))
+            // A model name only works with its own provider, so each preset brings its own three names.
+            // OpenAI-style keeps whatever is typed: there is no single right name for those servers.
+            val models = when (id) {
+                "deepseek" -> Triple(DefaultSettings.CHAT_MODEL, DefaultSettings.BACKGROUND_MODEL, DefaultSettings.LETTER_MODEL)
+                "anthropic" -> Triple(
+                    DefaultSettings.ANTHROPIC_CHAT_MODEL,
+                    DefaultSettings.ANTHROPIC_BACKGROUND_MODEL,
+                    DefaultSettings.ANTHROPIC_LETTER_MODEL,
+                )
+                else -> null
+            }
+            var next = _state.value.copy(provider = id, baseUrl = url, testLine = null, keySet = settings.hasKey(id))
+            if (models != null) {
+                settings.set(SettingsRepository.Keys.CHAT_MODEL, models.first)
+                settings.set(SettingsRepository.Keys.BACKGROUND_MODEL, models.second)
+                settings.set(SettingsRepository.Keys.LETTER_MODEL, models.third)
+                next = next.copy(chatModel = models.first, backgroundModel = models.second, letterModel = models.third)
+            }
+            _state.value = next
         }
     }
 

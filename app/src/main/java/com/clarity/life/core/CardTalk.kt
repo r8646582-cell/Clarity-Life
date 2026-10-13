@@ -7,17 +7,22 @@ package com.clarity.life.core
  */
 object CardTalk {
 
+    // Strict on purpose: everyday coaching words ("your sleep is below seven hours", "here it is",
+    // "I made a list of your flash cards") must not raise a false alarm (the owner's report, 13 Oct 2026).
+    private const val THING = "(card|cards|button|buttons)"
+    private const val ONE = "(a|an|the|your|this|that)( \\w+)? "
     private val POINTS = Regex(
         "\\b(tap|tapping)\\b[^.?!\\n]*\\bbelow\\b|\\bbelow\\b[^.?!\\n]*\\b(tap|tapping)\\b|" +
-            "\\b(put|placed) (it|that|this) below\\b|\\b(is|are) below\\b|" +
-            // "here is your card", "here's the button", "I've added a card", "I'll attach the plan card"
-            "\\bhere(?:'s|’s| is| are)\\b[^.?!\\n]*\\b(card|cards|button|buttons)\\b|" +
-            "\\b(add|added|attach|attached|sent|included|made|put)\\b[^.?!\\n]*\\b(card|cards|button|buttons)\\b|" +
-            "\\b(card|cards|button|buttons)\\b[^.?!\\n]*\\b(below|attached|added|ready)\\b|" +
-            // "tap Set it", "tap Save plan", "tap Switch": the buttons by name
-            "\\b(tap|tapping|press|hit)\\b[^.?!\\n]*\\b(set it|save plan|save it|switch|keep it)\\b|" +
+            "\\b(put|placed) (it|that|this) below\\b|" +
+            "\\b(plan|card|cards|button|buttons|reminder|promise) (is|are) below\\b|" +
+            // "here is your card", "here's the plan card", "I've added a card", "I'll attach the plan card"
+            "\\bhere(?:'s|’s| is| are) $ONE$THING\\b|" +
+            "\\b(add|added|attach|attached|sent|included|made|put) $ONE$THING\\b|" +
+            "\\b$THING (is |are )?(below|attached)\\b|" +
+            // "tap Set it", "tap Save plan", "tap Switch": the buttons by name, right after the verb
+            "\\b(tap|tapping|press)\\b \"?(set it|save plan|save it|switch|keep it)\\b|" +
             // "Here it is. Tap it and we start": the owner's case of 13 Oct 2026, with no card under it
-            "\\btap (it|this|that|here|the button)\\b|\\bhere (it is|you go)\\b",
+            "\\btap (it|this|that|here|the button)\\b",
         RegexOption.IGNORE_CASE,
     )
 

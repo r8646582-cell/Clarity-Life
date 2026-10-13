@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.clarity.life.ui.know
 
 import androidx.compose.foundation.background
@@ -330,7 +332,11 @@ private fun ItemCard(
                 }
             }
             if (item.canEdit || item.canDelete || item.canConfirm || item.statusActions.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Wraps on a narrow phone rather than squeezing a button's words onto two lines.
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     if (item.canEdit) OutlineButton("Edit", clarity.text, onEdit)
                     item.statusActions.forEach { (label, status) -> OutlineButton(label, clarity.text) { onStatus(status) } }
                     if (item.canDelete) OutlineButton("Delete", clarity.danger, onDelete)

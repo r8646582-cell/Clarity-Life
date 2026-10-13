@@ -194,8 +194,17 @@ class WireTest {
     }
 
     @Test
-    fun theThinkingBudgetStaysBelowTheOutputLimit() {
-        assertTrue(AnthropicWire.thinkingBudget(16000) < 16000)
-        assertEquals(1024, AnthropicWire.thinkingBudget(100))
+    fun anthropicThinksAdaptivelyAndNeverSendsWhatCurrentModelsRefuse() {
+        fun body(e: Endpoint) = kotlinx.serialization.json.Json.parseToJsonElement(
+            AnthropicWire.requestBody(e, ChatRequest(system = "s", messages = listOf(ChatMessage(ChatMessage.USER, "hi")))),
+        ).jsonObject
+        val base = Endpoint(provider = "anthropic", baseUrl = "https://api.anthropic.com", apiKey = "k", model = "m", maxOutputTokens = 16000)
+        val off = body(base.copy(thinking = false, effort = "off", temperature = 0.3))
+        assertEquals("adaptive", off["thinking"]!!.jsonObject["type"]!!.jsonPrimitive.content)
+        assertTrue(!off["thinking"]!!.jsonObject.containsKey("budget_tokens"))
+        assertTrue(!off.containsKey("temperature"))
+        assertEquals("low", off["output_config"]!!.jsonObject["effort"]!!.jsonPrimitive.content)
+        assertEquals("high", body(base.copy(effort = "high"))["output_config"]!!.jsonObject["effort"]!!.jsonPrimitive.content)
+        assertEquals("max", body(base.copy(effort = "max"))["output_config"]!!.jsonObject["effort"]!!.jsonPrimitive.content)
     }
 }

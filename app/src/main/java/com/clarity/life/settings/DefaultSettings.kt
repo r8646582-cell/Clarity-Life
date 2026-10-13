@@ -37,6 +37,27 @@ object DefaultSettings {
      */
     const val ANTHROPIC_BASE_URL = "https://api.anthropic.com"
 
+    /**
+     * The model names filled in with the Anthropic preset (checked 13 Oct 2026), mirroring the DeepSeek
+     * split: a fast model for chat and the background jobs, the biggest one for the weekly letter.
+     */
+    const val ANTHROPIC_CHAT_MODEL = "claude-sonnet-5-5"
+    const val ANTHROPIC_BACKGROUND_MODEL = ANTHROPIC_CHAT_MODEL
+    const val ANTHROPIC_LETTER_MODEL = "claude-opus-5-5"
+
+    /**
+     * The page where each preset's key is made, opened in the phone's browser by "Get a key" (the app itself
+     * sends nothing there). OpenAI-style servers differ, so they have none.
+     */
+    const val DEEPSEEK_KEY_PAGE = "https://platform.deepseek.com/api_keys"
+    const val ANTHROPIC_KEY_PAGE = "https://console.anthropic.com/settings/keys"
+
+    fun keyPage(provider: String): String? = when (provider) {
+        "deepseek" -> DEEPSEEK_KEY_PAGE
+        "anthropic" -> ANTHROPIC_KEY_PAGE
+        else -> null
+    }
+
     /** Thinking tokens count against the output limit, so this is set high; there is no reply cap in the app. */
     const val MAX_OUTPUT_TOKENS = 16000
     const val BACKGROUND_TEMPERATURE = 0.3
@@ -44,8 +65,11 @@ object DefaultSettings {
     /** Stage B. CLS pooling, 384 dimensions (spec section 7). */
     const val EMBEDDING_MODEL = "bge-small-en-v1.5"
 
-    /** A 12:30 am check-in belongs to the day before (spec section 2.4). */
-    const val DAY_BOUNDARY_HOUR = 4
+    /**
+     * When his day ends: midnight, like a calendar (the owner's choice, 13 Oct 2026; it was 4 am). A night owl
+     * can pick 1 to 6 am in Settings so a 12:30 am check-in still counts for the day before.
+     */
+    const val DAY_BOUNDARY_HOUR = 0
 
     const val WEEKLY_LETTER_ON = true
     // On, silent: the spec's recommendation (section 17), chosen by the owner in the audit follow-up of 10 Oct 2026.

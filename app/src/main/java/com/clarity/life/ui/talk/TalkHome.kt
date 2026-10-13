@@ -55,6 +55,10 @@ fun TalkHome(
     planModel: PlanViewModel,
     promises: PromisesViewModel.State,
     latest: ConversationRow?,
+    hasKey: Boolean,
+    provider: String,
+    onSetUp: () -> Unit,
+    onOpenGuide: () -> Unit,
     focuses: List<FocusRow>,
     letterCard: @Composable () -> Unit,
     onStart: (chatType: String, focusId: Long?) -> Unit,
@@ -66,6 +70,17 @@ fun TalkHome(
         item {
             Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(greeting(java.time.LocalTime.now().hour), style = MaterialTheme.typography.displayLarge, color = clarity.text)
+                // The very first visit: one line on what this is, gone once there is a conversation.
+                if (latest == null) {
+                    Text(
+                        "Your coach is here for anything: a goal, a hard day, a choice. It remembers what matters " +
+                            "and helps you keep your plans. Nothing is saved unless you tap to save it.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = clarity.muted,
+                        modifier = Modifier.padding(top = 6.dp, end = 8.dp),
+                    )
+                    com.clarity.life.ui.theme.TextAction("New here? See how Clarity works", onClick = onOpenGuide)
+                }
                 planModel.planDay(plan)?.takeIf { plan.ready }?.let { day ->
                     Text(
                         "Day $day of your plan.",
@@ -76,6 +91,7 @@ fun TalkHome(
                 }
             }
         }
+        if (!hasKey) item(key = "setup") { SetupCard(provider, onSetUp) }
         item { letterCard() }
         val open = plan.todayRows.firstOrNull { it.answer == null }
         if (open != null && !plan.restToday) {
@@ -107,6 +123,58 @@ fun TalkHome(
         }.take(3)
         starts.forEach { s -> item { StartRow(s) } }
         item { Spacer(Modifier.height(12.dp)) }
+    }
+}
+
+/**
+ * Shown on Talk home until a key is saved: the one thing a new person must do before the coach can answer,
+ * in three plain steps, with a button to the key page and one straight to Settings, Coach.
+ */
+@Composable
+private fun SetupCard(provider: String, onSetUp: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val page = com.clarity.life.settings.DefaultSettings.keyPage(provider)
+    val service = when (provider) {
+        "deepseek" -> "DeepSeek"
+        "anthropic" -> "Anthropic"
+        else -> "your AI service"
+    }
+    BoldCard(gap = 10) {
+        Kicker("Before your first talk", color = clarity.yellow)
+        Text("Your coach needs a key", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.text)
+        Text(
+            "The coach thinks with an AI service. You make an account there, copy a key (a long password for apps), " +
+                "and paste it here once. It stays locked on this phone.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = clarity.muted,
+        )
+        listOf(
+            "Tap Get a key and sign up at $service. Add a little credit there.",
+            "Make a new API key and copy it.",
+            "Come back, tap Paste my key, and paste it under API key.",
+        ).forEachIndexed { i, step ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("${i + 1}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = clarity.yellow)
+                Text(step, style = MaterialTheme.typography.bodyMedium, color = clarity.text, modifier = Modifier.weight(1f))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+            if (page != null) {
+                com.clarity.life.ui.theme.SecondaryButton("Get a key", Modifier.weight(1f)) {
+                    openPage(context, page)
+                }
+            }
+            com.clarity.life.ui.theme.PrimaryButton("Paste my key", Modifier.weight(1f), onClick = onSetUp)
+        }
+    }
+}
+
+/** Opens a page in the phone's browser; a phone with no browser simply does nothing. */
+internal fun openPage(context: android.content.Context, url: String) {
+    try {
+        context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+    } catch (e: android.content.ActivityNotFoundException) {
+        // Nothing to open it with: the steps still name the service.
     }
 }
 
