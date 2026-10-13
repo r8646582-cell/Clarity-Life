@@ -116,6 +116,17 @@ class WireTest {
     }
 
     @Test
+    fun jsonModeIsAskedForOnlyWhenTheRequestWantsItAndOnlyFromDeepSeek() {
+        val base = Endpoint("deepseek", "https://api.test.com", "k", "deepseek-flash", 16000)
+        val msgs = listOf(ChatMessage(ChatMessage.USER, "json please"))
+        val json = OpenAiWire.requestBody(base, ChatRequest("S", msgs, jsonOutput = true))
+        assertTrue(json.contains("\"response_format\":{\"type\":\"json_object\"}"))
+        assertFalse(OpenAiWire.requestBody(base, ChatRequest("S", msgs)).contains("response_format"))
+        // Another OpenAI-style server may reject a field it does not know.
+        assertFalse(OpenAiWire.requestBody(base.copy(provider = "compat"), ChatRequest("S", msgs, jsonOutput = true)).contains("response_format"))
+    }
+
+    @Test
     fun theChatUrlDoesNotDoubleTheVersionSegment() {
         assertEquals("https://api.test.com/v1/chat/completions", OpenAiWire.chatUrl("https://api.test.com"))
         assertEquals("https://api.test.com/v1/chat/completions", OpenAiWire.chatUrl("https://api.test.com/"))

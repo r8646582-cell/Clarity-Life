@@ -49,6 +49,11 @@ object OpenAiWire {
             // Ask for the usage block at the end of the stream, so the cache counter is real, not guessed.
             putJsonObject("stream_options") { put("include_usage", true) }
             put("max_tokens", endpoint.maxOutputTokens)
+            // JSON mode: the answer is always one valid JSON object. Only the DeepSeek preset sends it; another
+            // OpenAI-style server may reject a field it does not know, and the parser still checks every card.
+            if (request.jsonOutput && endpoint.provider == "deepseek") {
+                putJsonObject("response_format") { put("type", "json_object") }
+            }
             // DeepSeek thinks by default; thinking off is said out loud, and a level goes in reasoning_effort.
             // In thinking mode DeepSeek ignores temperature, so it is only sent with thinking off.
             val effort = if (endpoint.provider == "deepseek") endpoint.effort else null

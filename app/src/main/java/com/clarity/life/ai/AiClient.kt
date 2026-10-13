@@ -38,7 +38,15 @@ data class ChatMessage(val role: String, val content: String) {
     }
 }
 
-data class ChatRequest(val system: String, val messages: List<ChatMessage>)
+data class ChatRequest(
+    val system: String,
+    val messages: List<ChatMessage>,
+    /**
+     * Ask the provider for one JSON object as the whole answer (DeepSeek's JSON mode, `response_format`), so the
+     * shape is guaranteed by the provider, not hoped for. Only the card step sets it.
+     */
+    val jsonOutput: Boolean = false,
+)
 
 data class Usage(val tokensIn: Long = 0, val tokensOut: Long = 0, val tokensCached: Long = 0)
 
