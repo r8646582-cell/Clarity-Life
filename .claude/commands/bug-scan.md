@@ -51,7 +51,13 @@ Go through each area below. Read the code, not just the names. For each screen, 
 - Very long text: a long name, goal, promise or quote. Does it cut off, overlap or push buttons off screen?
 - Big font size (Android's font scale at 1.3 to 2.0), small phones, landscape, the keyboard covering the input or a button.
 - Something that looks tappable but is not, or a button that does nothing.
-- Colours, fonts and spacing that differ from `docs/mockups/redesign/`.
+
+### C2. Design (against the approved mockups)
+- Open each mockup in `docs/mockups/redesign/` (and its README) next to the Compose code for the same screen. Report every difference in layout, order of sections, copy, colours, fonts, sizes, corner radius and spacing. The mockups win unless the spec says otherwise.
+- Colours or font sizes written straight into a screen instead of coming from the theme (`ui/theme/`), and theme values that differ from the tokens in the spec (section 2).
+- Inconsistency between screens: the same kind of card, button, heading or chip looking different in two places; primary (yellow) used for more than the one main action on a screen.
+- Things the design rules forbid: disclaimer lines on screens, streaks, badges, emoji, nagging copy.
+- Dark-only colours: anything unreadable if Android's system colours or a light status bar leak in.
 
 ### D. State and the app's lifecycle
 - What is lost on screen rotation, dark/light change, leaving the app, the app lock, or Android killing the app in the background (half-typed message, open dialog, scroll position, selected tab).
@@ -109,6 +115,25 @@ Go through each area below. Read the code, not just the names. For each screen, 
 - Dependencies that are not pinned, or added without being in the CLAUDE.md stack.
 - Build and release: `versionCode`/`versionName` bumped, the CI workflow, signing secrets never in the repo.
 
+## 2b. Look at the real screens (only when an Android emulator or a connected phone is available)
+
+Reading code misses what the eye catches at once (like "Good evening" at 12:30 am). If `adb devices` lists an emulator or phone, do this too; if not, say so in the report and rely on step 2.
+
+1. `./gradlew installDebug`, open the app, and go through every screen listed in step 2. Take a screenshot of each with `adb exec-out screencap -p > docs/audits/shots/<date>/<screen>.png`.
+2. Repeat the screens in these conditions, one at a time, and put each back afterwards:
+   - **Empty:** a fresh install with no key, no goals, no conversations.
+   - **Full:** sample data with long names, many promises, a goal behind its pace, a rest day.
+   - **Times:** 12:30 am, just before and after the day boundary, Sunday evening (letter), the 1st of a month. On an emulator: `adb root`, `adb shell settings put global auto_time 0`, then `adb shell date <MMDDhhmmYYYY.ss>`. Set it back with `auto_time 1`.
+   - **Big text:** `adb shell settings put system font_scale 1.5`, then 2.0 (back to 1.0 after).
+   - **Small and large screens:** `adb shell wm size 720x1280` and `adb shell wm density 320`, then `wm size reset` and `wm density reset`.
+   - **Keyboard open** on Talk and on every screen with a text field.
+   - **Rotation and coming back:** rotate, leave the app for over a minute (the lock), come back.
+3. For each screen, `adb shell uiautomator dump` and look for buttons with no text or content description and tap targets smaller than 44 dp.
+4. Compare every screenshot with its mockup, and with the conditions above. Each problem is a finding with the screenshot's path in the table.
+5. Never put real personal data in screenshots: use made-up sample data. Do not commit the screenshots unless I ask; list their paths in the report.
+
+Screenshot tests that run on every build (such as Paparazzi or Roborazzi) would need a new dependency: suggest it under "Not bugs but ideas", never add it in this run.
+
 ## 3. Prove each finding
 
 Report a bug only if you can name the exact situation that triggers it (the input, the time, the tap) and trace it through the code to the wrong result. If you cannot, leave it out or put it under "Unsure" with what would confirm it. Do not invent problems or pad the list.
@@ -122,7 +147,7 @@ Write it to `docs/audits/bug-scan-YYYY-MM-DD.md` (today's date) and show it to m
 
    | # | Type | What I would see | When it happens | Where (file:line) | Why | Smallest fix | Severity |
 
-   Type is one of: bug, crash, data loss, privacy, wording, layout, accessibility, slow, docs out of date, dead code, missing test. Severity is high (data loss, a crash, privacy, or a broken rule from CLAUDE.md), medium (wrong on screen, works badly), or low (wording, tidying).
+   Type is one of: bug, crash, data loss, privacy, wording, layout, design, accessibility, slow, docs out of date, dead code, missing test. Severity is high (data loss, a crash, privacy, or a broken rule from CLAUDE.md), medium (wrong on screen, works badly), or low (wording, tidying).
 3. **Unsure:** suspicions you could not prove, and how to check them on the phone.
 4. **Needs my phone:** what only a real device can show (reminders firing, HyperOS battery rules, the lock screen), as numbered steps I can follow.
 5. **Not bugs but ideas:** a short list kept separate, because the spec's scope is locked.
