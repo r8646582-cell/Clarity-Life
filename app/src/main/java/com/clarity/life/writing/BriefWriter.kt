@@ -21,8 +21,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /**
- * The morning brief (spec section 8, the 0.1.6 redesign): a few lines from the coach each morning, shown on
- * Talk home and Plan, Today. Written from finished facts only (prompts/brief_daily.md) and published only if
+ * The morning brief (spec section 8). Removed from the app on 13 Oct 2026 at the owner's request: nothing calls
+ * this writer and nothing shows a brief; it stays, with its table, prompt and contract, so the schema is unchanged.
+ * Written from finished facts only (prompts/brief_daily.md) and published only if
  * TextJobCheck passes (kind "brief": plain text, quotes his, every number in its inputs). One per day (the key).
  * It never creates a card and never changes a goal, plan, target, promise or note: it writes its own table only.
  * A brief that fails its check twice is not shown; tomorrow has a new one.

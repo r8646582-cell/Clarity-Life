@@ -45,9 +45,7 @@ fun PlanScreen(
     model: PromisesViewModel = hiltViewModel(),
     planner: PlanViewModel = hiltViewModel(),
     reviews: ReviewsViewModel = hiltViewModel(),
-    briefs: com.clarity.life.ui.brief.BriefViewModel = hiltViewModel(),
 ) {
-    val brief by briefs.brief.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
     val planState by planner.state.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
@@ -105,7 +103,7 @@ fun PlanScreen(
         if (section == "Promises") {
             PromisesSection(state, model)
         } else if (section == "Today") {
-            TodaySection(planState, planner, brief?.body)
+            TodaySection(planState, planner)
         } else if (section == "Goals") {
             GoalsSection(
                 planState,

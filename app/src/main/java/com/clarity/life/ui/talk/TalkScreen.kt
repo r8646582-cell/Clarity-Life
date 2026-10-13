@@ -83,9 +83,7 @@ fun TalkScreen(
     promises: com.clarity.life.ui.plan.PromisesViewModel = hiltViewModel(),
     planner: com.clarity.life.ui.plan.PlanViewModel = hiltViewModel(),
     reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
-    briefs: com.clarity.life.ui.brief.BriefViewModel = hiltViewModel(),
 ) {
-    val brief by briefs.brief.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
     val promiseState by promises.state.collectAsStateWithLifecycle()
     val planState by planner.state.collectAsStateWithLifecycle()
@@ -293,7 +291,6 @@ fun TalkScreen(
                 plan = planState,
                 planModel = planner,
                 promises = promiseState,
-                brief = brief,
                 latest = state.conversations.firstOrNull(),
                 focuses = state.focuses,
                 letterCard = {

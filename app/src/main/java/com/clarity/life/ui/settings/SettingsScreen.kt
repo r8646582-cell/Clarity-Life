@@ -142,7 +142,7 @@ fun SettingsScreen(
             Hint("Low is quick; High and Max are slower and more careful.")
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
-            Hint("For reflection, reviews and the morning brief.")
+            Hint("For reflection, reviews and the monthly story.")
             Label("Weekly letter model")
             Field(state.letterModel, model::setLetterModel)
             Label("Weekly letter thinking")
@@ -169,12 +169,7 @@ fun SettingsScreen(
             Hint("Optional. Only the coach's prompt uses it.")
 
         }
-        Group("Letters and your day", "Morning brief, Sunday letter, when your day ends, reminders", Icons.Outlined.MailOutline, openGroup, { openGroup = it }) {
-            SwitchRow(
-                "Morning brief",
-                "A few lines from the coach each morning",
-                state.morningBrief,
-            ) { model.setMorningBrief(it) }
+        Group("Letters and your day", "Sunday letter, when your day ends, reminders", Icons.Outlined.MailOutline, openGroup, { openGroup = it }) {
             SwitchRow(
                 "Weekly letter",
                 "Every Sunday evening",
