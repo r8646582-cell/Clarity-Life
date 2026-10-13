@@ -60,6 +60,9 @@ tap text "Paste your key" || tap class "" android.widget.EditText || exit 1
 adb shell input text "sk-test-0123456789"; sleep 1
 tap text "Save" || exit 1; sleep 3; crashed
 echo "SMOKE: Save survived"
+# Close the keyboard if it is open, then scroll back to the top, where Back is.
+dump; grep -q 'content-desc="Back"' /tmp/ui.xml || adb shell input keyevent 111
+for i in 1 2 3 4 5; do dump; grep -q 'content-desc="Back"' /tmp/ui.xml && break; adb shell input swipe 160 200 160 500 300; sleep 1; done
 tap content-desc "Back" || exit 1; crashed
 tap text "Message" || exit 1
 adb shell input text "hello"; sleep 1
