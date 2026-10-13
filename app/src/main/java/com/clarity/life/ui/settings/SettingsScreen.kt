@@ -59,12 +59,21 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenReliable: () -> Unit = {},
     onOpenPrompts: () -> Unit = {},
+    onOpenGuide: () -> Unit = {},
     model: SettingsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     var key by remember { mutableStateOf("") }
     // One group open at a time; the health check opens the one a problem lives in.
     var openGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    // No key yet (a new person, or "Paste my key" on Talk): Coach opens by itself, with the key box in view.
+    var autoOpened by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(state.loaded) {
+        if (state.loaded && !autoOpened) {
+            autoOpened = true
+            if (!state.keySet && openGroup == null) openGroup = "Coach"
+        }
+    }
     // The Sunday alert needs permission to show a notification (Android 13 and later), asked when he turns it on.
     val context = androidx.compose.ui.platform.LocalContext.current
     fun notificationsOn() = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
@@ -132,6 +141,14 @@ fun SettingsScreen(
             }
             if (state.keySet) SmallButton("Remove key", danger = true, modifier = Modifier.padding(top = 8.dp)) { model.clearKey() }
             Hint("Kept in the phone's secure keystore, never shown or logged.")
+            com.clarity.life.settings.DefaultSettings.keyPage(state.provider)?.let { page ->
+                if (!state.keySet) {
+                    SmallButton("Get a key", modifier = Modifier.padding(top = 8.dp)) {
+                        com.clarity.life.ui.talk.openPage(context, page)
+                    }
+                    Hint("Opens the provider's site: sign up, add a little credit, make an API key, copy it, paste it above.")
+                }
+            }
 
             Label("Chat model")
             Field(state.chatModel, model::setChatModel)
@@ -280,6 +297,7 @@ fun SettingsScreen(
                 SmallButton("Clear", modifier = Modifier.padding(top = 8.dp)) { model.clearCrash() }
             }
         }
+        com.clarity.life.ui.theme.SecondaryButton("How Clarity works", Modifier.fillMaxWidth(), onClick = onOpenGuide)
         Hint("Clarity ${state.version}")
         Spacer(Modifier.height(32.dp))
     }

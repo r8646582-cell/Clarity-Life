@@ -40,6 +40,8 @@ class SettingsViewModel @Inject constructor(
         val letterThinking: String = DefaultSettings.LETTER_THINKING,
         val userName: String = DefaultSettings.USER_NAME,
         val keySet: Boolean = false,
+        /** False until the stored settings are read, so the screen does not act on the defaults. */
+        val loaded: Boolean = false,
         val testing: Boolean = false,
         val testLine: String? = null,
         val testOk: Boolean = false,
@@ -87,6 +89,7 @@ class SettingsViewModel @Inject constructor(
     private suspend fun reload() {
         val provider = settings.get(SettingsRepository.Keys.PROVIDER, DefaultSettings.PROVIDER)
         _state.value = State(
+            loaded = true,
             provider = provider,
             baseUrl = settings.get(SettingsRepository.Keys.BASE_URL, DefaultSettings.BASE_URL),
             chatModel = settings.get(SettingsRepository.Keys.CHAT_MODEL, DefaultSettings.CHAT_MODEL),

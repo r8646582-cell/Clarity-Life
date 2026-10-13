@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -82,6 +83,7 @@ private val CHAT_TYPES = listOf(
 @Composable
 fun TalkScreen(
     onOpenSettings: () -> Unit,
+    onOpenGuide: () -> Unit = {},
     onOpenPromises: () -> Unit = {},
     onOpenPlan: () -> Unit = onOpenPromises,
     model: TalkViewModel = hiltViewModel(),
@@ -107,6 +109,11 @@ fun TalkScreen(
         model.takeDraft()?.let { draft = it }
     }
     val home = state.conversationId == 0L
+    val providerName by model.provider.collectAsStateWithLifecycle()
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        model.refreshKey()
+        onPauseOrDispose { }
+    }
     var typeMenu by remember { mutableStateOf(false) }
     var drawer by remember { mutableStateOf(false) }
     var forgetting by remember { mutableStateOf<Long?>(null) }
@@ -206,6 +213,13 @@ fun TalkScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         modifier = Modifier.weight(1f),
                     )
+                    IconButton(onClick = onOpenGuide) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.HelpOutline,
+                            contentDescription = "How Clarity works",
+                            tint = clarity.text,
+                        )
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
                     }
@@ -296,6 +310,10 @@ fun TalkScreen(
                     planModel = planner,
                     promises = promiseState,
                     latest = state.conversations.firstOrNull(),
+                    hasKey = state.hasKey,
+                    provider = providerName,
+                    onSetUp = onOpenSettings,
+                    onOpenGuide = onOpenGuide,
                     focuses = state.focuses,
                     letterCard = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

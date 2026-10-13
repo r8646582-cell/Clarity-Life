@@ -45,6 +45,19 @@ object DefaultSettings {
     const val ANTHROPIC_BACKGROUND_MODEL = ANTHROPIC_CHAT_MODEL
     const val ANTHROPIC_LETTER_MODEL = "claude-opus-5-5"
 
+    /**
+     * The page where each preset's key is made, opened in the phone's browser by "Get a key" (the app itself
+     * sends nothing there). OpenAI-style servers differ, so they have none.
+     */
+    const val DEEPSEEK_KEY_PAGE = "https://platform.deepseek.com/api_keys"
+    const val ANTHROPIC_KEY_PAGE = "https://console.anthropic.com/settings/keys"
+
+    fun keyPage(provider: String): String? = when (provider) {
+        "deepseek" -> DEEPSEEK_KEY_PAGE
+        "anthropic" -> ANTHROPIC_KEY_PAGE
+        else -> null
+    }
+
     /** Thinking tokens count against the output limit, so this is set high; there is no reply cap in the app. */
     const val MAX_OUTPUT_TOKENS = 16000
     const val BACKGROUND_TEMPERATURE = 0.3

@@ -44,6 +44,7 @@ enum class Tab(val route: String, val label: String, val icon: ImageVector) {
 const val SETTINGS_ROUTE = "settings"
 const val RELIABLE_ROUTE = "reliable"
 const val PROMPTS_ROUTE = "prompts"
+const val GUIDE_ROUTE = "guide"
 
 @Composable
 fun ClarityRoot() {
@@ -68,6 +69,7 @@ fun ClarityRoot() {
                 composable(Tab.Talk.route) {
                     TalkScreen(
                         onOpenSettings = { nav.navigate(SETTINGS_ROUTE) },
+                        onOpenGuide = { nav.navigate(GUIDE_ROUTE) },
                         onOpenPromises = { nav.switchTab(Tab.Plan.route) },
                         onOpenPlan = { nav.switchTab(Tab.Plan.route) },
                     )
@@ -84,7 +86,11 @@ fun ClarityRoot() {
                         onBack = { nav.popBackStack() },
                         onOpenReliable = { nav.navigate(RELIABLE_ROUTE) },
                         onOpenPrompts = { nav.navigate(PROMPTS_ROUTE) },
+                        onOpenGuide = { nav.navigate(GUIDE_ROUTE) },
                     )
+                }
+                composable(GUIDE_ROUTE) {
+                    com.clarity.life.ui.guide.GuideScreen(onBack = { nav.popBackStack() })
                 }
                 composable(PROMPTS_ROUTE) {
                     com.clarity.life.ui.prompts.PromptEditorScreen(onBack = { nav.popBackStack() })
