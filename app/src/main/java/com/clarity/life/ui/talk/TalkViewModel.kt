@@ -277,16 +277,24 @@ class TalkViewModel @Inject constructor(
         return com.clarity.life.core.KnowText.drawerDay(day, today)
     }
 
-    /** Read again each time Talk comes back on screen, so the setup card goes as soon as a key is pasted. */
+    /**
+     * Read again each time Talk comes back on screen, so the setup card goes as soon as a key is pasted and
+     * the greeting uses a name as soon as it is saved.
+     */
     fun refreshKey() {
         viewModelScope.launch {
             hasKey.value = settings.chatEndpoint() != null
+            _userName.value = settings.userName()
             _provider.value = settings.get(
                 com.clarity.life.settings.SettingsRepository.Keys.PROVIDER,
                 com.clarity.life.settings.DefaultSettings.PROVIDER,
             )
         }
     }
+
+    /** His name from Settings, Coach, for the greeting on Talk home; empty until he sets one. */
+    private val _userName = MutableStateFlow("")
+    val userName: StateFlow<String> = _userName
 
     /** The chosen provider, so the setup card names the right service and key page. */
     private val _provider = MutableStateFlow(com.clarity.life.settings.DefaultSettings.PROVIDER)
