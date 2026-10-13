@@ -52,6 +52,8 @@ adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
 
 tap content-desc "Settings" || exit 1; crashed
+# The key box sits in the folded Coach group.
+tap text "Coach" || exit 1; crashed
 tap text "Paste your key" || tap class "" android.widget.EditText || exit 1
 adb shell input text "sk-test-0123456789"; sleep 1
 tap text "Save" || exit 1; sleep 3; crashed
@@ -77,8 +79,9 @@ dump; grep -q "No goals yet" /tmp/ui.xml && { echo "SMOKE: the goal was not save
 # back to the top of the list, where the new goal is
 for i in 1 2 3; do adb shell input swipe 160 120 160 320 300; sleep 1; done
 tap text "Pass the exam" || exit 1; sleep 2; crashed
+# With one goal, Goals opens it directly, with Edit at the top.
+dump; grep -q 'text="Edit"' /tmp/ui.xml || { echo "SMOKE: the goal page did not open"; exit 1; }
 echo "SMOKE: a goal was written and opened"
-tap text "All goals" || exit 1; crashed
 tap text "Reviews" || exit 1; sleep 2; crashed
 tap text "Today" || exit 1; sleep 2; crashed
 echo "SMOKE: Plan, Goals, Reviews and Today survived"
