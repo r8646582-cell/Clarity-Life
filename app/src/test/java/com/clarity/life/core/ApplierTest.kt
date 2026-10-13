@@ -58,8 +58,8 @@ class ApplierTest {
 
     @Test
     fun vectorCountMatchesThePythonReference() {
-        // A guard against the file failing to load silently: the contract has 62 cases today.
-        assertEquals(62, Vectors.cases("contracts/applier_vectors.json").size)
+        // A guard against the file failing to load silently: the contract has 69 cases today (7 for the morning brief).
+        assertEquals(69, Vectors.cases("contracts/applier_vectors.json").size)
     }
 
     private fun call(fn: String, args: JsonObject, fixtures: JsonObject): JsonObject {
