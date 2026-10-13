@@ -1,8 +1,6 @@
 package com.clarity.life.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -10,7 +8,6 @@ import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -20,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -137,14 +133,5 @@ private fun ClarityTabBar(currentRoute: String?, planDot: Boolean, onSelect: (St
                 ),
             )
         }
-    }
-}
-
-/** Shared placeholder for the screens that arrive in later stages of the build order. */
-@Composable
-fun NotBuiltYet(title: String, stage: String) {
-    Column(Modifier.fillMaxSize().background(clarity.ground).padding(24.dp)) {
-        Text(title, style = MaterialTheme.typography.displaySmall, color = clarity.text)
-        Text(stage, style = MaterialTheme.typography.bodyMedium, color = clarity.muted)
     }
 }
