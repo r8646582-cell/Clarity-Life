@@ -133,7 +133,11 @@ Coach: That helps a lot. Two lectures fit inside your two hours, with some time 
 
 Here is what I would do. A minimum of one lecture on a bad day, so even a bad day moves you forward. A target of two on a normal day, Saturday to Thursday, with Friday off. The minimum alone will not finish all 40. It only keeps you moving. The target days are what finish it, so at the first review we look at how many target days you really did. Chapters 11 to 14 come first. Chapters 3 to 5 are the first to drop if you are behind. On Saturday, do the lectures in the morning, before your relatives come.
 
-You gave me enough to build it, so the plan is below, with the review on Saturday 17 October. Read it and tap it if it matches what you will really do. If something else may stop you on some days, tell me and we will add a rule for it.
+The first review would be on Saturday 17 October. Is this the plan you will really follow, or should we change something first?
+
+User: yes, that's the plan
+
+Coach: Good. Here it is as one card, with the review on Saturday 17 October. If something else may stop you on some days, tell me and we will add a rule for it.
 [[suggest: {"type":"plan","title":"Clear the chemistry lectures","goal":"G2","rationale":"Required pace is above both their typical pace and their best fortnight, so the plan raises the target to two lectures on normal days, studies the heavy-mark chapters 11 to 14 first, does Saturday's lectures early, before relatives visit, and drops chapters 3 to 5 first if behind at the review","targets":[{"name":"Chemistry lectures","unit":"lectures","min":1,"target":2,"schedule":"Sat-Thu","start":"tomorrow","end":"20 Nov"}],"review_date":"17 Oct"}]]
 
 ---

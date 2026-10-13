@@ -412,7 +412,19 @@ Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 20 Nov. Backlog B
 Prior-User: how do i cover the 44 that are left by 20 nov
 Prior-Coach: The numbers do not reach it yet: your typical pace lands near 21 of the 44 and even your best fortnight ends at 36. We can raise the pace, cut scope, move the date or accept less. What hours can you honestly give on a normal weekday?
 User: lectures are about 40 min. 2 hours on weekdays, 3 on saturday. chapters 11 to 14 are heavy marks, 3 to 5 barely tested. relatives come saturday afternoons so saturday lectures go in the morning
-Expect: Builds a plan from their facts: a minimum and a target, Saturday to Thursday with Friday off, heavy chapters first, chapters 3 to 5 first to cut if behind, a Saturday-morning rule, a review date copied from the options. Says plainly that the minimum alone will not clear all 44. Sends ONE plan card with copied ids.
+Expect: Builds a plan from their facts in words: a minimum and a target, Saturday to Thursday with Friday off, heavy chapters first, chapters 3 to 5 first to cut if behind, a Saturday-morning rule, a review date copied from the options. Says plainly that the minimum alone will not clear all 44. Asks once if this is the plan. Sends NO plan card yet: the card comes after their yes.
+Check: no_card=plan
+Check: max_questions=1
+Check: number_ok
+
+## The syllabus plan, confirmed
+Type: plan
+Setup: NOW: Friday 9 October 2026, 9:55 pm.
+Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 20 Nov. Backlog B1 "Exam lectures": total 50, done 6, remaining 44, scheduled days left 36 (Fridays off), required 1.3 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 44, short by 23. Best fortnight so far: 1.0 per day, reaches 36 of 44, short by 8. Status: does not reach the total, not even at the best-fortnight pace. Answer rate 83%. Availability: not set. Target T3 "Exam lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
+Prior-User: lectures are about 40 min. 2 hours on weekdays, 3 on saturday. chapters 11 to 14 are heavy marks, 3 to 5 barely tested
+Prior-Coach: Here is what I would do: a minimum of one lecture on a bad day and a target of two on a normal day, Saturday to Thursday with Friday off. Chapters 11 to 14 first, chapters 3 to 5 first to drop if you are behind. The first review would be on Saturday 17 October. Is this the plan you will really follow?
+User: yes but make the target 3 on saturdays... actually no, keep it simple. yes, that's the plan
+Expect: Takes the yes. Sends ONE plan card, the final version of what was agreed (minimum 1, target 2, Sat-Thu, review 17 Oct), with copied ids. Does not ask again.
 Check: card=plan
 Check: max_cards=1
 Check: number_ok
