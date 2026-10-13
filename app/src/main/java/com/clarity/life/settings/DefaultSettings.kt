@@ -52,8 +52,8 @@ object DefaultSettings {
     // A phone that already saved the switch keeps what it saved.
     const val SUNDAY_ALERT_ON = true
 
-    /** The morning brief (spec section 8): on by default, the owner's choice of 13 Oct 2026. */
-    const val MORNING_BRIEF_ON = true
+    /** The morning brief (spec section 8): removed on 13 Oct 2026, the owner's choice. Off; nothing turns it on. */
+    const val MORNING_BRIEF_ON = false
 
     /** Empty: the app ships for anyone. The person types a name in Settings, Coach, if they want one used. */
     const val USER_NAME = ""

@@ -8,12 +8,12 @@ Open them for layout, spacing, colours and copy; rebuild in Compose, do not ship
 | File | Screen |
 |---|---|
 | Type.dc.html | Font pairings (A chosen: Instrument Sans + Instrument Serif) and the palette |
-| TalkHome.dc.html | Talk with no conversation open: greeting, morning brief, today's step, next promise, ways to start |
+| TalkHome.dc.html | Talk with no conversation open: greeting, today's step, next promise, ways to start (the morning brief shown there was removed on 13 Oct 2026) |
 | TalkChat.dc.html | A conversation: coach presence dot, suggested promise card, Saved receipt, thinking line |
-| Today.dc.html | Plan, Today: brief, check-in with stepper and reasons, due promise, rest day |
+| Today.dc.html | Plan, Today: check-in (the brief was removed on 13 Oct 2026) with stepper and reasons, due promise, rest day |
 | Goal.dc.html | Goal when the saved plan falls short: the calm "Add the ramp" card |
 | Promises.dc.html, Reviews.dc.html | Plan, Promises and Reviews |
-| Know.dc.html, Story.dc.html, Focus.dc.html | What I know, Your story, a Focus |
+| Know.dc.html, Story.dc.html, Focus.dc.html | What I know, Your story (made cleaner on 13 Oct 2026; spec 2.5 wins where they differ), a Focus |
 | Settings.dc.html | Settings: grouped cards, switches, real buttons |
 
 Tokens: ground #0F0E13, surface #1A1820, hairline #2D2A36, raised #24212C, control outline #3A3645, text #F5F3F8,

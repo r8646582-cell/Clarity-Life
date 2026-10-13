@@ -26,6 +26,7 @@ import com.clarity.life.data.entity.MessageRow
 import com.clarity.life.prompts.PromptStore
 import com.clarity.life.settings.SettingsRepository
 import java.time.Instant
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -302,7 +303,13 @@ class ChatRepository @Inject constructor(
             ContextBuilder.historyMessage(
                 role = row.role,
                 text = row.content,
-                stamp = if (row.role == "user") TimeFacts.stamp(Instant.ofEpochMilli(row.createdAt), tz) else null,
+                // The stamp says how long ago, counted here (persona: never work out a date).
+                stamp = if (row.role == "user") {
+                    val day = Planner.dayKey(Instant.ofEpochMilli(row.createdAt).toString(), tz, boundary)
+                    "${TimeFacts.stamp(Instant.ofEpochMilli(row.createdAt), tz)} (${TimeFacts.ago(day, LocalDate.parse(today))})"
+                } else {
+                    null
+                },
                 cards = if (row.role == "coach") offered[row.id].orEmpty() else emptyList(),
             )
         }
@@ -423,16 +430,18 @@ class ChatRepository @Inject constructor(
         val m = db.memory()
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
+        val today = Planner.dayKey(Instant.now().toString(), tz, boundary)
+        fun ago(day: String) = runCatching { TimeFacts.ago(LocalDate.parse(day), today) }.getOrNull()
         val evidence = m.allEvidence().groupBy { it.noteId }
         val notes = m.activeNotes().map { n ->
             MemoryBlocks.Note(
                 n.id, n.kind, n.confidence, n.timesSeen, n.firstSeen, n.lastSeen, n.text,
-                (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day) },
+                (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
             )
         }
         val sessions = m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS).map { c ->
             val day = Planner.dayKey(Instant.ofEpochMilli(c.startedAt).toString(), tz, boundary).toString()
-            MemoryBlocks.Session(day, c.title, c.summary)
+            MemoryBlocks.Session(day, c.title, c.summary, ago(day))
         }
         return listOf(
             MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),

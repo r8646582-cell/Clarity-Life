@@ -45,15 +45,13 @@ import com.clarity.life.ui.theme.TextAction
  * answer"; a planned rest day is neither done nor missed.
  */
 @Composable
-fun TodaySection(state: PlanViewModel.State, model: PlanViewModel, brief: String? = null) {
+fun TodaySection(state: PlanViewModel.State, model: PlanViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(horizontal = 4.dp)) {
             Quiet(model.longDay(state.today))
             Headline(todayHeadline(state, model))
         }
-        // This morning's brief (spec section 8), the same lines Talk home shows.
-        brief?.let { com.clarity.life.ui.talk.BriefCard(it) }
         if (state.restToday) {
             BoldCard(gap = 8) {
                 Text("Rest day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)

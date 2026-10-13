@@ -49,7 +49,6 @@ class SettingsViewModel @Inject constructor(
         val rebuildLine: String? = null,
         val dayBoundaryHour: Int = DefaultSettings.DAY_BOUNDARY_HOUR,
         val weeklyLetter: Boolean = true,
-        val morningBrief: Boolean = true,
         val sundayAlert: Boolean = com.clarity.life.settings.DefaultSettings.SUNDAY_ALERT_ON,
         /** Your data: where backups go, whether a passphrase is set, and the last backup's one line. */
         val backupFolder: String = "",
@@ -104,7 +103,6 @@ class SettingsViewModel @Inject constructor(
             lastCrash = com.clarity.life.CrashLog.read(context),
             dayBoundaryHour = settings.dayBoundaryHour(),
             weeklyLetter = settings.getBool(SettingsRepository.Keys.WEEKLY_LETTER_ON, DefaultSettings.WEEKLY_LETTER_ON),
-            morningBrief = settings.getBool(SettingsRepository.Keys.MORNING_BRIEF_ON, DefaultSettings.MORNING_BRIEF_ON),
             sundayAlert = settings.getBool(SettingsRepository.Keys.SUNDAY_ALERT_ON, DefaultSettings.SUNDAY_ALERT_ON),
             backupFolder = folderName(settings.get(SettingsRepository.Keys.BACKUP_FOLDER, "")),
             hasPassphrase = backups.hasPassphrase(),
@@ -228,12 +226,6 @@ class SettingsViewModel @Inject constructor(
             restoreMade = if (done) null else _state.value.restoreMade,
             restoreLine = line,
         )
-    }
-
-    /** The morning brief (spec section 8). Off: no brief is written and none is shown. */
-    fun setMorningBrief(on: Boolean) = viewModelScope.launch {
-        settings.setBool(SettingsRepository.Keys.MORNING_BRIEF_ON, on)
-        _state.value = _state.value.copy(morningBrief = on)
     }
 
     /** Weekly letter on or off. Off means no letter is written (and no model call is made for it). */

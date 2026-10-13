@@ -33,22 +33,20 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.clarity.life.data.entity.BriefRow
 import com.clarity.life.data.entity.ConversationRow
 import com.clarity.life.data.entity.FocusRow
 import com.clarity.life.ui.plan.PlanViewModel
 import com.clarity.life.ui.plan.PromisesViewModel
 import com.clarity.life.ui.theme.Bold
 import com.clarity.life.ui.theme.BoldCard
-import com.clarity.life.ui.theme.CoachDot
 import com.clarity.life.ui.theme.Kicker
 import com.clarity.life.ui.theme.clarity
 
 /**
  * Talk home (spec section 2.1, the 0.1.6 redesign): what Talk shows while no conversation is open, so it is
- * never a blank screen. A greeting by the time of day, the letter card when one is unread, the morning brief,
- * today's step with a one-tap check-in, the next promise, and two or three ways to start a conversation. Every
- * line here is written by code except the brief, which passed its checks before it was stored.
+ * never a blank screen. A greeting by the time of day, the letter card when one is unread, today's step with a
+ * one-tap check-in, the next promise, and two or three ways to start a conversation. Every line here is written
+ * by code. (The morning brief was removed on 13 Oct 2026, the owner's decision.)
  */
 @Composable
 fun TalkHome(
@@ -56,7 +54,6 @@ fun TalkHome(
     plan: PlanViewModel.State,
     planModel: PlanViewModel,
     promises: PromisesViewModel.State,
-    brief: BriefRow?,
     latest: ConversationRow?,
     focuses: List<FocusRow>,
     letterCard: @Composable () -> Unit,
@@ -80,7 +77,6 @@ fun TalkHome(
             }
         }
         item { letterCard() }
-        brief?.let { b -> item(key = "brief") { BriefCard(b.body) } }
         val open = plan.todayRows.firstOrNull { it.answer == null }
         if (open != null && !plan.restToday) {
             item(key = "step") { StepCard(open, plan, planModel, onOpenToday) }
@@ -119,17 +115,6 @@ fun greeting(hour: Int): String = when {
     hour in 4..11 -> "Good morning."
     hour in 12..16 -> "Good afternoon."
     else -> "Good evening."
-}
-
-@Composable
-fun BriefCard(body: String, modifier: Modifier = Modifier) {
-    BoldCard(modifier, gap = 10) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CoachDot()
-            Text("Your morning brief", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
-        }
-        Text(body, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-    }
 }
 
 @Composable

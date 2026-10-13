@@ -17,7 +17,8 @@ object MemoryBlocks {
 
     data class Person(val name: String, val relation: String, val notes: String, val updatedAt: Long)
 
-    data class Evidence(val kind: String, val text: String, val day: String)
+    /** [ago]: "today", "2 days ago", from [TimeFacts.ago]; null leaves the line as the day alone. */
+    data class Evidence(val kind: String, val text: String, val day: String, val ago: String? = null)
 
     data class Note(
         val id: Long,
@@ -32,7 +33,7 @@ object MemoryBlocks {
     )
 
     /** [day] is the day key the conversation started on. */
-    data class Session(val day: String, val title: String, val summary: String)
+    data class Session(val day: String, val title: String, val summary: String, val ago: String? = null)
 
     const val EVIDENCE_LINES = 2
     const val RECENT_SESSIONS = 5
@@ -73,7 +74,7 @@ object MemoryBlocks {
         notes.map { n ->
             val head = "note ${n.id}, ${n.kind}, ${n.confidence}, ${KnowText.seen(n.timesSeen, n.firstSeen, n.lastSeen)}: ${n.text}"
             val lines = n.evidence.takeLast(EVIDENCE_LINES).map { e ->
-                if (e.kind == "count") "  counted by the app: ${e.text}" else "  their words, ${KnowText.shortDay(e.day)}: \"${e.text}\""
+                if (e.kind == "count") "  counted by the app: ${e.text}" else "  their words, ${KnowText.shortDay(e.day)}${e.ago?.let { " ($it)" }.orEmpty()}: \"${e.text}\""
             }
             val base = when (n.confidence) {
                 "confirmed" -> CONFIRMED_NOTE_RANK
@@ -91,7 +92,7 @@ object MemoryBlocks {
             "RECENT_SESSIONS",
             kept.mapIndexed { i, s ->
                 val title = if (s.title.isNotBlank()) " \"${s.title}\"" else ""
-                BlockItem("${KnowText.shortDay(s.day)}$title: ${s.summary}", SESSIONS_RANK + i + 1)
+                BlockItem("${KnowText.shortDay(s.day)}${s.ago?.let { " ($it)" }.orEmpty()}$title: ${s.summary}", SESSIONS_RANK + i + 1)
             }.reversed(), // shown oldest first, like a story
         )
     }

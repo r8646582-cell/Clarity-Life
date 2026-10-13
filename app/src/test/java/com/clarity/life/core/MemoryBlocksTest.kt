@@ -28,6 +28,20 @@ class MemoryBlocksTest {
     }
 
     @Test
+    fun evidenceAndSessionsSayHowLongAgoWhenTheAppCountedIt() {
+        val n = MemoryBlocks.Note(
+            5, "strength", "likely", 1, "2026-10-13", "2026-10-13", "Held the ramp",
+            listOf(MemoryBlocks.Evidence("quote", "keep my 2-3-4", "2026-10-13", "today")),
+        )
+        assertEquals(
+            "note 5, strength, likely, seen once · Oct: Held the ramp\n  their words, 13 Oct (today): \"keep my 2-3-4\"",
+            MemoryBlocks.notes(listOf(n)).items.single().text,
+        )
+        val s = MemoryBlocks.recentSessions(listOf(MemoryBlocks.Session("2026-10-12", "Ramp", "Set a ramp.", "yesterday")))
+        assertEquals("12 Oct (yesterday) \"Ramp\": Set a ramp.", s.items.single().text)
+    }
+
+    @Test
     fun underPressureSessionsGoFirstThenTheWeakestNotesAndConfirmedLast() {
         val blocks = listOf(
             MemoryBlocks.profile(listOf(MemoryBlocks.Profile("Goal", "Clear the exam", true))),
