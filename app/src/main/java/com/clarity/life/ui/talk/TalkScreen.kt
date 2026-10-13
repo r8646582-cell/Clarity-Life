@@ -25,6 +25,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Menu
@@ -184,212 +189,239 @@ fun TalkScreen(
         if (last > 0 && follow) listState.scrollToItem(last)
     }
 
-    Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
-        if (home) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = { drawer = !drawer }) {
-                    Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
-                }
-                Text(
-                    if (planState.ready) planner.longDay(planState.today) else "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = clarity.muted,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
-                }
-            }
-        } else {
-            Row(
-                Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = { drawer = false; model.home() }) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back to Talk home", tint = clarity.text)
-                }
-                Column(Modifier.weight(1f)) {
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
+            if (home) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { drawer = !drawer }) {
+                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+                    }
                     Text(
-                        state.conversations.firstOrNull { it.id == state.conversationId }?.title?.takeIf { it.isNotBlank() }
-                            ?: "New conversation",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = clarity.text,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        if (planState.ready) planner.longDay(planState.today) else "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = clarity.muted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.weight(1f),
                     )
-                    Box {
-                        Row(
-                            Modifier.clickable { typeMenu = true }.padding(vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                state.focuses.firstOrNull { it.id == state.focusId }?.name
-                                    ?: CHAT_TYPES.firstOrNull { it.first == state.chatType }?.second ?: "Free talk",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = clarity.muted,
-                            )
-                            Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
-                        }
-                        DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
-                            CHAT_TYPES.forEach { (id, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        typeMenu = false
-                                        model.switchChatType(id)
-                                    },
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
+                    }
+                }
+            } else {
+                Row(
+                    Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { drawer = false; model.home() }) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back to Talk home", tint = clarity.text)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            state.conversations.firstOrNull { it.id == state.conversationId }?.title?.takeIf { it.isNotBlank() }
+                                ?: "New conversation",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = clarity.text,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                        Box {
+                            Row(
+                                Modifier.clickable { typeMenu = true }.padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    state.focuses.firstOrNull { it.id == state.focusId }?.name
+                                        ?: CHAT_TYPES.firstOrNull { it.first == state.chatType }?.second ?: "Free talk",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = clarity.muted,
                                 )
+                                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
                             }
-                            // One entry per active focus (spec section 2.1); the conversation joins it.
-                            state.focuses.forEach { f ->
-                                DropdownMenuItem(
-                                    text = { Text(f.name) },
-                                    onClick = {
-                                        typeMenu = false
-                                        model.switchToFocus(f.id)
-                                    },
-                                )
+                            DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
+                                CHAT_TYPES.forEach { (id, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            typeMenu = false
+                                            model.switchChatType(id)
+                                        },
+                                    )
+                                }
+                                // One entry per active focus (spec section 2.1); the conversation joins it.
+                                state.focuses.forEach { f ->
+                                    DropdownMenuItem(
+                                        text = { Text(f.name) },
+                                        onClick = {
+                                            typeMenu = false
+                                            model.switchToFocus(f.id)
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
+                    IconButton(onClick = { drawer = !drawer }) {
+                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+                    }
                 }
-                IconButton(onClick = { drawer = !drawer }) {
-                    Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+                androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
+            }
+
+
+            // On Talk home the quiet line sits at the top. In a conversation it goes under the last reply instead
+            // (below), so it is read with the reply it is about and never covers the words as they scroll.
+            if (home) state.quietLine?.let { line ->
+                Text(
+                    line,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.danger,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                )
+            }
+            if (!home) {
+                val line = state.quietLine
+                LaunchedEffect(line) {
+                    // Bring a new line into view: it is the item right after the last message.
+                    if (line != null) listState.animateScrollToItem(state.messages.size)
                 }
             }
-            androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
+
+            if (home) {
+                TalkHome(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    plan = planState,
+                    planModel = planner,
+                    promises = promiseState,
+                    latest = state.conversations.firstOrNull(),
+                    focuses = state.focuses,
+                    letterCard = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // The letter card, only while a new weekly letter is unread (spec section 2.1).
+                            com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
+                            // Promises due now, written by the app, never the coach (spec section 2.1).
+                            com.clarity.life.ui.plan.DueCard(promiseState, promises, onSeeAll = { reviews.showSection("Promises"); onOpenPromises() })
+                        }
+                    },
+                    onStart = { type, focusId -> follow = true; model.startFromHome(type, focusId) },
+                    onOpen = { id -> follow = true; model.open(id) },
+                    // Part and Not are answered on Plan, Today, where the amount and the reasons are.
+                    onOpenToday = { reviews.showSection("Today"); onOpenPromises() },
+                    onOpenPromises = { reviews.showSection("Promises"); onOpenPromises() },
+                )
+            } else LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                items(state.messages, key = { it.id }) { row ->
+                    MessageBubble(
+                        row = row,
+                        live = model.live,
+                        isLive = state.live?.messageId == row.id,
+                        onGrow = { toBottom(row.id) },
+                        cards = state.cards[row.id].orEmpty(),
+                        receipts = state.receipts,
+                        cardLines = state.cardLines,
+                        previews = state.previews,
+                        actions = actions,
+                        onTryAgain = { model.tryAgain(row.id) },
+                    )
+                }
+                state.quietLine?.let { line ->
+                    item(key = "quiet-line") {
+                        Text(
+                            line,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = clarity.danger,
+                            modifier = Modifier.padding(start = 4.dp, end = 4.dp),
+                        )
+                    }
+                }
+                item { Spacer(Modifier.height(8.dp)) }
+            }
+
+            state.live?.note?.let { note ->
+                Text(
+                    note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.muted,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                )
+            }
+
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text(if (home) "Talk to your coach" else "Message", color = clarity.muted) },
+                    shape = RoundedCornerShape(27.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = clarity.text,
+                        unfocusedTextColor = clarity.text,
+                        focusedContainerColor = clarity.surface,
+                        unfocusedContainerColor = clarity.surface,
+                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                        cursorColor = clarity.yellow,
+                    ),
+                    keyboardActions = KeyboardActions(onSend = { sendDraft() }),
+                    maxLines = 6,
+                )
+                Box(
+                    Modifier
+                        .size(52.dp)
+                        .background(clarity.yellow, androidx.compose.foundation.shape.CircleShape)
+                        .clickable(role = androidx.compose.ui.semantics.Role.Button) { sendDraft() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Outlined.ArrowUpward, contentDescription = "Send", tint = clarity.onYellow)
+                }
+            }
         }
 
-        if (drawer) {
+        // The conversations drawer (docs/mockups/Drawer.dc.html): a panel from the left over a dimmed screen.
+        // A tap on the dimmed part, Back, or the close button puts it away.
+        androidx.compose.animation.AnimatedVisibility(
+            visible = drawer,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut(),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color(0xB808070C))
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null,
+                        onClickLabel = "Close conversations",
+                    ) { drawer = false },
+            )
+        }
+        androidx.compose.animation.AnimatedVisibility(
+            visible = drawer,
+            enter = androidx.compose.animation.slideInHorizontally { -it },
+            exit = androidx.compose.animation.slideOutHorizontally { -it },
+        ) {
             ConversationsDrawer(
                 state = state,
                 onOpen = { id -> model.open(id); drawer = false },
                 onNew = { model.newConversation("free"); drawer = false },
+                onClose = { drawer = false },
                 onForget = { id -> forgetting = id },
                 onRename = model::rename,
                 onSearch = model::searchConversations,
                 dayOf = model::drawerDay,
             )
         }
-
-        // On Talk home the quiet line sits at the top. In a conversation it goes under the last reply instead
-        // (below), so it is read with the reply it is about and never covers the words as they scroll.
-        if (home) state.quietLine?.let { line ->
-            Text(
-                line,
-                style = MaterialTheme.typography.bodySmall,
-                color = clarity.danger,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-            )
-        }
-        if (!home) {
-            val line = state.quietLine
-            LaunchedEffect(line) {
-                // Bring a new line into view: it is the item right after the last message.
-                if (line != null) listState.animateScrollToItem(state.messages.size)
-            }
-        }
-
-        if (home) {
-            TalkHome(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                plan = planState,
-                planModel = planner,
-                promises = promiseState,
-                latest = state.conversations.firstOrNull(),
-                focuses = state.focuses,
-                letterCard = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // The letter card, only while a new weekly letter is unread (spec section 2.1).
-                        com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
-                        // Promises due now, written by the app, never the coach (spec section 2.1).
-                        com.clarity.life.ui.plan.DueCard(promiseState, promises, onSeeAll = { reviews.showSection("Promises"); onOpenPromises() })
-                    }
-                },
-                onStart = { type, focusId -> follow = true; model.startFromHome(type, focusId) },
-                onOpen = { id -> follow = true; model.open(id) },
-                // Part and Not are answered on Plan, Today, where the amount and the reasons are.
-                onOpenToday = { reviews.showSection("Today"); onOpenPromises() },
-                onOpenPromises = { reviews.showSection("Promises"); onOpenPromises() },
-            )
-        } else LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            items(state.messages, key = { it.id }) { row ->
-                MessageBubble(
-                    row = row,
-                    live = model.live,
-                    isLive = state.live?.messageId == row.id,
-                    onGrow = { toBottom(row.id) },
-                    cards = state.cards[row.id].orEmpty(),
-                    receipts = state.receipts,
-                    cardLines = state.cardLines,
-                    previews = state.previews,
-                    actions = actions,
-                    onTryAgain = { model.tryAgain(row.id) },
-                )
-            }
-            state.quietLine?.let { line ->
-                item(key = "quiet-line") {
-                    Text(
-                        line,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = clarity.danger,
-                        modifier = Modifier.padding(start = 4.dp, end = 4.dp),
-                    )
-                }
-            }
-            item { Spacer(Modifier.height(8.dp)) }
-        }
-
-        state.live?.note?.let { note ->
-            Text(
-                note,
-                style = MaterialTheme.typography.bodySmall,
-                color = clarity.muted,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-            )
-        }
-
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            OutlinedTextField(
-                value = draft,
-                onValueChange = { draft = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(if (home) "Talk to your coach" else "Message", color = clarity.muted) },
-                shape = RoundedCornerShape(27.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = clarity.text,
-                    unfocusedTextColor = clarity.text,
-                    focusedContainerColor = clarity.surface,
-                    unfocusedContainerColor = clarity.surface,
-                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    cursorColor = clarity.yellow,
-                ),
-                keyboardActions = KeyboardActions(onSend = { sendDraft() }),
-                maxLines = 6,
-            )
-            Box(
-                Modifier
-                    .size(52.dp)
-                    .background(clarity.yellow, androidx.compose.foundation.shape.CircleShape)
-                    .clickable(role = androidx.compose.ui.semantics.Role.Button) { sendDraft() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Outlined.ArrowUpward, contentDescription = "Send", tint = clarity.onYellow)
-            }
-        }
+        androidx.activity.compose.BackHandler(enabled = drawer) { drawer = false }
     }
 
     // Forget is final (spec section 3), so it asks first.
@@ -416,14 +448,16 @@ fun TalkScreen(
 }
 
 /**
- * The conversations drawer (spec section 2.1): every conversation, newest first and grouped by day, a search
- * box (titles and summaries), and Rename and Forget on each row.
+ * The conversations drawer (spec section 2.1, docs/mockups/Drawer.dc.html): a panel from the left with New,
+ * a search box (titles and summaries), every conversation newest first under yellow day headings, the open
+ * one lit, and a ⋯ button on each row for Rename and Forget.
  */
 @Composable
 private fun ConversationsDrawer(
     state: TalkViewModel.State,
     onOpen: (Long) -> Unit,
     onNew: () -> Unit,
+    onClose: () -> Unit,
     onForget: (Long) -> Unit,
     onRename: (Long, String) -> Unit,
     onSearch: (String) -> Unit,
@@ -435,27 +469,68 @@ private fun ConversationsDrawer(
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onSearch("") } }
     Column(
         Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .background(clarity.surface, RoundedCornerShape(16.dp))
-            .padding(12.dp),
+            .fillMaxHeight()
+            .widthIn(max = 330.dp)
+            .fillMaxWidth(0.86f)
+            .background(clarity.surface)
+            .border(1.dp, clarity.hairline)
+            // Taps inside the panel stay inside it; only the dimmed part closes it.
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+            ) {}
+            .padding(top = 18.dp, bottom = 16.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Conversations", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-            TextButton(onClick = onNew) { Text("New", color = clarity.yellow) }
+        Row(
+            Modifier.fillMaxWidth().padding(start = 20.dp, end = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Conversations",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = clarity.text,
+            )
+            IconButton(onClick = onClose) {
+                Icon(Icons.Outlined.Close, contentDescription = "Close conversations", tint = clarity.text)
+            }
+        }
+        Row(
+            Modifier
+                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp)
+                .fillMaxWidth()
+                .heightIn(min = 46.dp)
+                .background(clarity.yellow, RoundedCornerShape(12.dp))
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onNew),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Add, contentDescription = null, tint = clarity.onYellow, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.size(6.dp))
+            Text(
+                "New conversation",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = clarity.onYellow,
+            )
         }
         OutlinedTextField(
             value = query,
             onValueChange = { query = it; onSearch(it) },
-            placeholder = { Text("Search titles and summaries", color = clarity.muted) },
+            placeholder = { Text("Search conversations", color = clarity.muted) },
+            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = clarity.muted) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                 focusedTextColor = clarity.text,
                 unfocusedTextColor = clarity.text,
+                focusedContainerColor = clarity.raised,
+                unfocusedContainerColor = clarity.raised,
                 cursorColor = clarity.yellow,
                 focusedBorderColor = clarity.yellow,
-                unfocusedBorderColor = clarity.controlOutline,
+                unfocusedBorderColor = clarity.hairline,
             ),
         )
         if (state.conversations.isEmpty()) {
@@ -463,7 +538,7 @@ private fun ConversationsDrawer(
                 if (query.isBlank()) "No conversations yet." else "Nothing matches that.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = clarity.muted,
-                modifier = Modifier.padding(vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             )
         }
         // Headings are worked out once per list, not on every row drawn.
@@ -474,31 +549,28 @@ private fun ConversationsDrawer(
                 (if (day != last) day else null).also { last = day } to row
             }
         }
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
+        LazyColumn(Modifier.fillMaxWidth().weight(1f).padding(top = 6.dp)) {
             items(rows, key = { it.second.id }) { (heading, row) ->
                 Column {
                     heading?.let {
                         Text(
-                            it,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = clarity.muted,
-                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
+                            it.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                            color = clarity.yellow,
+                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 4.dp),
                         )
                     }
-                    Row(
-                        Modifier.fillMaxWidth().clickable { onOpen(row.id) }.padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            row.title.ifBlank { "Untitled" },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (row.id == state.conversationId) clarity.yellow else clarity.text,
-                            maxLines = 2,
-                            modifier = Modifier.weight(1f),
-                        )
-                        TextButton(onClick = { renaming = row }) { Text("Rename", color = clarity.muted) }
-                        TextButton(onClick = { onForget(row.id) }) { Text("Forget", color = clarity.danger) }
-                    }
+                    DrawerRow(
+                        row = row,
+                        open = row.id == state.conversationId,
+                        kind = state.focuses.firstOrNull { it.id == row.focusId }?.let { "Focus: ${it.name}" }
+                            ?: CHAT_TYPES.firstOrNull { it.first == row.chatType }?.second ?: "Free talk",
+                        onOpen = { onOpen(row.id) },
+                        onRename = { renaming = row },
+                        onForget = { onForget(row.id) },
+                    )
                 }
             }
         }
@@ -533,6 +605,79 @@ private fun ConversationsDrawer(
             },
             dismissButton = { TextButton(onClick = { renaming = null }) { Text("Cancel", color = clarity.text) } },
         )
+    }
+}
+
+/** One conversation in the drawer: its title, its kind and start time, and a ⋯ menu for Rename and Forget. */
+@Composable
+private fun DrawerRow(
+    row: com.clarity.life.data.entity.ConversationRow,
+    open: Boolean,
+    kind: String,
+    onOpen: () -> Unit,
+    onRename: () -> Unit,
+    onForget: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val time = remember(row.startedAt) {
+        com.clarity.life.core.TimeFacts.clock(
+            java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(row.startedAt), java.time.ZoneId.systemDefault()),
+        )
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(if (open) clarity.raised else androidx.compose.ui.graphics.Color.Transparent)
+            .clickable(onClick = onOpen)
+            .heightIn(min = 60.dp)
+            .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                row.title.ifBlank { "Untitled" },
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (open) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.SemiBold,
+                color = clarity.text,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            Text(
+                "$kind · $time",
+                style = MaterialTheme.typography.bodySmall,
+                color = clarity.muted,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        Box {
+            IconButton(onClick = { menu = true }) {
+                Icon(Icons.Outlined.MoreHoriz, contentDescription = "More for this conversation", tint = clarity.muted)
+            }
+            DropdownMenu(
+                expanded = menu,
+                onDismissRequest = { menu = false },
+                containerColor = clarity.raised,
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Rename", color = clarity.text) },
+                    onClick = { menu = false; onRename() },
+                )
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text("Forget this conversation", color = clarity.danger)
+                            Text(
+                                "Also removes anything learned only from it",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = clarity.muted,
+                            )
+                        }
+                    },
+                    onClick = { menu = false; onForget() },
+                )
+            }
+        }
     }
 }
 
