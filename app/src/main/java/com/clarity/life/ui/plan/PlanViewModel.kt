@@ -46,17 +46,33 @@ class PlanViewModel @Inject constructor(
     private val requests: com.clarity.life.chat.TalkRequests,
 ) : ViewModel() {
 
-    data class TodayRow(val target: TargetRow, val answer: CheckinRow?) {
+    data class TodayRow(
+        val target: TargetRow,
+        val answer: CheckinRow?,
+        /** The backlog this target counts toward, so an answer can show what it means for the plan. */
+        val backlog: BacklogView? = null,
+        /** Which step of its ramp this is (1-based) and how many steps there are; 1 of 1 for a plain target. */
+        val step: Int = 1,
+        val steps: Int = 1,
+    ) {
         val quantity: Boolean get() = target.unit.isNotBlank()
     }
+
+    /** One day in the last-seven-days strip: its level when answered, null for no answer, "off" when not scheduled. */
+    data class DayMark(val day: LocalDate, val level: String?)
 
     data class BacklogView(
         val row: BacklogRow,
         val facts: PlanBlocks.BacklogFacts,
         val linked: List<TargetRow>,
+        /** The last seven days since tracking began, oldest first, for the week strip. */
+        val recent: List<DayMark> = emptyList(),
     ) {
         val remaining: Double get() = row.total - facts.done
     }
+
+    /** A step of a goal's plan: a target in start order, and whether it is done, now, or still to come. */
+    data class StepView(val target: TargetRow, val start: LocalDate, val end: LocalDate?, val phase: String)
 
     data class TargetView(val row: TargetRow, val done: Int, val answered: Int, val reasons: List<String>)
 
@@ -66,6 +82,10 @@ class PlanViewModel @Inject constructor(
         val plan: PlanRow?,
         val backlogs: List<BacklogView>,
         val targets: List<TargetView>,
+        /** Its targets as plan steps, ended ones included, in start order. */
+        val steps: List<StepView> = emptyList(),
+        /** The first day any of its targets starts; null when it has none. */
+        val firstStart: LocalDate? = null,
     )
 
     data class State(
@@ -132,9 +152,6 @@ class PlanViewModel @Inject constructor(
 
         // Paused targets stay on their goal (with Resume); only live ones are on Today and count for pace.
         val shown = live + r.targets.filter { it.status == "paused" }
-        val todayRows = live.filter { t ->
-            !LocalDate.parse(t.startDay).isAfter(today) && scheduledOn(t.schedule, today)
-        }.map { t -> TodayRow(t, byTarget[t.id]?.firstOrNull { it.dayKey == today.toString() }) }
 
         fun targetView(t: TargetRow): TargetView {
             val h = history(t)
@@ -161,7 +178,30 @@ class PlanViewModel @Inject constructor(
                 today,
                 r.rest,
             )
-            return BacklogView(b, facts, linked)
+            // The week strip: the last seven days since tracking began, answers of every step merged per day.
+            val all = PlanBlocks.mergeByDay(r.targets.filter { it.backlogId == b.id }.flatMap(::history))
+            val from = maxOf(today.minusDays(6), model.firstStart ?: today)
+            val recent = generateSequence(from) { it.plusDays(1) }.takeWhile { !it.isAfter(today) }.map { day ->
+                val row = all.firstOrNull { it.day == day }
+                when {
+                    row != null -> DayMark(day, row.level)
+                    day in r.rest -> DayMark(day, "rest")
+                    linked.none { scheduledOn(it.schedule, day) } -> DayMark(day, "off")
+                    else -> DayMark(day, null)
+                }
+            }.toList()
+            return BacklogView(b, facts, linked, recent)
+        }
+
+        fun steps(targets: List<TargetRow>): List<StepView> = targets.sortedBy { it.startDay }.map { t ->
+            val start = LocalDate.parse(t.startDay)
+            val end = t.endDay?.let(LocalDate::parse)
+            val phase = when {
+                t.status == "ended" || (end != null && end.isBefore(today)) -> "done"
+                start.isAfter(today) -> "next"
+                else -> "now"
+            }
+            StepView(t, start, end, phase)
         }
 
         val activeBacklogs = r.backlogs.filter { it.status == "active" }
@@ -170,12 +210,30 @@ class PlanViewModel @Inject constructor(
         val goals = activeGoals.map { g ->
             val bs = activeBacklogs.filter { it.goalId == g.id }.map(::backlogView)
             val ts = shown.filter { it.goalId == g.id }.map(::targetView)
+            val mine = r.targets.filter { it.goalId == g.id && it.status != "paused" }
             GoalView(
                 row = g,
                 status = goalStatus(bs, ts),
                 plan = r.plans.firstOrNull { it.goalId == g.id && it.status == "active" },
                 backlogs = bs,
                 targets = ts,
+                steps = steps(mine),
+                firstStart = mine.minOfOrNull { LocalDate.parse(it.startDay) },
+            )
+        }
+        val looseBacklogs = activeBacklogs.filter { it.goalId == null || it.goalId !in goalIds }.map(::backlogView)
+        val backlogById = (goals.flatMap { it.backlogs } + looseBacklogs).associateBy { it.row.id }
+        val todayRows = live.filter { t ->
+            !LocalDate.parse(t.startDay).isAfter(today) && scheduledOn(t.schedule, today)
+        }.map { t ->
+            // A ramp's steps share a backlog and a name: say which step today is.
+            val ramp = r.targets.filter { it.backlogId != null && it.backlogId == t.backlogId && it.name == t.name }.sortedBy { it.startDay }
+            TodayRow(
+                target = t,
+                answer = byTarget[t.id]?.firstOrNull { it.dayKey == today.toString() },
+                backlog = t.backlogId?.let { backlogById[it] },
+                step = ramp.indexOfFirst { it.id == t.id }.coerceAtLeast(0) + 1,
+                steps = ramp.size.coerceAtLeast(1),
             )
         }
         return State(
@@ -185,7 +243,7 @@ class PlanViewModel @Inject constructor(
             restToday = today in r.rest,
             todayRows = todayRows,
             goals = goals,
-            looseBacklogs = activeBacklogs.filter { it.goalId == null || it.goalId !in goalIds }.map(::backlogView),
+            looseBacklogs = looseBacklogs,
             looseTargets = shown.filter { it.goalId == null || it.goalId !in goalIds }.map(::targetView),
             oldGoals = r.goals.filter { it.status != "active" },
             quietLine = line,
@@ -226,6 +284,51 @@ class PlanViewModel @Inject constructor(
         else -> {
             val key = if (p.status != "short" || p.bestPerDay != null) p.status else "short_no_best"
             PlanStateText.STATUS_TEXT.getValue(key).removePrefix("Status: ").replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    /** "Wednesday 14 October": the top line of Today. */
+    fun longDay(d: LocalDate): String = "${DAY_NAMES[d.dayOfWeek.value - 1]} ${d.dayOfMonth} ${MONTH_NAMES[d.monthValue - 1]}"
+
+    /** The day the next not-yet-started step begins, when nothing is scheduled today because the plan starts later. */
+    fun nextStart(state: State): LocalDate? =
+        state.goals.flatMap { it.steps }.filter { it.start.isAfter(state.today) }.minOfOrNull { it.start }
+
+    /** Which day of the plan today is (1 on its first day), from the earliest start of any goal's targets. */
+    fun planDay(state: State): Long? = state.goals.mapNotNull { it.firstStart }.minOrNull()
+        ?.takeIf { !it.isAfter(state.today) }
+        ?.let { java.time.temporal.ChronoUnit.DAYS.between(it, state.today) + 1 }
+
+    /** What today's answer was, in plain words: "Target met: 2 lectures", "The minimum, and it counts". */
+    fun answeredLine(row: TodayRow): String {
+        val a = row.answer ?: return ""
+        val unit = if (row.target.unit.isBlank()) "" else " ${row.target.unit}"
+        val amount = if (row.quantity) ": ${n(a.amount)}$unit" else ""
+        return when (a.level) {
+            "beyond" -> "Beyond the target$amount"
+            "target" -> "Target met$amount"
+            "minimum" -> "The minimum, and it counts$amount"
+            "not" -> "Not today. That is information, not a failure."
+            "rest" -> "Rest day"
+            else -> ""
+        }
+    }
+
+    /**
+     * What an answer means for the plan, from the app's own numbers: "298 left. Your plan still finishes Sat 2 Jan."
+     * Null when the target counts toward no backlog.
+     */
+    fun planLine(row: TodayRow): String? {
+        val b = row.backlog ?: return null
+        val left = "${n(b.remaining)} left."
+        val f = b.facts.finish ?: return left
+        val finishDay = f.finish
+        return when {
+            b.facts.projection.status == "done" -> "All ${n(b.row.total)} done."
+            f.status == "finishes" && finishDay != null -> "$left Your plan still finishes ${showDay(finishDay)}."
+            f.status == "late" || f.status == "never" ->
+                "$left At your steps it reaches ${n(f.reachesByDeadline ?: 0.0)} of ${n(f.remaining)} by ${day(b.row.deadline)}."
+            else -> left
         }
     }
 
@@ -323,6 +426,10 @@ class PlanViewModel @Inject constructor(
 
     companion object {
         private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+        private val MONTH_NAMES = listOf(
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December",
+        )
 
         /** On pace, behind, or no data yet: read from the backlogs' Status lines, never judged by the model. */
         fun goalStatus(backlogs: List<BacklogView>, targets: List<TargetView>): String {

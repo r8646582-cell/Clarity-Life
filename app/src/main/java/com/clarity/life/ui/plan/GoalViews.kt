@@ -30,50 +30,72 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.clarity.life.core.Planner
 import com.clarity.life.ui.theme.clarity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
+import com.clarity.life.ui.theme.BigFact
+import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.Headline
+import com.clarity.life.ui.theme.Kicker
+import com.clarity.life.ui.theme.OutlineCard
+import com.clarity.life.ui.theme.Pill
+import com.clarity.life.ui.theme.PrimaryButton
+import com.clarity.life.ui.theme.Quiet
+import com.clarity.life.ui.theme.SecondaryButton
+import com.clarity.life.ui.theme.TextAction
+import java.time.LocalDate
 
 /**
- * Plan, Goals (docs/mockups/Goal.dc.html): every goal with its status (on pace, behind, no data yet), its
- * backlogs and targets, and a goal page with the pace in numbers the app computed. A goal is archived or marked
- * done by his tap, never silently changed. "Plan with coach" opens a Plan and track chat.
+ * Plan, Goals: the redesigned goal page (the owner's approved mockup of 13 Oct 2026). One clear thing at the top
+ * (it starts tomorrow, it is on track, it is behind), then where the plan's own steps finish it (counted by
+ * [com.clarity.life.core.Planner.planFinish]), today's step, the steps, the last seven days and the progress.
+ * Everything that changes the plan by hand sits behind Edit. With one goal, Goals opens it directly.
  */
 @Composable
-fun GoalsSection(state: PlanViewModel.State, model: PlanViewModel, onPlanWithCoach: () -> Unit) {
+fun GoalsSection(
+    state: PlanViewModel.State,
+    model: PlanViewModel,
+    onToday: () -> Unit = {},
+    onPlanWithCoach: () -> Unit,
+) {
     var openGoal by rememberSaveable { mutableStateOf<Long?>(null) }
-    val goal = state.goals.firstOrNull { it.row.id == openGoal }
+    val only = state.goals.singleOrNull()?.takeIf { state.looseBacklogs.isEmpty() && state.looseTargets.isEmpty() }
+    val goal = state.goals.firstOrNull { it.row.id == openGoal } ?: only
     if (goal != null) {
-        androidx.activity.compose.BackHandler { openGoal = null }
-        GoalPage(goal, state, model, onBack = { openGoal = null }, onPlanWithCoach = onPlanWithCoach)
+        if (only == null) androidx.activity.compose.BackHandler { openGoal = null }
+        GoalPage(
+            goal,
+            state,
+            model,
+            onBack = if (only == null) ({ openGoal = null }) else null,
+            onToday = onToday,
+            onPlanWithCoach = onPlanWithCoach,
+        )
         return
     }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
         if (state.goals.isEmpty() && state.looseBacklogs.isEmpty() && state.looseTargets.isEmpty()) {
-            Muted("No goals yet. Write one below, or talk it through with the coach and save the plan it offers.")
+            Headline("No goals yet.")
+            Quiet("Talk one through with the coach and save the plan it offers, or write one yourself.")
         }
         state.goals.forEach { g ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(16.dp))
-                    .clickable { openGoal = g.row.id }
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(g.row.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = clarity.text, modifier = Modifier.weight(1f))
-                    StatusChip(g.status)
-                }
-                g.row.deadline?.let { Muted("Deadline ${model.day(it)}") }
-                g.backlogs.forEach { b -> Muted("${model.n(b.remaining)} of ${model.n(b.row.total)} ${b.row.unit} left") }
-                g.targets.forEach { t -> Muted("${t.row.name}: ${model.levelsLine(t.row)}, ${t.row.schedule}") }
+            val (pill, warn) = statusPill(g, state, model)
+            BoldCard(gap = 6, onClick = { openGoal = g.row.id }) {
+                Pill(pill, warn)
+                Text(g.row.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.text)
+                subtitle(g, model)?.let { Quiet(it) }
             }
         }
         if (state.looseBacklogs.isNotEmpty() || state.looseTargets.isNotEmpty()) {
             Heading("Not under a goal")
-            state.looseBacklogs.forEach { BacklogBlock(it, model, state) }
-            state.looseTargets.forEach { TargetBlock(it, model, state) }
+            state.looseBacklogs.forEach { ManageBacklog(it, model) }
+            state.looseTargets.forEach { ManageTarget(it, model, state) }
         }
-        PlanButton("Plan with coach", filled = true, onClick = onPlanWithCoach)
+        PrimaryButton("Plan with coach", onClick = onPlanWithCoach)
         AddGoalForm(state, model)
         if (state.oldGoals.isNotEmpty()) {
             Heading("Done and archived")
@@ -87,12 +109,36 @@ fun GoalsSection(state: PlanViewModel.State, model: PlanViewModel, onPlanWithCoa
                 }
             }
         }
-        Text(
-            "Goals change only when you tap. Every change of a goal's words or date is kept.",
-            style = MaterialTheme.typography.bodySmall,
-            color = clarity.muted,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
-        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** The pill at the top of a goal: when it starts, whether its plan is on track, or which day it is. */
+private fun statusPill(g: PlanViewModel.GoalView, state: PlanViewModel.State, model: PlanViewModel): Pair<String, Boolean> {
+    val today = state.today
+    val first = g.firstStart
+    if (first != null && first.isAfter(today)) {
+        val day = model.showDay(first)
+        return (if (first == today.plusDays(1)) "Starts tomorrow, $day" else "Starts $day") to false
+    }
+    val finish = g.backlogs.firstNotNullOfOrNull { it.facts.finish }
+    return when {
+        g.backlogs.isNotEmpty() && g.backlogs.all { it.facts.projection.status == "done" } -> "Done" to false
+        finish?.status == "finishes" -> "On track" to false
+        finish?.status == "late" || finish?.status == "never" -> "Behind the plan" to true
+        g.status == "behind" -> "Behind" to true
+        first != null -> "Day ${java.time.temporal.ChronoUnit.DAYS.between(first, today) + 1}" to false
+        else -> g.status.replaceFirstChar { it.uppercase() } to false
+    }
+}
+
+private fun subtitle(g: PlanViewModel.GoalView, model: PlanViewModel): String? {
+    val b = g.backlogs.firstOrNull()
+    val deadline = g.row.deadline
+    return when {
+        b != null -> "${model.n(b.row.total)} ${b.row.unit} by ${model.day(b.row.deadline)}"
+        deadline != null -> "By ${model.day(deadline)}"
+        else -> null
     }
 }
 
@@ -101,74 +147,264 @@ private fun GoalPage(
     g: PlanViewModel.GoalView,
     state: PlanViewModel.State,
     model: PlanViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
+    onToday: () -> Unit,
     onPlanWithCoach: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("‹ All goals", color = clarity.yellow) }
+    var editing by rememberSaveable(g.row.id) { mutableStateOf(false) }
+    val b = g.backlogs.firstOrNull()
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onBack != null) TextAction("‹ Goals", onClick = onBack)
+            Spacer(Modifier.weight(1f))
+            TextAction(if (editing) "Done" else "Edit", color = clarity.muted) { editing = !editing }
+        }
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
-        StatusChip(g.status)
-        Text(g.row.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = clarity.text)
-        g.row.deadline?.let { Muted("Deadline ${model.day(it)}") }
-        g.backlogs.forEach { BacklogBlock(it, model, state) }
-        g.targets.forEach { TargetBlock(it, model, state) }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val (pill, warn) = statusPill(g, state, model)
+            Pill(pill, warn)
+            Headline(g.row.title)
+            subtitle(g, model)?.let { Quiet(it) }
+        }
+        if (b != null) FinishCard(b, g, state, model)
+        TodayStepCard(g, state, model, onToday)
+        if (g.steps.isNotEmpty()) StepsCard(g, state, model)
+        if (b != null) WeekCard(b)
+        if (b != null) ProgressLine(b, model)
         g.plan?.let { p ->
-            Column(Modifier.fillMaxWidth().border(1.dp, clarity.hairline, RoundedCornerShape(14.dp)).padding(12.dp)) {
-                Text("Plan", style = MaterialTheme.typography.labelLarge, color = clarity.muted)
-                Text("v${p.version} · review ${model.day(p.reviewDay)}", style = MaterialTheme.typography.bodyMedium, color = clarity.text)
-                Muted(p.rationale)
+            OutlineCard {
+                val review = LocalDate.parse(p.reviewDay)
+                val label = when {
+                    review.isBefore(state.today) -> "Review was due ${model.day(p.reviewDay)}"
+                    review == state.today -> "Review today"
+                    else -> (if (p.version == 1) "First review, " else "Next review, ") + model.day(p.reviewDay)
+                }
+                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Quiet(p.rationale)
             }
         }
-        PlanButton("Plan with coach", filled = true, onClick = onPlanWithCoach)
-        AddTargetForm(g.row.id, g.backlogs, state, model)
-        AddBacklogForm(g.row.id, state, model)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PlanButton("Mark done", filled = false, modifier = Modifier.weight(1f)) {
-                model.setGoalStatus(g.row.id, "done")
-                onBack()
+        PrimaryButton("Plan with coach", onClick = onPlanWithCoach)
+        if (editing) {
+            Kicker("Change by hand", clarity.muted)
+            g.targets.forEach { ManageTarget(it, model, state) }
+            g.backlogs.forEach { ManageBacklog(it, model) }
+            AddTargetForm(g.row.id, g.backlogs, state, model)
+            AddBacklogForm(g.row.id, state, model)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton("Mark goal done", Modifier.weight(1f)) {
+                    model.setGoalStatus(g.row.id, "done")
+                    onBack?.invoke()
+                }
+                SecondaryButton("Archive goal", Modifier.weight(1f)) {
+                    model.setGoalStatus(g.row.id, "archived")
+                    onBack?.invoke()
+                }
             }
-            PlanButton("Archive", filled = false, modifier = Modifier.weight(1f)) {
-                model.setGoalStatus(g.row.id, "archived")
-                onBack()
-            }
+            Quiet("Its targets and check-ins stay as they are, and can be ended one by one.")
         }
-        Muted("Its targets and check-ins stay as they are, and can be ended one by one.")
-        Text("", modifier = Modifier.padding(bottom = 24.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }
 
-/** A backlog with the pace in the app's own numbers: need versus usual, where each pace lands, the Status. */
+/** Where the plan's own steps finish it; without steps, the pace the calendar needs. All counted by the app. */
 @Composable
-private fun BacklogBlock(b: PlanViewModel.BacklogView, model: PlanViewModel, state: PlanViewModel.State) {
+private fun FinishCard(b: PlanViewModel.BacklogView, g: PlanViewModel.GoalView, state: PlanViewModel.State, model: PlanViewModel) {
+    val f = b.facts.finish
     val p = b.facts.projection
-    Column(
-        Modifier.fillMaxWidth().background(clarity.surface, RoundedCornerShape(16.dp)).padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(b.row.name, style = MaterialTheme.typography.titleMedium, color = clarity.text)
-        Muted("${model.n(b.remaining)} of ${model.n(b.row.total)} ${b.row.unit} left · deadline ${model.day(b.row.deadline)}")
-        if (p.requiredPerDay != null) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                BigNumber("You need", model.perDayUp(p.requiredPerDay), "a day, ${p.daysLeft} scheduled days left", Modifier.weight(1f))
-                p.typicalPerDay?.let {
-                    BigNumber("Your usual pace", model.perDay(it), "a day, last ${Planner.WINDOW} days, ${b.facts.windowAnswered} answered", Modifier.weight(1f))
+    val first = g.firstStart
+    val started = first != null && !first.isAfter(state.today)
+    BoldCard(gap = 6) {
+        val finishDay = f?.finish
+        val spare = f?.daysSpare
+        val reaches = f?.reachesByDeadline ?: 0.0
+        val required = p.requiredPerDay
+        when {
+            p.status == "done" -> {
+                Quiet("Finished")
+                BigFact("${model.n(b.row.total)} of ${model.n(b.row.total)}")
+                Text("Every one of them is done.", color = clarity.text, style = MaterialTheme.typography.bodyLarge)
+            }
+            f?.status == "finishes" && finishDay != null && spare != null -> {
+                Quiet(if (started && b.facts.done > 0) "Your plan still finishes" else "Your plan finishes")
+                BigFact(model.showDay(finishDay))
+                Text(
+                    when (spare) {
+                        0 -> "On your deadline day"
+                        1 -> "1 day before your deadline"
+                        else -> "$spare days before your deadline"
+                    },
+                    color = clarity.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                val steps = b.facts.steps.size
+                val flat = required?.takeIf { steps > 1 }
+                Quiet(
+                    "Counted by the app from your ${if (steps == 1) "plan" else "$steps steps"}." +
+                        (flat?.let { " A flat pace would need ${model.perDayUp(it)} a day; your steps start lower and end higher." } ?: ""),
+                    Modifier.padding(top = 6.dp),
+                )
+            }
+            f != null && (f.status == "late" || f.status == "never") -> {
+                Quiet("At your plan's steps, by ${model.day(b.row.deadline)}")
+                BigFact("${model.n(reaches)} of ${model.n(f.remaining)}", clarity.danger)
+                Text(
+                    "Short by ${model.n(f.remaining - reaches)}. A step or the date needs to change.",
+                    color = clarity.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Quiet("Counted by the app. Plan with coach to change it together.", Modifier.padding(top = 6.dp))
+            }
+            required != null -> {
+                Quiet("You need")
+                BigFact(model.perDayUp(required))
+                Text("a day, ${p.daysLeft} scheduled days left", color = clarity.text, style = MaterialTheme.typography.bodyLarge)
+                Quiet("Counted by the app, nothing estimated.", Modifier.padding(top = 6.dp))
+            }
+            else -> Quiet(model.statusText(p))
+        }
+    }
+}
+
+/** Today's step, with Check in; once answered, what was answered. Only on a day it is scheduled. */
+@Composable
+private fun TodayStepCard(g: PlanViewModel.GoalView, state: PlanViewModel.State, model: PlanViewModel, onToday: () -> Unit) {
+    if (state.restToday) return
+    val row = state.todayRows.firstOrNull { it.target.goalId == g.row.id } ?: return
+    val t = row.target
+    BoldCard(gap = 8) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Today",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = clarity.text,
+                modifier = Modifier.weight(1f),
+            )
+            if (row.steps > 1) Quiet("Step ${row.step} of ${row.steps}")
+        }
+        BigFact(model.n(t.target) + if (t.unit.isBlank()) "" else " ${t.unit}")
+        if (t.minimum > 0 && t.minimum < t.target) Quiet("${model.n(t.minimum)} still counts on a bad day")
+        if (row.answer == null) {
+            PrimaryButton("Check in", Modifier.fillMaxWidth().padding(top = 6.dp), onClick = onToday)
+        } else {
+            Text(model.answeredLine(row), color = clarity.yellow, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+/** The plan's steps as a timeline: done (grey), now (yellow), next (hollow). */
+@Composable
+private fun StepsCard(g: PlanViewModel.GoalView, state: PlanViewModel.State, model: PlanViewModel) {
+    BoldCard(gap = 16) {
+        Text("The plan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+        g.steps.forEach { st ->
+            val t = st.target
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(
+                    Modifier
+                        .padding(top = 5.dp)
+                        .size(14.dp)
+                        .then(
+                            when (st.phase) {
+                                "now" -> Modifier.background(clarity.yellow, CircleShape)
+                                "done" -> Modifier.background(clarity.controlOutline, CircleShape)
+                                else -> Modifier.border(2.dp, clarity.controlOutline, CircleShape)
+                            },
+                        ),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val unit = if (t.unit.isBlank()) "" else " ${t.unit}"
+                    val per = if (t.schedule == "daily") " a day" else ", ${t.schedule}"
+                    Text(
+                        "${model.n(t.target)}$unit$per",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (st.phase == "done") clarity.muted else clarity.text,
+                    )
+                    val end = st.end
+                    val dates = if (end != null) "${model.showDay(st.start)} to ${model.showDay(end)}" else "From ${model.showDay(st.start)}"
+                    val tag = when {
+                        st.phase == "done" -> " · done"
+                        st.phase == "now" && !st.start.isAfter(state.today) -> " · now"
+                        else -> ""
+                    }
+                    Quiet(dates + tag)
                 }
             }
         }
-        if (p.reachesTypical != null) {
-            Muted("Where each pace lands by ${model.day(b.row.deadline)}")
-            Text("At your usual pace: ${model.n(p.reachesTypical)} of ${model.n(p.remaining)}", color = clarity.text, style = MaterialTheme.typography.bodyMedium)
-            if (p.reachesBest != null && p.bestPerDay != null) {
-                Text(
-                    "At your best fortnight (${model.perDay(p.bestPerDay)} a day): ${model.n(p.reachesBest)} of ${model.n(p.remaining)}",
-                    color = clarity.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+        val current = g.steps.firstOrNull { it.phase == "now" } ?: g.steps.firstOrNull { it.phase == "next" }
+        current?.target?.takeIf { it.minimum > 0 && it.minimum < it.target }?.let {
+            HorizontalDivider(color = clarity.hairline)
+            Quiet("On a bad day, ${model.n(it.minimum)} still counts. Missed days are not failures; they show what to change.")
+        }
+    }
+}
+
+/** The last seven days since tracking began: full days yellow, minimum days lighter, a miss outlined. */
+@Composable
+private fun WeekCard(b: PlanViewModel.BacklogView) {
+    val days = b.recent.filter { it.level != "off" }
+    if (days.size < 2) return // a strip of one day says nothing yet
+    BoldCard(gap = 12) {
+        Text("Last ${days.size} days", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            b.recent.forEach { m ->
+                Column(
+                    Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    val shape = RoundedCornerShape(8.dp)
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .then(
+                                when (m.level) {
+                                    "target", "beyond" -> Modifier.background(clarity.yellow, shape)
+                                    "minimum" -> Modifier.background(clarity.yellow.copy(alpha = 0.45f), shape)
+                                    "rest" -> Modifier.background(clarity.raised, shape)
+                                    "not" -> Modifier.border(2.dp, clarity.danger, shape)
+                                    "off" -> Modifier
+                                    else -> Modifier.border(1.dp, clarity.hairline, shape)
+                                },
+                            ),
+                    )
+                    Text(m.day.dayOfWeek.name.take(1), style = MaterialTheme.typography.labelSmall, color = clarity.muted)
+                }
             }
         }
-        Text(model.statusText(p), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (p.status in setOf("short", "needs_best", "past_deadline")) clarity.danger else clarity.text)
-        b.facts.answerRate?.let { Muted("Answer rate ${it.toInt()}%. Counted by the app, nothing estimated.") }
-        if (b.linked.isEmpty()) Muted("No target is linked to it yet, so nothing counts toward it. Add a target for it on its goal.")
+        val answered = days.count { it.level != null && it.level != "rest" }
+        val scheduled = days.count { it.level != "rest" }
+        Quiet("$answered of $scheduled days answered. Full days yellow, minimum days lighter, an empty box is no answer.")
+    }
+}
+
+@Composable
+private fun ProgressLine(b: PlanViewModel.BacklogView, model: PlanViewModel) {
+    val p = b.facts.projection
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row {
+            Quiet("${model.n(b.facts.done)} of ${model.n(b.row.total)} done", Modifier.weight(1f))
+            Quiet(
+                p.typicalPerDay?.let { "Your pace ${model.perDay(it)} a day" }
+                    ?: "Your pace shows after ${Planner.MIN_ANSWERED} answered days",
+            )
+        }
+        val share = if (b.row.total > 0) (b.facts.done / b.row.total).toFloat().coerceIn(0f, 1f) else 0f
+        Box(Modifier.fillMaxWidth().height(8.dp).background(clarity.surface, RoundedCornerShape(999.dp))) {
+            if (share > 0f) Box(Modifier.fillMaxWidth(share).height(8.dp).background(clarity.yellow, RoundedCornerShape(999.dp)))
+        }
+    }
+}
+
+/** Behind Edit: a backlog with its hand controls. */
+@Composable
+private fun ManageBacklog(b: PlanViewModel.BacklogView, model: PlanViewModel) {
+    OutlineCard {
+        Text(b.row.name, style = MaterialTheme.typography.titleSmall, color = clarity.text)
+        Quiet("${model.n(b.remaining)} of ${model.n(b.row.total)} ${b.row.unit} left · deadline ${model.day(b.row.deadline)}")
+        if (b.linked.isEmpty()) Quiet("No target counts toward it yet. Add one below.")
         Row {
             TextButton(onClick = { model.setBacklogStatus(b.row.id, "done") }) { Text("Mark done", color = clarity.yellow) }
             TextButton(onClick = { model.setBacklogStatus(b.row.id, "archived") }) { Text("Archive", color = clarity.muted) }
@@ -176,22 +412,16 @@ private fun BacklogBlock(b: PlanViewModel.BacklogView, model: PlanViewModel, sta
     }
 }
 
+/** Behind Edit: a target with its hand controls. */
 @Composable
-private fun TargetBlock(t: PlanViewModel.TargetView, model: PlanViewModel, state: PlanViewModel.State) {
-    Column(
-        Modifier.fillMaxWidth().border(1.dp, clarity.hairline, RoundedCornerShape(14.dp)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text("Target: ${t.row.name}", style = MaterialTheme.typography.titleSmall, color = clarity.text)
-        Muted("${model.levelsLine(t.row)}, ${t.row.schedule}" + (t.row.endDay?.let { ", until ${model.day(it)}" } ?: ""))
-        Muted(
-            if (t.answered == 0) {
-                "No answers in the last ${Planner.WINDOW} days."
-            } else {
-                "Last ${Planner.WINDOW} days: done ${t.done} of ${t.answered} answered days."
-            },
+private fun ManageTarget(t: PlanViewModel.TargetView, model: PlanViewModel, state: PlanViewModel.State) {
+    OutlineCard {
+        Text(t.row.name, style = MaterialTheme.typography.titleSmall, color = clarity.text)
+        Quiet(
+            "${model.levelsLine(t.row)}, ${t.row.schedule}, from ${model.day(t.row.startDay)}" +
+                (t.row.endDay?.let { " to ${model.day(it)}" } ?: ""),
         )
-        t.reasons.forEach { Muted("Not or Part: $it.") }
+        t.reasons.forEach { Quiet("Not or Part: $it.") }
         Row {
             if (t.row.status == "active") {
                 TextButton(onClick = { model.setTargetStatus(t.row.id, "paused", state.today) }) { Text("Pause", color = clarity.muted) }
@@ -201,29 +431,6 @@ private fun TargetBlock(t: PlanViewModel.TargetView, model: PlanViewModel, state
             TextButton(onClick = { model.setTargetStatus(t.row.id, "ended", state.today) }) { Text("End it", color = clarity.muted) }
         }
     }
-}
-
-@Composable
-private fun BigNumber(label: String, value: String, under: String, modifier: Modifier) {
-    Column(modifier) {
-        Muted(label)
-        Text(value, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = clarity.yellow)
-        Muted(under)
-    }
-}
-
-@Composable
-private fun StatusChip(status: String) {
-    val bad = status == "behind"
-    Text(
-        status.replaceFirstChar { it.uppercase() },
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Bold,
-        color = if (bad) clarity.ground else clarity.text,
-        modifier = Modifier
-            .then(if (bad) Modifier.background(clarity.coral, RoundedCornerShape(12.dp)) else Modifier.border(1.dp, clarity.controlOutline, RoundedCornerShape(12.dp)))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-    )
 }
 
 @Composable

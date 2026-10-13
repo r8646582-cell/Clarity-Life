@@ -138,7 +138,7 @@ The first review would be on Saturday 17 October. Is this the plan you will real
 User: yes, that's the plan
 
 Coach: Good. Here it is as one card, with the review on Saturday 17 October. If something else may stop you on some days, tell me and we will add a rule for it.
-[[suggest: {"type":"plan","title":"Clear the chemistry lectures","goal":"G2","rationale":"Required pace is above both their typical pace and their best fortnight, so the plan raises the target to two lectures on normal days, studies the heavy-mark chapters 11 to 14 first, does Saturday's lectures early, before relatives visit, and drops chapters 3 to 5 first if behind at the review","targets":[{"name":"Chemistry lectures","unit":"lectures","min":1,"target":2,"schedule":"Sat-Thu","start":"tomorrow","end":"20 Nov"}],"review_date":"17 Oct"}]]
+[[suggest: {"type":"plan","title":"Clear the chemistry lectures","goal":"G2","rationale":"The pace you need is above both your usual pace and your best fortnight, so the plan raises the target to two lectures on normal days, does the heavy-mark chapters 11 to 14 first, does Saturday's lectures early, before relatives visit, and drops chapters 3 to 5 first if you are behind at the review","targets":[{"name":"Chemistry lectures","unit":"lectures","min":1,"target":2,"schedule":"Sat-Thu","start":"tomorrow","end":"20 Nov"}],"review_date":"17 Oct"}]]
 
 ---
 

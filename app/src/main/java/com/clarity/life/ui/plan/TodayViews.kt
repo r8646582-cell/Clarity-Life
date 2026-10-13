@@ -30,56 +30,74 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.clarity.life.core.Planner
 import com.clarity.life.ui.theme.clarity
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.Headline
+import com.clarity.life.ui.theme.Quiet
+import com.clarity.life.ui.theme.TextAction
 
 /**
- * Plan, Today (docs/mockups/Today.dc.html): the daily check-in. One card per active target scheduled today:
- * Did it / Part / Not, an amount stepper when the target has a unit, and after Not or Part the reason chips
- * and an optional line. A planned rest day is neither done nor missed. Unanswered stays "no answer".
+ * Plan, Today: the daily check-in, redesigned (the owner's approved mockup of 13 Oct 2026). A headline that fits
+ * the day (day 1, all answered, it starts tomorrow), then one card per target scheduled today: big number
+ * buttons for an amount (Did it / Part / Not when there is no unit), and once answered, what it means for the
+ * plan in the app's own numbers. What got in the way is asked only below the target. Unanswered stays "no
+ * answer"; a planned rest day is neither done nor missed.
  */
 @Composable
 fun TodaySection(state: PlanViewModel.State, model: PlanViewModel) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.Bottom) {
-            Text(state.todayLabel, style = MaterialTheme.typography.titleLarge, color = clarity.text, modifier = Modifier.weight(1f))
-            if (state.todayRows.isNotEmpty() && !state.restToday) {
-                Muted("${state.answeredToday} of ${state.todayRows.size} answered")
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Quiet(model.longDay(state.today))
+            Headline(todayHeadline(state, model))
         }
         if (state.restToday) {
-            Column(
-                Modifier.fillMaxWidth().background(clarity.surface, RoundedCornerShape(16.dp)).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("Rest day", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-                Muted("Planned. It counts as neither done nor missed, and it is not counted in days left.")
-                TextButton(onClick = { model.setRest(state.today, false) }) { Text("Not a rest day after all", color = clarity.yellow) }
+            BoldCard(gap = 8) {
+                Text("Rest day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Quiet("Planned. It counts as neither done nor missed, and it is not counted in days left.")
+                TextAction("Not a rest day after all") { model.setRest(state.today, false) }
             }
             return@Column
         }
         if (state.todayRows.isEmpty()) {
-            Muted(
-                "Nothing is scheduled today. Targets come from a plan you save in a Plan and track chat, " +
-                    "or from Add a target on a goal.",
+            Quiet(
+                if (model.nextStart(state) != null) {
+                    "Your first check-in shows here on the day your plan starts."
+                } else {
+                    "Targets come from a plan you save in a Plan and track chat, or from Edit on a goal."
+                },
             )
         }
         state.todayRows.forEach { row -> TodayCard(row, state, model) }
-        Muted("Unanswered stays \"no answer\". Nothing is guessed.")
         if (state.todayRows.isNotEmpty()) {
-            Text(
-                "Make today a rest day",
-                style = MaterialTheme.typography.labelLarge,
-                color = clarity.text,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 44.dp)
-                    .border(1.dp, clarity.controlOutline, RoundedCornerShape(12.dp))
-                    .clickable { model.setRest(state.today, true) }
-                    .padding(vertical = 12.dp),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextAction("Make today a rest day", color = clarity.muted, modifier = Modifier.weight(1f)) { model.setRest(state.today, true) }
+                Quiet("Nothing is guessed")
+            }
         }
-        Muted("A rest day pauses every target for the day.")
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** The one line that fits today. */
+private fun todayHeadline(state: PlanViewModel.State, model: PlanViewModel): String {
+    if (state.restToday) return "A rest day. Nothing to answer."
+    if (state.todayRows.isEmpty()) {
+        val next = model.nextStart(state)
+        return when {
+            next == null -> "Nothing scheduled today."
+            next == state.today.plusDays(1) -> "Your plan starts tomorrow."
+            else -> "Your plan starts ${model.showDay(next)}."
+        }
+    }
+    val open = state.todayRows.size - state.answeredToday
+    val day = model.planDay(state)
+    return when {
+        open == 0 -> "All answered. That is the habit."
+        day == 1L -> "Day 1. Start small, start today."
+        open == 1 -> "One to answer today."
+        else -> "$open to answer today."
     }
 }
 
@@ -88,47 +106,80 @@ private fun TodayCard(row: PlanViewModel.TodayRow, state: PlanViewModel.State, m
     val t = row.target
     val a = row.answer
     val hasPart = t.minimum > 0 && t.minimum < t.target
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(clarity.surface, RoundedCornerShape(16.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    BoldCard(gap = 14) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(t.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = clarity.text)
-                Muted(model.levelsLine(t))
-            }
-            if (a != null) TextButton(onClick = { model.clear(row, state.today) }) { Text("Clear", color = clarity.muted) }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            val done = a != null && a.level in setOf("target", "beyond")
-            LevelButton(if (a?.level == "beyond") "Beyond" else "Did it", done, Modifier.weight(1f)) {
-                model.answer(row, "target", state.today)
-            }
-            if (hasPart) {
-                LevelButton("Part", a?.level == "minimum", Modifier.weight(1f)) { model.answer(row, "minimum", state.today) }
-            }
-            LevelButton("Not", a?.level == "not", Modifier.weight(1f)) { model.answer(row, "not", state.today) }
-        }
-        if (row.quantity) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("How many?", style = MaterialTheme.typography.bodyMedium, color = clarity.text, modifier = Modifier.weight(1f))
-                val amount = a?.amount ?: 0.0
-                Stepper("−") { model.setAmount(row, amount - 1, state.today) }
-                Text(
-                    "${model.n(amount)} ${t.unit}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = clarity.text,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(min = 72.dp),
+                Text(t.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Quiet(
+                    model.levelsLine(t).replace(" · ", ", ") + (if (row.steps > 1) " · step ${row.step} of ${row.steps}" else ""),
                 )
-                Stepper("+") { model.setAmount(row, amount + 1, state.today) }
+            }
+            if (a != null) TextAction("Clear", color = clarity.muted) { model.clear(row, state.today) }
+        }
+        if (row.quantity && t.target <= MAX_BUTTON) {
+            Quiet("How many did you do?")
+            val top = (kotlin.math.ceil(t.target).toInt() + 1).coerceAtMost(MAX_BUTTON.toInt() + 1)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                (0..top).forEach { k ->
+                    val chosen = a != null && a.level != "rest" &&
+                        (if (k == top) a.amount >= k - 1e-9 else kotlin.math.abs(a.amount - k) < 1e-9)
+                    NumberButton(if (k == top) "$k+" else "$k", chosen, Modifier.weight(1f)) {
+                        if (k == 0) model.answer(row, "not", state.today) else model.setAmount(row, k.toDouble(), state.today)
+                    }
+                }
+            }
+            if (a != null && a.amount >= top - 1e-9) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Quiet("More than that?", Modifier.weight(1f))
+                    Stepper("−") { model.setAmount(row, a.amount - 1, state.today) }
+                    Text(
+                        "${model.n(a.amount)} ${t.unit}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = clarity.text,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(min = 72.dp),
+                    )
+                    Stepper("+") { model.setAmount(row, a.amount + 1, state.today) }
+                }
+            }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val done = a != null && a.level in setOf("target", "beyond")
+                NumberButton(if (a?.level == "beyond") "Beyond" else "Did it", done, Modifier.weight(1f)) {
+                    model.answer(row, "target", state.today)
+                }
+                if (hasPart) {
+                    NumberButton("Part", a?.level == "minimum", Modifier.weight(1f)) { model.answer(row, "minimum", state.today) }
+                }
+                NumberButton("Not", a?.level == "not", Modifier.weight(1f)) { model.answer(row, "not", state.today) }
+            }
+            if (row.quantity) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Quiet("How many?", Modifier.weight(1f))
+                    val amount = a?.amount ?: 0.0
+                    Stepper("−") { model.setAmount(row, amount - 1, state.today) }
+                    Text(
+                        "${model.n(amount)} ${t.unit}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = clarity.text,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(min = 72.dp),
+                    )
+                    Stepper("+") { model.setAmount(row, amount + 1, state.today) }
+                }
+            }
+        }
+        if (a != null) {
+            Column(
+                Modifier.fillMaxWidth().background(clarity.raised, RoundedCornerShape(14.dp)).padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(model.answeredLine(row), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.yellow)
+                model.planLine(row)?.let { Quiet(it) }
             }
         }
         if (a != null && a.level in Planner.SHORT_LEVELS) {
-            Text("What got in the way?", style = MaterialTheme.typography.bodySmall, color = clarity.text)
+            Text("What got in the way?", style = MaterialTheme.typography.bodyMedium, color = clarity.text)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 model.reasons.forEach { r ->
                     ReasonChip(r, a.reason == r) { model.reason(row, if (a.reason == r) null else r, state.today) }
@@ -149,24 +200,30 @@ private fun TodayCard(row: PlanViewModel.TodayRow, state: PlanViewModel.State, m
                     TextButton(onClick = { model.note(row, note, state.today) }) { Text("Save", color = clarity.yellow) }
                 }
             }
+            Quiet("It is information, never a mark against you.")
+        } else if (a == null && hasPart) {
+            Quiet("Below ${model.n(t.minimum)}, it asks what got in the way, in one tap.")
         }
     }
 }
 
+/** Amounts above this are entered with the stepper; below it, one big button per number. */
+private const val MAX_BUTTON = 5.0
+
 @Composable
-private fun LevelButton(label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(10.dp)
+private fun NumberButton(label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(14.dp)
     Text(
         label,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
         color = if (on) clarity.ground else clarity.text,
         textAlign = TextAlign.Center,
         modifier = modifier
-            .heightIn(min = 44.dp)
-            .then(if (on) Modifier.background(clarity.yellow, shape) else Modifier.border(2.dp, clarity.controlOutline, shape))
+            .heightIn(min = 56.dp)
+            .then(if (on) Modifier.background(clarity.yellow, shape) else Modifier.border(1.dp, clarity.controlOutline, shape))
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 14.dp),
     )
 }
 

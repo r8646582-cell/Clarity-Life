@@ -101,7 +101,7 @@ fun PlanScreen(
         } else if (section == "Today") {
             TodaySection(planState, planner)
         } else if (section == "Goals") {
-            GoalsSection(planState, planner) {
+            GoalsSection(planState, planner, onToday = { section = "Today" }) {
                 planner.planWithCoach()
                 onPlanWithCoach()
             }
