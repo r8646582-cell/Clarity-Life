@@ -24,8 +24,16 @@ object AnthropicWire {
     const val VERSION_HEADER = "anthropic-version"
     const val VERSION = "2023-06-01"
 
-    /** Thinking needs room of its own, and the budget must stay below the output limit. */
-    fun thinkingBudget(maxOutputTokens: Int): Int = maxOf(1024, maxOutputTokens / 2)
+    /**
+     * The app's thinking level as Anthropic's effort word. Current Claude models (checked 13 Oct 2026) only
+     * think adaptively: a fixed `budget_tokens` and `thinking: disabled` are both refused with an error, and
+     * so is a non-default temperature. So "off" becomes the lowest effort, the closest thing they allow.
+     */
+    fun effort(endpoint: Endpoint): String = when (endpoint.effort ?: if (endpoint.thinking) "high" else "off") {
+        "max" -> "max"
+        "high" -> "high"
+        else -> "low"
+    }
 
     fun messagesUrl(baseUrl: String): String = baseUrl.trimEnd('/') + "/v1/messages"
 
@@ -39,14 +47,12 @@ object AnthropicWire {
         if (request.system.isNotEmpty()) {
             put("system", buildJsonArray { add(textBlock(request.system, cache = true)) })
         }
-        if (endpoint.thinking) {
-            putJsonObject("thinking") {
-                put("type", "enabled")
-                put("budget_tokens", thinkingBudget(endpoint.maxOutputTokens))
-            }
-        } else {
-            endpoint.temperature?.let { put("temperature", it) }
+        // Adaptive thinking with a readable summary, so a long think still streams something (the gap timer).
+        putJsonObject("thinking") {
+            put("type", "adaptive")
+            put("display", "summarized")
         }
+        putJsonObject("output_config") { put("effort", effort(endpoint)) }
         put(
             "messages",
             buildJsonArray {

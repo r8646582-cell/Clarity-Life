@@ -60,7 +60,7 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 3,000 estimated tokens.
 
 ### NOW
-One sentence, written by code, that names the day the moment counts as (the day boundary, 4 am by default):
+One sentence, written by code, that names the day the moment counts as (the day boundary: midnight by default, 1 to 6 am if they choose; the example uses 4 am):
 - `It's Friday 9 October 2026, 9:40 pm (night).`
 - `It's Sunday 4 October 2026, 12:40 am (late night; their day still counts as Saturday until 4 am).`
 No greeting band is given; the coach decides.

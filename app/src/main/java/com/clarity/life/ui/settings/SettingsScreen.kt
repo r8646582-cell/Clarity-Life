@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.clarity.life.ui.settings
 
 import androidx.compose.foundation.background
@@ -5,12 +7,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -95,19 +99,13 @@ fun SettingsScreen(
         )
         Group("Coach", "Provider, key, models, your name", Icons.Outlined.AutoAwesome, openGroup, { openGroup = it }) {
             Label("Main provider")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Wraps to a second line on a narrow phone instead of breaking a name in half ("Anthrop / ic").
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 model.providers.forEach { (id, label) ->
-                    val on = state.provider == id
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (on) clarity.ground else clarity.text,
-                        modifier = Modifier
-                            .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                            .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                            .clickable { model.pickProvider(id) }
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                    )
+                    Chip(label, state.provider == id) { model.pickProvider(id) }
                 }
             }
 
@@ -139,7 +137,13 @@ fun SettingsScreen(
             Field(state.chatModel, model::setChatModel)
             Label("Chat thinking")
             Levels(state.chatThinking, model::setChatThinking)
-            Hint("Low is quick; High and Max are slower and more careful.")
+            Hint(
+                if (state.provider == "anthropic") {
+                    "Claude always thinks a little, so Off works like Low. High and Max are slower and more careful."
+                } else {
+                    "Low is quick; High and Max are slower and more careful."
+                },
+            )
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
             Hint("For reflection, reviews and the monthly story.")
@@ -205,22 +209,21 @@ fun SettingsScreen(
                 )
             }
             Label("My day ends at")
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 SettingsViewModel.DAY_BOUNDARY_CHOICES.forEach { hour ->
-                    val on = state.dayBoundaryHour == hour
-                    Text(
-                        if (hour == 0) "12" else "$hour",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (on) clarity.ground else clarity.text,
-                        modifier = Modifier
-                            .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                            .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                            .clickable { model.setDayBoundary(hour) }
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                    )
+                    Chip(if (hour == 0) "Midnight" else "$hour am", state.dayBoundaryHour == hour) { model.setDayBoundary(hour) }
                 }
             }
-            Hint("In am. A 12:30 am check-in counts for the day before.")
+            Hint(
+                if (state.dayBoundaryHour == 0) {
+                    "Like a calendar: a new day starts at midnight."
+                } else {
+                    "For late nights: until ${state.dayBoundaryHour} am, a check-in still counts for the day before."
+                },
+            )
             Row(
                 Modifier.fillMaxWidth().padding(top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -492,21 +495,28 @@ private fun SecretField(value: String, label: String, onChange: (String) -> Unit
 /** Off, Low, High, Max as a row of chips, the same as "My day ends at". */
 @Composable
 private fun Levels(current: String, onPick: (String) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         com.clarity.life.core.Thinking.LEVELS.forEach { (id, label) ->
-            val on = current == id
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (on) clarity.ground else clarity.text,
-                modifier = Modifier
-                    .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                    .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                    .clickable { onPick(id) }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-            )
+            Chip(label, current == id) { onPick(id) }
         }
     }
+}
+
+/** One choice in a row of chips: yellow when picked. Never breaks a word across two lines. */
+@Composable
+private fun Chip(label: String, on: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (on) clarity.ground else clarity.text,
+        maxLines = 1,
+        softWrap = false,
+        modifier = Modifier
+            .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
+            .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    )
 }
 
 @Composable
@@ -729,7 +739,16 @@ private fun HealthRow(good: Boolean, text: String, detail: String?, action: Stri
                 .background(if (good) clarity.green else clarity.yellow, androidx.compose.foundation.shape.CircleShape),
         )
         Text(text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, modifier = Modifier.weight(1f))
-        detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.muted) }
+        detail?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodySmall,
+                color = clarity.muted,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 140.dp),
+            )
+        }
         action?.let { SmallButton(it, primary = true, onClick = onAction) }
     }
 }
