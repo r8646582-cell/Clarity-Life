@@ -495,6 +495,50 @@
    "expect_dropped": 1,
    "prose_has": "Text",
    "prose_not": "```"
+  },
+  {
+   "name": "a ramp: three steps of the same target, the first two lasting a week each",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"start\":\"tomorrow\",\"weeks\":1},{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":3,\"weeks\":1},{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":4}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [
+    "plan"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "weeks must be at least 1",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":0}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "weeks must be a whole number",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":1.5}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "weeks is a number, never text",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":\"2\"}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "weeks and end together are refused: which one would win",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":1,\"end\":\"20 Nov\"}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "weeks above a year is refused",
+   "chat_type": "plan",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":53}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
   }
  ]
 }

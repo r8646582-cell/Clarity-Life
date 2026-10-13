@@ -606,6 +606,177 @@
     "backlog": [],
     "review": "2026-11-06"
    }
+  },
+  {
+   "name": "a ramp is chained in code: each step starts the day after the last one ends",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "CAF lectures",
+       "target": 2,
+       "schedule": "daily",
+       "start": "tomorrow",
+       "weeks": 1
+      },
+      {
+       "name": "CAF lectures",
+       "target": 3,
+       "schedule": "daily",
+       "weeks": 1
+      },
+      {
+       "name": "CAF lectures",
+       "target": 4,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "20 Oct"
+    },
+    "today": "2026-10-13"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     },
+     {
+      "start": "2026-10-28",
+      "end": null
+     }
+    ],
+    "backlog": [],
+    "review": "2026-10-20"
+   }
+  },
+  {
+   "name": "a step with no start and no earlier step starts today",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "CAF lectures",
+       "target": 2,
+       "schedule": "daily",
+       "weeks": 2
+      }
+     ],
+     "backlog": [],
+     "review_date": "20 Oct"
+    },
+    "today": "2026-10-13"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-13",
+      "end": "2026-10-26"
+     }
+    ],
+    "backlog": [],
+    "review": "2026-10-20"
+   }
+  },
+  {
+   "name": "a target after a non-step target is not chained: it starts today as before",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "CAF lectures",
+       "target": 2,
+       "schedule": "daily",
+       "end": "20 Oct"
+      },
+      {
+       "name": "Walk",
+       "target": 2,
+       "schedule": "daily"
+      }
+     ],
+     "backlog": [],
+     "review_date": "20 Oct"
+    },
+    "today": "2026-10-13"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-13",
+      "end": "2026-10-20"
+     },
+     {
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "backlog": [],
+    "review": "2026-10-20"
+   }
+  },
+  {
+   "name": "a step's own start wins over the chain",
+   "fn": "check_card",
+   "args": {
+    "card": {
+     "type": "plan",
+     "title": "t",
+     "rationale": "r",
+     "targets": [
+      {
+       "name": "CAF lectures",
+       "target": 2,
+       "schedule": "daily",
+       "weeks": 1
+      },
+      {
+       "name": "CAF lectures",
+       "target": 3,
+       "schedule": "daily",
+       "start": "Monday"
+      }
+     ],
+     "backlog": [],
+     "review_date": "20 Oct"
+    },
+    "today": "2026-10-13"
+   },
+   "expect": {
+    "ok": true,
+    "targets": [
+     {
+      "start": "2026-10-13",
+      "end": "2026-10-19"
+     },
+     {
+      "start": "2026-10-19",
+      "end": null
+     }
+    ],
+    "backlog": [],
+    "review": "2026-10-20"
+   }
   }
  ]
 }

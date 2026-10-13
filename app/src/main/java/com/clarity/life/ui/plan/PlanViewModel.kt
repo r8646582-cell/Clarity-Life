@@ -153,6 +153,7 @@ class PlanViewModel @Inject constructor(
                 b.id, b.name, b.goalId, b.total, b.startDone, LocalDate.parse(b.deadline),
                 Planner.dayKey(Instant.ofEpochMilli(b.createdAt).toString(), tz, boundary),
                 r.targets.filter { it.backlogId == b.id && it !in live }.flatMap(::history),
+                r.targets.filter { it.backlogId == b.id }.minOfOrNull { LocalDate.parse(it.startDay) },
             )
             val facts = PlanBlocks.backlogFacts(
                 model,

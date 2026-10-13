@@ -25,6 +25,7 @@ CHAT_TYPES = {
 }
 MAX_CARDS = 3
 MAX_NUMBER = 100000        # no target, minimum or total is ever this large; bigger means a broken card
+MAX_WEEKS = 52             # a ramp step lasts at most a year
 LINE_RE = re.compile(r"^\[\[suggest:\s*(\{.*\})\s*\]\]$")
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 ID_RE = {"goal": re.compile(r"^G\d+$"), "target": re.compile(r"^T\d+$"),
@@ -124,6 +125,17 @@ def _target_item(t):
         s = _str(t, k, 40, required=False)
         if s:
             out[k] = s
+    # A ramp step: how many weeks this target lasts. The app works out its end, and the next target with no
+    # start begins the day after (plan_dates.check_card); the coach never counts the dates.
+    w = t.get("weeks")
+    if w is not None:
+        if isinstance(w, bool) or not isinstance(w, (int, float)) or not math.isfinite(w) or w != int(w):
+            raise Bad("weeks must be a whole number")
+        if not 1 <= w <= MAX_WEEKS:
+            raise Bad("weeks out of range")
+        if "end" in out:
+            raise Bad("weeks and end together")
+        out["weeks"] = int(w)
     return out
 
 

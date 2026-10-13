@@ -48,6 +48,27 @@ class PlanApplyTest {
     }
 
     @Test
+    fun aRampUpdatesTheTargetAndAddsItsLaterStepsOneAfterAnother() {
+        val c = card(
+            """{"type":"plan","title":"Clear the chemistry lectures","goal":"G2","rationale":"Their ramp","targets":[{"name":"Chemistry lectures","unit":"lectures","min":1,"target":2,"schedule":"Sat-Thu","start":"tomorrow","weeks":1},{"name":"Chemistry lectures","unit":"lectures","min":1,"target":3,"schedule":"Sat-Thu","weeks":1},{"name":"Chemistry lectures","unit":"lectures","min":1,"target":4,"schedule":"Sat-Thu"}],"backlog":[{"name":"Chemistry lectures","total":40,"unit":"lectures","deadline":"20 Nov"}],"review_date":"17 Oct"}""",
+        )
+        val s = PlanApply.plan(c, days(c), setOf(2), listOf(t3), listOf(b1))
+        assertEquals(3, s.targets.size)
+        val first = s.targets[0] as PlanApply.TargetStep.Change
+        assertEquals(t3, first.old)
+        assertEquals(LocalDate.parse("2026-10-16"), first.end) // Sat 10 Oct + one week - 1 day
+        val second = s.targets[1] as PlanApply.TargetStep.New
+        assertEquals(LocalDate.parse("2026-10-17"), second.start)
+        assertEquals(LocalDate.parse("2026-10-23"), second.end)
+        assertEquals(3.0, second.target, 0.0)
+        assertEquals(0, second.backlog)
+        val third = s.targets[2] as PlanApply.TargetStep.New
+        assertEquals(LocalDate.parse("2026-10-24"), third.start)
+        assertNull(third.end)
+        assertEquals(0, third.backlog)
+    }
+
+    @Test
     fun aNewGoalGetsNewRowsLinkedByName() {
         val c = card(syllabus.replace("\"goal\":\"G2\",", ""))
         val s = PlanApply.plan(c, days(c), setOf(2), listOf(t3), listOf(b1))

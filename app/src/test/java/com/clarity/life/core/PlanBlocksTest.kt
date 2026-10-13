@@ -146,4 +146,21 @@ class PlanBlocksTest {
         val paused = PlanBlocks.backlogFacts(b.copy(doneElsewhere = logged), emptyList(), today, emptySet())
         assertEquals(30.0, paused.done, 0.0)
     }
+
+    @Test
+    fun aRampKeepsItsPaceWhenItMovesToTheNextStep() {
+        // Step 1 (2 a day) ran 14 to 20 Oct and has ended; step 2 (3 a day) started on 21 Oct.
+        val start = LocalDate.parse("2026-10-14")
+        val today = LocalDate.parse("2026-10-23")
+        val step1 = (0..6).map { CheckIn(start.plusDays(it.toLong()), "target", 2.0) }
+        val step2 = (7..8).map { CheckIn(start.plusDays(it.toLong()), "target", 3.0) }
+        val b = PlanBlocks.Backlog(1, "CAF lectures", null, 300.0, 0.0, LocalDate.parse("2027-02-01"), start.minusDays(1), step1, start)
+        val live = PlanBlocks.Target(2, "CAF lectures", null, 1, 1.0, 3.0, "daily", step2, LocalDate.parse("2026-10-21"))
+        val f = PlanBlocks.backlogFacts(b, listOf(live), today, emptySet())
+        assertEquals(20.0, f.done, 0.0)
+        // Nine answered days since the ramp began, not two since the current step began: the pace is there.
+        assertEquals(9, f.windowAnswered)
+        assertEquals(100.0, f.answerRate!!, 0.0)
+        assertEquals(20.0 / 9, f.projection.typicalPerDay!!, 1e-9)
+    }
 }

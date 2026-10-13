@@ -40,6 +40,11 @@ object PlanBlocks {
         val createdDay: LocalDate,
         /** Check-ins of its paused or ended targets: work already done toward it, though no longer tracked. */
         val doneElsewhere: List<CheckIn> = emptyList(),
+        /**
+         * The first start day of any target ever linked to it, ended ramp steps included, so its pace window
+         * does not restart at every step. Null: worked out from the linked targets, else [createdDay].
+         */
+        val firstStart: LocalDate? = null,
     )
 
     /** Everything active in the tracker, as the database holds it today. */
@@ -102,14 +107,15 @@ object PlanBlocks {
 
     fun backlogFacts(b: Backlog, linked: List<Target>, today: LocalDate, rest: Set<LocalDate>): BacklogFacts {
         val schedule = linked.firstOrNull()?.schedule ?: "daily"
-        val merged = mergeByDay(linked.flatMap { it.checkins })
+        // The pace reads every answer given toward it, ended ramp steps included, so it does not reset each step.
+        val merged = mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
         val done = b.startDone + mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
             .filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
         val remaining = b.total - done
         val todayAnswered = merged.any { it.day == today }
         val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
         // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
-        val start = linked.mapNotNull { it.start }.minOrNull() ?: b.createdDay
+        val start = b.firstStart ?: linked.mapNotNull { it.start }.minOrNull() ?: b.createdDay
         val typical = Planner.typicalPace(merged, schedule, today, rest, start)
         val best = Planner.bestPace(merged, schedule, today, rest, start)
         return BacklogFacts(

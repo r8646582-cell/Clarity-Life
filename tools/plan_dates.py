@@ -136,12 +136,24 @@ def check_card(card, today):
         typ = card["type"]
         if typ == "plan":
             targets = []
+            step_end = None   # the end of the previous ramp step (a target with "weeks"), if there is one
             for item in card.get("targets", []):
-                start = need(item["start"], "start") if "start" in item else today
-                end = need(item["end"], "end") if "end" in item else None
+                if "start" in item:
+                    start = need(item["start"], "start")
+                elif step_end is not None:
+                    start = (date.fromisoformat(step_end) + timedelta(days=1)).isoformat()
+                else:
+                    start = today
+                if "end" in item:
+                    end = need(item["end"], "end")
+                elif "weeks" in item:
+                    end = (date.fromisoformat(start) + timedelta(days=7 * item["weeks"] - 1)).isoformat()
+                else:
+                    end = None
                 if end is not None and end < start:
                     raise _Bad("end before start")
                 targets.append({"start": start, "end": end})
+                step_end = end if "weeks" in item else None
             backlog = [{"deadline": need(b["deadline"], "deadline")} for b in card.get("backlog", [])]
             review = need(card["review_date"], "review_date")
             if review <= t.isoformat():

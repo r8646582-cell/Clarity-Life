@@ -269,6 +269,7 @@ class PlannerRepository @Inject constructor(
                     b.id, b.name, b.goalId, b.total, b.startDone, LocalDate.parse(b.deadline),
                     LocalDate.parse(b.startDay!!),
                     offTargets.filter { it.backlogId == b.id }.flatMap { t -> (offCheckins[t.id] ?: emptyList()).map { model(it) } },
+                    (targets + offTargets).filter { it.backlogId == b.id }.minOfOrNull { LocalDate.parse(it.startDay) },
                 )
             },
             restDays = dao.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),

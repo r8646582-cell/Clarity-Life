@@ -80,6 +80,9 @@ object CardParser {
     /** No target, minimum or total is ever this large; bigger means a broken card. */
     const val MAX_NUMBER = 100000.0
 
+    /** A ramp step lasts at most a year. */
+    const val MAX_WEEKS = 52.0
+
     val NOTE_KINDS = listOf("pattern", "what_helps", "what_doesnt", "value", "thread")
     val MODE_TARGETS = listOf("free", "untangle", "decide", "plan", "focus")
 
@@ -160,6 +163,16 @@ object CardParser {
         for (k in listOf("unit", "start", "end")) {
             val s = str(t, k, 40, required = false)
             if (!s.isNullOrEmpty()) out[k] = Jv.Str(s)
+        }
+        // A ramp step: how many weeks this target lasts. PlanDates works out its end, and the next target with no
+        // start begins the day after; the coach never counts the dates.
+        val w = t["weeks"]
+        if (w != null && w !is Jv.Null) {
+            val n = (w as? Jv.Num)?.value
+            if (w is Jv.Bool || n == null || !n.isFinite() || n != Math.floor(n)) throw CardBad("weeks must be a whole number")
+            if (n < 1 || n > MAX_WEEKS) throw CardBad("weeks out of range")
+            if (out.containsKey("end")) throw CardBad("weeks and end together")
+            out["weeks"] = Jv.Num(n, isInteger = true)
         }
         return Jv.Obj(out)
     }

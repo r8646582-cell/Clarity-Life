@@ -101,7 +101,7 @@ The AI's reply is text. It may end with at most three **card lines**, each a sin
 
 Card types and fields (the exact schema and limits are enforced by `tools/cards.py`, the reference parser; the Kotlin parser must pass every test vector in `contracts/card_vectors.json`):
 - `promise`: text, when (local human wording, e.g. "tomorrow 07:00"), remind (true/false), why.
-- `plan`: goal id (or omitted for a new goal), title, rationale (short), targets (up to 4: name, target, min, unit, schedule, start, end), backlog (up to 2: name, total, unit, deadline), review_date (must be one of the **review options** the app puts in PLAN_STATE, so the AI never calculates a date).
+- `plan`: goal id (or omitted for a new goal), title, rationale (short), targets (up to 4: name, target, min, unit, schedule, start, end, weeks; a ramp repeats one name as steps, each but the last with `weeks`, and code chains their dates: the owner's decision, 13 Oct 2026), backlog (up to 2: name, total, unit, deadline), review_date (must be one of the **review options** the app puts in PLAN_STATE, so the AI never calculates a date).
 - `target_change`: target id, new target_value / min / schedule / end, reason.
 - `backlog`: new (name, total, unit, deadline) or an adjustment of an existing id, with a reason.
 - `focus`: name, why.

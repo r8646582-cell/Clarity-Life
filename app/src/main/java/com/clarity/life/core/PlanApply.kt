@@ -167,6 +167,9 @@ object PlanApply {
         }
 
         val tItems = card.list("targets").orEmpty().map { it.asObj!!.map }
+        // A ramp repeats one name (2 a day, then 3, then 4). Its first step may update the existing target of that
+        // name; every later step with the same name is a new target, starting where PlanDates put it.
+        val named = mutableListOf<String>()
         val tSteps = tItems.mapIndexed { i, t ->
             val name = t.getValue("name").asStr!!
             val unit = t["unit"]?.asStr.orEmpty()
@@ -183,7 +186,9 @@ object PlanApply {
                 }
                 if (same(bUnit, unit)) link = 0
             }
-            val old = targets.firstOrNull { mine(it.goalId) && same(it.name, name) }
+            val laterStep = named.any { same(it, name) }
+            named += name
+            val old = if (laterStep) null else targets.firstOrNull { mine(it.goalId) && same(it.name, name) }
             if (old == null) {
                 TargetStep.New(name, unit, min, target, schedule, start, end, link)
             } else {

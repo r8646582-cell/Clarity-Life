@@ -129,11 +129,24 @@ object PlanDates {
         return try {
             when (type) {
                 "plan" -> {
+                    // A ramp: a target with "weeks" lasts that many weeks, and the next target with no start begins
+                    // the day after it ends. The dates are worked out here, never by the coach.
+                    var stepEnd: LocalDate? = null
                     val targets = (fields["targets"]?.asList ?: emptyList()).map { item ->
                         val t = item.asObj?.map ?: throw BadCard("target item")
-                        val start = if ("start" in t) need(t["start"], "start") else today
-                        val end = if ("end" in t) need(t["end"], "end") else null
+                        val weeks = t["weeks"]?.asNum?.toLong()
+                        val start = when {
+                            "start" in t -> need(t["start"], "start")
+                            stepEnd != null -> stepEnd!!.plusDays(1)
+                            else -> today
+                        }
+                        val end = when {
+                            "end" in t -> need(t["end"], "end")
+                            weeks != null -> start.plusDays(7 * weeks - 1)
+                            else -> null
+                        }
                         if (end != null && end.isBefore(start)) throw BadCard("end before start")
+                        stepEnd = if (weeks != null) end else null
                         start to end
                     }
                     val deadlines = (fields["backlog"]?.asList ?: emptyList()).map { item ->
