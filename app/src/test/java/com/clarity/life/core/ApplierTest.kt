@@ -58,8 +58,8 @@ class ApplierTest {
 
     @Test
     fun vectorCountMatchesThePythonReference() {
-        // A guard against the file failing to load silently: the contract has 42 cases today.
-        assertEquals(42, Vectors.cases("contracts/applier_vectors.json").size)
+        // A guard against the file failing to load silently: the contract has 62 cases today.
+        assertEquals(62, Vectors.cases("contracts/applier_vectors.json").size)
     }
 
     private fun call(fn: String, args: JsonObject, fixtures: JsonObject): JsonObject {
@@ -81,6 +81,24 @@ class ApplierTest {
                     args.str("raw"), args.strings("known_ids"), args.strings("inputs"), args.strings("his_messages"),
                 )
                 obj("ok" to r.ok, "problems" to r.problems)
+            }
+            "apply_story" -> {
+                val quotes = args.getValue("quotes").jsonArray.associate {
+                    val q = it.jsonObject
+                    q.getValue("id").jsonPrimitive.content.toLong() to q.str("day")
+                }
+                val r = TextJobCheck.story(args.str("raw"), quotes, args.strings("inputs"), args.strings("his_messages"))
+                obj(
+                    "ok" to r.ok,
+                    "problems" to r.problems,
+                    "short" to r.short,
+                    "then_quote" to r.thenQuote,
+                    "now_quote" to r.nowQuote,
+                    "overcame" to r.overcame.map {
+                        mapOf("title" to it.title, "then_quote" to it.thenQuote, "did" to it.did, "now" to it.now)
+                    },
+                    "dropped" to r.dropped,
+                )
             }
             else -> error("the vectors call $fn, which this test does not know")
         }

@@ -13,6 +13,14 @@ import tempfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 MUTATIONS = [
+    ("appliers.py", "if then_q is not None and not days[then_q] < days[now_q]:", "if False:", "test_appliers.py",
+     "a story's now quote older than its then quote"),
+    ("appliers.py", "if isinstance(v, bool) or not isinstance(v, int) or v not in days:", "if v not in days:",
+     "test_appliers.py", "true accepted as quote id 1"),
+    ("appliers.py", "            if not number_check(text, inputs)[\"ok\"]:\n                raise Bad(\"a number not in the inputs\")\n", "",
+     "test_appliers.py", "an overcame line with an invented number published"),
+    ("appliers.py", "        items = items[:STORY_OVERCAME]", "        pass", "test_appliers.py", "more than three overcame items"),
+    ("appliers.py", "STORY_WORDS = (40, 120)", "STORY_WORDS = (1, 120)", "test_appliers.py", "a one-line story published"),
     ("story.py", "if cur.weekday() in val and cur not in rest:\n                    total += st[\"target\"]",
      "if cur.weekday() in val:\n                    total += st[\"target\"]", "test_story.py",
      "a planned rest day still asked for in the plan line"),

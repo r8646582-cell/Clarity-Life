@@ -25,7 +25,7 @@ import javax.inject.Singleton
 
 /**
  * Writes what is due: the review rows (facts in code), the notes under them, the weekly letter, the
- * quarterly chapter, then the monthly memory gardening. Runs on
+ * quarterly chapter, the monthly story, then the monthly memory gardening. Runs on
  * every app start (catch-up) and each Sunday at 19:00 and 19:30; Try again on a review or a letter runs it for
  * that one with fresh attempts. Every run is safe to repeat: the job keys make a second run a no-op.
  */
@@ -37,6 +37,7 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         fun reviews(): ReviewWriter
         fun letters(): LetterWriter
         fun chapters(): ChapterWriter
+        fun stories(): StoryWriter
         fun gardening(): GardeningJob
         fun scheduler(): WritingScheduler
     }
@@ -60,6 +61,9 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             // The quarterly chapter, once the quarter is over (a no-op once it is written or skipped).
             val chapter = deps.chapters().write(deps.chapters().dueQuarter(now), now)
             if (chapter is ChapterWriter.Outcome.Retry) again = true
+            // The monthly story for Your story, once the month is over (a no-op once written or skipped).
+            val story = deps.stories().write(deps.stories().dueMonth(now), now)
+            if (story is StoryWriter.Outcome.Retry) again = true
             // Monthly memory gardening (and an extra tidy when a kind of note is full).
             if (deps.gardening().runDue(now) is GardeningJob.Outcome.Retry) again = true
         } finally {

@@ -257,6 +257,29 @@
       "placeholders": [],
       "must_contain": [],
       "max_words": 12000
+    },
+    "story.md": {
+      "placeholders": [
+        "USER_NAME",
+        "SINCE",
+        "LENGTH",
+        "FACTS",
+        "PLAN_STATE",
+        "CHAPTERS",
+        "MONTHLY_REVIEWS",
+        "FOCUSES",
+        "NOTES",
+        "QUOTES",
+        "PREVIOUS_STORY"
+      ],
+      "must_contain": [
+        "Use only numbers",
+        "numbers written in words",
+        "then_quote",
+        "overcame",
+        "copy their words exactly"
+      ],
+      "max_words": 900
     }
   },
   "banned_phrases_for_replies": [

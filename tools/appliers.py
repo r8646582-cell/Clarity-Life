@@ -472,3 +472,94 @@ def apply_monthly_review(raw, known_ids, inputs, his_messages):
     if not nc["ok"]:
         probs.append("numbers not in the inputs: %s" % ", ".join(nc["bad"]))
     return {"ok": not probs, "problems": probs}
+
+
+STORY_WORDS = (40, 120)
+STORY_OVERCAME = 3
+STORY_TITLE_CHARS = 60
+STORY_LINE_CHARS = 200
+
+
+def _quote_id(v, days):
+    """A quote reference: null, or the id of a quote the model was given (never a bool, never a guess)."""
+    if v is None:
+        return None
+    if isinstance(v, bool) or not isinstance(v, int) or v not in days:
+        raise Bad("unknown quote id")
+    return v
+
+
+def _story_line(v, maxlen):
+    if not isinstance(v, str) or not v.strip() or len(v) > maxlen or "\n" in v.strip() or "[[" in v:
+        raise Bad("missing, too long or not one line")
+    return v.strip()
+
+
+def apply_story(raw, quotes, inputs, his_messages):
+    """The monthly story job (spec 2.5 and 8). quotes = [{"id", "day"}] the model was given; inputs = every
+    string it was given (NumberCheck). The short version must pass or nothing is published. The quote pair and
+    each overcame item are checked on their own: a bad one is dropped and named in "dropped", the rest kept.
+    Returns {"ok", "problems", "short", "then_quote", "now_quote", "overcame", "dropped"}."""
+    fail = {"ok": False, "short": "", "then_quote": None, "now_quote": None, "overcame": [], "dropped": []}
+    try:
+        obj = loads_strict(raw.strip())
+    except (ValueError, Bad) as e:
+        return dict(fail, problems=["not strict JSON: %s" % e])
+    if not isinstance(obj, dict):
+        return dict(fail, problems=["not an object"])
+    short = obj.get("short")
+    probs = []
+    if not isinstance(short, str) or not STORY_WORDS[0] <= len(short.split()) <= STORY_WORDS[1]:
+        probs.append("short missing or outside %d to %d words" % STORY_WORDS)
+    else:
+        short = short.strip()
+        probs += _plain_text_problems(short)
+        q = verify_quotes_in_text(short, his_messages)
+        if not q["ok"]:
+            probs.append("quotes not his: %s" % "; ".join(q["bad"]))
+        nc = number_check(short, inputs)
+        if not nc["ok"]:
+            probs.append("numbers not in the inputs: %s" % ", ".join(nc["bad"]))
+    if probs:
+        return dict(fail, problems=probs)
+    days = {q["id"]: q["day"] for q in quotes}
+    dropped = []
+    then_q = now_q = None
+    try:
+        then_q = _quote_id(obj.get("then_quote"), days)
+        now_q = _quote_id(obj.get("now_quote"), days)
+        if (then_q is None) != (now_q is None):
+            raise Bad("then and now come together")
+        if then_q is not None and not days[then_q] < days[now_q]:
+            raise Bad("the then quote must be from an earlier day than the now quote")
+    except Bad as e:
+        dropped.append("quotes: %s" % e)
+        then_q = now_q = None
+    items = obj.get("overcame", [])
+    if not isinstance(items, list):
+        dropped.append("overcame: not a list")
+        items = []
+    if len(items) > STORY_OVERCAME:
+        dropped.append("overcame: more than %d, the rest dropped" % STORY_OVERCAME)
+        items = items[:STORY_OVERCAME]
+    out = []
+    for i, it in enumerate(items):
+        try:
+            if not isinstance(it, dict):
+                raise Bad("not an object")
+            item = {"title": _story_line(it.get("title"), STORY_TITLE_CHARS),
+                    "then_quote": _quote_id(it.get("then_quote"), days),
+                    "did": _story_line(it.get("did"), STORY_LINE_CHARS),
+                    "now": _story_line(it.get("now"), STORY_LINE_CHARS)}
+            text = "\n".join([item["title"], item["did"], item["now"]])
+            if _plain_text_problems(text):
+                raise Bad("not plain text")
+            if not verify_quotes_in_text(text, his_messages)["ok"]:
+                raise Bad("a quotation that is not his")
+            if not number_check(text, inputs)["ok"]:
+                raise Bad("a number not in the inputs")
+            out.append(item)
+        except Bad as e:
+            dropped.append("overcame %d: %s" % (i + 1, e))
+    return {"ok": True, "problems": [], "short": short, "then_quote": then_q, "now_quote": now_q,
+            "overcame": out, "dropped": dropped}

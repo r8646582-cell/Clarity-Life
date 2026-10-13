@@ -5,8 +5,9 @@ import com.clarity.life.core.JobFields.strip
 import com.clarity.life.core.JobFields.words
 
 /**
- * Checks AI-written text before it is published: the weekly review note, the letter, the chapter, and the
- * monthly review. A 1:1 port of `check_text_job` and `apply_monthly_review` in tools/appliers.py.
+ * Checks AI-written text before it is published: the weekly review note, the letter, the chapter, the
+ * monthly review and the monthly story. A 1:1 port of `check_text_job`, `apply_monthly_review` and
+ * `apply_story` in tools/appliers.py.
  *
  * Every quotation must be his own words (QuoteCheck), every number must be in the inputs the model was given
  * (NumberCheck), and the text must be plain prose (no brackets, no dashes used as punctuation, no markdown).
@@ -101,5 +102,114 @@ object TextJobCheck {
         val nc = TextCheck.numberCheck(allText, inputs + knownIds)
         if (!nc.ok) probs.add("numbers not in the inputs: " + nc.bad.joinToString(", "))
         return MonthlyResult(probs.isEmpty(), probs, strip(head), strip(narr), out)
+    }
+
+    /** One thing he overcame, as the story job wrote it and the check let through. */
+    data class Overcame(val title: String, val thenQuote: Long?, val did: String, val now: String)
+
+    data class StoryResult(
+        val ok: Boolean,
+        val problems: List<String>,
+        val short: String = "",
+        val thenQuote: Long? = null,
+        val nowQuote: Long? = null,
+        val overcame: List<Overcame> = emptyList(),
+        val dropped: List<String> = emptyList(),
+    )
+
+    const val STORY_MIN_WORDS = 40
+    const val STORY_MAX_WORDS = 120
+    const val STORY_OVERCAME = 3
+    const val STORY_TITLE_CHARS = 60
+    const val STORY_LINE_CHARS = 200
+
+    private class Bad(message: String) : Exception(message)
+
+    /** A quote reference: null, or the id of a quote the model was given (never a bool, never a guess). */
+    private fun quoteId(v: Jv?, days: Map<Long, String>): Long? {
+        if (v == null || v == Jv.Null) return null
+        val n = v as? Jv.Num
+        if (n == null || !n.isInteger || n.value.toLong() !in days) throw Bad("unknown quote id")
+        return n.value.toLong()
+    }
+
+    private fun storyLine(v: Jv?, maxLen: Int): String {
+        val s = v?.asStr
+        if (s == null || strip(s).isEmpty() || pyLen(s) > maxLen || '\n' in strip(s) || "[[" in s) {
+            throw Bad("missing, too long or not one line")
+        }
+        return strip(s)
+    }
+
+    /**
+     * The monthly story job (spec 2.5 and 8). [quotes] = quote id to its day, the quotes the model was given;
+     * [inputs] = every string it was given. The short version must pass or nothing is published; the quote
+     * pair and each overcame item are checked on their own, and a bad one is dropped and named in dropped.
+     */
+    fun story(raw: String, quotes: Map<Long, String>, inputs: List<String>, hisMessages: List<String>): StoryResult {
+        val (parsed, error) = JobFields.parse(raw)
+        if (parsed == null) return StoryResult(false, listOf(error ?: "not strict JSON"))
+        val obj = parsed as? Jv.Obj ?: return StoryResult(false, listOf("not an object"))
+        val probs = mutableListOf<String>()
+        val rawShort = obj.map["short"]?.asStr
+        var short = ""
+        if (rawShort == null || words(rawShort).size !in STORY_MIN_WORDS..STORY_MAX_WORDS) {
+            probs.add("short missing or outside $STORY_MIN_WORDS to $STORY_MAX_WORDS words")
+        } else {
+            short = strip(rawShort)
+            probs += plainTextProblems(short)
+            val q = TextCheck.verifyQuotesInText(short, hisMessages)
+            if (!q.ok) probs.add("quotes not his: " + q.bad.joinToString("; "))
+            val nc = TextCheck.numberCheck(short, inputs)
+            if (!nc.ok) probs.add("numbers not in the inputs: " + nc.bad.joinToString(", "))
+        }
+        if (probs.isNotEmpty()) return StoryResult(false, probs)
+        val dropped = mutableListOf<String>()
+        var thenQ: Long? = null
+        var nowQ: Long? = null
+        try {
+            thenQ = quoteId(obj.map["then_quote"], quotes)
+            nowQ = quoteId(obj.map["now_quote"], quotes)
+            if ((thenQ == null) != (nowQ == null)) throw Bad("then and now come together")
+            if (thenQ != null && quotes.getValue(thenQ) >= quotes.getValue(nowQ!!)) {
+                throw Bad("the then quote must be from an earlier day than the now quote")
+            }
+        } catch (e: Bad) {
+            dropped.add("quotes: ${e.message}")
+            thenQ = null
+            nowQ = null
+        }
+        var items: List<Jv> = if (obj.map.containsKey("overcame")) {
+            obj.map["overcame"]?.asList ?: run {
+                dropped.add("overcame: not a list")
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+        if (items.size > STORY_OVERCAME) {
+            dropped.add("overcame: more than $STORY_OVERCAME, the rest dropped")
+            items = items.take(STORY_OVERCAME)
+        }
+        val out = mutableListOf<Overcame>()
+        items.forEachIndexed { i, it ->
+            try {
+                val o = it as? Jv.Obj ?: throw Bad("not an object")
+                val item = Overcame(
+                    title = storyLine(o.map["title"], STORY_TITLE_CHARS),
+                    thenQuote = quoteId(o.map["then_quote"], quotes),
+                    did = storyLine(o.map["did"], STORY_LINE_CHARS),
+                    now = storyLine(o.map["now"], STORY_LINE_CHARS),
+                )
+                val text = listOf(item.title, item.did, item.now).joinToString("\n")
+                if (plainTextProblems(text).isNotEmpty()) throw Bad("not plain text")
+                if (!TextCheck.verifyQuotesInText(text, hisMessages).ok) throw Bad("a quotation that is not his")
+                if (!TextCheck.numberCheck(text, inputs).ok) throw Bad("a number not in the inputs")
+                out.add(item)
+            } catch (e: Bad) {
+                dropped.add("overcame ${i + 1}: ${e.message}")
+            }
+        }
+        return StoryResult(true, emptyList(), short, thenQ, nowQ, out, dropped)
     }
 }

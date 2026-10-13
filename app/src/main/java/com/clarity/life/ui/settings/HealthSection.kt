@@ -110,6 +110,7 @@ class HealthViewModel @Inject constructor(
             "review_month" to "Monthly review",
             "letter" to "Weekly letter",
             "chapter" to "Chapter",
+            "story" to "Monthly story",
             "gardening" to "Gardening",
             "backup" to "Backup",
             "index" to "Search index",

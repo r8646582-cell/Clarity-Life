@@ -999,6 +999,745 @@
      ]
     ]
    }
+  },
+  {
+   "name": "story: a good story passes whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: not JSON is rejected whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "Here is your story: {\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: duplicate keys are rejected whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}], \"short\": \"x\"}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: a short version under 40 words is rejected whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You kept going this month.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: an invented number in the short version rejects it whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 130 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: a misquote in the short version rejects it whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but never do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: an em dash in the short version rejects it whole",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\", and since then \\u2014 you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "short": "",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: an unknown quote id drops the pair, the rest is kept",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 4, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: a then quote newer than the now quote drops the pair",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 9, \"now_quote\": 3, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: the same quote as then and now drops the pair",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 3, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: then without now drops the pair",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": null, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: true is not quote id 1",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": true, \"now_quote\": 9, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 1,
+      "day": "2026-10-01"
+     },
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: no quotes at all is fine",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": null, \"now_quote\": null, \"overcame\": [{\"title\": \"Being scared to drive\", \"then_quote\": 3, \"did\": \"You took 4 small steps, from sitting in the car to the market.\", \"now\": \"You drive to the market on your own.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": null,
+    "now_quote": null,
+    "overcame": [
+     {
+      "title": "Being scared to drive",
+      "then_quote": 3,
+      "did": "You took 4 small steps, from sitting in the car to the market.",
+      "now": "You drive to the market on your own."
+     }
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "story: an overcame line with an invented number is dropped, the others kept",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You took 6 small steps.\", \"now\": \"Evenings hold on most days.\"}, {\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [
+     {
+      "title": "Evenings",
+      "then_quote": null,
+      "did": "You put the phone outside the room.",
+      "now": "Evenings hold on most days."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: more than three overcame items keeps the first three",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}, {\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}, {\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}, {\"title\": \"Fourth\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [
+     {
+      "title": "Evenings",
+      "then_quote": null,
+      "did": "You put the phone outside the room.",
+      "now": "Evenings hold on most days."
+     },
+     {
+      "title": "Evenings",
+      "then_quote": null,
+      "did": "You put the phone outside the room.",
+      "now": "Evenings hold on most days."
+     },
+     {
+      "title": "Evenings",
+      "then_quote": null,
+      "did": "You put the phone outside the room.",
+      "now": "Evenings hold on most days."
+     }
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: overcame that is not a list is dropped",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": \"none\"}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: an overcame title over 60 characters is dropped",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: an overcame line on two lines is dropped",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold.\\nMostly.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: an overcame item with an unknown quote id is dropped",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Evenings\", \"then_quote\": 5, \"did\": \"You put the phone outside the room.\", \"now\": \"Evenings hold on most days.\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "story: an overcame line that misquotes him is dropped",
+   "fn": "apply_story",
+   "args": {
+    "raw": "{\"short\": \"You came in saying \\\"I know what to do but I don't do it\\\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.\", \"then_quote\": 3, \"now_quote\": 9, \"overcame\": [{\"title\": \"Evenings\", \"then_quote\": null, \"did\": \"You put the phone outside the room.\", \"now\": \"You said \\\"evenings are fine now\\\".\"}]}",
+    "quotes": [
+     {
+      "id": 3,
+      "day": "2026-10-13"
+     },
+     {
+      "id": 9,
+      "day": "2027-02-28"
+     }
+    ],
+    "inputs": [
+     "CAF lectures: 300 lectures by 1 Feb. Done 120. Plan: 2 a day for 1 week, then 3 a day for 1 week, then 4 a day.",
+     "Focus done: Driving again (4 steps kept)."
+    ],
+    "his_messages": [
+     "honestly I know what to do but I don't do it",
+     "now I just start the first ten minutes and keep going"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "short": "You came in saying \"I know what to do but I don't do it\". Since then you built a plan in steps and kept it on most days, and you have done 120 of the 300 lectures. The evenings stopped being where the day went wrong. You learned that starting small works for you, and you drove again on your own.",
+    "then_quote": 3,
+    "now_quote": 9,
+    "overcame": [],
+    "dropped_count": 1
+   }
   }
  ]
 }

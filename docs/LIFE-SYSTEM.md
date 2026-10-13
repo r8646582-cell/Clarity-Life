@@ -255,6 +255,7 @@ All of these exist now and pass `tools/check_prompts.py`. Review them; you have 
 | `reflection.md` | After a conversation: strict JSON with observations, notes with verified evidence (quotes or counts copied from the app's facts), events, focus summary, profile, people. Cannot touch promises or plans. Learns how to coach them from their reactions. |
 | `review_weekly.md`, `review_monthly.md` | Narrate the app's computed facts; every number must exist in the inputs. |
 | `letter_weekly.md`, `chapter.md`, `gardening.md` | Letter (a person-level letter, not a repeat of the numbers), quarterly chapter, monthly memory gardening. |
+| `story.md` | The monthly story for Your story (section 2.5): strict JSON with the short version, a then and a now quote chosen by id, and at most three things overcome; every number from the facts the app counted. |
 | `testbench.md` | 69 scenarios with automatic checks (semantics pinned by `tools/bench.py`) plus a human Expect line. |
 
 `contracts/prompts.json` is the single contract (placeholders per prompt, required rules, forbidden old syntax, size budgets, banned phrases). `contracts/context.md` is the context packet the app must build.

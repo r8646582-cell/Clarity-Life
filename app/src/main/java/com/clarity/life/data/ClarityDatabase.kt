@@ -83,6 +83,7 @@ abstract class ClarityDatabase : RoomDatabase() {
     abstract fun memory(): MemoryDao
     abstract fun search(): SearchDao
     abstract fun embeddings(): EmbeddingDao
+    abstract fun story(): com.clarity.life.data.dao.StoryDao
 
     companion object {
         const val NAME = "clarity.db"
