@@ -57,6 +57,7 @@ fun TalkHome(
     latest: ConversationRow?,
     hasKey: Boolean,
     provider: String,
+    userName: String,
     onSetUp: () -> Unit,
     onOpenGuide: () -> Unit,
     focuses: List<FocusRow>,
@@ -69,7 +70,7 @@ fun TalkHome(
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(greeting(java.time.LocalTime.now().hour), style = MaterialTheme.typography.displayLarge, color = clarity.text)
+                Text(greeting(userName), style = MaterialTheme.typography.displayLarge, color = clarity.text)
                 // The very first visit: one line on what this is, gone once there is a conversation.
                 if (latest == null) {
                     Text(
@@ -194,15 +195,11 @@ fun stepLabel(unit: String, name: String): String {
 }
 
 /**
- * By the phone's clock: night before 5 (12:30 am is not an evening), morning before 12, afternoon before 17,
- * evening otherwise. Warm, never a nudge to go to bed.
+ * "Hello, Sam." with the name from Settings, Coach, or just "Hello." until one is set. The same at any hour:
+ * the date sits above it and the plan line below, so a time-of-day greeting only added a way to be wrong
+ * (it said "Good evening." at 12:30 am).
  */
-fun greeting(hour: Int): String = when {
-    hour in 0..4 -> "Hello, night owl."
-    hour in 5..11 -> "Good morning."
-    hour in 12..16 -> "Good afternoon."
-    else -> "Good evening."
-}
+fun greeting(name: String): String = name.trim().let { if (it.isEmpty()) "Hello." else "Hello, $it." }
 
 @Composable
 private fun StepCard(row: PlanViewModel.TodayRow, plan: PlanViewModel.State, model: PlanViewModel, onOpenToday: () -> Unit) {
