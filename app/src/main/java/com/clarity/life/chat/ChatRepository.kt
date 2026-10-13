@@ -546,6 +546,75 @@ class ChatRepository @Inject constructor(
     fun stream(endpoint: Endpoint, request: ChatRequest): Flow<ChatChunk> =
         clientFor(endpoint).stream(endpoint, request)
 
+    /**
+     * The card follow-up (contracts/context.md): a finished reply that points at a button, or carried a card line
+     * that was thrown away, and has no card is followed by one more request for only the card line
+     * (prompts/card_followup.md), read by the same strict parser. Returns the raw reply to close with: the
+     * merged one when a valid card came back, otherwise [raw] unchanged. A failed follow-up never fails the
+     * reply; the quiet "no button" line then shows as before. Logged as codes, never content.
+     */
+    suspend fun withCardFollowUp(
+        endpoint: Endpoint,
+        request: ChatRequest,
+        raw: String,
+        chatType: String,
+        known: KnownIds,
+        finishReason: String?,
+        now: Long,
+    ): String {
+        val parsed = CardParser.parseReply(raw, chatType, known)
+        if (!com.clarity.life.core.CardFollowUp.needed(parsed, finishReason)) return raw
+        return try {
+            val ask = prompts.fill(
+                prompts.text(PromptStore.CARD_FOLLOWUP),
+                mapOf("REASON" to com.clarity.life.core.CardFollowUp.reason(parsed.dropped)),
+            )
+            // The same prefix and history, so the provider's cache covers almost all of it.
+            val followUp = request.copy(
+                messages = request.messages +
+                    com.clarity.life.ai.ChatMessage(
+                        com.clarity.life.ai.ChatMessage.ASSISTANT,
+                        ContextBuilder.historyMessage("coach", parsed.prose).content,
+                    ) +
+                    com.clarity.life.ai.ChatMessage(com.clarity.life.ai.ChatMessage.USER, ask),
+            )
+            val answer = StringBuilder()
+            var usage: com.clarity.life.ai.Usage? = null
+            stream(endpoint, followUp).collect { chunk ->
+                when (chunk) {
+                    is ChatChunk.Text -> {
+                        answer.append(chunk.text)
+                    }
+
+                    is ChatChunk.Finished -> {
+                        usage = chunk.usage
+                    }
+
+                    else -> Unit
+                }
+            }
+            usage?.let {
+                db.diagnostics().addUsage(
+                    month = monthKey(now, settings.timeZone()),
+                    calls = 1,
+                    tokensIn = it.tokensIn,
+                    tokensOut = it.tokensOut,
+                    tokensCached = it.tokensCached,
+                )
+            }
+            val merged = com.clarity.life.core.CardFollowUp.merged(parsed.prose, answer.toString(), chatType, known)
+            db.diagnostics().log(
+                ErrorLogRow(at = now, area = "card", code = if (merged != null) "card_followup_ok" else "card_followup_none", detail = ""),
+            )
+            merged ?: raw
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            db.diagnostics().log(ErrorLogRow(at = now, area = "card", code = "card_followup_failed", detail = ""))
+            raw
+        }
+    }
+
     companion object {
         /** Years of conversations fit; the list is lazy, so only the rows on screen are drawn. */
         const val DRAWER_LIMIT = 5000

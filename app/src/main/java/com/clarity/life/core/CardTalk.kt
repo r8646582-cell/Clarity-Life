@@ -15,7 +15,9 @@ object CardTalk {
             "\\b(add|added|attach|attached|sent|included|made|put)\\b[^.?!\\n]*\\b(card|cards|button|buttons)\\b|" +
             "\\b(card|cards|button|buttons)\\b[^.?!\\n]*\\b(below|attached|added|ready)\\b|" +
             // "tap Set it", "tap Save plan", "tap Switch": the buttons by name
-            "\\b(tap|tapping|press|hit)\\b[^.?!\\n]*\\b(set it|save plan|save it|switch|keep it)\\b",
+            "\\b(tap|tapping|press|hit)\\b[^.?!\\n]*\\b(set it|save plan|save it|switch|keep it)\\b|" +
+            // "Here it is. Tap it and we start": the owner's case of 13 Oct 2026, with no card under it
+            "\\btap (it|this|that|here|the button)\\b|\\bhere (it is|you go)\\b",
         RegexOption.IGNORE_CASE,
     )
 

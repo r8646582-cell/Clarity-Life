@@ -80,6 +80,17 @@
       ],
       "max_words": 1800
     },
+    "card_followup.md": {
+      "placeholders": [
+        "REASON"
+      ],
+      "must_contain": [
+        "Write only the card line",
+        "NONE",
+        "do not invent"
+      ],
+      "max_words": 200
+    },
     "examples.md": {
       "placeholders": [
         "USER_NAME"

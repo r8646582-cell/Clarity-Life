@@ -140,11 +140,22 @@ class ReplyService : Service() {
                     }
                 }
             }
+            val chatType = chat.conversations.get(conversationId)?.chatType ?: "free"
+            // A reply that points at a button with no card gets one more try for only the card line.
+            val raw = chat.withCardFollowUp(
+                endpoint = endpoint,
+                request = packet.request,
+                raw = partial.toString(),
+                chatType = chatType,
+                known = packet.known,
+                finishReason = finishReason,
+                now = System.currentTimeMillis(),
+            )
             val outcome = chat.closeCoachReply(
                 conversationId = conversationId,
                 messageId = messageId,
-                raw = partial.toString(),
-                chatType = chat.conversations.get(conversationId)?.chatType ?: "free",
+                raw = raw,
+                chatType = chatType,
                 known = packet.known,
                 finishReason = finishReason,
                 usage = usage,

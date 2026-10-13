@@ -19,6 +19,8 @@ class CardTalkTest {
         assertTrue(CardTalk.pointsAtAButton("I've added a card for it."))
         assertTrue(CardTalk.pointsAtAButton("If that matches, tap Save plan."))
         assertTrue(CardTalk.pointsAtAButton("Tap Set it if you want the reminder."))
+        assertTrue(CardTalk.pointsAtAButton("Right, my mistake. Here it is. Tap it and we will build the plan from your numbers."))
+        assertTrue(CardTalk.pointsAtAButton("If yes, tap below and we start."))
         assertFalse(CardTalk.pointsAtAButton("That sounds like a hard evening. What happened?"))
         assertFalse(CardTalk.pointsAtAButton("Here is what I noticed: you studied best after dinner."))
         assertFalse(CardTalk.pointsAtAButton("You tapped Not now earlier, and that is fine."))

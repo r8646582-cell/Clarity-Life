@@ -77,6 +77,7 @@ class PromptStore @Inject constructor(
         const val PERSONA = "persona.md"
         const val EXAMPLES = "examples.md"
         const val CARDS = "cards.md"
+        const val CARD_FOLLOWUP = "card_followup.md"
         const val REFLECTION = "reflection.md"
         const val TESTBENCH = "testbench.md"
 
