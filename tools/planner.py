@@ -162,19 +162,30 @@ def _window(checkins, schedule, first, last, rest_dates):
     return {"answered": len(answered), "scheduled": scheduled, "amount": amount, "done": done}
 
 
-def typical_pace(checkins, schedule, today, rest_dates=()):
-    """Pace over the 14 days before today. None when fewer than MIN_ANSWERED answered scheduled days."""
+def typical_pace(checkins, schedule, today, rest_dates=(), start=None):
+    """Pace over the 14 days before today. None when fewer than MIN_ANSWERED answered scheduled days.
+    With start (the first day it was tracked), the window never reaches before it: days before a plan existed
+    are not unanswered days. A plan that starts today or later has no window, so no answer rate yet."""
     today = d(today)
-    w = _window(checkins, schedule, today - timedelta(days=WINDOW), today - timedelta(days=1), rest_dates)
+    first = today - timedelta(days=WINDOW)
+    if start is not None and d(start) > first:
+        first = d(start)
+    last = today - timedelta(days=1)
+    if first > last:
+        return {"answered": 0, "scheduled": 0, "amount": 0, "done": 0, "pace": None, "answer_rate": None}
+    w = _window(checkins, schedule, first, last, rest_dates)
     w["pace"] = w["amount"] / w["answered"] if w["answered"] >= MIN_ANSWERED else None
     w["answer_rate"] = (round_half_up(100 * w["answered"] / w["scheduled"]) if w["scheduled"] else None)
     return w
 
 
-def best_pace(checkins, schedule, today, rest_dates=()):
+def best_pace(checkins, schedule, today, rest_dates=(), start=None):
     """Best pace over any 14-day window that ends before today and holds at least MIN_ANSWERED answered days.
-    The typical window (ending yesterday) is always one of the candidates, so best >= typical whenever both exist."""
+    The typical window (ending yesterday) is always one of the candidates, so best >= typical whenever both exist.
+    With start, check-ins before it are not counted, the same as in typical_pace."""
     today = d(today)
+    if start is not None:
+        checkins = [c for c in checkins if d(c["day"]) >= d(start)]
     days = [d(c["day"]) for c in checkins if d(c["day"]) < today]
     if not days:
         return None

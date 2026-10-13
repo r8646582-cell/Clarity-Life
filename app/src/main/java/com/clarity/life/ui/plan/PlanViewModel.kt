@@ -138,7 +138,7 @@ class PlanViewModel @Inject constructor(
 
         fun targetView(t: TargetRow): TargetView {
             val h = history(t)
-            val w = Planner.typicalPace(h, t.schedule, today, r.rest)
+            val w = Planner.typicalPace(h, t.schedule, today, r.rest, LocalDate.parse(t.startDay))
             val first = today.minusDays(Planner.WINDOW.toLong())
             val short = h.filter { !it.day.isBefore(first) && it.day.isBefore(today) && it.level in Planner.SHORT_LEVELS }
             val reasons = short.mapNotNull { it.reason }.groupingBy { it }.eachCount()
@@ -156,7 +156,7 @@ class PlanViewModel @Inject constructor(
             )
             val facts = PlanBlocks.backlogFacts(
                 model,
-                linked.map { PlanBlocks.Target(it.id, it.name, it.goalId, it.backlogId, it.minimum, it.target, it.schedule, history(it)) },
+                linked.map { PlanBlocks.Target(it.id, it.name, it.goalId, it.backlogId, it.minimum, it.target, it.schedule, history(it), LocalDate.parse(it.startDay)) },
                 today,
                 r.rest,
             )

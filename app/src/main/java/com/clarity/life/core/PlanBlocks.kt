@@ -108,8 +108,10 @@ object PlanBlocks {
         val remaining = b.total - done
         val todayAnswered = merged.any { it.day == today }
         val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
-        val typical = Planner.typicalPace(merged, schedule, today, rest)
-        val best = Planner.bestPace(merged, schedule, today, rest)
+        // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
+        val start = linked.mapNotNull { it.start }.minOrNull() ?: b.createdDay
+        val typical = Planner.typicalPace(merged, schedule, today, rest, start)
+        val best = Planner.bestPace(merged, schedule, today, rest, start)
         return BacklogFacts(
             done = done,
             schedule = schedule,
@@ -144,7 +146,7 @@ object PlanBlocks {
             )
         }
         fun targetLine(x: Target) {
-            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays)
+            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)
             val owner = x.goalId?.let { "G$it" } ?: "no goal"
             lines += PlanStateText.targetLine(
                 "T${x.id}", clean(x.name), owner, x.minimum, x.target, x.schedule, w.done, w.answered,
@@ -185,7 +187,7 @@ object PlanBlocks {
         val first = today.minusDays(Planner.WINDOW.toLong())
         val last = today.minusDays(1)
         for (x in t.targets) {
-            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays)
+            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)
             val head = "T${x.id} \"${clean(x.name)}\", last ${Planner.WINDOW} days"
             if (w.answered >= Planner.REASON_MIN_N) {
                 val sched = if (w.scheduled != null) " of ${w.scheduled} scheduled" else ""

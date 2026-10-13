@@ -1337,6 +1337,170 @@
     "  Status: reaches the total at the typical pace.",
     "  Answer rate 100%. Availability: not set."
    ]
+  },
+  {
+   "name": "a plan that starts today has no window yet: no answer rate, not 0%",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [],
+    "schedule": "daily",
+    "today": "2026-10-13",
+    "start": "2026-10-13"
+   },
+   "expect": {
+    "answered": 0,
+    "scheduled": 0,
+    "amount": 0,
+    "done": 0,
+    "pace": null,
+    "answer_rate": null
+   }
+  },
+  {
+   "name": "a plan that starts tomorrow has no window either",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [],
+    "schedule": "daily",
+    "today": "2026-10-13",
+    "start": "2026-10-14"
+   },
+   "expect": {
+    "answered": 0,
+    "scheduled": 0,
+    "amount": 0,
+    "done": 0,
+    "pace": null,
+    "answer_rate": null
+   }
+  },
+  {
+   "name": "three days in, all answered: 3 of 3 scheduled, 100%, not 3 of 14",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     },
+     {
+      "day": "2026-10-16",
+      "level": "minimum",
+      "amount": 1,
+      "reason": "tired"
+     }
+    ],
+    "schedule": "daily",
+    "today": "2026-10-17",
+    "start": "2026-10-14"
+   },
+   "expect": {
+    "answered": 3,
+    "scheduled": 3,
+    "amount": 5,
+    "done": 3,
+    "pace": null,
+    "answer_rate": 100
+   }
+  },
+  {
+   "name": "check-ins from before the start are not counted in the window",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-10",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     }
+    ],
+    "schedule": "daily",
+    "today": "2026-10-17",
+    "start": "2026-10-14"
+   },
+   "expect": {
+    "answered": 1,
+    "scheduled": 3,
+    "amount": 2,
+    "done": 1,
+    "pace": null,
+    "answer_rate": 33
+   }
+  },
+  {
+   "name": "best fortnight ignores check-ins from before the start",
+   "fn": "best_pace",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-02",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-03",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-04",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-07",
+      "level": "target",
+      "amount": 9,
+      "reason": null
+     },
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 2,
+      "reason": null
+     }
+    ],
+    "schedule": "daily",
+    "today": "2026-10-20",
+    "start": "2026-10-14"
+   },
+   "expect": null
   }
  ]
 }

@@ -147,6 +147,7 @@ class PlannerTest {
                 args.str("schedule"),
                 LocalDate.parse(args.str("today")),
                 restDates(args),
+                args.strOrNull("start")?.let(LocalDate::parse),
             )
             json(
                 mapOf(
@@ -162,6 +163,7 @@ class PlannerTest {
                 args.str("schedule"),
                 LocalDate.parse(args.str("today")),
                 restDates(args),
+                args.strOrNull("start")?.let(LocalDate::parse),
             ),
         )
 

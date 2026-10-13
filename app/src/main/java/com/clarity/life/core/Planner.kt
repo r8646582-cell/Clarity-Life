@@ -246,14 +246,25 @@ object Planner {
         )
     }
 
-    /** Pace over the 14 days before today. Null pace when fewer than [MIN_ANSWERED] answered scheduled days. */
+    /**
+     * Pace over the 14 days before today. Null pace when fewer than [MIN_ANSWERED] answered scheduled days.
+     * With [start] (the first day it was tracked) the window never reaches before it: days before a plan existed
+     * are not unanswered days. A plan that starts today or later has no window, so no answer rate yet.
+     */
     fun typicalPace(
         checkins: List<CheckIn>,
         schedule: String,
         today: LocalDate,
         restDates: Set<LocalDate> = emptySet(),
+        start: LocalDate? = null,
     ): PaceWindow {
-        val w = window(checkins, schedule, today.minusDays(WINDOW.toLong()), today.minusDays(1), restDates)
+        var first = today.minusDays(WINDOW.toLong())
+        if (start != null && start.isAfter(first)) first = start
+        val last = today.minusDays(1)
+        if (first.isAfter(last)) {
+            return PaceWindow(answered = 0, scheduled = 0, amount = 0.0, done = 0, pace = null, answerRate = null)
+        }
+        val w = window(checkins, schedule, first, last, restDates)
         return PaceWindow(
             answered = w.answered,
             scheduled = w.scheduled,
@@ -269,11 +280,14 @@ object Planner {
      * The typical window is always one of the candidates, so best is never below typical when both exist.
      */
     fun bestPace(
-        checkins: List<CheckIn>,
+        all: List<CheckIn>,
         schedule: String,
         today: LocalDate,
         restDates: Set<LocalDate> = emptySet(),
+        start: LocalDate? = null,
     ): Double? {
+        // Check-ins from before the start are not counted, the same as in typicalPace.
+        val checkins = if (start == null) all else all.filter { !it.day.isBefore(start) }
         val days = checkins.map { it.day }.filter { it.isBefore(today) }
         if (days.isEmpty()) return null
         val lastEnd = today.minusDays(1)
