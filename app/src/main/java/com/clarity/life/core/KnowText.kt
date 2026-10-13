@@ -51,7 +51,7 @@ object KnowText {
 
     /** One evidence line: his words with the day he said them, or the app's own count. */
     fun evidence(kind: String, text: String, day: String): String =
-        if (kind == "count") "Counted by the app: $text" else "You said, ${shortDay(day)}: “$text”"
+        if (kind == "count") text else "You said, ${shortDay(day)}: “$text”"
 
     /** The grade tag. "Confirmed by you" covers both his tap and his edit. */
     fun grade(confidence: String): String = when (confidence) {

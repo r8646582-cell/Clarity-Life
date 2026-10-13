@@ -97,12 +97,7 @@ fun StoryScreen(
                 Quiet("The short version")
                 val story = s.story
                 if (story != null) {
-                    Text(story.short, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-                    Text(
-                        "Written by the coach from your record. Every number is counted by the app.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = clarity.muted,
-                    )
+                    Text(story.short, style = MaterialTheme.typography.headlineSmall, color = clarity.text)
                 } else {
                     Text(
                         "Your first short version arrives at ${StoryViewModel.nextStory(s.today!!)}, written from what you did this month.",
@@ -182,11 +177,6 @@ fun StoryScreen(
                     model.talk()
                     onTalk()
                 }
-                Text(
-                    "No scores, levels or streaks. Only what happened, and the proof for it.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = clarity.muted,
-                )
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
@@ -244,7 +234,7 @@ private fun CountTiles(s: StoryViewModel.State, c: com.clarity.life.story.StoryR
                 Modifier.weight(1f).background(clarity.surface, RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(n, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = if (i == 0) clarity.yellow else clarity.text)
+                Text(n, style = MaterialTheme.typography.headlineSmall, color = if (i == 0) clarity.yellow else clarity.text)
                 Text(label, style = MaterialTheme.typography.bodySmall, color = clarity.muted)
             }
         }

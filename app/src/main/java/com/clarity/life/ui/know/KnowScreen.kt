@@ -30,12 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -112,15 +110,7 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
     LazyColumn(Modifier.fillMaxSize().background(clarity.ground)) {
         item {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    buildAnnotatedString {
-                        append("What I know")
-                        withStyle(SpanStyle(color = clarity.yellow)) { append(".") }
-                    },
-                    style = MaterialTheme.typography.displaySmall,
-                    color = clarity.text,
-                )
-                Quiet("Only what you said or did. Change or delete anything; a deletion is final.")
+                Text("What I know", style = MaterialTheme.typography.displayLarge, color = clarity.text)
                 OutlinedTextField(
                     value = typed,
                     onValueChange = {
@@ -183,15 +173,17 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
             }
             else -> {
                 item(key = "story") {
-                    BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), gap = 8, onClick = { showStory = true }) {
-                        Kicker("Your story")
+                    com.clarity.life.ui.theme.CalmCard(
+                        Modifier.padding(horizontal = 20.dp, vertical = 8.dp).clickable { showStory = true },
+                        gap = 6,
+                    ) {
+                        Kicker("Your story", clarity.yellow)
                         Text(
                             "What you did, what you got through, and how you changed.",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.headlineSmall,
                             color = clarity.text,
                         )
-                        Text("Open your story ›", style = MaterialTheme.typography.bodyMedium, color = clarity.yellow)
+                        Text("Open your story", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = clarity.yellow)
                     }
                 }
                 if (toCheck != null) {
@@ -279,7 +271,7 @@ private fun Tile(s: KnowViewModel.Section, modifier: Modifier, onClick: () -> Un
         if (s.items.isEmpty()) {
             Text("Nothing yet", style = MaterialTheme.typography.bodySmall, color = clarity.muted)
         } else {
-            Text("${s.items.size}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = clarity.text)
+            Text("${s.items.size}", style = MaterialTheme.typography.headlineSmall, color = clarity.text)
         }
         Text(s.name, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
     }
@@ -485,9 +477,11 @@ private fun FocusPage(d: com.clarity.life.memory.MemoryRepository.FocusDetail, o
         }
         if (f.summary.isNotBlank()) {
             BoldCard(gap = 8) {
-                Quiet("Where we are")
-                Text(f.summary, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-                Quiet("Written by the coach from your words. Change it from What I know.")
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.clarity.life.ui.theme.CoachDot()
+                    Quiet("Where we are")
+                }
+                Text(f.summary, style = MaterialTheme.typography.headlineSmall, fontSize = 21.sp, lineHeight = 29.sp, color = clarity.text)
             }
         }
         if (d.current != null || d.last.isNotEmpty()) {
