@@ -1501,6 +1501,480 @@
     "start": "2026-10-14"
    },
    "expect": null
+  },
+  {
+   "name": "the owner's ramp: 14 + 21, then 4 a day, finishes Sat 2 Jan, 30 days before 1 Feb",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "target": 3,
+      "schedule": "daily",
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     },
+     {
+      "target": 4,
+      "schedule": "daily",
+      "start": "2026-10-28",
+      "end": null
+     }
+    ],
+    "remaining": 300,
+    "today": "2026-10-13",
+    "deadline": "2027-02-01"
+   },
+   "expect": {
+    "remaining": 300,
+    "reaches_by_deadline": 300,
+    "finish": "2027-01-02",
+    "days_spare": 30,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "steps that all end before the total never finish; they reach 35",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "target": 3,
+      "schedule": "daily",
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     }
+    ],
+    "remaining": 300,
+    "today": "2026-10-13",
+    "deadline": "2027-02-01"
+   },
+   "expect": {
+    "remaining": 300,
+    "reaches_by_deadline": 35.0,
+    "status": "never"
+   }
+  },
+  {
+   "name": "1 a day reaches 111 by 1 Feb (14 Oct to 1 Feb is 111 days) and finishes late",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": null
+     }
+    ],
+    "remaining": 300,
+    "today": "2026-10-13",
+    "deadline": "2027-02-01"
+   },
+   "expect": {
+    "remaining": 300,
+    "reaches_by_deadline": 111.0,
+    "finish": "2027-08-09",
+    "days_spare": -189,
+    "status": "late"
+   }
+  },
+  {
+   "name": "today not answered yet: today counts",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 4,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20"
+   },
+   "expect": {
+    "remaining": 4,
+    "reaches_by_deadline": 4,
+    "finish": "2026-10-14",
+    "days_spare": 6,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "today already answered: counting starts tomorrow",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 4,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20",
+    "today_answered": true
+   },
+   "expect": {
+    "remaining": 4,
+    "reaches_by_deadline": 4,
+    "finish": "2026-10-15",
+    "days_spare": 5,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "a rest date adds nothing",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 4,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20",
+    "rest_dates": [
+     "2026-10-14"
+    ]
+   },
+   "expect": {
+    "remaining": 4,
+    "reaches_by_deadline": 4,
+    "finish": "2026-10-15",
+    "days_spare": 5,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "a Sat-Thu step skips Fridays (16 Oct 2026 is a Friday)",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "Sat-Thu",
+      "start": "2026-10-14",
+      "end": null
+     }
+    ],
+    "remaining": 3,
+    "today": "2026-10-14",
+    "deadline": "2026-10-30"
+   },
+   "expect": {
+    "remaining": 3,
+    "reaches_by_deadline": 3,
+    "finish": "2026-10-17",
+    "days_spare": 13,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "overlapping steps add up",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     },
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 4,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20"
+   },
+   "expect": {
+    "remaining": 4,
+    "reaches_by_deadline": 4,
+    "finish": "2026-10-14",
+    "days_spare": 6,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "finishing exactly on the deadline leaves 0 spare days",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 8,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20"
+   },
+   "expect": {
+    "remaining": 8,
+    "reaches_by_deadline": 8,
+    "finish": "2026-10-20",
+    "days_spare": 0,
+    "status": "finishes"
+   }
+  },
+  {
+   "name": "an Nx/week step has no fixed days: the plan is not dated",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "3x/week",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "remaining": 8,
+    "today": "2026-10-13",
+    "deadline": "2026-10-20"
+   },
+   "expect": {
+    "remaining": 8,
+    "status": "count_schedule"
+   }
+  },
+  {
+   "name": "nothing left: done",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "target": 3,
+      "schedule": "daily",
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     },
+     {
+      "target": 4,
+      "schedule": "daily",
+      "start": "2026-10-28",
+      "end": null
+     }
+    ],
+    "remaining": 0,
+    "today": "2026-10-13",
+    "deadline": "2027-02-01"
+   },
+   "expect": {
+    "remaining": 0,
+    "status": "done"
+   }
+  },
+  {
+   "name": "plan line: finishes, with the days to spare",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B1",
+    "name": "CAF lectures",
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "target": 3,
+      "schedule": "daily",
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     },
+     {
+      "target": 4,
+      "schedule": "daily",
+      "start": "2026-10-28",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 300,
+     "reaches_by_deadline": 300,
+     "finish": "2027-01-02",
+     "days_spare": 30,
+     "status": "finishes"
+    }
+   },
+   "expect": "Plan steps for B1 \"CAF lectures\": 2 per day, daily, 14 Oct to 20 Oct; 3 per day, daily, 21 Oct to 27 Oct; 4 per day, daily, from 28 Oct. At these steps it finishes on 2 Jan (Saturday), 30 days before the deadline."
+  },
+  {
+   "name": "plan line: steps that end before the total",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B1",
+    "name": "CAF lectures",
+    "steps": [
+     {
+      "target": 2,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": "2026-10-20"
+     },
+     {
+      "target": 3,
+      "schedule": "daily",
+      "start": "2026-10-21",
+      "end": "2026-10-27"
+     }
+    ],
+    "p": {
+     "remaining": 300,
+     "reaches_by_deadline": 35.0,
+     "status": "never"
+    }
+   },
+   "expect": "Plan steps for B1 \"CAF lectures\": 2 per day, daily, 14 Oct to 20 Oct; 3 per day, daily, 21 Oct to 27 Oct. At these steps it reaches 35 of 300 by the deadline, short by 265, and the steps end before the total."
+  },
+  {
+   "name": "plan line: late, short by what the deadline leaves",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B1",
+    "name": "CAF lectures",
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-14",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 300,
+     "reaches_by_deadline": 111.0,
+     "finish": "2027-08-09",
+     "days_spare": -189,
+     "status": "late"
+    }
+   },
+   "expect": "Plan steps for B1 \"CAF lectures\": 1 per day, daily, from 14 Oct. At these steps it reaches 111 of 300 by the deadline, short by 189."
+  },
+  {
+   "name": "plan line: on the deadline day",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B2",
+    "name": "Pages",
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 8,
+     "reaches_by_deadline": 8,
+     "finish": "2026-10-20",
+     "days_spare": 0,
+     "status": "finishes"
+    }
+   },
+   "expect": "Plan steps for B2 \"Pages\": 1 per day, daily, from 13 Oct. At these steps it finishes on 20 Oct (Tuesday), on the deadline day."
+  },
+  {
+   "name": "plan line: one day before",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B2",
+    "name": "Pages",
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 7,
+     "reaches_by_deadline": 7,
+     "finish": "2026-10-19",
+     "days_spare": 1,
+     "status": "finishes"
+    }
+   },
+   "expect": "Plan steps for B2 \"Pages\": 1 per day, daily, from 13 Oct. At these steps it finishes on 19 Oct (Monday), 1 day before the deadline."
+  },
+  {
+   "name": "plan line: a count schedule is not dated",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B2",
+    "name": "Pages",
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "3x/week",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 8,
+     "status": "count_schedule"
+    }
+   },
+   "expect": "Plan steps for B2 \"Pages\": 1 per day, 3x/week, from 13 Oct. These steps have no fixed days, so the app cannot date where they finish."
+  },
+  {
+   "name": "plan line: nothing to say when done",
+   "fn": "plan_line",
+   "args": {
+    "bid": "B2",
+    "name": "Pages",
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-13",
+      "end": null
+     }
+    ],
+    "p": {
+     "remaining": 0,
+     "status": "done"
+    }
+   },
+   "expect": null
   }
  ]
 }

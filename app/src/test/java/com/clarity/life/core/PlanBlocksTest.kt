@@ -148,6 +148,31 @@ class PlanBlocksTest {
     }
 
     @Test
+    fun theOwnersRampTellsTheCoachWhereItFinishes() {
+        val today = LocalDate.parse("2026-10-13")
+        fun step(id: Long, target: Double, start: String, end: String?) = PlanBlocks.Target(
+            id, "CAF lectures", 1, 1, 1.0, target, "daily", emptyList(), LocalDate.parse(start), end?.let(LocalDate::parse),
+        )
+        val t = PlanBlocks.Tracker(
+            goals = listOf(PlanBlocks.Goal(1, "Clear the CAF course", LocalDate.parse("2027-02-01"))),
+            targets = listOf(step(2, 3.0, "2026-10-21", "2026-10-27"), step(1, 2.0, "2026-10-14", "2026-10-20"), step(3, 4.0, "2026-10-28", null)),
+            backlogs = listOf(PlanBlocks.Backlog(1, "CAF lectures", 1, 300.0, 0.0, LocalDate.parse("2027-02-01"), today)),
+            restDays = emptySet(),
+        )
+        val block = text(PlanBlocks.planState(t, today))
+        assertTrue(
+            block,
+            block.contains(
+                "  Plan steps for B1 \"CAF lectures\": 2 per day, daily, 14 Oct to 20 Oct; 3 per day, daily, 21 Oct to 27 Oct; " +
+                    "4 per day, daily, from 28 Oct. At these steps it finishes on 2 Jan (Saturday), 30 days before the deadline.",
+            ),
+        )
+        // Before it starts there is no answer rate to show, rather than 0%.
+        assertTrue(block, block.contains("Answer rate not tracked."))
+        assertTrue(block, !block.contains("Answer rate 0%"))
+    }
+
+    @Test
     fun aRampKeepsItsPaceWhenItMovesToTheNextStep() {
         // Step 1 (2 a day) ran 14 to 20 Oct and has ended; step 2 (3 a day) started on 21 Oct.
         val start = LocalDate.parse("2026-10-14")

@@ -262,6 +262,7 @@ class PlannerRepository @Inject constructor(
                     t.id, t.name, t.goalId, t.backlogId, t.minimum, t.target, t.schedule,
                     (byTarget[t.id] ?: emptyList()).map { model(it) },
                     LocalDate.parse(t.startDay),
+                    t.endDay?.let(LocalDate::parse),
                 )
             },
             backlogs = backlogs.map { b ->

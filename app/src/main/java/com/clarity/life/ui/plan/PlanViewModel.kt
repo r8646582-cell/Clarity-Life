@@ -157,7 +157,7 @@ class PlanViewModel @Inject constructor(
             )
             val facts = PlanBlocks.backlogFacts(
                 model,
-                linked.map { PlanBlocks.Target(it.id, it.name, it.goalId, it.backlogId, it.minimum, it.target, it.schedule, history(it), LocalDate.parse(it.startDay)) },
+                linked.map { PlanBlocks.Target(it.id, it.name, it.goalId, it.backlogId, it.minimum, it.target, it.schedule, history(it), LocalDate.parse(it.startDay), it.endDay?.let(LocalDate::parse)) },
                 today,
                 r.rest,
             )

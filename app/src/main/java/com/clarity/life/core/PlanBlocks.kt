@@ -27,6 +27,8 @@ object PlanBlocks {
         val checkins: List<CheckIn>,
         /** First day it is tracked; before it, it has no "today" line. */
         val start: LocalDate? = null,
+        /** Last day it is tracked (a ramp step), or null when it runs on. */
+        val end: LocalDate? = null,
     )
 
     data class Backlog(
@@ -42,7 +44,7 @@ object PlanBlocks {
         val doneElsewhere: List<CheckIn> = emptyList(),
         /**
          * The first start day of any target ever linked to it, ended ramp steps included, so its pace window
-         * does not restart at every step. Null: worked out from the linked targets, else [createdDay].
+         * does not restart at every step. Null: worked out from the linked targets (no start known: no clipping).
          */
         val firstStart: LocalDate? = null,
     )
@@ -103,6 +105,9 @@ object PlanBlocks {
         val projection: Projection,
         val windowAnswered: Int,
         val answerRate: Double?,
+        /** The plan's own steps toward it (its linked targets with a start, in order) and where they finish it. */
+        val steps: List<PlanStep> = emptyList(),
+        val finish: PlanFinish? = null,
     )
 
     fun backlogFacts(b: Backlog, linked: List<Target>, today: LocalDate, rest: Set<LocalDate>): BacklogFacts {
@@ -115,15 +120,19 @@ object PlanBlocks {
         val todayAnswered = merged.any { it.day == today }
         val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
         // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
-        val start = b.firstStart ?: linked.mapNotNull { it.start }.minOrNull() ?: b.createdDay
+        val start = b.firstStart ?: linked.mapNotNull { it.start }.minOrNull()
         val typical = Planner.typicalPace(merged, schedule, today, rest, start)
         val best = Planner.bestPace(merged, schedule, today, rest, start)
+        val steps = linked.filter { it.start != null }.sortedBy { it.start }
+            .map { PlanStep(it.target, it.schedule, it.start!!, it.end) }
         return BacklogFacts(
             done = done,
             schedule = schedule,
             projection = Planner.project(remaining, left, typical.pace, best),
             windowAnswered = typical.answered,
             answerRate = typical.answerRate,
+            steps = steps,
+            finish = if (steps.isEmpty()) null else Planner.planFinish(steps, remaining, today, b.deadline, todayAnswered, rest),
         )
     }
 
@@ -150,6 +159,8 @@ object PlanBlocks {
                 "B${b.id}", clean(b.name), b.total, f.done, f.schedule, f.projection, f.windowAnswered,
                 f.answerRate, t.availability,
             )
+            // Where the plan's own steps take it, counted here (a ramp is judged by its steps, not a flat pace).
+            f.finish?.let { PlanStateText.planLine("B${b.id}", clean(b.name), f.steps, it) }?.let { lines += "  $it" }
         }
         fun targetLine(x: Target) {
             val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)

@@ -110,6 +110,35 @@ object PlanStateText {
         return lines
     }
 
+    private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+    private fun day(d: java.time.LocalDate) = "${d.dayOfMonth} ${MONTHS[d.monthValue - 1]}"
+
+    /** One step of a plan: "2 per day, daily, 14 Oct to 20 Oct" or "4 per day, daily, from 28 Oct". */
+    fun stepText(st: PlanStep): String =
+        "${g(st.target)} per day, ${st.schedule}, " + (st.end?.let { "${day(st.start)} to ${day(it)}" } ?: "from ${day(st.start)}")
+
+    /** Where the plan's own steps take a backlog, from [Planner.planFinish]. Null when there is nothing to say. */
+    fun planLine(bid: String, name: String, steps: List<PlanStep>, p: PlanFinish): String? {
+        if (p.status == "done" || steps.isEmpty()) return null
+        val head = "Plan steps for $bid \"$name\": " + steps.joinToString("; ") { stepText(it) } + "."
+        if (p.status == "count_schedule") return "$head These steps have no fixed days, so the app cannot date where they finish."
+        if (p.status == "finishes") {
+            val f = p.finish!!
+            val spare = p.daysSpare!!
+            val whenText = when (spare) {
+                0 -> "on the deadline day"
+                1 -> "1 day before the deadline"
+                else -> "$spare days before the deadline"
+            }
+            return "$head At these steps it finishes on ${day(f)} (${DAY_NAMES[f.dayOfWeek.value - 1]}), $whenText."
+        }
+        val reaches = p.reachesByDeadline!!
+        val tail = " At these steps it reaches ${g(reaches)} of ${g(p.remaining)} by the deadline, short by ${g(p.remaining - reaches)}"
+        return if (p.status == "never") "$head$tail, and the steps end before the total." else "$head$tail."
+    }
+
     fun reviewOptionsLine(options: List<ReviewOption>): String =
         "Review options: " + options.joinToString(", ") { "${it.date} (${it.weekday}, ${it.after})" } + "."
 

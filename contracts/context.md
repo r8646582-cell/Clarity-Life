@@ -92,12 +92,15 @@ Target T3 "Chemistry lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days:
 Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
 Re-plan flag: yes (below pace in two reviews in a row).        <- only when true
   Not enough data yet: fewer than 7 answered days in the last 14 days.   <- replaces the pace and status lines when true
+  Plan steps for B1 "CAF lectures": 2 per day, daily, 14 Oct to 20 Oct; 3 per day, daily, 21 Oct to 27 Oct; 4 per day, daily, from 28 Oct. At these steps it finishes on 2 Jan (Saturday), 30 days before the deadline.   <- after a backlog's lines when its linked targets have start days
 ```
 Display rounding never flatters the plan: required pace is rounded up, "reaches" is rounded down, and the Status line is decided from the same numbers that are shown. The coach copies ids, numbers, the status and review dates exactly. It never calculates. A plan card is only accepted when Review options were offered.
 
 How the app assembles it (`core/PlanBlocks.kt`, tested against the sample above in `PlanBlocksTest`):
 - Ids are the database ids: G2 is goal 2, T3 target 3, B1 backlog 1. Each goal is followed by its backlogs, then its targets; backlogs and targets without a goal come last. With nothing tracked yet the block says `No goals, targets or backlogs yet.` and still ends with the review options.
 - A backlog's done = `start_done` + the amounts entered on its linked targets from the day the backlog was made (earlier work is already in `start_done`, so it is never counted twice). Its pace and days left use the first linked target's schedule and the whole history of its linked targets, added up per day.
+- Pace windows start no earlier than the first start day of any target ever linked to the backlog (ended ramp steps included), so days before a plan existed are never unanswered days, and a plan that has not started has no answer rate. The pace reads the answers of every linked target, ended steps included.
+- The plan steps line comes from `plan_finish` and `plan_line` in `tools/planner.py`: the backlog's live linked targets in start order, each adding its target on its scheduled days from its start to its end, counted from today (tomorrow when today is answered), rest days skipped. It says where the steps finish it and how many days before the deadline, or how many they reach by the deadline and how short that is. An Nx/week step cannot be dated, and the line says so.
 - Review options use the days on which at least one active day-based target is scheduled (every day when there are none), minus planned rest days.
 
 ## CHECKIN_FACTS line formats (counted in code, `core/PlanBlocks.kt`)

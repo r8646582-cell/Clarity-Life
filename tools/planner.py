@@ -237,6 +237,59 @@ def project(remaining, left, typical, best, step=1.0):
     return out
 
 
+FINISH_HORIZON = 366      # a plan that has not finished a year after its deadline is reported as not finishing
+
+
+def plan_finish(steps, remaining, today, deadline, today_answered=False, rest_dates=()):
+    """Where the plan's own steps finish a backlog, counted day by day: each step adds its target on every
+    scheduled day from its start to its end (None = open). Counting starts today, or tomorrow when today is
+    already answered (today's work is then in remaining). Steps that overlap add up. Rest dates add nothing.
+    A step with an Nx/week schedule has no fixed days, so the plan cannot be dated: status "count_schedule".
+    Statuses: done, finishes (on or before the deadline), late (after it), never (no planned work left)."""
+    today, deadline = d(today), d(deadline)
+    out = {"remaining": remaining}
+    if remaining <= EPS:
+        out["status"] = "done"
+        return out
+    if not steps:
+        out["status"] = "never"
+        return out
+    parsed = []
+    for st in steps:
+        kind, val = parse_schedule(st["schedule"])
+        if kind != "days":
+            out["status"] = "count_schedule"
+            return out
+        parsed.append((d(st["start"]), d(st["end"]) if st.get("end") else None, val, st["target"]))
+    rest = {d(x) for x in rest_dates}
+    cur = today + timedelta(days=1) if today_answered else today
+    last = deadline + timedelta(days=FINISH_HORIZON)
+    total, by_deadline, finish = 0.0, None, None
+    while cur <= last:
+        if cur not in rest:
+            for start, end, days, target in parsed:
+                if start <= cur and (end is None or cur <= end) and cur.weekday() in days:
+                    total += target
+        if cur == deadline:
+            by_deadline = total
+        if total >= remaining - EPS:
+            finish = cur
+            break
+        if all(end is not None and end < cur for _, end, _, _ in parsed):
+            break   # every step has ended and the total is not reached
+        cur += timedelta(days=1)
+    if by_deadline is None:     # stopped before the deadline: finished early, or every step ended
+        by_deadline = total
+    out["reaches_by_deadline"] = min(remaining, round_down(by_deadline)) if by_deadline < remaining - EPS else remaining
+    if finish is None:
+        out["status"] = "never"
+        return out
+    out["finish"] = finish.isoformat()
+    out["days_spare"] = (deadline - finish).days
+    out["status"] = "finishes" if finish <= deadline else "late"
+    return out
+
+
 def replan_flag(reviews):
     """True when the last two weekly reviews both had enough data and both projected below 85% of what remained."""
     if len(reviews) < 2:
@@ -372,6 +425,37 @@ def backlog_lines(bid, name, total, done, schedule, p, window_answered, answer_r
 
 def review_options_line(opts):
     return "Review options: " + ", ".join("%s (%s, %s)" % (o["date"], o["weekday"], o["after"]) for o in opts) + "."
+
+
+def _step_text(st):
+    """One step of a plan: '2 per day, daily, 14 Oct to 20 Oct' or '4 per day, daily, from 28 Oct'."""
+    a, b = d(st["start"]), d(st["end"]) if st.get("end") else None
+    when = ("%d %s to %d %s" % (a.day, _MONTHS[a.month - 1], b.day, _MONTHS[b.month - 1]) if b
+            else "from %d %s" % (a.day, _MONTHS[a.month - 1]))
+    return "%g per day, %s, %s" % (st["target"], st["schedule"], when)
+
+
+def plan_line(bid, name, steps, p):
+    """Where the plan's own steps take a backlog, from plan_finish. None when there is nothing to say."""
+    st = p["status"]
+    if st == "done" or not steps:
+        return None
+    head = 'Plan steps for %s "%s": %s.' % (bid, name, "; ".join(_step_text(x) for x in steps))
+    if st == "count_schedule":
+        return head + " These steps have no fixed days, so the app cannot date where they finish."
+    if st == "finishes":
+        f = d(p["finish"])
+        spare = p["days_spare"]
+        when = ("on the deadline day" if spare == 0 else
+                "1 day before the deadline" if spare == 1 else "%d days before the deadline" % spare)
+        return head + " At these steps it finishes on %d %s (%s), %s." % (f.day, _MONTHS[f.month - 1],
+                                                                          _WEEKDAYS[f.weekday()], when)
+    short = p["remaining"] - p["reaches_by_deadline"]
+    tail = " At these steps it reaches %g of %g by the deadline, short by %g" % (
+        p["reaches_by_deadline"], p["remaining"], short)
+    if st == "never":
+        return head + tail + ", and the steps end before the total."
+    return head + tail + "."
 
 
 def goal_line(gid, title, deadline):

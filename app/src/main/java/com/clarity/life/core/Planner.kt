@@ -52,6 +52,18 @@ data class PaceWindow(
 )
 
 /** The result of [Planner.project]. A null field is one the Python reference leaves out of its dict. */
+/** One step of a plan, as plan_finish reads it: a target on its schedule from [start] to [end] (null = open). */
+data class PlanStep(val target: Double, val schedule: String, val start: LocalDate, val end: LocalDate?)
+
+/** Where a plan's own steps finish a backlog (tools/planner.py, plan_finish). */
+data class PlanFinish(
+    val remaining: Double,
+    val status: String,
+    val reachesByDeadline: Double? = null,
+    val finish: LocalDate? = null,
+    val daysSpare: Int? = null,
+)
+
 data class Projection(
     val remaining: Double,
     val daysLeft: Int,
@@ -308,6 +320,60 @@ object Planner {
         val raw = pace * left
         if (raw >= remaining - EPS) return remaining
         return minOf(remaining, roundDown(raw, step))
+    }
+
+    /** A plan that has not finished a year after its deadline is reported as not finishing. */
+    const val FINISH_HORIZON = 366L
+
+    /**
+     * Where the plan's own steps finish a backlog, counted day by day: each step adds its target on every
+     * scheduled day from its start to its end (null = open). Counting starts today, or tomorrow when today is
+     * already answered. Overlapping steps add up; rest dates add nothing. An Nx/week step has no fixed days, so
+     * the plan cannot be dated ("count_schedule"). Statuses: done, finishes, late, never. A 1:1 port of
+     * tools/planner.py plan_finish.
+     */
+    fun planFinish(
+        steps: List<PlanStep>,
+        remaining: Double,
+        today: LocalDate,
+        deadline: LocalDate,
+        todayAnswered: Boolean = false,
+        restDates: Set<LocalDate> = emptySet(),
+    ): PlanFinish {
+        if (remaining <= EPS) return PlanFinish(remaining, "done")
+        if (steps.isEmpty()) return PlanFinish(remaining, "never")
+        val days = steps.map { st ->
+            when (val s = parseSchedule(st.schedule)) {
+                is Schedule.Days -> s.weekdays
+                is Schedule.Count -> return PlanFinish(remaining, "count_schedule")
+            }
+        }
+        var cur = if (todayAnswered) today.plusDays(1) else today
+        val last = deadline.plusDays(FINISH_HORIZON)
+        var total = 0.0
+        var byDeadline: Double? = null
+        var finish: LocalDate? = null
+        while (!cur.isAfter(last)) {
+            if (cur !in restDates) {
+                for ((i, st) in steps.withIndex()) {
+                    if (!st.start.isAfter(cur) && (st.end == null || !cur.isAfter(st.end)) && weekday(cur) in days[i]) {
+                        total += st.target
+                    }
+                }
+            }
+            if (cur == deadline) byDeadline = total
+            if (total >= remaining - EPS) {
+                finish = cur
+                break
+            }
+            if (steps.all { it.end != null && it.end.isBefore(cur) }) break // every step has ended short of the total
+            cur = cur.plusDays(1)
+        }
+        val atDeadline = byDeadline ?: total // stopped before the deadline: finished early, or every step ended
+        val reaches = if (atDeadline < remaining - EPS) minOf(remaining, roundDown(atDeadline)) else remaining
+        if (finish == null) return PlanFinish(remaining, "never", reaches)
+        val spare = java.time.temporal.ChronoUnit.DAYS.between(finish, deadline).toInt()
+        return PlanFinish(remaining, if (!finish.isAfter(deadline)) "finishes" else "late", reaches, finish, spare)
     }
 
     /** Where the backlog ends up at the typical and the best pace, never rounded in the plan's favour. */

@@ -107,6 +107,20 @@ class PlannerTest {
         )
     }
 
+    private fun steps(args: JsonObject): List<PlanStep> = args.getValue("steps").jsonArray.map { it.jsonObject }.map {
+        PlanStep(it.dbl("target"), it.str("schedule"), LocalDate.parse(it.str("start")), it.strOrNull("end")?.let(LocalDate::parse))
+    }
+
+    private fun planFinishJson(p: PlanFinish): JsonElement = jsonNoNulls(
+        listOf(
+            "remaining" to p.remaining,
+            "status" to p.status,
+            "reaches_by_deadline" to p.reachesByDeadline,
+            "finish" to p.finish?.toString(),
+            "days_spare" to p.daysSpare,
+        ),
+    )
+
     private fun restDates(args: JsonObject): Set<LocalDate> =
         args.strings("rest_dates").map { LocalDate.parse(it) }.toSet()
 
@@ -209,6 +223,35 @@ class PlannerTest {
                 args.int("short_days"),
             ),
         )
+
+        "plan_finish" -> planFinishJson(
+            Planner.planFinish(
+                steps(args),
+                args.dbl("remaining"),
+                LocalDate.parse(args.str("today")),
+                LocalDate.parse(args.str("deadline")),
+                args.boolOr("today_answered", false),
+                restDates(args),
+            ),
+        )
+
+        "plan_line" -> {
+            val p = args.getValue("p").jsonObject
+            json(
+                PlanStateText.planLine(
+                    args.str("bid"),
+                    args.str("name"),
+                    steps(args),
+                    PlanFinish(
+                        remaining = p.dbl("remaining"),
+                        status = p.str("status"),
+                        reachesByDeadline = p.dblOrNull("reaches_by_deadline"),
+                        finish = p.strOrNull("finish")?.let(LocalDate::parse),
+                        daysSpare = p.strOrNull("days_spare")?.toInt(),
+                    ),
+                ),
+            )
+        }
 
         "backlog_lines" -> {
             val p = args.getValue("p").jsonObject
