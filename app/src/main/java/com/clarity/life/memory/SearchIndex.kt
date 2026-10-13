@@ -228,7 +228,12 @@ class SearchIndex @Inject constructor(
     private fun candidate(s: SummaryHit, tz: String) =
         Retrieval.Candidate(s.text, s.at, "${stamp(s.at, tz)}${titled(s.title)}, summary")
 
-    private fun stamp(at: Long, tz: String) = TimeFacts.stamp(Instant.ofEpochMilli(at), tz).substringBefore(",")
+    /** "Tue 13 Oct (today)": the day and how long ago, counted here so the coach never works it out. */
+    private fun stamp(at: Long, tz: String): String {
+        val day = TimeFacts.local(Instant.ofEpochMilli(at), tz).toLocalDate()
+        val today = TimeFacts.local(Instant.now(), tz).toLocalDate()
+        return "${TimeFacts.stamp(Instant.ofEpochMilli(at), tz).substringBefore(",")} (${TimeFacts.ago(day, today)})"
+    }
 
     private fun titled(title: String) = if (title.isNotBlank()) ", in \"$title\"" else ""
 

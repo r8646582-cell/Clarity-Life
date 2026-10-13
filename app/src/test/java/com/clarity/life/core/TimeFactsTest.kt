@@ -64,6 +64,16 @@ class TimeFactsTest {
     }
 
     @Test
+    fun howLongAgoIsCountedByCodeSoTheCoachNeverGuessesYesterday() {
+        val today = java.time.LocalDate.parse("2026-10-13")
+        assertEquals("today", TimeFacts.ago(today, today))
+        assertEquals("yesterday", TimeFacts.ago(today.minusDays(1), today))
+        assertEquals("3 days ago", TimeFacts.ago(today.minusDays(3), today))
+        assertEquals("tomorrow", TimeFacts.ago(today.plusDays(1), today))
+        assertEquals("in 2 days", TimeFacts.ago(today.plusDays(2), today))
+    }
+
+    @Test
     fun duePhrasesAreWrittenByCodeInBothDirections() {
         val now = Instant.parse("2026-10-04T03:00:00Z")
         val soon = now.plus(Duration.ofHours(31))

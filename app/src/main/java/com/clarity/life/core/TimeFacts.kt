@@ -87,6 +87,21 @@ object TimeFacts {
     fun shortDay(date: LocalDate): String =
         "${shortWeekday(date)} ${date.dayOfMonth} ${SHORT_MONTHS[date.monthValue - 1]}"
 
+    /**
+     * How far [day] is from [today], both day keys, counted here so the coach never has to: "today",
+     * "yesterday", "3 days ago", "tomorrow", "in 3 days". Every date the coach sees in the past carries it.
+     */
+    fun ago(day: LocalDate, today: LocalDate): String {
+        val n = java.time.temporal.ChronoUnit.DAYS.between(day, today)
+        return when {
+            n == 0L -> "today"
+            n == 1L -> "yesterday"
+            n > 1L -> "$n days ago"
+            n == -1L -> "tomorrow"
+            else -> "in ${-n} days"
+        }
+    }
+
     /** Fri 9 Oct, 21:40: the stamp his stored messages carry in the history window. */
     fun stamp(at: Instant, tz: String): String {
         val t = local(at, tz)
