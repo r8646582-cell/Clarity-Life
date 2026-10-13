@@ -96,6 +96,8 @@ MUTATIONS = [
      "a stored card with a bracket pair sent as a broken card line"),
     ("promise_times.py", "            d = cal\n            sure_day = False\n", "            d = day_key + timedelta(days=offset)\n",
      "test_promise_times.py", "after midnight, tomorrow saved without asking"),
+    ("promise_times.py", "    late = n.hour < max(boundary_hour, LATE_NIGHT_END)\n", "    late = n.hour < boundary_hour\n",
+     "test_promise_times.py", "with a midnight day boundary, tomorrow at 12:40 am saved without asking"),
     ("promise_times.py", "            sure_time = False\n", "", "test_promise_times.py", "a bare hour saved as a guess"),
     ("promise_times.py", "            if t is not None and datetime.combine(d, t) <= n:\n                d += timedelta(days=7)\n", "",
      "test_promise_times.py", "a weekday promise saved in the past"),

@@ -661,6 +661,45 @@
     "date": "2027-01-01",
     "time": "09:00"
    }
+  },
+  {
+   "name": "midnight day boundary: tomorrow at 12:40 am is still asked",
+   "args": {
+    "phrase": "tomorrow 9am",
+    "now": "2026-10-11T00:40",
+    "boundary_hour": 0
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "09:00"
+   }
+  },
+  {
+   "name": "midnight day boundary: tonight at 3:59 am is still asked",
+   "args": {
+    "phrase": "tonight 10",
+    "now": "2026-10-11T03:59",
+    "boundary_hour": 0
+   },
+   "expect": {
+    "status": "pick",
+    "date": "2026-10-11",
+    "time": "22:00"
+   }
+  },
+  {
+   "name": "midnight day boundary: 4 am is no longer late night",
+   "args": {
+    "phrase": "tomorrow 9am",
+    "now": "2026-10-11T04:00",
+    "boundary_hour": 0
+   },
+   "expect": {
+    "status": "ok",
+    "date": "2026-10-12",
+    "time": "09:00"
+   }
   }
  ]
 }
