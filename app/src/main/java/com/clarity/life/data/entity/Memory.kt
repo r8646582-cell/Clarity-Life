@@ -150,6 +150,24 @@ data class LetterRow(
     val key: String,
 )
 
+/**
+ * Your story (schema 4): the monthly story job's short version, the then and now quotes it picked (by quote
+ * id, so they are always word for word), and at most three "overcame" items as checked JSON. One per month.
+ */
+@Entity(tableName = "story", indices = [Index(value = ["key"], unique = true)])
+data class StoryRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "period_start") val periodStart: String,
+    @ColumnInfo(name = "period_end") val periodEnd: String,
+    val short: String,
+    @ColumnInfo(name = "then_quote_id") val thenQuoteId: Long? = null,
+    @ColumnInfo(name = "now_quote_id") val nowQuoteId: Long? = null,
+    @ColumnInfo(name = "overcame_json", defaultValue = "[]") val overcameJson: String = "[]",
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    /** story:2026-10, so a month can only ever have one story. */
+    val key: String,
+)
+
 /** Only inserted after QuoteCheck passes, so a stored quote is always word for word his. */
 @Entity(
     tableName = "quote",

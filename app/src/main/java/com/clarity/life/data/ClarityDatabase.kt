@@ -44,7 +44,7 @@ import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.UsageMonthRow
 
 /**
- * The whole database, version 3, exactly the 29 tables of db/schema.sql.
+ * The whole database, version 4, exactly the 30 tables of db/schema.sql.
  *
  * Rules that never break here (CLAUDE.md rule 8): the schema is exported and committed, and every future
  * change is a written migration plus a MigrationTest. The destructive-migration escape hatch Room offers is
@@ -52,7 +52,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 3,
+    version = 4,
     exportSchema = true,
     entities = [
         // chat
@@ -62,7 +62,7 @@ import com.clarity.life.data.entity.UsageMonthRow
         RestDayRow::class, CheckinRow::class, PromiseRow::class,
         // memory and writing
         NoteRow::class, NoteEvidenceRow::class, ProfileEntryRow::class, PersonRow::class, EventRow::class,
-        ReviewRow::class, ChapterRow::class, LetterRow::class, QuoteRow::class,
+        ReviewRow::class, ChapterRow::class, LetterRow::class, StoryRow::class, QuoteRow::class,
         SearchDocRow::class, EmbeddingRow::class, ReflectionItemRow::class,
         // housekeeping
         SettingRow::class, PromptOverrideRow::class, ErrorLogRow::class, UsageMonthRow::class, JobRow::class,
@@ -88,6 +88,10 @@ abstract class ClarityDatabase : RoomDatabase() {
         const val NAME = "clarity.db"
 
         /** Every migration ever written goes in this list. The list is never allowed to be "skip it". */
-        val MIGRATIONS: Array<androidx.room.migration.Migration> = arrayOf(Migrations.V1_TO_V2, Migrations.V2_TO_V3)
+        val MIGRATIONS: Array<androidx.room.migration.Migration> = arrayOf(
+            Migrations.V1_TO_V2,
+            Migrations.V2_TO_V3,
+            Migrations.V3_TO_V4,
+        )
     }
 }

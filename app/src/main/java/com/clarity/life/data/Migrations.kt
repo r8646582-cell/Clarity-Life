@@ -42,4 +42,17 @@ object Migrations {
             db.execSQL("ALTER TABLE `backlog` ADD COLUMN `start_day` TEXT")
         }
     }
+
+    /** Version 4: story, the monthly story job's text for Your story (spec 2.5). Only adds a table. */
+    val V3_TO_V4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `story` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`period_start` TEXT NOT NULL, `period_end` TEXT NOT NULL, `short` TEXT NOT NULL, " +
+                    "`then_quote_id` INTEGER, `now_quote_id` INTEGER, " +
+                    "`overcame_json` TEXT NOT NULL DEFAULT '[]', `created_at` INTEGER NOT NULL, `key` TEXT NOT NULL)",
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_story_key` ON `story` (`key`)")
+        }
+    }
 }

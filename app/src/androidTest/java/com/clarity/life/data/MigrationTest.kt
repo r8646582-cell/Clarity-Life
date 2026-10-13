@@ -107,6 +107,47 @@ class MigrationTest {
     }
 
     @Test
+    fun version3To4KeepsEveryRowAndAddsStories() {
+        helper.createDatabase(TEST_DB, 3).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'First', 1760000000000)")
+            execSQL("INSERT INTO quote (id, conversation_id, text, said_day) VALUES (1, 1, 'I know what to do', '2026-10-13')")
+            execSQL(
+                "INSERT INTO chapter (period_start, period_end, title, body, created_at) " +
+                    "VALUES ('2026-10-01', '2026-12-31', 'The plan that held', 'Body', 1760000000000)",
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, Migrations.V3_TO_V4)
+        db.query("SELECT text FROM quote WHERE id = 1").use {
+            assertTrue("the quote is gone", it.moveToFirst())
+            assertEquals("I know what to do", it.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM chapter").use {
+            it.moveToFirst()
+            assertEquals("the chapter is gone", 1, it.getInt(0))
+        }
+        db.execSQL(
+            "INSERT INTO story (period_start, period_end, short, then_quote_id, created_at, key) " +
+                "VALUES ('2026-10-01', '2026-10-31', 'Short', 1, 1760000000000, 'story:2026-10')",
+        )
+        db.query("SELECT overcame_json FROM story WHERE key = 'story:2026-10'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("[]", it.getString(0))
+        }
+        var second = false
+        try {
+            db.execSQL(
+                "INSERT INTO story (period_start, period_end, short, created_at, key) " +
+                    "VALUES ('2026-10-01', '2026-10-31', 'Again', 1760000000000, 'story:2026-10')",
+            )
+        } catch (e: android.database.sqlite.SQLiteConstraintException) {
+            second = true
+        }
+        assertTrue("a month can only have one story", second)
+        db.close()
+    }
+
+    @Test
     fun everyMigrationStepIsWritten() {
         // One migration per version step, always. A gap would mean Room had nothing to run.
         val expected = DATABASE_VERSION - 1
@@ -135,6 +176,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
     }
 }

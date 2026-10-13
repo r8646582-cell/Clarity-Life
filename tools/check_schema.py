@@ -37,6 +37,8 @@ checks = [
     ("minimum above target rejected", fails("INSERT INTO target(name,minimum,target,schedule,start_day) VALUES ('x',3,2,'daily','2026-10-10')")),
     ("zero backlog total rejected", fails("INSERT INTO backlog(name,total,unit,deadline,created_at) VALUES ('x',0,'u','2026-11-20',?)", (NOW,))),
     ("bad promise status rejected", fails("INSERT INTO promise(text,due_at,due_text,status,created_at) VALUES ('x',?, 'now','done',?)", (NOW, NOW))),
+    ("a second story for the same month rejected", (db.execute("INSERT INTO story(period_start,period_end,short,created_at,key) VALUES ('2026-10-01','2026-10-31','s',?,'story:2026-10')", (NOW,)) and False) or fails("INSERT INTO story(period_start,period_end,short,created_at,key) VALUES ('2026-10-01','2026-10-31','t',?,'story:2026-10')", (NOW,))),
+    ("bad job type rejected", fails("INSERT INTO job(key,type,created_at) VALUES ('x:1','summary',?)", (NOW,))),
     ("bad note confidence rejected", fails("INSERT INTO note(kind,text,confidence,first_seen,last_seen,created_at) VALUES ('pattern','x','sure','2026-10-10','2026-10-10',?)", (NOW,))),
     ("bad card type rejected", fails("INSERT INTO card(message_id,type,payload_json,created_at) VALUES (1,'reminder','{}',?)", (NOW,))),
     ("duplicate letter key rejected", None),

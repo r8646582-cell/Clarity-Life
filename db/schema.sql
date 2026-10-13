@@ -1,4 +1,4 @@
--- Clarity: database schema, version 2 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 4 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
@@ -251,6 +251,18 @@ CREATE TABLE letter (
   key TEXT NOT NULL UNIQUE              -- letter:week:2026-10-05; a deleted letter keeps its key, so it is never regenerated
 );
 
+CREATE TABLE story (                   -- Your story: the monthly story job's text (schema version 4)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  period_start TEXT NOT NULL,           -- the month written after, first and last day
+  period_end TEXT NOT NULL,
+  short TEXT NOT NULL,                  -- "The short version"
+  then_quote_id INTEGER,                -- quote.id; no foreign key: a forgotten conversation takes its quote
+  now_quote_id INTEGER,                 -- with it, and the page then simply leaves that quote out
+  overcame_json TEXT NOT NULL DEFAULT '[]',  -- [{"title","then_quote_id","did","now"}], at most 3, checked
+  created_at INTEGER NOT NULL,
+  key TEXT NOT NULL UNIQUE              -- story:2026-10, one per month
+);
+
 CREATE TABLE quote (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   conversation_id INTEGER REFERENCES conversation(id) ON DELETE CASCADE,
@@ -306,7 +318,7 @@ CREATE TABLE usage_month (
 CREATE TABLE job (                     -- idempotence: one row per unit of background work
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL UNIQUE,            -- type + period or conversation + hash of inputs
-  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','gardening','backup','index')),
+  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','gardening','backup','index')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','succeeded','failed','skipped')),
   attempts INTEGER NOT NULL DEFAULT 0,
   last_error TEXT,
