@@ -73,7 +73,7 @@ fun TalkHome(
                 // The very first visit: one line on what this is, gone once there is a conversation.
                 if (latest == null) {
                     Text(
-                        "Talk to your coach about anything: a goal, a hard day, a choice. It remembers what matters " +
+                        "Your coach is here for anything: a goal, a hard day, a choice. It remembers what matters " +
                             "and helps you keep your plans. Nothing is saved unless you tap to save it.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = clarity.muted,
