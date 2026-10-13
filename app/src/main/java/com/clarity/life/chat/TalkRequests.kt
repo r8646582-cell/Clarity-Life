@@ -15,7 +15,13 @@ import kotlinx.coroutines.flow.getAndUpdate
 class TalkRequests @Inject constructor() {
 
     /** A new conversation of [chatType], opened from a letter or a review when [openedFrom] is set. */
-    data class Start(val chatType: String, val openedFrom: String? = null, val openedFromId: Long? = null)
+    data class Start(
+        val chatType: String,
+        val openedFrom: String? = null,
+        val openedFromId: Long? = null,
+        /** A conversation inside this focus (Talk about this, on a Focus page). */
+        val focusId: Long? = null,
+    )
 
     /** What Plan should show: a section, and a letter or review to open in it. */
     data class Show(val section: String, val letterId: Long? = null, val reviewId: Long? = null)
@@ -26,8 +32,8 @@ class TalkRequests @Inject constructor() {
     val requests: StateFlow<Start?> get() = pending
     val planRequests: StateFlow<Show?> get() = plan
 
-    fun startConversation(chatType: String, openedFrom: String? = null, openedFromId: Long? = null) {
-        pending.value = Start(chatType, openedFrom, openedFromId)
+    fun startConversation(chatType: String, openedFrom: String? = null, openedFromId: Long? = null, focusId: Long? = null) {
+        pending.value = Start(chatType, openedFrom, openedFromId, focusId)
     }
 
     /** Talk took the request. Returns it, or null when there was none. */

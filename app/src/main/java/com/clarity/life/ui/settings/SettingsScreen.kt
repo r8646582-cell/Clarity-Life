@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,6 +54,8 @@ fun SettingsScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     var key by remember { mutableStateOf("") }
+    // One group open at a time; the health check opens the one a problem lives in.
+    var openGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     // The Sunday alert needs permission to show a notification (Android 13 and later), asked when he turns it on.
     val context = androidx.compose.ui.platform.LocalContext.current
     fun notificationsOn() = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
@@ -71,218 +75,230 @@ fun SettingsScreen(
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = clarity.muted)
             }
-            Text("Coach.", style = MaterialTheme.typography.displaySmall, color = clarity.text)
+            Text("Settings.", style = MaterialTheme.typography.displaySmall, color = clarity.text)
         }
-
-        Label("Main provider")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            model.providers.forEach { (id, label) ->
-                val on = state.provider == id
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (on) clarity.ground else clarity.text,
-                    modifier = Modifier
-                        .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                        .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                        .clickable { model.pickProvider(id) }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                )
-            }
-        }
-
-        Label("Base URL")
-        Field(state.baseUrl, model::setBaseUrl)
-
-        Label("API key")
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = key,
-                onValueChange = { key = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(if (state.keySet) "Key set" else "Paste your key", color = clarity.muted) },
-                visualTransformation = PasswordVisualTransformation(),
-                colors = fieldColors(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-            )
-            TextButton(
-                onClick = {
-                    model.pasteKey(key)
-                    key = ""
-                },
-                enabled = key.isNotBlank(),
-            ) { Text("Save", color = clarity.yellow) }
-            if (state.keySet) {
-                TextButton(onClick = { model.clearKey() }) { Text("Remove", color = clarity.danger) }
-            }
-        }
-        Hint("Kept in the phone's secure keystore. Never shown again in full, never logged.")
-
-        Label("Chat model")
-        Field(state.chatModel, model::setChatModel)
-        Label("Chat thinking")
-        Levels(state.chatThinking, model::setChatThinking)
-        Hint("How long the coach thinks before it answers. Low is quick; High and Max are slower and more careful.")
-        Label("Background model")
-        Field(state.backgroundModel, model::setBackgroundModel)
-        Hint("Reflection and reviews, written while you are away.")
-        Label("Weekly letter model")
-        Field(state.letterModel, model::setLetterModel)
-        Label("Weekly letter thinking")
-        Levels(state.letterThinking, model::setLetterThinking)
-        Hint("Typed freely, so a retired model never needs a new app. Check names in the provider's docs.")
-
+        HealthCheck(
+            state = state,
+            notificationsAllowed = notificationsAllowed,
+            onCoach = { openGroup = "Coach" },
+            onReminders = onOpenReliable,
+            onData = { openGroup = "Your data" },
+        )
         Spacer(Modifier.height(12.dp))
-        Button(
-            onClick = { model.testConnection() },
-            enabled = !state.testing,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = clarity.yellow,
-                contentColor = clarity.ground,
-            ),
-            shape = RoundedCornerShape(14.dp),
-        ) { Text(if (state.testing) "Testing" else "Test connection") }
+        Group("Coach", "Provider, key, models, your name", openGroup, { openGroup = it }) {
+            Label("Main provider")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                model.providers.forEach { (id, label) ->
+                    val on = state.provider == id
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (on) clarity.ground else clarity.text,
+                        modifier = Modifier
+                            .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
+                            .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
+                            .clickable { model.pickProvider(id) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                    )
+                }
+            }
 
-        state.testLine?.let { line ->
-            Text(
-                line,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (state.testOk) clarity.text else clarity.danger,
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-        }
-        Hint("Changed the model or the thinking level? Run the test bench (below) before you rely on it.")
+            Label("Base URL")
+            Field(state.baseUrl, model::setBaseUrl)
 
-        Label("Your name")
-        Field(state.userName, model::setUserName)
-        Hint("Optional. Used in the coach's prompt, nowhere else. Empty: the coach says \"this person\" until you tell it your name.")
+            Label("API key")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = key,
+                    onValueChange = { key = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text(if (state.keySet) "Key set" else "Paste your key", color = clarity.muted) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    colors = fieldColors(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                )
+                TextButton(
+                    onClick = {
+                        model.pasteKey(key)
+                        key = ""
+                    },
+                    enabled = key.isNotBlank(),
+                ) { Text("Save", color = clarity.yellow) }
+                if (state.keySet) {
+                    TextButton(onClick = { model.clearKey() }) { Text("Remove", color = clarity.danger) }
+                }
+            }
+            Hint("Kept in the phone's secure keystore. Never shown again in full, never logged.")
 
-        Spacer(Modifier.height(20.dp))
-        Text("Reminders", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-        SwitchRow(
-            "Weekly letter",
-            "Written on Sunday evening from your week. It appears in Talk and in Plan, Reviews.",
-            state.weeklyLetter,
-        ) { model.setWeeklyLetter(it) }
-        SwitchRow(
-            "Sunday alert",
-            "One silent notification when the letter is ready. No sound, nothing on the lock screen.",
-            state.sundayAlert,
-        ) {
-            model.setSundayAlert(it)
-            if (it && android.os.Build.VERSION.SDK_INT >= 33) askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-        }
-        // On by default now, so he may never have been asked: say so plainly and offer the question here.
-        if (state.sundayAlert && !notificationsAllowed) {
-            Text(
-                "Notifications are off for Clarity, so the alert cannot show. Tap to allow them.",
-                style = MaterialTheme.typography.bodySmall,
-                color = clarity.coral,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        if (android.os.Build.VERSION.SDK_INT >= 33) {
-                            askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            context.startActivity(
-                                android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName),
-                            )
-                        }
-                    }
-                    .padding(vertical = 8.dp),
-            )
-        }
-        Label("My day ends at")
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            SettingsViewModel.DAY_BOUNDARY_CHOICES.forEach { hour ->
-                val on = state.dayBoundaryHour == hour
+            Label("Chat model")
+            Field(state.chatModel, model::setChatModel)
+            Label("Chat thinking")
+            Levels(state.chatThinking, model::setChatThinking)
+            Hint("How long the coach thinks before it answers. Low is quick; High and Max are slower and more careful.")
+            Label("Background model")
+            Field(state.backgroundModel, model::setBackgroundModel)
+            Hint("Reflection and reviews, written while you are away.")
+            Label("Weekly letter model")
+            Field(state.letterModel, model::setLetterModel)
+            Label("Weekly letter thinking")
+            Levels(state.letterThinking, model::setLetterThinking)
+            Hint("Typed freely, so a retired model never needs a new app. Check names in the provider's docs.")
+
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { model.testConnection() },
+                enabled = !state.testing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = clarity.yellow,
+                    contentColor = clarity.ground,
+                ),
+                shape = RoundedCornerShape(14.dp),
+            ) { Text(if (state.testing) "Testing" else "Test connection") }
+
+            state.testLine?.let { line ->
                 Text(
-                    if (hour == 0) "12" else "$hour",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (on) clarity.ground else clarity.text,
-                    modifier = Modifier
-                        .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                        .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                        .clickable { model.setDayBoundary(hour) }
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.testOk) clarity.text else clarity.danger,
+                    modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
+            Hint("Changed the model or the thinking level? Run the test bench (below) before you rely on it.")
+
+            Label("Your name")
+            Field(state.userName, model::setUserName)
+            Hint("Optional. Used in the coach's prompt, nowhere else. Empty: the coach says \"this person\" until you tell it your name.")
+
         }
-        Hint(
-            "Hours after midnight, in am. At ${if (state.dayBoundaryHour == 0) 12 else state.dayBoundaryHour} am, " +
-                "a 12:30 am promise still counts for the day before.",
-        )
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-                .background(clarity.surface, RoundedCornerShape(14.dp))
-                .clickable(onClick = onOpenReliable)
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Keep reminders reliable", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+        Group("Letters and reminders", "Sunday letter and alert, when your day ends, reliable reminders", openGroup, { openGroup = it }) {
+            SwitchRow(
+                "Weekly letter",
+                "Written on Sunday evening from your week. It appears in Talk and in Plan, Reviews.",
+                state.weeklyLetter,
+            ) { model.setWeeklyLetter(it) }
+            SwitchRow(
+                "Sunday alert",
+                "One silent notification when the letter is ready. No sound, nothing on the lock screen.",
+                state.sundayAlert,
+            ) {
+                model.setSundayAlert(it)
+                if (it && android.os.Build.VERSION.SDK_INT >= 33) askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+            // On by default now, so he may never have been asked: say so plainly and offer the question here.
+            if (state.sundayAlert && !notificationsAllowed) {
                 Text(
-                    "Battery, autostart, alarms and notifications on this phone",
+                    "Notifications are off for Clarity, so the alert cannot show. Tap to allow them.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = clarity.muted,
+                    color = clarity.coral,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                context.startActivity(
+                                    android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName),
+                                )
+                            }
+                        }
+                        .padding(vertical = 8.dp),
                 )
             }
-            Text("Open", color = clarity.yellow)
-        }
-
-        Spacer(Modifier.height(20.dp))
-        Text("Advanced", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-        Hint(
-            "Search is built from your messages and summaries: by keyword, and by meaning with " +
-                "bge-small-en-v1.5, which runs on this phone. Rebuilding either loses nothing.",
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = { model.rebuildSearch() }, enabled = !state.rebuilding) {
-                Text(if (state.rebuilding) "Rebuilding" else "Rebuild search", color = clarity.yellow)
+            Label("My day ends at")
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SettingsViewModel.DAY_BOUNDARY_CHOICES.forEach { hour ->
+                    val on = state.dayBoundaryHour == hour
+                    Text(
+                        if (hour == 0) "12" else "$hour",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (on) clarity.ground else clarity.text,
+                        modifier = Modifier
+                            .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
+                            .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
+                            .clickable { model.setDayBoundary(hour) }
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                    )
+                }
             }
-            TextButton(onClick = { model.reindex() }) { Text("Re-index meaning", color = clarity.yellow) }
-        }
-        state.rebuildLine?.let { Hint(it) }
-
-        Spacer(Modifier.height(20.dp))
-        Text("Privacy", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-        SwitchRow(
-            "App lock",
-            if (state.canLock) {
-                "Asks for your fingerprint or screen lock when you open Clarity, and after a minute away."
-            } else {
-                "This phone has no screen lock, so Clarity cannot lock. Set one in the phone's settings first."
-            },
-            state.appLock,
-        ) { model.setAppLock(it) }
-        SwitchRow(
-            "Hide in recents",
-            "The app switcher shows a blank card instead of your conversation. Applies the next time Clarity opens.",
-            state.hideInRecents,
-        ) { model.setHideInRecents(it) }
-
-        YourData(state, model)
-        HealthSection()
-        BenchSection()
-        TextButton(onClick = onOpenPrompts) { Text("Edit the coach's prompts", color = clarity.yellow) }
-
-        Spacer(Modifier.height(20.dp))
-
-        state.lastCrash?.let { crash ->
-            Label("Last time the app stopped")
-            Hint("Take a photo or screenshot of this and send it. It holds no messages and no keys.")
-            Text(
-                crash,
-                style = MaterialTheme.typography.bodySmall,
-                color = clarity.text,
-                modifier = Modifier.padding(top = 6.dp),
+            Hint(
+                "Hours after midnight, in am. At ${if (state.dayBoundaryHour == 0) 12 else state.dayBoundaryHour} am, " +
+                    "a 12:30 am promise still counts for the day before.",
             )
-            TextButton(onClick = { model.clearCrash() }) { Text("Clear", color = clarity.yellow) }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .background(clarity.surface, RoundedCornerShape(14.dp))
+                    .clickable(onClick = onOpenReliable)
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Keep reminders reliable", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+                    Text(
+                        "Battery, autostart, alarms and notifications on this phone",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = clarity.muted,
+                    )
+                }
+                Text("Open", color = clarity.yellow)
+            }
+
         }
+        Group("Privacy", "App lock, hide in recents", openGroup, { openGroup = it }) {
+            SwitchRow(
+                "App lock",
+                if (state.canLock) {
+                    "Asks for your fingerprint or screen lock when you open Clarity, and after a minute away."
+                } else {
+                    "This phone has no screen lock, so Clarity cannot lock. Set one in the phone's settings first."
+                },
+                state.appLock,
+            ) { model.setAppLock(it) }
+            SwitchRow(
+                "Hide in recents",
+                "The app switcher shows a blank card instead of your conversation. Applies the next time Clarity opens.",
+                state.hideInRecents,
+            ) { model.setHideInRecents(it) }
+
+        }
+        Group("Your data", "Backup, restore, export, erase", openGroup, { openGroup = it }) {
+            YourData(state, model)
+        }
+        Group("Advanced", "Search, health, test bench, prompts", openGroup, { openGroup = it }, last = true) {
+            Hint(
+                "Search is built from your messages and summaries: by keyword, and by meaning with " +
+                    "bge-small-en-v1.5, which runs on this phone. Rebuilding either loses nothing.",
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { model.rebuildSearch() }, enabled = !state.rebuilding) {
+                    Text(if (state.rebuilding) "Rebuilding" else "Rebuild search", color = clarity.yellow)
+                }
+                TextButton(onClick = { model.reindex() }) { Text("Re-index meaning", color = clarity.yellow) }
+            }
+            state.rebuildLine?.let { Hint(it) }
+
+            HealthSection()
+            BenchSection()
+            TextButton(onClick = onOpenPrompts) { Text("Edit the coach's prompts", color = clarity.yellow) }
+
+            Spacer(Modifier.height(20.dp))
+
+            state.lastCrash?.let { crash ->
+                Label("Last time the app stopped")
+                Hint("Take a photo or screenshot of this and send it. It holds no messages and no keys.")
+                Text(
+                    crash,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.text,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                TextButton(onClick = { model.clearCrash() }) { Text("Clear", color = clarity.yellow) }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         Hint("Version ${state.version}")
         Spacer(Modifier.height(32.dp))
     }
@@ -587,5 +603,121 @@ private fun SwitchRow(title: String, hint: String, on: Boolean, onChange: (Boole
                 uncheckedBorderColor = clarity.controlOutline,
             ),
         )
+    }
+}
+
+/**
+ * A settings group (the owner's approved mockup of 13 Oct 2026): a row with its name and what is inside;
+ * tapping it opens its controls in place. One group is open at a time, so the page stays short.
+ */
+@Composable
+private fun Group(
+    title: String,
+    subtitle: String,
+    open: String?,
+    onOpen: (String?) -> Unit,
+    last: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val isOpen = open == title
+    Column {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 66.dp)
+                .clickable { onOpen(if (isOpen) null else title) }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = if (isOpen) clarity.yellow else clarity.text)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = clarity.muted)
+            }
+            Text(if (isOpen) "–" else "›", style = MaterialTheme.typography.titleLarge, color = clarity.muted)
+        }
+        if (isOpen) {
+            Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) { content() }
+        }
+        if (!last) androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
+    }
+}
+
+/**
+ * Health check at the top of Settings: is the coach set up, can reminders ring on time on this phone, is there
+ * a backup. Read from the phone and the settings, never guessed; each problem has the tap that fixes it.
+ */
+@Composable
+private fun HealthCheck(
+    state: SettingsViewModel.State,
+    notificationsAllowed: Boolean,
+    onCoach: () -> Unit,
+    onReminders: () -> Unit,
+    onData: () -> Unit,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val power = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+    val alarms = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+    val reminderChecks = listOf(
+        notificationsAllowed,
+        power.isIgnoringBatteryOptimizations(context.packageName),
+        if (android.os.Build.VERSION.SDK_INT >= 31) alarms.canScheduleExactAlarms() else true,
+    )
+    val ok = reminderChecks.count { it }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .background(clarity.surface, RoundedCornerShape(22.dp))
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text("Health check", style = MaterialTheme.typography.titleMedium, color = clarity.text)
+        HealthRow(
+            good = state.keySet && (state.testLine == null || state.testOk),
+            text = when {
+                !state.keySet -> "No API key yet"
+                state.testLine != null && !state.testOk -> "The last connection test failed"
+                else -> "Coach key set"
+            },
+            detail = if (state.keySet) state.chatModel else null,
+            action = if (state.keySet && (state.testLine == null || state.testOk)) null else "Fix",
+            onAction = onCoach,
+        )
+        HealthRow(
+            good = ok == reminderChecks.size,
+            text = if (ok == reminderChecks.size) "Reminders can ring on time" else "Reminders may be late",
+            detail = "$ok of ${reminderChecks.size}",
+            action = if (ok == reminderChecks.size) null else "Fix",
+            onAction = onReminders,
+        )
+        val backup = state.backupFolder.isNotBlank() && state.hasPassphrase
+        HealthRow(
+            good = backup,
+            text = if (backup) "Backups are set up" else "No backup yet",
+            detail = null,
+            action = if (backup) null else "Set one up",
+            onAction = onData,
+        )
+    }
+}
+
+@Composable
+private fun HealthRow(good: Boolean, text: String, detail: String?, action: String?, onAction: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        androidx.compose.foundation.layout.Box(
+            Modifier
+                .size(10.dp)
+                .background(if (good) androidx.compose.ui.graphics.Color(0xFF7BD88F) else clarity.danger, androidx.compose.foundation.shape.CircleShape),
+        )
+        Text(text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, modifier = Modifier.weight(1f))
+        detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.muted) }
+        action?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = clarity.yellow,
+                modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onAction).padding(vertical = 12.dp, horizontal = 4.dp),
+            )
+        }
     }
 }

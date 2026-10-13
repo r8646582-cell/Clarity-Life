@@ -31,7 +31,21 @@ import kotlinx.coroutines.launch
 class KnowViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val memory: MemoryRepository,
+    private val requests: com.clarity.life.chat.TalkRequests,
 ) : ViewModel() {
+
+    /** The Focus page that is open, read when he opens it. */
+    private val focusDetail = MutableStateFlow<MemoryRepository.FocusDetail?>(null)
+    val focus: StateFlow<MemoryRepository.FocusDetail?> get() = focusDetail
+
+    fun openFocus(id: Long) = viewModelScope.launch { focusDetail.value = memory.focusDetail(id) }
+
+    fun closeFocus() {
+        focusDetail.value = null
+    }
+
+    /** Talk about this: a new conversation inside the focus, in Talk. */
+    fun talkAboutFocus(id: Long) = requests.startConversation("free", focusId = id)
 
     sealed class Ref {
         data class Note(val id: Long) : Ref()

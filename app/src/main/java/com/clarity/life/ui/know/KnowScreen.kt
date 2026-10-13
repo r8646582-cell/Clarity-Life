@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,16 +42,34 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clarity.life.ui.know.KnowViewModel.Item
 import com.clarity.life.ui.know.KnowViewModel.Ref
 import com.clarity.life.ui.theme.clarity
+import androidx.compose.foundation.layout.Box
+import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.Kicker
+import com.clarity.life.ui.theme.PrimaryButton
+import com.clarity.life.ui.theme.Quiet
+import com.clarity.life.ui.theme.SecondaryButton
+import com.clarity.life.ui.theme.TextAction
 
 /**
- * What I know (docs/mockups/Know.dc.html): sections collapsed by default, each item opening to its evidence
- * with Edit, Delete and That's right. A search opens every section that has a match. Deleting asks first,
- * because a deletion is final.
+ * What I know, redesigned (the owner's approved mockup of 13 Oct 2026): a short promise of what this is, the
+ * search, one featured note the coach is not sure of yet (That's right / Not quite), then the sections as
+ * tiles. A tile opens its section; a search opens every section that has a match. Each item opens to its
+ * evidence with Edit, Delete and That's right. Deleting asks first, because a deletion is final.
  */
 @Composable
-fun KnowScreen(model: KnowViewModel = hiltViewModel()) {
+fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) {
     val state by model.state.collectAsStateWithLifecycle()
-    var open by remember { mutableStateOf(setOf<String>()) }
+    val focus by model.focus.collectAsStateWithLifecycle()
+    focus?.let { f ->
+        androidx.activity.compose.BackHandler { model.closeFocus() }
+        FocusPage(f, onBack = { model.closeFocus() }, onTalk = {
+            model.talkAboutFocus(f.focus.id)
+            model.closeFocus()
+            onTalk()
+        })
+        return
+    }
+    var section by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var expanded by remember { mutableStateOf<Ref?>(null) }
     var editing by remember { mutableStateOf<Item?>(null) }
     var deleting by remember { mutableStateOf<Item?>(null) }
@@ -57,10 +77,15 @@ fun KnowScreen(model: KnowViewModel = hiltViewModel()) {
     // async state drops letters and makes the cursor jump while typing fast).
     var typed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(state.query) }
     val searching = state.query.isNotBlank()
+    val sections = state.sections + KnowViewModel.Section("Archive", state.archive)
+    val shownSection = sections.firstOrNull { it.name == section }
+    if (shownSection != null && !searching) androidx.activity.compose.BackHandler { section = null }
+    // The note to check: one the coach is not sure of yet, so he can confirm or correct it in one tap.
+    val toCheck = state.sections.flatMap { it.items }.firstOrNull { it.canConfirm }
 
     LazyColumn(Modifier.fillMaxSize().background(clarity.ground)) {
         item {
-            Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
+            Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     buildAnnotatedString {
                         append("What I know")
@@ -69,12 +94,7 @@ fun KnowScreen(model: KnowViewModel = hiltViewModel()) {
                     style = MaterialTheme.typography.displaySmall,
                     color = clarity.text,
                 )
-                Text(
-                    "Only what you said or did. Edit or delete anything; a deletion is final.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = clarity.muted,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                Quiet("Only what you said or did. Change or delete anything; a deletion is final.")
                 OutlinedTextField(
                     value = typed,
                     onValueChange = {
@@ -83,45 +103,92 @@ fun KnowScreen(model: KnowViewModel = hiltViewModel()) {
                     },
                     singleLine = true,
                     placeholder = { Text("Search what I know", color = clarity.muted) },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = fieldColors(),
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
                 )
                 state.quietLine?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger)
                 }
             }
         }
-        val sections = state.sections + KnowViewModel.Section("Archive", state.archive)
-        for (section in sections) {
-            if (section.name == "Archive" && section.items.isEmpty()) continue
-            val isOpen = searching || section.name in open
-            item(key = "section:" + section.name) {
-                SectionRow(section.name, section.items.size, isOpen) {
-                    open = if (section.name in open) open - section.name else open + section.name
+        when {
+            searching -> {
+                val hits = sections.filter { it.items.isNotEmpty() }
+                if (hits.isEmpty()) {
+                    item { Quiet("Nothing here matches.", Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
                 }
-            }
-            if (isOpen) {
-                if (section.items.isEmpty()) {
-                    item(key = "empty:" + section.name) {
-                        Text(
-                            if (searching) "Nothing here matches." else "Nothing yet.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = clarity.muted,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                hits.forEach { s ->
+                    item(key = "head:" + s.name) { SectionTitle(s.name) }
+                    items(s.items, key = { s.name + ":" + it.ref.toString() }) { item ->
+                        ItemCard(
+                            item = item,
+                            expanded = expanded == item.ref,
+                            onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
+                            onEdit = { editing = item },
+                            onDelete = { deleting = item },
+                            onConfirm = { model.confirm(item.ref) },
+                            onStatus = { status -> model.setStatus(item.ref, status) },
                         )
                     }
                 }
-                items(section.items, key = { section.name + ":" + it.ref.toString() }) { item ->
+            }
+            shownSection != null -> {
+                item(key = "back") {
+                    Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextAction("‹ All") { section = null }
+                    }
+                }
+                item(key = "title") { SectionTitle(shownSection.name) }
+                if (shownSection.items.isEmpty()) {
+                    item { Quiet("Nothing here yet. It fills in from your conversations.", Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
+                }
+                items(shownSection.items, key = { shownSection.name + ":" + it.ref.toString() }) { item ->
                     ItemCard(
                         item = item,
                         expanded = expanded == item.ref,
-                        onToggle = { expanded = if (expanded == item.ref) null else item.ref },
+                        onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
                         onEdit = { editing = item },
                         onDelete = { deleting = item },
                         onConfirm = { model.confirm(item.ref) },
                         onStatus = { status -> model.setStatus(item.ref, status) },
                     )
+                }
+            }
+            else -> {
+                if (toCheck != null) {
+                    item(key = "check") {
+                        BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), gap = 12) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.weight(1f)) { Kicker("Is this right?") }
+                                toCheck.grade?.let { GradeTag(it, toCheck.confidence) }
+                            }
+                            Text(toCheck.text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                            toCheck.evidence.firstOrNull()?.let { e ->
+                                Column(
+                                    Modifier.fillMaxWidth().background(clarity.raised, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+                                ) { Text(e, style = MaterialTheme.typography.bodySmall, color = clarity.muted) }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                PrimaryButton("That's right", Modifier.weight(1f)) { model.confirm(toCheck.ref) }
+                                SecondaryButton("Not quite", Modifier.weight(1f)) { editing = toCheck }
+                            }
+                        }
+                    }
+                }
+                item(key = "tiles") {
+                    val tiles = state.sections
+                    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        tiles.chunked(2).forEach { pair ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                pair.forEach { s -> Tile(s, Modifier.weight(1f)) { section = s.name } }
+                                if (pair.size == 1) Spacer(Modifier.weight(1f))
+                            }
+                        }
+                        if (state.archive.isNotEmpty()) {
+                            TextAction("Archive · ${state.archive.size}", color = clarity.muted) { section = "Archive" }
+                        }
+                    }
                 }
             }
         }
@@ -160,19 +227,35 @@ fun KnowScreen(model: KnowViewModel = hiltViewModel()) {
     }
 }
 
+/** A section as a tile: how many, and its name; "Nothing yet" instead of a bare 0. */
 @Composable
-private fun SectionRow(name: String, count: Int, isOpen: Boolean, onClick: () -> Unit) {
-    Column(Modifier.padding(horizontal = 20.dp)) {
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(onClick = onClick),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(name, style = MaterialTheme.typography.titleLarge, color = if (isOpen) clarity.yellow else clarity.text)
-            Text(count.toString(), style = MaterialTheme.typography.bodySmall, color = clarity.muted)
+private fun Tile(s: KnowViewModel.Section, modifier: Modifier, onClick: () -> Unit) {
+    Column(
+        modifier
+            .background(clarity.surface, RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+            .heightIn(min = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (s.items.isEmpty()) {
+            Text("Nothing yet", style = MaterialTheme.typography.bodySmall, color = clarity.muted)
+        } else {
+            Text("${s.items.size}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = clarity.text)
         }
-        HorizontalDivider(color = clarity.hairline)
+        Text(s.name, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
     }
+}
+
+@Composable
+private fun SectionTitle(name: String) {
+    Text(
+        name,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = clarity.text,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
@@ -327,3 +410,96 @@ private fun fieldColors() = TextFieldDefaults.colors(
     unfocusedIndicatorColor = clarity.hairline,
     cursorColor = clarity.yellow,
 )
+
+/**
+ * A Focus (the owner's approved mockup of 13 Oct 2026): what it is and why, where it stands in the coach's
+ * words, the steps as a ladder (answered, this one, and the conversations about it), and Talk about this,
+ * which opens a new conversation inside the focus. Opened from What I know, Focuses.
+ */
+@Composable
+private fun FocusPage(d: com.clarity.life.memory.MemoryRepository.FocusDetail, onBack: () -> Unit, onTalk: () -> Unit) {
+    val f = d.focus
+    val zone = java.time.ZoneId.systemDefault()
+    fun day(ms: Long) = com.clarity.life.core.TimeFacts.shortDay(java.time.Instant.ofEpochMilli(ms).atZone(zone).toLocalDate())
+    val weeks = java.time.temporal.ChronoUnit.WEEKS.between(
+        java.time.Instant.ofEpochMilli(f.createdAt).atZone(zone).toLocalDate(),
+        java.time.LocalDate.now(zone),
+    ) + 1
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(clarity.ground)
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        TextAction("‹ What I know", modifier = Modifier.padding(top = 12.dp), onClick = onBack)
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            com.clarity.life.ui.theme.Pill(
+                when (f.status) {
+                    "active" -> "Focus · week $weeks"
+                    "paused" -> "Paused"
+                    else -> "Done"
+                },
+            )
+            com.clarity.life.ui.theme.Headline(f.name)
+            if (f.why.isNotBlank()) Quiet("Why: ${f.why}")
+        }
+        if (f.summary.isNotBlank()) {
+            BoldCard(gap = 8) {
+                Quiet("Where we are")
+                Text(f.summary, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+                Quiet("Written by the coach from your words. Change it from What I know.")
+            }
+        }
+        if (d.current != null || d.last.isNotEmpty()) {
+            BoldCard(gap = 14) {
+                Text("Steps", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                d.last.reversed().forEach { p -> StepRow(p.text, outcome(p.status) + (p.reason?.let { ", $it" } ?: "") + " · " + day(p.resolvedAt ?: p.dueAt), done = true) }
+                d.current?.let { p -> StepRow(p.text, "This one · due ${p.dueText}", done = false) }
+                Quiet("Each step is a promise you set in this focus. The next one is chosen from how the last one went.")
+            }
+        }
+        if (d.conversations.isNotEmpty()) {
+            Column {
+                Text("Talks about it", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                d.conversations.take(5).forEachIndexed { i, c ->
+                    if (i > 0) HorizontalDivider(color = clarity.hairline)
+                    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(c.title.ifBlank { "A conversation" }, style = MaterialTheme.typography.bodyLarge, color = clarity.text, modifier = Modifier.weight(1f))
+                        Quiet(day(c.startedAt))
+                    }
+                }
+            }
+        }
+        if (f.status == "active") PrimaryButton("Talk about this", onClick = onTalk)
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+private fun outcome(status: String) = when (status) {
+    "kept" -> "Done"
+    "not_done" -> "Not done"
+    "moved" -> "Moved"
+    "let_go" -> "Let go"
+    else -> status
+}
+
+@Composable
+private fun StepRow(text: String, sub: String, done: Boolean) {
+    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(
+            Modifier
+                .padding(top = 3.dp)
+                .size(20.dp)
+                .then(
+                    if (done) Modifier.background(clarity.yellow, androidx.compose.foundation.shape.CircleShape)
+                    else Modifier.border(2.dp, clarity.yellow, androidx.compose.foundation.shape.CircleShape),
+                ),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = if (done) FontWeight.Normal else FontWeight.SemiBold, color = if (done) clarity.muted else clarity.text)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = if (done) clarity.muted else clarity.yellow)
+        }
+    }
+}

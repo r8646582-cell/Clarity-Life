@@ -78,7 +78,7 @@ fun ClarityRoot() {
                         onTalk = { nav.switchTab(Tab.Talk.route) },
                     )
                 }
-                composable(Tab.Know.route) { KnowScreen() }
+                composable(Tab.Know.route) { KnowScreen(onTalk = { nav.switchTab(Tab.Talk.route) }) }
                 composable(SETTINGS_ROUTE) {
                     SettingsScreen(
                         onBack = { nav.popBackStack() },

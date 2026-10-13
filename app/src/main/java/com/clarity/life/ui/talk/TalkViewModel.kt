@@ -188,7 +188,7 @@ class TalkViewModel @Inject constructor(
     fun takeDoorway() {
         viewModelScope.launch {
             opened.await()
-            requests.take()?.let { r -> start(r.chatType, r.openedFrom, r.openedFromId) }
+            requests.take()?.let { r -> start(r.chatType, r.openedFrom, r.openedFromId, r.focusId) }
         }
     }
 
@@ -203,8 +203,8 @@ class TalkViewModel @Inject constructor(
         viewModelScope.launch { start(type, openedFrom, openedFromId) }
     }
 
-    private suspend fun start(type: String, openedFrom: String? = null, openedFromId: Long? = null) {
-        val id = chat.startConversation(type, null, System.currentTimeMillis(), openedFrom, openedFromId)
+    private suspend fun start(type: String, openedFrom: String? = null, openedFromId: Long? = null, focusId: Long? = null) {
+        val id = chat.startConversation(type, focusId, System.currentTimeMillis(), openedFrom, openedFromId)
         chatType.value = type
         conversationId.value = id
         // He moved on, so the conversations he left are reflected now instead of after the idle time.

@@ -188,6 +188,19 @@ class MemoryRepository @Inject constructor(
 
     fun watchFocuses() = dao.watchFocuses()
 
+    /** A focus with its current step, its last answered steps and its conversations, for the Focus page. */
+    data class FocusDetail(
+        val focus: com.clarity.life.data.entity.FocusRow,
+        val current: com.clarity.life.data.entity.PromiseRow?,
+        val last: List<com.clarity.life.data.entity.PromiseRow>,
+        val conversations: List<com.clarity.life.data.entity.ConversationRow>,
+    )
+
+    suspend fun focusDetail(id: Long): FocusDetail? {
+        val f = dao.focus(id) ?: return null
+        return FocusDetail(f, dao.focusCurrentStep(id), dao.focusLastSteps(id, 6), dao.focusConversations(id))
+    }
+
     fun watchChapters() = dao.watchChapters()
 
     /** "That's right": only his tap makes a note confirmed, and then no job may change it again. */

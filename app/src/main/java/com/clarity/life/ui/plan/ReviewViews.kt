@@ -169,6 +169,8 @@ private fun excerpt(body: String): String {
     return cut.substring(0, cut.lastIndexOf(' ').takeIf { it > 100 } ?: cut.length).trimEnd(',', ';', ':') + "…"
 }
 
+
+
 @Composable
 private fun LetterPage(
     title: String,
@@ -318,3 +320,38 @@ private fun DelayedLine(text: String, onRetry: () -> Unit) {
     }
 }
 
+/**
+ * The letter card at the top of Talk (docs/mockups/TalkLetter.dc.html): only while a new letter is unread; it
+ * goes once the letter is opened.
+ */
+@Composable
+fun LetterCard(state: ReviewsViewModel.State, model: ReviewsViewModel, onRead: () -> Unit) {
+    val letter = state.newLetter ?: return
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+            .border(2.dp, clarity.yellow, RoundedCornerShape(16.dp))
+            .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Muted("Your weekly letter, ${model.range(letter.periodStart, letter.periodEnd)}")
+            Text(letter.title, style = MaterialTheme.typography.titleMedium, color = clarity.text)
+        }
+        Text(
+            "Read",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = clarity.ground,
+            modifier = Modifier
+                .heightIn(min = 44.dp)
+                .background(clarity.yellow, RoundedCornerShape(10.dp))
+                .clickable {
+                    model.showLetter(letter.id)
+                    onRead()
+                }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        )
+    }
+}
