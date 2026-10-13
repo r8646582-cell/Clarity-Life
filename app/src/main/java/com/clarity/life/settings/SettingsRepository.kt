@@ -40,6 +40,7 @@ class SettingsRepository @Inject constructor(
         const val USER_NAME = "user_name"
         const val WEEKLY_LETTER_ON = "weekly_letter_on"
         const val SUNDAY_ALERT_ON = "sunday_alert_on"
+        const val MORNING_BRIEF_ON = "morning_brief_on"
         const val TOUGH_LOVE = "tough_love"
         const val LISTEN_ONLY = "listen_only"
     }

@@ -217,6 +217,24 @@
       ],
       "max_words": 1500
     },
+    "brief_daily.md": {
+      "placeholders": [
+        "USER_NAME",
+        "NOW",
+        "TODAY_STEPS",
+        "YESTERDAY",
+        "OPEN_PROMISES",
+        "NOTES",
+        "PREVIOUS_BRIEF"
+      ],
+      "must_contain": [
+        "Do not say that anything was saved",
+        "numbers written in words",
+        "never work out a date",
+        "word for word"
+      ],
+      "max_words": 600
+    },
     "chapter.md": {
       "placeholders": [
         "USER_NAME",

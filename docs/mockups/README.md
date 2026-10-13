@@ -1,5 +1,7 @@
 # UI mockups (Bold design, final for v1)
 
+**Superseded where they differ by `redesign/` (the 0.1.6 redesign, approved 13 Oct 2026; see its README).**
+
 These are the screens to build, exported from the design canvas "Clarity Talk Mockups". Each file is one phone screen (390 x 844 px; Settings is the full scroll). They are HTML design files: open them for layout, spacing, colors, copy and states. Do not ship them; rebuild each screen in Jetpack Compose.
 
 All names and numbers are sample data. The numbers follow the planner contract (`tools/planner.py`): required pace rounded up, "reaches" rounded down, and a Status line.

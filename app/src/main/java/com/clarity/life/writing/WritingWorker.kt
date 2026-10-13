@@ -24,9 +24,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Writes what is due: the review rows (facts in code), the notes under them, the weekly letter, the
- * quarterly chapter, the monthly story, then the monthly memory gardening. Runs on
- * every app start (catch-up) and each Sunday at 19:00 and 19:30; Try again on a review or a letter runs it for
+ * Writes what is due: the morning brief, the review rows (facts in code), the notes under them, the weekly
+ * letter, the quarterly chapter, the monthly story, then the monthly memory gardening. Runs on
+ * every app start (catch-up), each morning for the brief, and each Sunday at 19:00 and 19:30; Try again on a review or a letter runs it for
  * that one with fresh attempts. Every run is safe to repeat: the job keys make a second run a no-op.
  */
 class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -34,6 +34,7 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface Deps {
+        fun briefs(): BriefWriter
         fun reviews(): ReviewWriter
         fun letters(): LetterWriter
         fun chapters(): ChapterWriter
@@ -49,6 +50,8 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val retryReview = inputData.getLong(KEY_RETRY_REVIEW, -1L)
         val retryLetter = inputData.getString(KEY_RETRY_LETTER)
         try {
+            // The morning brief first: it is what he sees when he opens the app.
+            if (deps.briefs().writeDue(now) is BriefWriter.Outcome.Retry) again = true
             for (review in deps.reviews().catchUp(now)) {
                 val outcome = deps.reviews().writeNote(review.id, now, retry = review.id == retryReview)
                 if (outcome is ReviewWriter.Outcome.Retry) again = true
@@ -68,6 +71,7 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             if (deps.gardening().runDue(now) is GardeningJob.Outcome.Retry) again = true
         } finally {
             deps.scheduler().scheduleNextSunday(now)
+            deps.scheduler().scheduleNextMorning(now)
         }
         return if (again && runAttemptCount < 3) Result.retry() else Result.success()
     }
@@ -87,6 +91,17 @@ class WritingScheduler @Inject constructor(
     suspend fun onStart(now: Long) {
         enqueue("writing-catch-up", 0, ExistingWorkPolicy.KEEP)
         scheduleNextSunday(now)
+        scheduleNextMorning(now)
+    }
+
+    /** The next morning run, for the brief (spec section 8): 06:00 his time, or the day boundary if later. */
+    suspend fun scheduleNextMorning(now: Long) {
+        val tz = settings.timeZone()
+        val local = com.clarity.life.core.TimeFacts.local(java.time.Instant.ofEpochMilli(now), tz)
+        val next = com.clarity.life.core.BriefInput.nextRun(local, settings.dayBoundaryHour())
+        val at = next.atZone(java.time.ZoneId.of(tz)).toInstant()
+        val delay = Duration.between(java.time.Instant.ofEpochMilli(now), at).toMillis().coerceAtLeast(0) + ONE_MINUTE
+        enqueue("writing-morning-${next.toLocalDate()}", delay, ExistingWorkPolicy.KEEP)
     }
 
     /** Try again, on a review note that is delayed. */

@@ -18,8 +18,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,9 +46,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clarity.life.ui.theme.clarity
 
 /**
- * Settings. The Coach section is the one stage A needs: provider, base URL, key, the two model names and
- * Test connection (docs/mockups/SettingsCoach.dc.html). The other sections arrive with the stages that
- * create what they configure, and say so rather than showing a dead switch.
+ * Settings, as the 0.1.6 redesign draws it (docs/mockups/redesign/Settings.dc.html): a health check, then
+ * grouped cards with an icon each (Coach, Letters and your day, Privacy, Your data, Advanced). Tapping a card
+ * opens its controls inside it; every action is a real button, and the copy is short.
  */
 @Composable
 fun SettingsScreen(
@@ -69,14 +74,18 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(clarity.ground)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = clarity.muted)
-            }
-            Text("Settings.", style = MaterialTheme.typography.displaySmall, color = clarity.text)
+        IconButton(onClick = onBack, modifier = Modifier.padding(top = 4.dp)) {
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = clarity.text)
         }
+        Text(
+            "Settings",
+            style = MaterialTheme.typography.displayLarge,
+            color = clarity.text,
+            modifier = Modifier.padding(start = 8.dp, bottom = 6.dp),
+        )
         HealthCheck(
             state = state,
             notificationsAllowed = notificationsAllowed,
@@ -84,8 +93,7 @@ fun SettingsScreen(
             onReminders = onOpenReliable,
             onData = { openGroup = "Your data" },
         )
-        Spacer(Modifier.height(12.dp))
-        Group("Coach", "Provider, key, models, your name", openGroup, { openGroup = it }) {
+        Group("Coach", "Provider, key, models, your name", Icons.Outlined.AutoAwesome, openGroup, { openGroup = it }) {
             Label("Main provider")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 model.providers.forEach { (id, label) ->
@@ -118,43 +126,33 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                 )
-                TextButton(
-                    onClick = {
-                        model.pasteKey(key)
-                        key = ""
-                    },
-                    enabled = key.isNotBlank(),
-                ) { Text("Save", color = clarity.yellow) }
-                if (state.keySet) {
-                    TextButton(onClick = { model.clearKey() }) { Text("Remove", color = clarity.danger) }
+                Spacer(Modifier.size(8.dp))
+                SmallButton("Save", primary = true, enabled = key.isNotBlank()) {
+                    model.pasteKey(key)
+                    key = ""
                 }
             }
-            Hint("Kept in the phone's secure keystore. Never shown again in full, never logged.")
+            if (state.keySet) SmallButton("Remove key", danger = true, modifier = Modifier.padding(top = 8.dp)) { model.clearKey() }
+            Hint("Kept in the phone's secure keystore, never shown or logged.")
 
             Label("Chat model")
             Field(state.chatModel, model::setChatModel)
             Label("Chat thinking")
             Levels(state.chatThinking, model::setChatThinking)
-            Hint("How long the coach thinks before it answers. Low is quick; High and Max are slower and more careful.")
+            Hint("Low is quick; High and Max are slower and more careful.")
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
-            Hint("Reflection and reviews, written while you are away.")
+            Hint("For reflection, reviews and the morning brief.")
             Label("Weekly letter model")
             Field(state.letterModel, model::setLetterModel)
             Label("Weekly letter thinking")
             Levels(state.letterThinking, model::setLetterThinking)
-            Hint("Typed freely, so a retired model never needs a new app. Check names in the provider's docs.")
+            Hint("Typed freely: check names in the provider's docs.")
 
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick = { model.testConnection() },
-                enabled = !state.testing,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = clarity.yellow,
-                    contentColor = clarity.ground,
-                ),
-                shape = RoundedCornerShape(14.dp),
-            ) { Text(if (state.testing) "Testing" else "Test connection") }
+            Spacer(Modifier.height(14.dp))
+            com.clarity.life.ui.theme.PrimaryButton(if (state.testing) "Testing" else "Test connection") {
+                if (!state.testing) model.testConnection()
+            }
 
             state.testLine?.let { line ->
                 Text(
@@ -164,22 +162,27 @@ fun SettingsScreen(
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
-            Hint("Changed the model or the thinking level? Run the test bench (below) before you rely on it.")
+            Hint("Changed a model? Run the test bench in Advanced before you rely on it.")
 
             Label("Your name")
             Field(state.userName, model::setUserName)
-            Hint("Optional. Used in the coach's prompt, nowhere else. Empty: the coach says \"this person\" until you tell it your name.")
+            Hint("Optional. Only the coach's prompt uses it.")
 
         }
-        Group("Letters and reminders", "Sunday letter and alert, when your day ends, reliable reminders", openGroup, { openGroup = it }) {
+        Group("Letters and your day", "Morning brief, Sunday letter, when your day ends, reminders", Icons.Outlined.MailOutline, openGroup, { openGroup = it }) {
+            SwitchRow(
+                "Morning brief",
+                "A few lines from the coach each morning",
+                state.morningBrief,
+            ) { model.setMorningBrief(it) }
             SwitchRow(
                 "Weekly letter",
-                "Written on Sunday evening from your week. It appears in Talk and in Plan, Reviews.",
+                "Every Sunday evening",
                 state.weeklyLetter,
             ) { model.setWeeklyLetter(it) }
             SwitchRow(
                 "Sunday alert",
-                "One silent notification when the letter is ready. No sound, nothing on the lock screen.",
+                "One silent notification",
                 state.sundayAlert,
             ) {
                 model.setSundayAlert(it)
@@ -222,67 +225,48 @@ fun SettingsScreen(
                     )
                 }
             }
-            Hint(
-                "Hours after midnight, in am. At ${if (state.dayBoundaryHour == 0) 12 else state.dayBoundaryHour} am, " +
-                    "a 12:30 am promise still counts for the day before.",
-            )
+            Hint("In am. A 12:30 am check-in counts for the day before.")
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .background(clarity.surface, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onOpenReliable)
-                    .padding(14.dp),
+                Modifier.fillMaxWidth().padding(top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("Keep reminders reliable", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-                    Text(
-                        "Battery, autostart, alarms and notifications on this phone",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = clarity.muted,
-                    )
+                    Text("Battery, autostart, alarms", style = MaterialTheme.typography.bodySmall, color = clarity.muted)
                 }
-                Text("Open", color = clarity.yellow)
+                SmallButton("Open", onClick = onOpenReliable)
             }
 
         }
-        Group("Privacy", "App lock, hide in recents", openGroup, { openGroup = it }) {
+        Group("Privacy", "App lock, hide in recents", Icons.Outlined.Lock, openGroup, { openGroup = it }) {
             SwitchRow(
                 "App lock",
-                if (state.canLock) {
-                    "Asks for your fingerprint or screen lock when you open Clarity, and after a minute away."
-                } else {
-                    "This phone has no screen lock, so Clarity cannot lock. Set one in the phone's settings first."
-                },
+                if (state.canLock) "Fingerprint or screen lock to open" else "Set a screen lock on the phone first",
                 state.appLock,
             ) { model.setAppLock(it) }
             SwitchRow(
                 "Hide in recents",
-                "The app switcher shows a blank card instead of your conversation. Applies the next time Clarity opens.",
+                "A blank card in the app switcher",
                 state.hideInRecents,
             ) { model.setHideInRecents(it) }
 
         }
-        Group("Your data", "Backup, restore, export, erase", openGroup, { openGroup = it }) {
+        Group("Your data", "Backup, restore, export, erase", Icons.Outlined.Storage, openGroup, { openGroup = it }) {
             YourData(state, model)
         }
-        Group("Advanced", "Search, health, test bench, prompts", openGroup, { openGroup = it }, last = true) {
-            Hint(
-                "Search is built from your messages and summaries: by keyword, and by meaning with " +
-                    "bge-small-en-v1.5, which runs on this phone. Rebuilding either loses nothing.",
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = { model.rebuildSearch() }, enabled = !state.rebuilding) {
-                    Text(if (state.rebuilding) "Rebuilding" else "Rebuild search", color = clarity.yellow)
+        Group("Advanced", "Search, health, test bench, prompts", Icons.Outlined.Tune, openGroup, { openGroup = it }) {
+            Hint("Search runs on this phone. Rebuilding loses nothing.")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                com.clarity.life.ui.theme.SecondaryButton(if (state.rebuilding) "Rebuilding" else "Rebuild search", Modifier.weight(1f)) {
+                    if (!state.rebuilding) model.rebuildSearch()
                 }
-                TextButton(onClick = { model.reindex() }) { Text("Re-index meaning", color = clarity.yellow) }
+                com.clarity.life.ui.theme.SecondaryButton("Re-index meaning", Modifier.weight(1f)) { model.reindex() }
             }
             state.rebuildLine?.let { Hint(it) }
 
             HealthSection()
             BenchSection()
-            TextButton(onClick = onOpenPrompts) { Text("Edit the coach's prompts", color = clarity.yellow) }
+            com.clarity.life.ui.theme.SecondaryButton("Edit the coach's prompts", Modifier.fillMaxWidth().padding(top = 8.dp), onClick = onOpenPrompts)
 
             Spacer(Modifier.height(20.dp))
 
@@ -295,11 +279,10 @@ fun SettingsScreen(
                     color = clarity.text,
                     modifier = Modifier.padding(top = 6.dp),
                 )
-                TextButton(onClick = { model.clearCrash() }) { Text("Clear", color = clarity.yellow) }
+                SmallButton("Clear", modifier = Modifier.padding(top = 8.dp)) { model.clearCrash() }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        Hint("Version ${state.version}")
+        Hint("Clarity ${state.version}")
         Spacer(Modifier.height(32.dp))
     }
 }
@@ -324,12 +307,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     ) { uri -> uri?.let(model::export) }
     var warnExport by remember { mutableStateOf(false) }
 
-    Spacer(Modifier.height(20.dp))
-    Text("Your data", style = MaterialTheme.typography.titleMedium, color = clarity.text)
-    Hint(
-        "Backups are encrypted with your passphrase and saved once a week to a folder you choose. " +
-            "The newest four are kept. Write the passphrase on paper: without it a backup cannot be restored.",
-    )
+    Hint("Encrypted, weekly, to a folder you choose. Write the passphrase on paper: without it a backup cannot be restored.")
     Label("Backup folder")
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -338,7 +316,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
             color = if (state.backupFolder.isBlank()) clarity.muted else clarity.text,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = { folder.launch(null) }) { Text("Choose", color = clarity.yellow) }
+        SmallButton("Choose") { folder.launch(null) }
     }
     Label("Backup passphrase")
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -348,30 +326,27 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
             color = if (state.hasPassphrase) clarity.text else clarity.muted,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = { passphraseDialog = true }) {
-            Text(if (state.hasPassphrase) "Change" else "Set", color = clarity.yellow)
-        }
+        SmallButton(if (state.hasPassphrase) "Change" else "Set") { passphraseDialog = true }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton(onClick = { model.backUpNow() }, enabled = !state.backingUp) {
-            Text(if (state.backingUp) "Backing up" else "Back up now", color = clarity.yellow)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 14.dp)) {
+        com.clarity.life.ui.theme.PrimaryButton(if (state.backingUp) "Backing up" else "Back up now", Modifier.weight(1f)) {
+            if (!state.backingUp) model.backUpNow()
         }
-        TextButton(onClick = { file.launch(arrayOf("*/*")) }, enabled = !state.restoring) {
-            Text("Restore from a backup", color = clarity.yellow)
+        com.clarity.life.ui.theme.SecondaryButton("Restore", Modifier.weight(1f)) {
+            if (!state.restoring) file.launch(arrayOf("*/*"))
         }
     }
     state.backupLine?.let { Hint(it) }
     if (state.restoreUri == null) state.restoreLine?.let { Hint(it) }
-    TextButton(onClick = { warnExport = true }, enabled = !state.exporting) {
-        Text(if (state.exporting) "Exporting" else "Export everything", color = clarity.yellow)
+    com.clarity.life.ui.theme.SecondaryButton(if (state.exporting) "Exporting" else "Export everything", Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        if (!state.exporting) warnExport = true
     }
-    Hint("A readable copy (Markdown and JSON) of your conversations, goals, check-ins, promises, notes and chapters.")
     state.exportLine?.let { Hint(it) }
     var erasing by remember { mutableStateOf(false) }
-    TextButton(onClick = { erasing = true }, enabled = !state.erasing) {
-        Text(if (state.erasing) "Erasing" else "Erase everything", color = clarity.danger)
+    com.clarity.life.ui.theme.DangerButton(if (state.erasing) "Erasing" else "Erase everything", Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        if (!state.erasing) erasing = true
     }
-    Hint("Deletes everything Clarity keeps on this phone. Backups in your folder are not touched.")
+    Hint("Backups in your folder are not touched.")
     state.eraseLine?.let { Hint(it) }
 
     if (erasing) {
@@ -585,7 +560,7 @@ private fun fieldColors() = TextFieldDefaults.colors(
 @Composable
 private fun SwitchRow(title: String, hint: String, on: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp).clickable { onChange(!on) },
+        Modifier.fillMaxWidth().heightIn(min = 60.dp).clickable { onChange(!on) }.padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -596,8 +571,9 @@ private fun SwitchRow(title: String, hint: String, on: Boolean, onChange: (Boole
             checked = on,
             onCheckedChange = onChange,
             colors = androidx.compose.material3.SwitchDefaults.colors(
-                checkedThumbColor = clarity.ground,
+                checkedThumbColor = clarity.onYellow,
                 checkedTrackColor = clarity.yellow,
+                checkedBorderColor = clarity.yellow,
                 uncheckedThumbColor = clarity.muted,
                 uncheckedTrackColor = clarity.surface,
                 uncheckedBorderColor = clarity.controlOutline,
@@ -607,39 +583,88 @@ private fun SwitchRow(title: String, hint: String, on: Boolean, onChange: (Boole
 }
 
 /**
- * A settings group (the owner's approved mockup of 13 Oct 2026): a row with its name and what is inside;
- * tapping it opens its controls in place. One group is open at a time, so the page stays short.
+ * A settings group (the 0.1.6 redesign): a card with an icon, its name and what is inside; tapping it opens its
+ * controls inside the card. One group is open at a time, so the page stays short.
  */
 @Composable
 private fun Group(
     title: String,
     subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     open: String?,
     onOpen: (String?) -> Unit,
-    last: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val isOpen = open == title
-    Column {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(clarity.surface, RoundedCornerShape(22.dp))
+            .border(1.dp, if (isOpen) clarity.controlOutline else clarity.hairline, RoundedCornerShape(22.dp)),
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 66.dp)
+                .heightIn(min = 72.dp)
                 .clickable { onOpen(if (isOpen) null else title) }
-                .padding(vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = if (isOpen) clarity.yellow else clarity.text)
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(40.dp).background(clarity.raised, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(icon, contentDescription = null, tint = clarity.yellow) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = clarity.text)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = clarity.muted)
             }
-            Text(if (isOpen) "–" else "›", style = MaterialTheme.typography.titleLarge, color = clarity.muted)
+            Icon(
+                if (isOpen) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                tint = clarity.muted,
+            )
         }
         if (isOpen) {
-            Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) { content() }
+            androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
+            Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 18.dp)) { content() }
         }
-        if (!last) androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
     }
+}
+
+/** A small real button for an action inside a row: Save, Choose, Open, Change. */
+@Composable
+private fun SmallButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    primary: Boolean = false,
+    danger: Boolean = false,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = if (primary) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium,
+        color = when {
+            !enabled -> clarity.muted
+            primary -> clarity.onYellow
+            danger -> clarity.danger
+            else -> clarity.text
+        },
+        modifier = modifier
+            .heightIn(min = 44.dp)
+            .then(
+                when {
+                    primary && enabled -> Modifier.background(clarity.yellow, shape)
+                    danger -> Modifier.border(1.dp, clarity.coralEdge, shape)
+                    else -> Modifier.background(clarity.raised, shape).border(1.dp, clarity.controlOutline, shape)
+                },
+            )
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    )
 }
 
 /**
@@ -666,12 +691,11 @@ private fun HealthCheck(
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
             .background(clarity.surface, RoundedCornerShape(22.dp))
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .border(1.dp, clarity.hairline, RoundedCornerShape(22.dp))
+            .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Health check", style = MaterialTheme.typography.titleMedium, color = clarity.text)
         HealthRow(
             good = state.keySet && (state.testLine == null || state.testOk),
             text = when {
@@ -695,7 +719,7 @@ private fun HealthCheck(
             good = backup,
             text = if (backup) "Backups are set up" else "No backup yet",
             detail = null,
-            action = if (backup) null else "Set one up",
+            action = if (backup) null else "Set up",
             onAction = onData,
         )
     }
@@ -706,18 +730,11 @@ private fun HealthRow(good: Boolean, text: String, detail: String?, action: Stri
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         androidx.compose.foundation.layout.Box(
             Modifier
-                .size(10.dp)
-                .background(if (good) androidx.compose.ui.graphics.Color(0xFF7BD88F) else clarity.danger, androidx.compose.foundation.shape.CircleShape),
+                .size(8.dp)
+                .background(if (good) clarity.green else clarity.yellow, androidx.compose.foundation.shape.CircleShape),
         )
         Text(text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, modifier = Modifier.weight(1f))
         detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.muted) }
-        action?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = clarity.yellow,
-                modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onAction).padding(vertical = 12.dp, horizontal = 4.dp),
-            )
-        }
+        action?.let { SmallButton(it, primary = true, onClick = onAction) }
     }
 }

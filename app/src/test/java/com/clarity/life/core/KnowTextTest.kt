@@ -20,7 +20,7 @@ class KnowTextTest {
             KnowText.evidence("quote", "I can do it when I'm fresh", "2026-10-07"),
         )
         assertEquals(
-            "Counted by the app: tired on 9 of 12 missed evening targets",
+            "tired on 9 of 12 missed evening targets",
             KnowText.evidence("count", "tired on 9 of 12 missed evening targets", "2026-10-10"),
         )
     }

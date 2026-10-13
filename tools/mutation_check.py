@@ -21,6 +21,7 @@ MUTATIONS = [
      "test_appliers.py", "an overcame line with an invented number published"),
     ("appliers.py", "        items = items[:STORY_OVERCAME]", "        pass", "test_appliers.py", "more than three overcame items"),
     ("appliers.py", "STORY_WORDS = (40, 120)", "STORY_WORDS = (1, 120)", "test_appliers.py", "a one-line story published"),
+    ("appliers.py", "BRIEF_WORDS = (15, 90)", "BRIEF_WORDS = (1, 900)", "test_appliers.py", "a one-line or letter-length brief published"),
     ("story.py", "if cur.weekday() in val and cur not in rest:\n                    total += st[\"target\"]",
      "if cur.weekday() in val:\n                    total += st[\"target\"]", "test_story.py",
      "a planned rest day still asked for in the plan line"),

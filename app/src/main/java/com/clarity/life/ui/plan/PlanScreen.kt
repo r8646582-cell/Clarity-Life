@@ -3,14 +3,17 @@ package com.clarity.life.ui.plan
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -20,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,7 +45,9 @@ fun PlanScreen(
     model: PromisesViewModel = hiltViewModel(),
     planner: PlanViewModel = hiltViewModel(),
     reviews: ReviewsViewModel = hiltViewModel(),
+    briefs: com.clarity.life.ui.brief.BriefViewModel = hiltViewModel(),
 ) {
+    val brief by briefs.brief.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
     val planState by planner.state.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
@@ -63,45 +70,52 @@ fun PlanScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        Text(
-            "Plan.",
-            style = MaterialTheme.typography.displaySmall,
-            color = clarity.text,
-            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp, start = 4.dp),
-        )
+        // The four sections as one segmented control (the 0.1.6 redesign); a coral dot on Reviews while unread.
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 6.dp).horizontalScroll(rememberScrollState()),
+            Modifier
+                .padding(top = 12.dp, bottom = 6.dp)
+                .fillMaxWidth()
+                .background(clarity.surface, RoundedCornerShape(16.dp))
+                .border(1.dp, clarity.hairline, RoundedCornerShape(16.dp))
+                .padding(4.dp),
         ) {
             SECTIONS.forEach { name ->
                 val on = name == section
-                // A coral dot on Reviews while a letter or a review is unread.
-                Text(
-                    androidx.compose.ui.text.buildAnnotatedString {
-                        append(name)
-                        if (name == "Reviews" && reviewState.unread) {
-                            pushStyle(androidx.compose.ui.text.SpanStyle(color = clarity.coral))
-                            append(" ●")
-                            pop()
-                        }
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (on) clarity.ground else clarity.text,
-                    modifier = Modifier
+                Row(
+                    Modifier
+                        .weight(1f)
                         .heightIn(min = 44.dp)
-                        .background(if (on) clarity.yellow else clarity.ground, RoundedCornerShape(20.dp))
-                        .border(1.dp, if (on) clarity.yellow else clarity.controlOutline, RoundedCornerShape(20.dp))
-                        .clickable { section = name }
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                )
+                        .background(if (on) clarity.raised else clarity.surface, RoundedCornerShape(12.dp))
+                        .clickable { section = name },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (on) clarity.text else clarity.muted,
+                    )
+                    if (name == "Reviews" && reviewState.unread) {
+                        Box(Modifier.padding(start = 6.dp).size(6.dp).background(clarity.coral, CircleShape))
+                    }
+                }
             }
         }
         if (section == "Promises") {
             PromisesSection(state, model)
         } else if (section == "Today") {
-            TodaySection(planState, planner)
+            TodaySection(planState, planner, brief?.body)
         } else if (section == "Goals") {
-            GoalsSection(planState, planner, onToday = { section = "Today" }) {
+            GoalsSection(
+                planState,
+                planner,
+                onToday = { section = "Today" },
+                onFix = { draft ->
+                    planner.planWithCoach(draft)
+                    onPlanWithCoach()
+                },
+            ) {
                 planner.planWithCoach()
                 onPlanWithCoach()
             }

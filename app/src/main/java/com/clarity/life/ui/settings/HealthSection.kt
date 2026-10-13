@@ -108,6 +108,7 @@ class HealthViewModel @Inject constructor(
             "reflection" to "Reflection",
             "review_week" to "Weekly review",
             "review_month" to "Monthly review",
+            "brief" to "Morning brief",
             "letter" to "Weekly letter",
             "chapter" to "Chapter",
             "story" to "Monthly story",

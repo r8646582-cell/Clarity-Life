@@ -37,7 +37,7 @@ object Values {
         "review.kind" to setOf("week", "month"),
         "reflection_item.kind" to setOf("idea", "disagreement", "contradiction"),
         "job.type" to setOf(
-            "reflection", "review_week", "review_month", "letter", "chapter", "story", "gardening", "backup",
+            "reflection", "review_week", "review_month", "letter", "chapter", "story", "brief", "gardening", "backup",
             "index",
         ),
         "job.status" to setOf("pending", "running", "succeeded", "failed", "skipped"),

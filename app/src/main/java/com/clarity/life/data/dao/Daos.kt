@@ -125,6 +125,13 @@ interface MessageDao {
 
     @Query("SELECT COUNT(*) FROM message WHERE conversation_id = :conversationId AND role = 'user'")
     suspend fun countHisMessages(conversationId: Long): Int
+
+    /** His own words since [since] (not off the record): what the morning brief may quote, word for word. */
+    @Query(
+        "SELECT m.content FROM message m JOIN conversation c ON c.id = m.conversation_id " +
+            "WHERE m.role = 'user' AND m.created_at >= :since AND c.off_the_record = 0 ORDER BY m.id",
+    )
+    suspend fun userTextSince(since: Long): List<String>
 }
 
 @Dao

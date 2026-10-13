@@ -41,6 +41,7 @@ import com.clarity.life.data.entity.ReviewRow
 import com.clarity.life.data.entity.SearchDocRow
 import com.clarity.life.data.entity.SettingRow
 import com.clarity.life.data.entity.StoryRow
+import com.clarity.life.data.entity.BriefRow
 import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.UsageMonthRow
 
@@ -53,7 +54,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 4,
+    version = 5,
     exportSchema = true,
     entities = [
         // chat
@@ -63,7 +64,7 @@ import com.clarity.life.data.entity.UsageMonthRow
         RestDayRow::class, CheckinRow::class, PromiseRow::class,
         // memory and writing
         NoteRow::class, NoteEvidenceRow::class, ProfileEntryRow::class, PersonRow::class, EventRow::class,
-        ReviewRow::class, ChapterRow::class, LetterRow::class, StoryRow::class, QuoteRow::class,
+        ReviewRow::class, ChapterRow::class, LetterRow::class, StoryRow::class, BriefRow::class, QuoteRow::class,
         SearchDocRow::class, EmbeddingRow::class, ReflectionItemRow::class,
         // housekeeping
         SettingRow::class, PromptOverrideRow::class, ErrorLogRow::class, UsageMonthRow::class, JobRow::class,
@@ -85,6 +86,7 @@ abstract class ClarityDatabase : RoomDatabase() {
     abstract fun search(): SearchDao
     abstract fun embeddings(): EmbeddingDao
     abstract fun story(): com.clarity.life.data.dao.StoryDao
+    abstract fun brief(): com.clarity.life.data.dao.BriefDao
 
     companion object {
         const val NAME = "clarity.db"
@@ -94,6 +96,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V1_TO_V2,
             Migrations.V2_TO_V3,
             Migrations.V3_TO_V4,
+            Migrations.V4_TO_V5,
         )
     }
 }

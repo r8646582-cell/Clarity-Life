@@ -55,4 +55,15 @@ object Migrations {
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_story_key` ON `story` (`key`)")
         }
     }
+
+    /** Version 5: brief, the morning brief (spec section 8, the 0.1.6 redesign). Only adds a table. */
+    val V4_TO_V5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `brief` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`day_key` TEXT NOT NULL, `body` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `key` TEXT NOT NULL)",
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_brief_key` ON `brief` (`key`)")
+        }
+    }
 }

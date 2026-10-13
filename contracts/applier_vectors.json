@@ -1738,6 +1738,164 @@
     "overcame": [],
     "dropped_count": 1
    }
+  },
+  {
+   "name": "text job: a good morning brief passes",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you.",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": true,
+    "problems": [],
+    "title": ""
+   }
+  },
+  {
+   "name": "text job: a brief with an invented number fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 4 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you.",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "numbers not in the inputs: 4"
+    ]
+   }
+  },
+  {
+   "name": "text job: a brief that is a letter fails on length",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. ",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": false
+   }
+  },
+  {
+   "name": "text job: a brief that is one line fails on length",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Good morning, keep going.",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "length 4 words is outside 15 to 90"
+    ]
+   }
+  },
+  {
+   "name": "text job: a brief with a card marker fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. [[suggest: {}]]",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": false
+   }
+  },
+  {
+   "name": "text job: a brief misquoting him fails",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. You said \"mornings are magic\".",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": false,
+    "problems": [
+     "quotes not his: mornings are magic"
+    ]
+   }
+  },
+  {
+   "name": "text job: a brief quoting him word for word passes",
+   "fn": "check_text_job",
+   "args": {
+    "kind": "brief",
+    "text": "Yesterday was a Monday and you still did both lectures. Today closes the first step; from tomorrow the plan asks for 3 a day, so tonight is a good time to decide where the third one goes. Before noon has worked for you. You said \"if I don't do it before lunch it's gone\".",
+    "inputs": [
+     "It is Tuesday 20 October 2026, 7:02 am. Day 7 of the CAF plan.",
+     "T1 CAF lectures: today 2 lectures (step 1 of 3, last day of the step). From tomorrow 3 a day.",
+     "Yesterday, Mon 19 Oct: CAF lectures, did 2 of 2.",
+     "Open promises: Find tomorrow's first lecture and check it plays (tonight 9:00 pm).",
+     "what_helps: Lectures before noon."
+    ],
+    "his_messages": [
+     "if I don't do it before lunch it's gone"
+    ]
+   },
+   "expect": {
+    "ok": true
+   }
   }
  ]
 }

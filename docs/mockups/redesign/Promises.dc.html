@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plan, Promises</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFD23F}a:hover{color:#FFE27A}
+</style>
+</helmet>
+<div style="width: 390px; height: 1240px; box-sizing: border-box; background: #0F0E13; color: #F5F3F8; font-family: 'Instrument Sans', sans-serif; display: flex; flex-direction: column;">
+
+  <div style="margin: 16px 16px 0; padding: 4px; background: #1A1820; border: 1px solid #2D2A36; border-radius: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); text-align: center; font-size: 14px;">
+    <a href="NewToday.dc.html" style="padding: 11px 0; color: #A9A4B6; text-decoration: none;">Today</a>
+    <a href="NewGoal.dc.html" style="padding: 11px 0; color: #A9A4B6; text-decoration: none;">Goals</a>
+    <span style="padding: 11px 0; border-radius: 12px; background: #2C2933; font-weight: 600;">Promises</span>
+    <a href="NewReviews.dc.html" style="padding: 11px 0; color: #A9A4B6; text-decoration: none;">Reviews</a>
+  </div>
+
+  <div style="padding: 26px 24px 0; display: flex; flex-direction: column; gap: 6px;">
+    <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 40px; line-height: 1.02; letter-spacing: -0.01em;">One needs an answer.</h1>
+    <span style="color: #A9A4B6; font-size: 15px;">Two coming up · 4 of the last 5 kept</span>
+  </div>
+
+  <div style="margin: 22px 16px 0; padding: 20px; background: #1A1820; border: 1px solid #2D2A36; border-radius: 22px; display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #FFD23F;" aria-hidden="true"></span>
+      <span style="font-size: 13px; color: #A9A4B6;">Was due 9:00 pm · 2 hours ago</span>
+    </div>
+    <span style="font-family: 'Instrument Serif', serif; font-size: 25px; line-height: 1.15;">Find tomorrow's first lecture and check it plays</span>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+      <button type="button" style="min-height: 50px; border: 0; border-radius: 14px; background: #F5F3F8; color: #0F0E13; font-family: inherit; font-size: 16px; font-weight: 600;">Done</button>
+      <button type="button" style="min-height: 50px; border: 1px solid #3A3645; border-radius: 14px; background: #24212C; color: #F5F3F8; font-family: inherit; font-size: 16px;">Not done</button>
+      <button type="button" style="min-height: 46px; border: 1px solid #2D2A36; border-radius: 14px; background: none; color: #F5F3F8; font-family: inherit; font-size: 15px;">Move it</button>
+      <button type="button" style="min-height: 46px; border: 1px solid #2D2A36; border-radius: 14px; background: none; color: #F5F3F8; font-family: inherit; font-size: 15px;">Let it go</button>
+    </div>
+  </div>
+
+  <div style="margin: 28px 24px 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #A9A4B6;">COMING UP</div>
+
+  <div style="margin: 0 16px; background: #1A1820; border: 1px solid #2D2A36; border-radius: 22px; display: flex; flex-direction: column;">
+    <div style="display: flex; gap: 14px; padding: 16px 18px; align-items: center;">
+      <div style="width: 52px; height: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #24212C; border-radius: 14px;">
+        <span style="font-size: 11px; letter-spacing: 0.06em; color: #A9A4B6;">WED</span><span style="font-family: 'Instrument Serif', serif; font-size: 24px; line-height: 1;">21</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+        <span style="font-size: 16px; font-weight: 500; line-height: 1.3;">Third lecture at 5:30, at the desk</span>
+        <span style="color: #A9A4B6; font-size: 14px; display: flex; align-items: center; gap: 6px;">5:30 pm · tomorrow<svg width="13" height="13" viewBox="0 0 16 16" aria-label="reminder on" role="img"><path d="M8 2a4 4 0 00-4 4v3l-1.5 2h11L12 9V6a4 4 0 00-4-4zM6.5 13a1.5 1.5 0 003 0" stroke="#FFD23F" stroke-width="1.4" fill="none" stroke-linejoin="round"></path></svg></span>
+      </div>
+    </div>
+    <div style="height: 1px; margin: 0 18px; background: #2D2A36;"></div>
+    <div style="display: flex; gap: 14px; padding: 16px 18px; align-items: center;">
+      <div style="width: 52px; height: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #24212C; border-radius: 14px;">
+        <span style="font-size: 11px; letter-spacing: 0.06em; color: #A9A4B6;">SAT</span><span style="font-family: 'Instrument Serif', serif; font-size: 24px; line-height: 1;">24</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+        <span style="font-size: 16px; font-weight: 500; line-height: 1.3;">Walk 20 minutes after Asr</span>
+        <span style="color: #A9A4B6; font-size: 14px;">5:00 pm · in 4 days</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin: 28px 24px 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #A9A4B6;">PAST</div>
+
+  <div style="margin: 0 16px; background: #1A1820; border: 1px solid #2D2A36; border-radius: 22px; display: flex; flex-direction: column;">
+    <div style="display: flex; gap: 12px; padding: 14px 18px; align-items: center;">
+      <span style="width: 26px; height: 26px; border-radius: 999px; background: #1E2A22; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" stroke="#8FD6A0" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+      <span style="font-size: 15px; flex-grow: 1;">Two lectures before noon</span>
+      <span style="font-size: 13px; color: #A9A4B6;">Mon · kept</span>
+    </div>
+    <div style="height: 1px; margin: 0 18px; background: #2D2A36;"></div>
+    <div style="display: flex; gap: 12px; padding: 14px 18px; align-items: center;">
+      <span style="width: 26px; height: 26px; border-radius: 999px; background: #24212C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7h8" stroke="#A9A4B6" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <span style="font-size: 15px; flex-grow: 1;">Call Bilal about the notes</span>
+      <span style="font-size: 13px; color: #A9A4B6;">Sat · not done, no time</span>
+    </div>
+    <div style="height: 1px; margin: 0 18px; background: #2D2A36;"></div>
+    <button type="button" style="min-height: 52px; border: 0; background: none; color: #F5F3F8; font-family: inherit; font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">All 12 past promises<svg width="8" height="14" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5L6.5 7l-5 5.5" stroke="#A9A4B6" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg></button>
+  </div>
+
+  <div style="flex-grow: 1;"></div>
+
+  <nav style="background: #0B0A0E; border-top: 1px solid #1F1D26; padding: 8px 16px 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center; font-size: 12px;">
+    <a href="NewTalkHome.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; color: #A9A4B6; text-decoration: none;"><span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 016.5 3h7A2.5 2.5 0 0116 5.5v5a2.5 2.5 0 01-2.5 2.5H9l-4 3.5V13H6.5" stroke="#A9A4B6" stroke-width="1.7" fill="none" stroke-linejoin="round"></path></svg></span>Talk</a>
+    <a href="NewToday.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; color: #F5F3F8; text-decoration: none; font-weight: 600;"><span style="width: 56px; height: 30px; border-radius: 999px; background: #2A2620; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5l1.5 1.5L8 4.5M4 11.5l1.5 1.5L8 10.5M11 6h5M11 12h5" stroke="#FFD23F" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Plan</a>
+    <a href="NewKnow.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; color: #A9A4B6; text-decoration: none;"><span style="width: 56px; height: 30px; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z" stroke="#A9A4B6" stroke-width="1.6" fill="none" stroke-linejoin="round"></path></svg></span>What I know</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
