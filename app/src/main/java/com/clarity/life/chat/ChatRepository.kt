@@ -547,9 +547,9 @@ class ChatRepository @Inject constructor(
         clientFor(endpoint).stream(endpoint, request)
 
     /**
-     * The card follow-up (contracts/context.md): a finished reply that points at a button, or carried a card line
-     * that was thrown away, and has no card is followed by one more request for only the card line
-     * (prompts/card_followup.md), read by the same strict parser. Returns the raw reply to close with: the
+     * The card step (contracts/context.md): every finished reply that has no valid card is followed by one more
+     * request, in the provider's JSON mode, for the cards that reply offered (prompts/card_followup.md), read
+     * by the same strict parser. An empty list is the normal answer. Returns the raw reply to close with: the
      * merged one when a valid card came back, otherwise [raw] unchanged. A failed follow-up never fails the
      * reply; the quiet "no button" line then shows as before. Logged as codes, never content.
      */
@@ -569,8 +569,16 @@ class ChatRepository @Inject constructor(
                 prompts.text(PromptStore.CARD_FOLLOWUP),
                 mapOf("REASON" to com.clarity.life.core.CardFollowUp.reason(parsed.dropped)),
             )
-            // The same prefix and history, so the provider's cache covers almost all of it.
+            // The same prefix and history, so the provider's cache covers almost all of it. No thinking: the
+            // offer is already made in the reply, this only writes it down, in JSON mode so the shape is certain.
+            val stepEndpoint = endpoint.copy(
+                thinking = false,
+                effort = if (endpoint.provider == "deepseek") com.clarity.life.core.Thinking.OFF else endpoint.effort,
+                temperature = if (endpoint.provider == "deepseek") 0.0 else endpoint.temperature,
+                maxOutputTokens = minOf(endpoint.maxOutputTokens, CARD_STEP_MAX_TOKENS),
+            )
             val followUp = request.copy(
+                jsonOutput = true,
                 messages = request.messages +
                     com.clarity.life.ai.ChatMessage(
                         com.clarity.life.ai.ChatMessage.ASSISTANT,
@@ -580,7 +588,7 @@ class ChatRepository @Inject constructor(
             )
             val answer = StringBuilder()
             var usage: com.clarity.life.ai.Usage? = null
-            stream(endpoint, followUp).collect { chunk ->
+            stream(stepEndpoint, followUp).collect { chunk ->
                 when (chunk) {
                     is ChatChunk.Text -> {
                         answer.append(chunk.text)
@@ -618,5 +626,8 @@ class ChatRepository @Inject constructor(
     companion object {
         /** Years of conversations fit; the list is lazy, so only the rows on screen are drawn. */
         const val DRAWER_LIMIT = 5000
+
+        /** The card step writes at most three small JSON cards; this is ample and keeps a runaway answer short. */
+        const val CARD_STEP_MAX_TOKENS = 2000
     }
 }

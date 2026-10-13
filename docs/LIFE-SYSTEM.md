@@ -113,6 +113,7 @@ Schedules use a small grammar the code can parse: daily, weekdays, a day list (M
 
 Rules:
 - A card with bad JSON is dropped and logged (no content). It never changes state.
+- **Card step (the owner's decision, 13 Oct 2026):** the AI decides what to suggest; writing the card down does not depend on it remembering a card line. After every reply with no valid card, the app asks for that reply's cards as JSON (`{"cards": [...]}`, the provider's JSON mode), read by the same parser and rules (`contracts/context.md`, Card step). An empty list is normal; nothing saves until a tap.
 - "when" strings are resolved by code (`TimeFacts`/`PromiseTimes`); the AI never computes timestamps. If code cannot resolve a phrase, the card shows a time picker instead of guessing.
 - Tapping "Set it"/"Save plan" writes to the database; the card shows "Saved" from the real result. "Not now" dismisses it.
 - The persona forbids claiming anything is saved. The only receipt is the card showing Saved.

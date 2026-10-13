@@ -1,7 +1,12 @@
-# Card follow-up
+# Card step
 
-The app could not show a button under your last reply: {{REASON}}. Your words there point at a button, so they are waiting for one.
+This message is from the app, not from them. The app reads the cards for your last reply here, because {{REASON}}.
 
-Write only the card line or lines for what that reply offered, in the exact card format from the card rules, one card per line. Nothing else: no words before or after, no code fences, no backticks. Use only what that reply and this conversation already hold: do not change the offer, and do not invent a number, a date or an id.
+Answer with one JSON object and nothing else, in this shape:
+{"cards": [ ... ]}
+Each item is one card object exactly as in the card rules (the part after suggest:). For example, a reply that offered to switch to planning:
+{"cards": [{"type":"mode","to":"plan"}]}
 
-If that reply did not really mean to offer a card, write only the word NONE.
+Put in only the cards your last reply offered or pointed at in words: tap below, here it is, Switch, Save plan, Set it, or an offer they can accept. Copy what that reply said. Do not change the offer, and do not invent a number, a date or an id. Never add a card the reply did not offer.
+
+If your last reply did not offer anything, answer {"cards": []}. That is normal and usually correct.

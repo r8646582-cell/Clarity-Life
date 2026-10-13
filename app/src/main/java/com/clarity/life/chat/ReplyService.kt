@@ -141,7 +141,7 @@ class ReplyService : Service() {
                 }
             }
             val chatType = chat.conversations.get(conversationId)?.chatType ?: "free"
-            // A reply that points at a button with no card gets one more try for only the card line.
+            // The card step: a reply with no valid card is followed by a JSON-mode request for the cards it offered.
             val raw = chat.withCardFollowUp(
                 endpoint = endpoint,
                 request = packet.request,

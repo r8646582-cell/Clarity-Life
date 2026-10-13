@@ -85,9 +85,10 @@
         "REASON"
       ],
       "must_contain": [
-        "Write only the card line",
-        "NONE",
-        "do not invent"
+        "JSON",
+        "{\"cards\": []}",
+        "do not invent",
+        "Never add a card the reply did not offer"
       ],
       "max_words": 200
     },
