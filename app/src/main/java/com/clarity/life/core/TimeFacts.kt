@@ -46,9 +46,12 @@ object TimeFacts {
         return "%d:%02d %s".format(hour, t.minute, suffix)
     }
 
-    /** The band of the day, as the NOW sentence names it. */
+    /**
+     * The band of the day, as the NOW sentence names it. Late night lasts until the day boundary or 4 am,
+     * whichever is later, so with a midnight boundary 12:40 am is still late night, never "morning".
+     */
     fun band(hour: Int, boundaryHour: Int): String = when {
-        hour < boundaryHour -> "late night"
+        hour < maxOf(boundaryHour, PromiseTimes.LATE_NIGHT_END) -> "late night"
         hour < 12 -> "morning"
         hour < 17 -> "afternoon"
         hour < 21 -> "evening"

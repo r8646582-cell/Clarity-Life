@@ -45,6 +45,20 @@ class TimeFactsTest {
     }
 
     @Test
+    fun withAMidnightBoundaryTheSmallHoursAreStillLateNight() {
+        // The app's default since 13 Oct 2026: 12:30 am said "morning" before this.
+        assertEquals("late night", TimeFacts.band(0, 0))
+        assertEquals("late night", TimeFacts.band(3, 0))
+        assertEquals("morning", TimeFacts.band(4, 0))
+        assertEquals("late night", TimeFacts.band(5, 6))
+        val bench = Vectors.readText("prompts/testbench.md")
+        val lateNight = TimeFacts.nowSentence(Instant.parse("2026-10-03T19:40:00Z"), tz, 0)
+        // No "still counts as" note: with a midnight boundary it is already Sunday.
+        assertEquals("It's Sunday 4 October 2026, 12:40 am (late night).", lateNight)
+        assertTrue("testbench.md no longer contains: $lateNight", bench.contains(lateNight))
+    }
+
+    @Test
     fun theDayKeyAndTheNowSentenceAgreeAboutWhichDayItIs() {
         val lateNight = Instant.parse("2026-10-03T19:40:00Z")
         assertEquals("2026-10-03", Planner.dayKey(lateNight.toString(), tz, 4).toString())

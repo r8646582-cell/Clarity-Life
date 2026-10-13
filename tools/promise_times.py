@@ -10,9 +10,11 @@ computes a date, so code does it here, and NEVER GUESSES:
           preselected when there is one (date and/or time may be None). Both None means the picker is empty.
 
 Rules (each one pinned by a vector):
-1. Between midnight and the day boundary (4 am by default) their day still counts as the day before, so "today",
-   "tonight", "tomorrow" and a bare time are ambiguous: always "pick", with the calendar day preselected (at
-   12:40 am on Sunday, "tomorrow 10:00" most likely means Sunday 10:00, but it might mean Monday).
+1. Late at night "today", "tonight", "tomorrow" and a bare time are ambiguous: always "pick", with the calendar
+   day preselected (at 12:40 am on Sunday, "tomorrow 10:00" most likely means Sunday 10:00, but it might mean
+   Monday). Late night is from midnight until the day boundary or LATE_NIGHT_END (4 am), whichever is later, so
+   it holds with a midnight day boundary too (the app's default since 13 Oct 2026). Before the boundary their
+   day also still counts as the day before.
 2. A weekday name means the next such day on or after today; if that moment has already passed today, the
    same weekday next week. "next Monday" is ambiguous English, so it is a "pick" with the coming Monday.
 3. A time needs a colon (17:00), am/pm (5pm, 5:30 pm), "noon", or an hour of 13 and above. A bare 1 to 12 is
@@ -41,6 +43,8 @@ MONTHS = {"january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3, "mar": 3,
           "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7, "august": 8, "aug": 8, "september": 9,
           "sep": 9, "sept": 9, "october": 10, "oct": 10, "november": 11, "nov": 11, "december": 12, "dec": 12}
 FILLER = {"at", "on", "this", "the", "by"}
+LATE_NIGHT_END = 4  # before this hour "tomorrow" is always asked, whatever the day boundary
+
 RELATIVE = {"today": 0, "tonight": 0, "tomorrow": 1, "tmrw": 1, "tmr": 1}
 PARTS = {"morning": "am", "afternoon": "pm", "evening": "pm", "night": "pm"}
 MAX_DAYS_AHEAD = 365
@@ -160,8 +164,8 @@ def resolve(phrase, now, boundary_hour=4):
     """Resolve a card's "when" against his local `now` ("YYYY-MM-DDTHH:MM"). See the module docstring."""
     n = datetime.strptime(now, "%Y-%m-%dT%H:%M")
     cal = n.date()
-    late = n.hour < boundary_hour
-    day_key = cal - timedelta(days=1) if late else cal
+    day_key = cal - timedelta(days=1) if n.hour < boundary_hour else cal
+    late = n.hour < max(boundary_hour, LATE_NIGHT_END)
     try:
         f = _parse(phrase)
     except _Unreadable:
