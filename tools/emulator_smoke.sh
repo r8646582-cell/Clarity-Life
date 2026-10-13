@@ -54,6 +54,8 @@ sleep 10; crashed
 tap content-desc "Settings" || exit 1; crashed
 # The key box sits in the folded Coach group.
 tap text "Coach" || exit 1; crashed
+# The group opens below the health check; scroll until the key box is on screen.
+for i in 1 2 3 4; do dump; grep -q 'Paste your key' /tmp/ui.xml && break; adb shell input swipe 160 500 160 200 300; sleep 1; done
 tap text "Paste your key" || tap class "" android.widget.EditText || exit 1
 adb shell input text "sk-test-0123456789"; sleep 1
 tap text "Save" || exit 1; sleep 3; crashed
