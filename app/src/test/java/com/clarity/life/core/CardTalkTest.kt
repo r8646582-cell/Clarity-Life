@@ -24,6 +24,12 @@ class CardTalkTest {
         assertFalse(CardTalk.pointsAtAButton("That sounds like a hard evening. What happened?"))
         assertFalse(CardTalk.pointsAtAButton("Here is what I noticed: you studied best after dinner."))
         assertFalse(CardTalk.pointsAtAButton("You tapped Not now earlier, and that is fine."))
+        // Ordinary coaching words are not a button (false alarms seen on 13 Oct 2026).
+        assertFalse(CardTalk.pointsAtAButton("Your sleep is below seven hours most nights."))
+        assertFalse(CardTalk.pointsAtAButton("Here it is, plainly: you did more than you think."))
+        assertFalse(CardTalk.pointsAtAButton("I made a list of the flash cards you still need."))
+        assertFalse(CardTalk.pointsAtAButton("Hit the books, then press on and keep it going."))
+        assertFalse(CardTalk.pointsAtAButton("Your flash cards are ready for tomorrow."))
     }
 
     @Test
