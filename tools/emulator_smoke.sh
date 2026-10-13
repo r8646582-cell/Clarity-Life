@@ -56,9 +56,9 @@ echo "SMOKE: Talk home showed"
 
 tap content-desc "Settings" || exit 1; crashed
 # With no key saved, Settings opens the Coach group by itself (0.1.8). Tapping Coach then would fold it
-# shut, so it is tapped only when the key box is not already on screen.
+# shut, so it is tapped only when the open group (its Main provider label) is not on screen.
 sleep 2; dump
-if ! grep -q 'Paste your key' /tmp/ui.xml; then tap text "Coach" || exit 1; crashed; fi
+if ! grep -q 'Main provider' /tmp/ui.xml; then tap text "Coach" || exit 1; crashed; fi
 # The group opens below the health check; scroll until the key box is on screen.
 for i in 1 2 3 4; do dump; grep -q 'Paste your key' /tmp/ui.xml && break; adb shell input swipe 160 500 160 200 300; sleep 1; done
 tap text "Paste your key" || tap class "" android.widget.EditText || exit 1
