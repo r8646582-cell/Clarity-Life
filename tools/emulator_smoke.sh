@@ -69,6 +69,11 @@ adb shell input text "hello"; sleep 1
 tap content-desc "Send" || exit 1; sleep 10; crashed
 echo "SMOKE: sending a message survived"
 tap text "What I know" || exit 1; sleep 3; crashed
+tap text "Open your story" || exit 1; sleep 3; crashed
+dump; grep -q 'Your story starts here\|The first pages\|Your story so far' /tmp/ui.xml || { echo "SMOKE: Your story did not open"; exit 1; }
+echo "SMOKE: Your story opened"
+adb shell input keyevent 4; sleep 2; crashed
+for i in 1 2 3; do dump; grep -q 'text="Patterns"' /tmp/ui.xml && break; adb shell input swipe 160 450 160 250 300; sleep 1; done
 tap text "Patterns" || exit 1; sleep 2; crashed
 echo "SMOKE: What I know survived"
 tap text "Plan" || exit 1; sleep 3; crashed

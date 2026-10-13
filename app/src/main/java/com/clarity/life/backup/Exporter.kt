@@ -122,6 +122,11 @@ class Exporter @Inject constructor(
             sb.append("\n### ${c.str(2)} (${c.str(0)} to ${c.str(1)})\n\n${c.str(3)}\n")
         }
 
+        sb.append("\n## Your story\n")
+        rows("SELECT period_start, period_end, short FROM story ORDER BY period_start") { st ->
+            sb.append("\n### ${st.str(0)} to ${st.str(1)}\n\n${st.str(2)}\n")
+        }
+
         sb.append("\n## Conversations\n")
         rows("SELECT id, title, started_at, summary FROM conversation WHERE off_the_record = 0 ORDER BY started_at") { c ->
             sb.append("\n### ${c.str(1).ifBlank { "Untitled" }} (${at(c.long(2))})\n")

@@ -76,6 +76,32 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
     // The box shows what he typed at once; the filtered list follows (a field fed back from the model's
     // async state drops letters and makes the cursor jump while typing fast).
     var typed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(state.query) }
+    // Your story (spec 2.5) opens over the list; its proof and chapters open their item here.
+    var showStory by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (showStory) {
+        StoryScreen(
+            onBack = { showStory = false },
+            onTalk = {
+                showStory = false
+                onTalk()
+            },
+            onProof = { n ->
+                showStory = false
+                typed = ""
+                model.search("")
+                section = "What helps"
+                expanded = Ref.Note(n.id)
+            },
+            onChapter = { id ->
+                showStory = false
+                typed = ""
+                model.search("")
+                section = "Chapters"
+                expanded = Ref.Chapter(id)
+            },
+        )
+        return
+    }
     val searching = state.query.isNotBlank()
     val sections = state.sections + KnowViewModel.Section("Archive", state.archive)
     val shownSection = sections.firstOrNull { it.name == section }
@@ -156,6 +182,18 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 }
             }
             else -> {
+                item(key = "story") {
+                    BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), gap = 8, onClick = { showStory = true }) {
+                        Kicker("Your story")
+                        Text(
+                            "What you did, what you got through, and how you changed.",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = clarity.text,
+                        )
+                        Text("Open your story ›", style = MaterialTheme.typography.bodyMedium, color = clarity.yellow)
+                    }
+                }
                 if (toCheck != null) {
                     item(key = "check") {
                         BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), gap = 12) {
