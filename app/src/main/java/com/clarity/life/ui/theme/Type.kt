@@ -4,35 +4,55 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.clarity.life.R
 
-/** Space Grotesk, bundled with the APK under the SIL Open Font License (app/licenses). */
-val SpaceGrotesk = FontFamily(
-    Font(R.font.space_grotesk_regular, FontWeight.Normal),
-    Font(R.font.space_grotesk_medium, FontWeight.Medium),
-    Font(R.font.space_grotesk_bold, FontWeight.Bold),
+/** Instrument Sans, for everything he reads and taps. Bundled under the SIL Open Font License (app/licenses). */
+val InstrumentSans = FontFamily(
+    Font(R.font.instrument_sans_regular, FontWeight.Normal),
+    Font(R.font.instrument_sans_medium, FontWeight.Medium),
+    Font(R.font.instrument_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.instrument_sans_bold, FontWeight.Bold),
 )
 
-private fun style(size: Int, weight: FontWeight, lineHeight: Int, letterSpacing: Double = 0.0) = TextStyle(
-    fontFamily = SpaceGrotesk,
+/** Instrument Serif, only for headlines, big numbers and the coach's longer writing (SIL OFL, app/licenses). */
+val InstrumentSerif = FontFamily(
+    Font(R.font.instrument_serif_regular, FontWeight.Normal),
+    Font(R.font.instrument_serif_italic, FontWeight.Normal, FontStyle.Italic),
+)
+
+private fun sans(size: Int, weight: FontWeight, lineHeight: Int, letterSpacing: Double = 0.0) = TextStyle(
+    fontFamily = InstrumentSans,
     fontWeight = weight,
     fontSize = size.sp,
     lineHeight = lineHeight.sp,
     letterSpacing = letterSpacing.sp,
 )
 
+private fun serif(size: Int, lineHeight: Int, letterSpacing: Double = 0.0) = TextStyle(
+    fontFamily = InstrumentSerif,
+    fontWeight = FontWeight.Normal,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    letterSpacing = letterSpacing.sp,
+)
+
 val ClarityTypography = Typography(
-    displaySmall = style(32, FontWeight.Bold, 38, (-0.5)),
-    headlineMedium = style(26, FontWeight.Bold, 32, (-0.3)),
-    headlineSmall = style(22, FontWeight.Bold, 28),
-    titleLarge = style(19, FontWeight.Medium, 25),
-    titleMedium = style(16, FontWeight.Medium, 22),
-    bodyLarge = style(16, FontWeight.Normal, 24),
-    bodyMedium = style(15, FontWeight.Normal, 23),
-    bodySmall = style(13, FontWeight.Normal, 19),
-    labelLarge = style(15, FontWeight.Medium, 20),
-    labelMedium = style(13, FontWeight.Medium, 17),
-    labelSmall = style(12, FontWeight.Medium, 16, 0.4),
+    displayLarge = serif(46, 48, -0.4),
+    displayMedium = serif(42, 44, -0.4),
+    displaySmall = serif(36, 40, -0.3),
+    headlineLarge = serif(32, 36, -0.2),
+    headlineMedium = serif(28, 32, -0.2),
+    headlineSmall = serif(24, 29),
+    titleLarge = sans(19, FontWeight.SemiBold, 25),
+    titleMedium = sans(16, FontWeight.Medium, 22),
+    titleSmall = sans(15, FontWeight.Medium, 20),
+    bodyLarge = sans(16, FontWeight.Normal, 24),
+    bodyMedium = sans(15, FontWeight.Normal, 23),
+    bodySmall = sans(13, FontWeight.Normal, 19),
+    labelLarge = sans(15, FontWeight.Medium, 20),
+    labelMedium = sans(13, FontWeight.Medium, 17),
+    labelSmall = sans(12, FontWeight.SemiBold, 16, 0.8),
 )

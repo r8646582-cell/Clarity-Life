@@ -14,7 +14,7 @@ The branch names in the sections below are kept as history only; start new work 
 | Piece | State |
 |---|---|
 | Gradle project, Kotlin, Compose, Material 3, Hilt, Room + SQLCipher, OkHttp, WorkManager, pinned versions | done |
-| Bold theme and tokens, Space Grotesk bundled (SIL OFL in `app/licenses/`) | done |
+| Theme and tokens (0.1.6 redesign), Instrument Sans and Serif bundled (SIL OFL in `app/licenses/`) | done |
 | Three tabs plus Settings, app icon, `allowBackup="false"`, no cloud backup or device transfer | done |
 | `DefaultSettings.kt` as the only place a provider, base URL or model name is written | done |
 | `prompts/*.md` and `contracts/prompts.json` packed into the APK as assets at build time | done |

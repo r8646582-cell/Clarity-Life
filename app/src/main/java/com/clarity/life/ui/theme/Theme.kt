@@ -7,7 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-/** The Bold palette, exactly as the mockups use it. One dark theme only; there is no light mode in v1. */
+/** The 0.1.6 palette, exactly as the redesign mockups use it. One dark theme only; there is no light mode in v1. */
 data class ClarityColors(
     val ground: Color = Tokens.Ground,
     val surface: Color = Tokens.Surface,
@@ -15,18 +15,28 @@ data class ClarityColors(
     val text: Color = Tokens.TextOn,
     val muted: Color = Tokens.Muted,
     val yellow: Color = Tokens.Yellow,
+    val onYellow: Color = Tokens.OnYellow,
     val coral: Color = Tokens.Coral,
+    val green: Color = Tokens.Green,
     val danger: Color = Tokens.Danger,
     val hairline: Color = Tokens.Hairline,
     val controlOutline: Color = Tokens.ControlOutline,
     val tabBar: Color = Tokens.TabBar,
+    val yellowTint: Color = Tokens.YellowTint,
+    val yellowEdge: Color = Tokens.YellowEdge,
+    val coralTint: Color = Tokens.CoralTint,
+    val coralEdge: Color = Tokens.CoralEdge,
+    val greenTint: Color = Tokens.GreenTint,
+    val paper: Color = Tokens.Paper,
+    val paperInk: Color = Tokens.PaperInk,
+    val paperMuted: Color = Tokens.PaperMuted,
 )
 
 val LocalClarityColors = staticCompositionLocalOf { ClarityColors() }
 
 private val Scheme = darkColorScheme(
     primary = Tokens.Yellow,
-    onPrimary = Tokens.Ground,
+    onPrimary = Tokens.OnYellow,
     secondary = Tokens.Coral,
     onSecondary = Tokens.Ground,
     background = Tokens.Ground,

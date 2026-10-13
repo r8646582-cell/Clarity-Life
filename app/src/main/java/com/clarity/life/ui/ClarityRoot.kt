@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,7 +38,7 @@ import com.clarity.life.ui.theme.clarity
 enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     Talk("talk", "Talk", Icons.Outlined.ChatBubbleOutline),
     Plan("plan", "Plan", Icons.AutoMirrored.Outlined.ListAlt),
-    Know("know", "What I know", Icons.Outlined.Lightbulb),
+    Know("know", "What I know", Icons.Outlined.AutoAwesome),
 }
 
 const val SETTINGS_ROUTE = "settings"
@@ -123,9 +123,9 @@ private fun ClarityTabBar(currentRoute: String?, planDot: Boolean, onSelect: (St
                 },
                 label = { Text(tab.label) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = clarity.ground,
-                    selectedTextColor = clarity.yellow,
-                    indicatorColor = clarity.yellow,
+                    selectedIconColor = clarity.yellow,
+                    selectedTextColor = clarity.text,
+                    indicatorColor = clarity.raised,
                     unselectedIconColor = clarity.muted,
                     unselectedTextColor = clarity.muted,
                 ),
