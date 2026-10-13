@@ -276,13 +276,22 @@ fun TalkScreen(
             )
         }
 
-        state.quietLine?.let { line ->
+        // On Talk home the quiet line sits at the top. In a conversation it goes under the last reply instead
+        // (below), so it is read with the reply it is about and never covers the words as they scroll.
+        if (home) state.quietLine?.let { line ->
             Text(
                 line,
                 style = MaterialTheme.typography.bodySmall,
                 color = clarity.danger,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
             )
+        }
+        if (!home) {
+            val line = state.quietLine
+            LaunchedEffect(line) {
+                // Bring a new line into view: it is the item right after the last message.
+                if (line != null) listState.animateScrollToItem(state.messages.size)
+            }
         }
 
         if (home) {
@@ -325,6 +334,16 @@ fun TalkScreen(
                     actions = actions,
                     onTryAgain = { model.tryAgain(row.id) },
                 )
+            }
+            state.quietLine?.let { line ->
+                item(key = "quiet-line") {
+                    Text(
+                        line,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = clarity.danger,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp),
+                    )
+                }
             }
             item { Spacer(Modifier.height(8.dp)) }
         }
