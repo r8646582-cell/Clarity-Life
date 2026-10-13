@@ -25,6 +25,11 @@ data class Endpoint(
      * reject fields it does not know.
      */
     val effort: String? = null,
+    /**
+     * The longest silence allowed between two pieces of the reply, in seconds (CLAUDE.md, AI client rules):
+     * 120 for chat, 300 for background calls, which may think for a long time with nothing to show.
+     */
+    val readTimeoutS: Long = com.clarity.life.settings.DefaultSettings.CHAT_GAP_TIMEOUT_S,
 ) {
     /** What a coach message records as its model, for the Details sheet. */
     val label: String
