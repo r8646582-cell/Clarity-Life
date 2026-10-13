@@ -63,10 +63,10 @@ PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save
 One sentence, written by code, that names the day the moment counts as (the day boundary: midnight by default, 1 to 6 am if they choose; the example uses 4 am):
 - `It's Friday 9 October 2026, 9:40 pm (night).`
 - `It's Sunday 4 October 2026, 12:40 am (late night; their day still counts as Saturday until 4 am).`
-No greeting band is given; the coach decides.
+The word in brackets is the part of the day: late night from midnight until the day boundary or 4 am, whichever is later (so 12:40 am is late night with a midnight boundary too, never "morning"), then morning, afternoon (from noon), evening (from 5 pm) and night (from 9 pm). The "still counts as" note is added only before the day boundary. No greeting band is given; the coach decides.
 
 ### Resolving "when" in a promise card
-The app resolves the card's `when` text in code (`PromiseTimes`), relative to the day key, and the card always shows the resolved weekday, date and time ("Sat 10 Oct, 17:00") before they tap, so they see exactly what will be saved. Between midnight and the day boundary, "today", "tonight" and "tomorrow" are ambiguous: the card opens its time picker with the most likely reading preselected instead of saving silently. If a phrase cannot be resolved at all, the card shows the picker empty.
+The app resolves the card's `when` text in code (`PromiseTimes`), relative to the day key, and the card always shows the resolved weekday, date and time ("Sat 10 Oct, 17:00") before they tap, so they see exactly what will be saved. Late at night (from midnight until the day boundary or 4 am, whichever is later), "today", "tonight" and "tomorrow" are ambiguous: the card opens its time picker with the most likely reading preselected instead of saving silently. If a phrase cannot be resolved at all, the card shows the picker empty.
 
 ### OPEN_PROMISES
 Written by code (`PromiseText`), never trimmed. First every open promise, soonest first, with its code-written due phrase; one that has passed says it has no answer yet (never "not done"). Then what they answered in the last 14 days (at most 8, newest first), so the coach can follow up without asking what happened:

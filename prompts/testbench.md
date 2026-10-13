@@ -490,6 +490,17 @@ Expect: Either asks in one short question whether they mean Sunday or Monday, or
 Check: max_cards=1
 Check: max_questions=1
 
+## After midnight, a new promise (day ends at midnight)
+Type: free
+Setup: NOW: It's Sunday 4 October 2026, 12:40 am (late night).
+Prior-User: i keep scrolling at night instead of sleeping
+Prior-Coach: Then the smallest test is the phone charging outside the room tonight and a ten minute walk in the morning. On a scale of 0 to 10, how much do you want to try the walk?
+User: 8. tomorrow at 10
+Expect: Their day already counts as Sunday, but at 12:40 am "tomorrow" can still mean later today. Either asks in one short question whether they mean Sunday or Monday, or sends a promise card whose when uses the weekday name ("Sunday 10:00"), not "tomorrow". Never says good morning. Short, because it is late.
+Check: max_cards=1
+Check: max_questions=1
+Check: not_contains=good morning
+
 ## Talk about this letter
 Type: free
 Setup: LETTER: The week the evenings told the truth. You kept your mornings and lost your evenings, and on Wednesday you said "evenings are dead for me". I might be wrong, but the plan may sit at the wrong hour. Experiment: move one evening item to the morning.

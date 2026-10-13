@@ -16,7 +16,8 @@ import java.time.temporal.ChronoUnit
  * The rules and the small grammar are written out in that file. In short:
  * - [Resolution.ok]: the phrase names exactly one moment in the future, which the card shows before he taps.
  * - otherwise the card opens its time picker, with the likeliest reading preselected when there is one
- *   (between midnight and the day boundary "today", "tonight" and "tomorrow" are always asked, never assumed).
+ *   (late at night, from midnight until the day boundary or 4 am, whichever is later, "today", "tonight" and
+ *   "tomorrow" are always asked, never assumed).
  *
  * Pure: no clock and no time zone inside; [resolve] takes his local date and time.
  */
@@ -157,12 +158,15 @@ object PromiseTimes {
         return f
     }
 
+    /** Before this hour "tomorrow" is always asked, whatever the day boundary (rule 1 in tools/promise_times.py). */
+    const val LATE_NIGHT_END = 4
+
     /** Resolve a card's "when" against his local [now]. See tools/promise_times.py for every rule. */
     fun resolve(phrase: String, now: LocalDateTime, boundaryHour: Int): Resolution {
         val n = now.truncatedTo(ChronoUnit.MINUTES)
         val cal = n.toLocalDate()
-        val late = n.hour < boundaryHour
-        val dayKey = if (late) cal.minusDays(1) else cal
+        val dayKey = if (n.hour < boundaryHour) cal.minusDays(1) else cal
+        val late = n.hour < maxOf(boundaryHour, LATE_NIGHT_END)
         val f = try {
             parse(phrase)
         } catch (e: Unreadable) {
