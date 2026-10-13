@@ -40,6 +40,7 @@ import com.clarity.life.data.entity.RestDayRow
 import com.clarity.life.data.entity.ReviewRow
 import com.clarity.life.data.entity.SearchDocRow
 import com.clarity.life.data.entity.SettingRow
+import com.clarity.life.data.entity.StoryRow
 import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.UsageMonthRow
 
