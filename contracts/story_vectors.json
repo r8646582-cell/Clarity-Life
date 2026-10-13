@@ -1,0 +1,848 @@
+{
+ "_comment": "Your story facts (tools/story.py). Read by tools/test_story.py and the Kotlin StoryTest. expect is the exact result; error means the call must fail.",
+ "cases": [
+  {
+   "name": "the owner's ramp: 2, then 3, then 4 a day draws as stairs; the week in progress counts only its days so far",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-29",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "target": 2,
+      "schedule": "daily"
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-27",
+      "target": 3,
+      "schedule": "daily"
+     },
+     {
+      "start": "2026-10-28",
+      "end": null,
+      "target": 4,
+      "schedule": "daily"
+     }
+    ],
+    "checkins": [
+     {
+      "day": "2026-10-14",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-15",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-16",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-17",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-18",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-19",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-21",
+      "amount": 3
+     },
+     {
+      "day": "2026-10-22",
+      "amount": 3
+     },
+     {
+      "day": "2026-10-23",
+      "amount": 3
+     },
+     {
+      "day": "2026-10-24",
+      "amount": 3
+     },
+     {
+      "day": "2026-10-25",
+      "amount": 3
+     }
+    ],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 12,
+      "planned": 14
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-27",
+      "done": 15,
+      "planned": 21
+     },
+     {
+      "start": "2026-10-28",
+      "end": "2026-10-29",
+      "done": 0,
+      "planned": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "weeks run from the plan's own start day, not from Monday",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-20",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 1,
+      "schedule": "Mon,Wed"
+     }
+    ],
+    "checkins": [
+     {
+      "day": "2026-10-13",
+      "amount": 5
+     },
+     {
+      "day": "2026-10-21",
+      "amount": 5
+     },
+     {
+      "day": "2026-10-19",
+      "amount": 1
+     }
+    ],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 1,
+      "planned": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "a planned rest day asks for nothing",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-20",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 2,
+      "schedule": "daily"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": [
+     "2026-10-16"
+    ]
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 0,
+      "planned": 12
+     }
+    ]
+   }
+  },
+  {
+   "name": "a rest check-in adds nothing, a part day adds its amount",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-20",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 2,
+      "schedule": "weekdays"
+     }
+    ],
+    "checkins": [
+     {
+      "day": "2026-10-15",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-16",
+      "amount": 1.5
+     }
+    ],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 1.5,
+      "planned": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "an Nx/week step asks for N per seven days, fewer in a short stretch",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-23",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 1,
+      "schedule": "3x/week"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 0,
+      "planned": 3
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-23",
+      "done": 0,
+      "planned": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "an Nx/week step loses a planned rest day only when the stretch has no other free day",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-16",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 1,
+      "schedule": "3x/week"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": [
+     "2026-10-15"
+    ]
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-16",
+      "done": 0,
+      "planned": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "a step that starts later adds nothing before its start",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-27",
+    "steps": [
+     {
+      "start": "2026-10-21",
+      "end": null,
+      "target": 1,
+      "schedule": "daily"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-27",
+      "done": 0,
+      "planned": 7
+     }
+    ]
+   }
+  },
+  {
+   "name": "overlapping steps add up",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-20",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 1,
+      "schedule": "daily"
+     },
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-15",
+      "target": 2,
+      "schedule": "daily"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-10-14",
+      "end": "2026-10-20",
+      "done": 0,
+      "planned": 11
+     }
+    ]
+   }
+  },
+  {
+   "name": "26 weeks still draw as weeks",
+   "fn": "series",
+   "args": {
+    "first": "2026-01-01",
+    "last": "2026-07-01",
+    "steps": [],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": [
+     {
+      "start": "2026-01-01",
+      "end": "2026-01-07",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-01-08",
+      "end": "2026-01-14",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-01-15",
+      "end": "2026-01-21",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-01-22",
+      "end": "2026-01-28",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-01-29",
+      "end": "2026-02-04",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-02-05",
+      "end": "2026-02-11",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-02-12",
+      "end": "2026-02-18",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-02-19",
+      "end": "2026-02-25",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-02-26",
+      "end": "2026-03-04",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-03-05",
+      "end": "2026-03-11",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-03-12",
+      "end": "2026-03-18",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-03-19",
+      "end": "2026-03-25",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-03-26",
+      "end": "2026-04-01",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-04-02",
+      "end": "2026-04-08",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-04-09",
+      "end": "2026-04-15",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-04-16",
+      "end": "2026-04-22",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-04-23",
+      "end": "2026-04-29",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-04-30",
+      "end": "2026-05-06",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-05-07",
+      "end": "2026-05-13",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-05-14",
+      "end": "2026-05-20",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-05-21",
+      "end": "2026-05-27",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-05-28",
+      "end": "2026-06-03",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-06-04",
+      "end": "2026-06-10",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-06-11",
+      "end": "2026-06-17",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-06-18",
+      "end": "2026-06-24",
+      "done": 0,
+      "planned": 0
+     },
+     {
+      "start": "2026-06-25",
+      "end": "2026-07-01",
+      "done": 0,
+      "planned": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "27 weeks draw as calendar months, the first and last clipped",
+   "fn": "series",
+   "args": {
+    "first": "2026-01-15",
+    "last": "2026-07-20",
+    "steps": [
+     {
+      "start": "2026-01-15",
+      "end": null,
+      "target": 1,
+      "schedule": "daily"
+     }
+    ],
+    "checkins": [
+     {
+      "day": "2026-01-31",
+      "amount": 4
+     },
+     {
+      "day": "2026-02-01",
+      "amount": 6
+     }
+    ],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "month",
+    "bars": [
+     {
+      "start": "2026-01-15",
+      "end": "2026-01-31",
+      "done": 4,
+      "planned": 17
+     },
+     {
+      "start": "2026-02-01",
+      "end": "2026-02-28",
+      "done": 6,
+      "planned": 28
+     },
+     {
+      "start": "2026-03-01",
+      "end": "2026-03-31",
+      "done": 0,
+      "planned": 31
+     },
+     {
+      "start": "2026-04-01",
+      "end": "2026-04-30",
+      "done": 0,
+      "planned": 30
+     },
+     {
+      "start": "2026-05-01",
+      "end": "2026-05-31",
+      "done": 0,
+      "planned": 31
+     },
+     {
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "done": 0,
+      "planned": 30
+     },
+     {
+      "start": "2026-07-01",
+      "end": "2026-07-20",
+      "done": 0,
+      "planned": 20
+     }
+    ]
+   }
+  },
+  {
+   "name": "a story that has not started has no bars",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-13",
+    "steps": [],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "expect": {
+    "by": "week",
+    "bars": []
+   }
+  },
+  {
+   "name": "finished on the day the total was reached",
+   "fn": "finished_on",
+   "args": {
+    "total": 10,
+    "start_done": 4,
+    "checkins": [
+     {
+      "day": "2026-10-16",
+      "amount": 3
+     },
+     {
+      "day": "2026-10-14",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-15",
+      "amount": 1
+     }
+    ]
+   },
+   "expect": "2026-10-16"
+  },
+  {
+   "name": "not finished",
+   "fn": "finished_on",
+   "args": {
+    "total": 10,
+    "start_done": 0,
+    "checkins": [
+     {
+      "day": "2026-10-14",
+      "amount": 9.5
+     }
+    ]
+   },
+   "expect": null
+  },
+  {
+   "name": "done before tracking began has no finish day in the story",
+   "fn": "finished_on",
+   "args": {
+    "total": 10,
+    "start_done": 10,
+    "checkins": []
+   },
+   "expect": null
+  },
+  {
+   "name": "day one",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-10-13"
+   },
+   "expect": "Day 1"
+  },
+  {
+   "name": "day 13",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-10-25"
+   },
+   "expect": "Day 13"
+  },
+  {
+   "name": "two weeks on day 14",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-10-26"
+   },
+   "expect": "Two weeks"
+  },
+  {
+   "name": "eight weeks on day 62",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-12-13"
+   },
+   "expect": "Eight weeks"
+  },
+  {
+   "name": "months from day 63",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-12-14"
+   },
+   "expect": "Two months"
+  },
+  {
+   "name": "a month counts only once its day comes round",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2027-03-12"
+   },
+   "expect": "Four months"
+  },
+  {
+   "name": "five months",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2027-03-13"
+   },
+   "expect": "Five months"
+  },
+  {
+   "name": "23 months in figures",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2028-10-12"
+   },
+   "expect": "23 months"
+  },
+  {
+   "name": "two years",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2028-10-13"
+   },
+   "expect": "Two years"
+  },
+  {
+   "name": "the first pages until day 27",
+   "fn": "headline",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-11-08"
+   },
+   "expect": "The first pages."
+  },
+  {
+   "name": "your story from day 28",
+   "fn": "headline",
+   "args": {
+    "first": "2026-10-13",
+    "today": "2026-11-09"
+   },
+   "expect": "Your story so far."
+  },
+  {
+   "name": "this month",
+   "fn": "view_range",
+   "args": {
+    "view": "month",
+    "first": "2026-10-13",
+    "today": "2027-03-20"
+   },
+   "expect": {
+    "from": "2027-03-01",
+    "to": "2027-03-20"
+   }
+  },
+  {
+   "name": "this month, never before the story began",
+   "fn": "view_range",
+   "args": {
+    "view": "month",
+    "first": "2026-10-13",
+    "today": "2026-10-20"
+   },
+   "expect": {
+    "from": "2026-10-13",
+    "to": "2026-10-20"
+   }
+  },
+  {
+   "name": "this year",
+   "fn": "view_range",
+   "args": {
+    "view": "year",
+    "first": "2026-10-13",
+    "today": "2027-03-20"
+   },
+   "expect": {
+    "from": "2027-01-01",
+    "to": "2027-03-20"
+   }
+  },
+  {
+   "name": "all of it",
+   "fn": "view_range",
+   "args": {
+    "view": "all",
+    "first": "2026-10-13",
+    "today": "2027-03-20"
+   },
+   "expect": {
+    "from": "2026-10-13",
+    "to": "2027-03-20"
+   }
+  },
+  {
+   "name": "an unknown view fails",
+   "fn": "view_range",
+   "args": {
+    "view": "week",
+    "first": "2026-10-13",
+    "today": "2027-03-20"
+   },
+   "error": true
+  },
+  {
+   "name": "a story cannot start after today",
+   "fn": "length",
+   "args": {
+    "first": "2026-10-14",
+    "today": "2026-10-13"
+   },
+   "error": true
+  },
+  {
+   "name": "a bad schedule fails, never guessed",
+   "fn": "series",
+   "args": {
+    "first": "2026-10-14",
+    "last": "2026-10-20",
+    "steps": [
+     {
+      "start": "2026-10-14",
+      "end": null,
+      "target": 1,
+      "schedule": "most days"
+     }
+    ],
+    "checkins": [],
+    "rest_dates": []
+   },
+   "error": true
+  }
+ ]
+}

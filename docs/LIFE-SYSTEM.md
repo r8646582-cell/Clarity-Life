@@ -61,6 +61,20 @@ Design: the **Bold** mockup (canvas "Clarity Talk Mockups": Bold and Settings bo
 - Search field. Sections collapsed by default: Profile (values, future self, life facts), Patterns, What helps, What doesn't, Open threads, People, Focuses, Chapters.
 - Each item shows its evidence (dates, your quotes, seen count) when expanded. Edit or delete anything. "Confirmed" tag for things you edited or confirmed.
 - Archive: retired notes and old versions, searchable.
+- At the top, a **Your story** card opens the story page (2.5).
+
+### 2.5 Your story (added 13 Oct 2026, the owner's approved mockup)
+One page, opened from the top of What I know: what he did, what he overcame and how he changed, over his whole life with the app. It fills in over time and is honest while it is short ("The first pages." for the first four weeks).
+- **Header:** how long his story is ("Two weeks", "Five months", counted by code) and a switch: This month, This year, All of it. The switch sets the date range of every count and chart below it.
+- **The short version:** a few sentences written once a month by the monthly story job (section 8). Until the first one exists, one quiet line says when it arrives.
+- **Counts** (code): the amount done of the first backlog, promises kept, things overcome (focuses he marked done), in the chosen range.
+- **Week by week** (code, `tools/story.py`): one chart per backlog, chips to switch between them. Bars are what he did in each story week (seven days from the backlog's start; calendar months past 26 weeks); a dashed line is what his plan's steps asked for in the same stretch, so a ramp draws as stairs. A finished backlog shows the day it was done.
+- **What you overcame:** written by the monthly story job, at most three items, each with Then (his own words, a saved quote), what he did, and Now. Before the first story, the focuses he marked done are listed with their steps.
+- **What helps you / What you're good at:** active what-helps and strength notes with their seen count. Tapping one opens its proof: its evidence rows with dates, and That's right, Not quite, Delete (the same rules as What I know).
+- **How you've changed, in your words:** two of his saved quotes, then and now, chosen by the story job by id (so they are always word for word); hidden until there is a story.
+- **Your years:** the chapters, grouped by year, newest first, and the chapter being written.
+- **Talk about how far you've come:** opens a free-talk conversation.
+- No scores, levels, streaks or badges. Every number is counted by code; the AI writes only the short version and the overcame lines, and both pass the text checks.
 
 ### 2.4 Settings (the simplified Bold mockup, plus the model fields)
 Main level: **Coach** (provider preset, base URL, API key, chat model name typed freely, background model name defaulting to the same, Test connection), **Reminders** (weekly letter on/off, "Sunday alert" on/off (one quiet notification when the letter is ready, no sound), day boundary (default 4:00 am, so a 12:30 am check-in counts for the day before); Keep reliable: battery, autostart, exact alarms), **Your data** (app lock, hide in recents, backup folder and automatic weekly backup, Export everything, Erase everything with type-ERASE). **Advanced** (collapsed): embedding model and Re-index, prompt editor with Reset to built-in, test bench, error log (no content), version.
@@ -193,6 +207,7 @@ After each conversation (when you end it, after 30 minutes idle, or on a new day
 
 - **Weekly review** (Sunday, local time; catch-up on launch if missed): code computes the week's facts; one model call (`review_weekly.md`) writes a short note under them. Shown in Plan, Reviews (mockup 6). It never changes targets. If the re-plan trigger fires, the review shows "The plan may be off" with a Talk about it button.
 - **Monthly review:** plan versus actual per goal, backlog status, top reasons, and up to three "revisit" questions (`review_monthly.md`, JSON). Each revisit opens a Plan chat; nothing is proposed as a card by the job.
+- **Monthly story** (section 2.5, `story.md`, strict JSON): after each calendar month ends, one job (key `story:YYYY-MM`) writes the short version (40 to 120 words), picks a then and a now quote by id from his saved quotes, and writes at most three "overcame" items (title, then-quote id, what he did, now). Code validates it (`apply_story` in tools/appliers.py): ids must be in the list it was given, the then quote older than the now quote, plain text, every quotation his and every number in its inputs; a failed check twice means it is not published and the page keeps the last story. Skipped (no call) when the month had no reflected conversation and no check-in. It never creates cards and never changes goals, plans, targets, promises or notes.
 - **Quarterly chapter:** written from summaries, notes, reviews, goals and focus summaries; stored; shown in What I know, Chapters.
 - **Weekly letter: on by default.** The pipeline each Sunday: 19:00 the review facts and review note are written; 19:30 the letter is written from the week's conversations, check-ins and review facts (`letter_weekly.md`); it is verified (every quote found word for word, every number found in the inputs); then it is stored with title, body and `readyAt`. It appears (a) as the yellow card at the top of Talk until opened, (b) as a dot on Plan and on its Reviews chip, (c) as the newest row under Weeks in Plan, Reviews. If you turned on "Sunday alert", one silent notification says "Your weekly letter is ready". Opening it marks it read. **Talk about this letter** starts a free-talk conversation that has the letter in its context (LETTER block), and any promise or plan still needs your tap. A letter is skipped (no model call) when the week had no reflected conversation with at least 4 of your messages and fewer than 3 answered check-in days; the review still appears. One letter per week, enforced by a unique key. If it fails verification twice it is not published; the list shows one quiet line "This week's letter is delayed" with Try again. You can delete any letter; deleted letters are never regenerated.
 - Skip any job with nothing to say (no API call). Retry background jobs 3 times with backoff; then show one quiet "delayed" line with Try again.
@@ -286,6 +301,8 @@ Decided by the owner: start clean (no old data import); Claude may rewrite and i
 Still open (not blocking): make the old repo private (it is public today); whether to freeze v1 for two weeks of real use before adding features (recommended, see section 14 step F).
 
 Also decided or recommended on 9 to 10 Oct 2026: letters live under Plan, Reviews with a card on Talk and a dot on Plan (section 2); the optional Sunday alert is a Settings toggle (my recommendation: on, silent; it is one notification a week); day boundary at 4:00 am; the coach has a short safety rule for danger but no help-line screen, matching your earlier removal.
+
+Decided on 13 Oct 2026: **Your story** (section 2.5) and its monthly story job (section 8) are part of v1. It is not the growth tree on the Later list: no scores, levels or badges.
 
 ---
 

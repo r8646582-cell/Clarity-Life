@@ -13,6 +13,20 @@ import tempfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 MUTATIONS = [
+    ("story.py", "if cur.weekday() in val and cur not in rest:\n                    total += st[\"target\"]",
+     "if cur.weekday() in val:\n                    total += st[\"target\"]", "test_story.py",
+     "a planned rest day still asked for in the plan line"),
+    ("story.py", "hi = b if e is None else min(b, e)", "hi = b", "test_story.py",
+     "a ramp step drawn past its end, so the stairs never step"),
+    ("story.py", "lo = max(a, s)", "lo = a", "test_story.py", "a step counted before it started"),
+    ("story.py", "if weeks <= MAX_WEEK_BARS:", "if weeks < MAX_WEEK_BARS:", "test_story.py",
+     "26 weeks drawn as months"),
+    ("story.py", "out.append((cur, min(cur + timedelta(days=6), last)))", "out.append((cur, cur + timedelta(days=6)))",
+     "test_story.py", "the week in progress asks for days that have not come yet"),
+    ("story.py", "    if today.day < first.day:\n        m -= 1\n", "", "test_story.py",
+     "a month counted before its day comes round"),
+    ("story.py", "return {\"from\": max(a, first).isoformat()", "return {\"from\": a.isoformat()", "test_story.py",
+     "a view that starts before the story began"),
     # (file, exact text, replacement, test to run, what the bug would be)
     ("cards.py", "if not opts:", "if False:", "test_cards.py", "plan card accepted without review options"),
     ("cards.py", 'limit = 2 if t == "promise" else 1', "limit = 2", "test_cards.py", "two plans in one reply"),
