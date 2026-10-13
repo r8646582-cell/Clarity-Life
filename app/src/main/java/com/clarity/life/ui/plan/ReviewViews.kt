@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.clarity.life.data.entity.ReviewRow
 import com.clarity.life.ui.theme.clarity
 import androidx.compose.foundation.layout.Spacer
@@ -40,7 +41,7 @@ import com.clarity.life.ui.theme.Quiet
 import com.clarity.life.ui.theme.TextAction
 
 /**
- * Plan, Reviews (docs/mockups/Reviews.dc.html): Weeks (the letter and the numbers of each week, a yellow dot while
+ * Plan, Reviews (docs/mockups/redesign/Reviews.dc.html): Weeks (the letter and the numbers of each week, a yellow dot while
  * the letter is unread, one quiet "delayed" line with Try again) and Months. A week opens its letter; the
  * letter's See the numbers opens the weekly review (Review.dc.html), which has Talk about it.
  */
@@ -97,22 +98,40 @@ fun ReviewsSection(
         }
         state.delayedLetter?.let { d -> DelayedLine("This week's letter is delayed") { model.retryLetter(d) } }
         newest?.let { w ->
-            BoldCard(gap = 10, onClick = { if (w.letter != null) onOpenLetter(w.letter.id) else w.review?.let { onOpenReview(it.id) } }) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Kicker("Week of " + model.weekRange(w.monday), clarity.yellow)
-                    Spacer(Modifier.weight(1f))
-                    if (w.letter != null && w.letter.readAt == null) Box(Modifier.size(8.dp).background(clarity.yellow, CircleShape))
+            if (w.letter != null) {
+                // The newest letter on paper (the 0.1.6 redesign): it reads as a letter, not a report.
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(clarity.paper, RoundedCornerShape(24.dp))
+                        .clickable { onOpenLetter(w.letter.id) }
+                        .padding(horizontal = 22.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Kicker("Week of " + model.weekRange(w.monday), clarity.paperMuted)
+                        Spacer(Modifier.weight(1f))
+                        if (w.letter.readAt == null) {
+                            Text(
+                                "New",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = clarity.yellow,
+                                modifier = Modifier.background(clarity.paperInk, RoundedCornerShape(999.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+                    Text(w.letter.title, style = MaterialTheme.typography.headlineLarge, color = clarity.paperInk)
+                    excerpt(w.letter.body).takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.headlineSmall, fontSize = 19.sp, lineHeight = 27.sp, color = clarity.paperInk)
+                    }
+                    Text("Read the letter", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.paperInk)
                 }
-                Text(
-                    w.letter?.title ?: "This week's numbers",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = clarity.text,
-                )
-                w.letter?.body?.let { excerpt(it) }?.takeIf { it.isNotBlank() }?.let { Quiet(it) }
-                Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    if (w.letter != null) TextAction("Read the letter") { onOpenLetter(w.letter.id) }
-                    w.review?.let { r -> TextAction("See the numbers", color = clarity.muted) { onOpenReview(r.id) } }
+                w.review?.let { r -> com.clarity.life.ui.theme.SecondaryButton("See the numbers") { onOpenReview(r.id) } }
+            } else {
+                BoldCard(gap = 10, onClick = { w.review?.let { onOpenReview(it.id) } }) {
+                    Kicker("Week of " + model.weekRange(w.monday))
+                    Text("This week's numbers", style = MaterialTheme.typography.headlineSmall, color = clarity.text)
+                    w.review?.let { r -> TextAction("See the numbers") { onOpenReview(r.id) } }
                 }
             }
         }
@@ -185,9 +204,9 @@ private fun LetterPage(
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         TextButton(onClick = onBack) { Text("‹ Reviews", color = clarity.yellow) }
         Muted("Your letter · $range")
-        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = clarity.text)
+        Text(title, style = MaterialTheme.typography.displaySmall, color = clarity.text)
         body.split(Regex("\n\\s*\n")).filter { it.isNotBlank() }.forEach {
-            Text(it.trim(), style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+            Text(it.trim(), style = MaterialTheme.typography.headlineSmall, fontSize = 20.sp, lineHeight = 30.sp, color = clarity.text)
         }
         PlanButton("Talk about this letter", filled = true, onClick = onTalk)
         onNumbers?.let { PlanButton("See the numbers", filled = false, onClick = it) }
@@ -228,7 +247,6 @@ private fun ReviewPage(
         Text(
             if (r.kind == "week") model.range(r.periodStart, r.periodEnd) else model.monthName(r.periodStart),
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
             color = clarity.text,
         )
         if (r.replanFlag == 1) {
@@ -262,7 +280,7 @@ private fun ReviewPage(
             Modifier.fillMaxWidth().background(clarity.surface, RoundedCornerShape(16.dp)).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Counted by the app", style = MaterialTheme.typography.labelLarge, color = clarity.muted)
+            Text("The numbers", style = MaterialTheme.typography.labelLarge, color = clarity.muted)
             model.facts(r).forEach { line ->
                 Text(
                     line.trimStart(),
@@ -330,23 +348,22 @@ fun LetterCard(state: ReviewsViewModel.State, model: ReviewsViewModel, onRead: (
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
-            .border(2.dp, clarity.yellow, RoundedCornerShape(16.dp))
-            .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+            .background(clarity.paper, RoundedCornerShape(22.dp))
+            .padding(start = 18.dp, end = 12.dp, top = 16.dp, bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Muted("Your weekly letter, ${model.range(letter.periodStart, letter.periodEnd)}")
-            Text(letter.title, style = MaterialTheme.typography.titleMedium, color = clarity.text)
+            Text("Your weekly letter, ${model.range(letter.periodStart, letter.periodEnd)}", style = MaterialTheme.typography.bodySmall, color = clarity.paperMuted)
+            Text(letter.title, style = MaterialTheme.typography.headlineSmall, color = clarity.paperInk)
         }
         Text(
             "Read",
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = clarity.ground,
+            fontWeight = FontWeight.SemiBold,
+            color = clarity.yellow,
             modifier = Modifier
                 .heightIn(min = 44.dp)
-                .background(clarity.yellow, RoundedCornerShape(10.dp))
+                .background(clarity.paperInk, RoundedCornerShape(12.dp))
                 .clickable {
                     model.showLetter(letter.id)
                     onRead()

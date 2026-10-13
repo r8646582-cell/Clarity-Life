@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import com.clarity.life.ui.theme.BigFact
 import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.CalmCard
 import com.clarity.life.ui.theme.Headline
 import com.clarity.life.ui.theme.Kicker
 import com.clarity.life.ui.theme.OutlineCard
@@ -59,6 +60,7 @@ fun GoalsSection(
     state: PlanViewModel.State,
     model: PlanViewModel,
     onToday: () -> Unit = {},
+    onFix: ((draft: String) -> Unit)? = null,
     onPlanWithCoach: () -> Unit,
 ) {
     var openGoal by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -72,6 +74,7 @@ fun GoalsSection(
             model,
             onBack = if (only == null) ({ openGoal = null }) else null,
             onToday = onToday,
+            onFix = onFix ?: { onPlanWithCoach() },
             onPlanWithCoach = onPlanWithCoach,
         )
         return
@@ -125,7 +128,7 @@ private fun statusPill(g: PlanViewModel.GoalView, state: PlanViewModel.State, mo
     return when {
         g.backlogs.isNotEmpty() && g.backlogs.all { it.facts.projection.status == "done" } -> "Done" to false
         finish?.status == "finishes" -> "On track" to false
-        finish?.status == "late" || finish?.status == "never" -> "Behind the plan" to true
+        finish?.status == "late" || finish?.status == "never" -> "Plan falls short" to false
         g.status == "behind" -> "Behind" to true
         first != null -> "Day ${java.time.temporal.ChronoUnit.DAYS.between(first, today) + 1}" to false
         else -> g.status.replaceFirstChar { it.uppercase() } to false
@@ -149,6 +152,7 @@ private fun GoalPage(
     model: PlanViewModel,
     onBack: (() -> Unit)?,
     onToday: () -> Unit,
+    onFix: (draft: String) -> Unit,
     onPlanWithCoach: () -> Unit,
 ) {
     var editing by rememberSaveable(g.row.id) { mutableStateOf(false) }
@@ -166,7 +170,7 @@ private fun GoalPage(
             Headline(g.row.title)
             subtitle(g, model)?.let { Quiet(it) }
         }
-        if (b != null) FinishCard(b, g, state, model)
+        if (b != null) FinishCard(b, g, state, model, onFix)
         TodayStepCard(g, state, model, onToday)
         if (g.steps.isNotEmpty()) StepsCard(g, state, model)
         if (b != null) WeekCard(b)
@@ -206,17 +210,29 @@ private fun GoalPage(
     }
 }
 
-/** Where the plan's own steps finish it; without steps, the pace the calendar needs. All counted by the app. */
+/**
+ * Where the plan's own steps finish it; without steps, the pace the calendar needs. All counted by the app.
+ * When the saved plan falls short, a calm card offers the fix instead of a red number (spec section 17, item 5).
+ */
 @Composable
-private fun FinishCard(b: PlanViewModel.BacklogView, g: PlanViewModel.GoalView, state: PlanViewModel.State, model: PlanViewModel) {
+private fun FinishCard(
+    b: PlanViewModel.BacklogView,
+    g: PlanViewModel.GoalView,
+    state: PlanViewModel.State,
+    model: PlanViewModel,
+    onFix: (draft: String) -> Unit,
+) {
     val f = b.facts.finish
     val p = b.facts.projection
     val first = g.firstStart
     val started = first != null && !first.isAfter(state.today)
+    if (f != null && (f.status == "late" || f.status == "never") && p.status != "done") {
+        ShortPlanCard(b, g, f, p.requiredPerDay, model, onFix)
+        return
+    }
     BoldCard(gap = 6) {
         val finishDay = f?.finish
         val spare = f?.daysSpare
-        val reaches = f?.reachesByDeadline ?: 0.0
         val required = p.requiredPerDay
         when {
             p.status == "done" -> {
@@ -236,31 +252,64 @@ private fun FinishCard(b: PlanViewModel.BacklogView, g: PlanViewModel.GoalView, 
                     color = clarity.text,
                     style = MaterialTheme.typography.bodyLarge,
                 )
-                val steps = b.facts.steps.size
-                val flat = required?.takeIf { steps > 1 }
-                Quiet(
-                    "Counted by the app from your ${if (steps == 1) "plan" else "$steps steps"}." +
-                        (flat?.let { " A flat pace would need ${model.perDayUp(it)} a day; your steps start lower and end higher." } ?: ""),
-                    Modifier.padding(top = 6.dp),
-                )
-            }
-            f != null && (f.status == "late" || f.status == "never") -> {
-                Quiet("At your plan's steps, by ${model.day(b.row.deadline)}")
-                BigFact("${model.n(reaches)} of ${model.n(f.remaining)}", clarity.danger)
-                Text(
-                    "Short by ${model.n(f.remaining - reaches)}. A step or the date needs to change.",
-                    color = clarity.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Quiet("Counted by the app. Plan with coach to change it together.", Modifier.padding(top = 6.dp))
             }
             required != null -> {
                 Quiet("You need")
                 BigFact(model.perDayUp(required))
                 Text("a day, ${p.daysLeft} scheduled days left", color = clarity.text, style = MaterialTheme.typography.bodyLarge)
-                Quiet("Counted by the app, nothing estimated.", Modifier.padding(top = 6.dp))
             }
             else -> Quiet(model.statusText(p))
+        }
+    }
+}
+
+/**
+ * The plan falls short of the goal: no red number, a calm offer of the fix. One plain step reads "Your saved
+ * plan is 2 a day. Add your ramp?"; steps that still fall short read "Your saved steps reach 222 of 300." The
+ * button opens a Plan chat with a message already typed (not sent). Every number here is the app's.
+ */
+@Composable
+private fun ShortPlanCard(
+    b: PlanViewModel.BacklogView,
+    g: PlanViewModel.GoalView,
+    f: com.clarity.life.core.PlanFinish,
+    required: Double?,
+    model: PlanViewModel,
+    onFix: (draft: String) -> Unit,
+) {
+    var later by rememberSaveable(g.row.id) { mutableStateOf(false) }
+    val steps = b.facts.steps
+    val reaches = model.n(f.reachesByDeadline ?: 0.0)
+    val of = model.n(f.remaining)
+    val by = model.day(b.row.deadline)
+    val single = steps.size <= 1
+    val perDay = steps.lastOrNull()?.target?.let { model.n(it) }
+    val headline = if (single && perDay != null) "Your saved plan is $perDay a day. Add your ramp?" else "Your saved steps reach $reaches of $of. Adjust them?"
+    if (later) {
+        OutlineCard {
+            Text("At your saved plan, $reaches of $of by $by", style = MaterialTheme.typography.titleSmall, color = clarity.text)
+            TextAction(if (single) "Add your ramp" else "Adjust the steps") { later = false }
+        }
+        return
+    }
+    CalmCard {
+        Kicker("One thing to fix", clarity.yellow)
+        Text(headline, style = MaterialTheme.typography.headlineMedium, color = clarity.text)
+        Text(
+            "At your saved plan you reach $reaches of $of by $by." +
+                (required?.let { " Finishing on time takes ${model.perDayUp(it)} a day from here." } ?: ""),
+            style = MaterialTheme.typography.bodyMedium,
+            color = clarity.text,
+        )
+        val draft = buildString {
+            append("My saved plan for \"${g.row.title}\" ")
+            append(if (single && perDay != null) "is $perDay a day" else "has ${steps.size} steps")
+            append(", and it reaches $reaches of $of by $by. ")
+            append(if (single) "Help me add the ramp so it gets there." else "Help me adjust the steps so it gets there.")
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            PrimaryButton(if (single) "Add the ramp" else "Adjust the plan", Modifier) { onFix(draft) }
+            TextAction("Not now", color = clarity.muted) { later = true }
         }
     }
 }

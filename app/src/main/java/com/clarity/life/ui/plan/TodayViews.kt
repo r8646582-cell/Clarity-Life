@@ -45,13 +45,15 @@ import com.clarity.life.ui.theme.TextAction
  * answer"; a planned rest day is neither done nor missed.
  */
 @Composable
-fun TodaySection(state: PlanViewModel.State, model: PlanViewModel) {
+fun TodaySection(state: PlanViewModel.State, model: PlanViewModel, brief: String? = null) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(horizontal = 4.dp)) {
             Quiet(model.longDay(state.today))
             Headline(todayHeadline(state, model))
         }
+        // This morning's brief (spec section 8), the same lines Talk home shows.
+        brief?.let { com.clarity.life.ui.talk.BriefCard(it) }
         if (state.restToday) {
             BoldCard(gap = 8) {
                 Text("Rest day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
@@ -71,10 +73,7 @@ fun TodaySection(state: PlanViewModel.State, model: PlanViewModel) {
         }
         state.todayRows.forEach { row -> TodayCard(row, state, model) }
         if (state.todayRows.isNotEmpty()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextAction("Make today a rest day", color = clarity.muted, modifier = Modifier.weight(1f)) { model.setRest(state.today, true) }
-                Quiet("Nothing is guessed")
-            }
+            com.clarity.life.ui.theme.SecondaryButton("Make today a rest day") { model.setRest(state.today, true) }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -269,56 +268,3 @@ internal fun planFieldColors() = TextFieldDefaults.colors(
     unfocusedIndicatorColor = clarity.hairline,
     cursorColor = clarity.yellow,
 )
-
-/**
- * Today's check-ins at the top of Talk (the owner's approved mockup of 13 Oct 2026): one slim card per
- * unanswered target scheduled today, in the places the promises left ([room]): the step and the amount, and
- * Check in, which opens Plan, Today, where the amount, the reason chips and the note are.
- */
-@Composable
-fun DueCheckins(state: PlanViewModel.State, model: PlanViewModel, room: Int, onSeeAll: () -> Unit) {
-    if (state.restToday || room <= 0) return
-    val open = state.todayRows.filter { it.answer == null }
-    if (open.isEmpty()) return
-    Column(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        open.take(room).forEachIndexed { i, row ->
-            val t = row.target
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(18.dp))
-                    .clickable(onClick = onSeeAll)
-                    .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    val more = open.size - room
-                    Quiet(
-                        (if (row.steps > 1) "Today, step ${row.step} of ${row.steps}" else "Today") +
-                            if (i == 0 && more > 0) " · $more more" else "",
-                    )
-                    Text(
-                        "${model.n(t.target)}${if (t.unit.isBlank()) "" else " ${t.unit}"} · ${t.name}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = clarity.text,
-                    )
-                }
-                Text(
-                    "Check in",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = clarity.ground,
-                    modifier = Modifier
-                        .heightIn(min = 44.dp)
-                        .background(clarity.yellow, RoundedCornerShape(14.dp))
-                        .clickable(onClick = onSeeAll)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                )
-            }
-        }
-    }
-}

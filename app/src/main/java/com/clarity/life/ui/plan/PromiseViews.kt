@@ -49,19 +49,20 @@ fun DueCard(state: PromisesViewModel.State, model: PromisesViewModel, onSeeAll: 
     if (state.due.isEmpty()) return
     val shown = state.due.take(com.clarity.life.core.PromiseText.DUE_CARD_MAX)
     Column(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         shown.forEachIndexed { i, item ->
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(18.dp))
-                    .padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
+                    .background(clarity.surface, RoundedCornerShape(22.dp))
+                    .border(1.dp, clarity.hairline, RoundedCornerShape(22.dp))
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f)) { Kicker(item.kicker, clarity.danger) }
+                    Box(Modifier.weight(1f)) { Kicker(item.kicker, clarity.yellow) }
                     val more = state.due.size - shown.size
                     if (i == 0 && more > 0) TextAction("$more more", onClick = onSeeAll)
                 }
@@ -78,7 +79,7 @@ fun Answers(item: PromisesViewModel.Item, model: PromisesViewModel, onYellow: Bo
     var askingReason by rememberSaveable(item.row.id) { mutableStateOf(false) }
     var moving by rememberSaveable(item.row.id) { mutableStateOf(false) }
     val ink = if (onYellow) clarity.ground else clarity.text
-    val fill = if (onYellow) clarity.ground else clarity.yellow
+    val fill = if (onYellow) clarity.ground else clarity.text
     val onFill = if (onYellow) clarity.text else clarity.ground
 
     if (askingReason) {
@@ -135,15 +136,21 @@ private fun AnswerButton(
     modifier: Modifier,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(14.dp)
     Text(
         label,
         style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
+        fontWeight = if (filled) FontWeight.SemiBold else FontWeight.Medium,
         color = if (filled) onFill else ink,
         modifier = modifier
-            .heightIn(min = 44.dp)
-            .then(if (filled) Modifier.background(fill, shape) else Modifier.border(2.dp, ink, shape))
+            .heightIn(min = 48.dp)
+            .then(
+                if (filled) {
+                    Modifier.background(fill, shape)
+                } else {
+                    Modifier.background(clarity.raised, shape).border(1.dp, clarity.controlOutline, shape)
+                },
+            )
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -157,7 +164,7 @@ internal fun Chip(label: String, ink: Color, onClick: () -> Unit) = Text(
     color = ink,
     modifier = Modifier
         .heightIn(min = 44.dp)
-        .border(1.dp, ink, RoundedCornerShape(20.dp))
+        .border(1.dp, clarity.controlOutline, RoundedCornerShape(999.dp))
         .clickable(onClick = onClick)
         .padding(horizontal = 12.dp, vertical = 12.dp),
 )
@@ -202,15 +209,15 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
 
         state.due.forEach { item ->
             BoldCard(gap = 12) {
-                Kicker(item.kicker, clarity.danger)
-                Text(item.row.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Kicker(item.kicker, clarity.yellow)
+                Text(item.row.text, style = MaterialTheme.typography.headlineSmall, color = clarity.text)
                 Answers(item, model, onYellow = false, withLetGo = true)
             }
         }
 
         if (state.coming.isNotEmpty()) {
-            Column {
-                Text("Coming up", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text, modifier = Modifier.padding(bottom = 6.dp))
+            Kicker("Coming up", modifier = Modifier.padding(start = 4.dp, top = 8.dp))
+            BoldCard(gap = 0) {
                 state.coming.forEachIndexed { i, item ->
                     if (i > 0) HorizontalDivider(color = clarity.hairline)
                     ComingRow(item, model)
@@ -246,7 +253,6 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
             }
         }
 
-        Quiet("Promises come only from cards you tapped. Reminders ring only for the ones you asked for.")
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -262,14 +268,14 @@ private fun ComingRow(item: PromisesViewModel.Item, model: PromisesViewModel) {
     Column(Modifier.fillMaxWidth().clickable { open = !open }.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(
-                Modifier.width(56.dp).background(clarity.surface, RoundedCornerShape(14.dp)).padding(vertical = 8.dp),
+                Modifier.width(52.dp).background(clarity.raised, RoundedCornerShape(14.dp)).padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(WEEKDAY_SHORT[date.dayOfWeek.value - 1], style = MaterialTheme.typography.labelSmall, color = clarity.muted)
-                Text("${date.dayOfMonth}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.text)
+                Text("${date.dayOfMonth}", style = MaterialTheme.typography.headlineSmall, color = clarity.text)
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(item.row.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Text(item.row.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = clarity.text)
                 Quiet(item.time + if (item.row.remind == 1) " · reminder on" else " · no reminder")
             }
         }

@@ -401,8 +401,11 @@ class PlanViewModel @Inject constructor(
 
     fun setBacklogStatus(id: Long, status: String) = act { planner.setBacklogStatus(id, status) }
 
-    /** Plan with coach: Talk opens a new Plan and track conversation, which sees the whole tracker. */
-    fun planWithCoach() = requests.startConversation("plan")
+    /**
+     * Plan with coach: Talk opens a new Plan and track conversation, which sees the whole tracker. [draft] is a
+     * message typed for him into the box (the goal page's calm "Add the ramp"); he sends it himself, or not.
+     */
+    fun planWithCoach(draft: String? = null) = requests.startConversation("plan", draft = draft)
 
     fun say(line: String?) {
         quietLine.value = line
