@@ -51,7 +51,7 @@ adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
 # Talk opens on its home (spec section 2.1): a greeting, never a blank screen.
-dump; grep -q 'Good morning\.\|Good afternoon\.\|Good evening\.' /tmp/ui.xml || { echo "SMOKE: Talk home did not show"; exit 1; }
+dump; grep -q 'Hello, night owl\.\|Good morning\.\|Good afternoon\.\|Good evening\.' /tmp/ui.xml || { echo "SMOKE: Talk home did not show"; exit 1; }
 echo "SMOKE: Talk home showed"
 
 tap content-desc "Settings" || exit 1; crashed

@@ -178,9 +178,13 @@ internal fun openPage(context: android.content.Context, url: String) {
     }
 }
 
-/** By the phone's clock: morning before 12, afternoon before 17, evening otherwise. */
+/**
+ * By the phone's clock: night before 5 (12:30 am is not an evening), morning before 12, afternoon before 17,
+ * evening otherwise. Warm, never a nudge to go to bed.
+ */
 fun greeting(hour: Int): String = when {
-    hour in 4..11 -> "Good morning."
+    hour in 0..4 -> "Hello, night owl."
+    hour in 5..11 -> "Good morning."
     hour in 12..16 -> "Good afternoon."
     else -> "Good evening."
 }
