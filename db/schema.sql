@@ -1,4 +1,4 @@
--- Clarity: database schema, version 4 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 5 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
