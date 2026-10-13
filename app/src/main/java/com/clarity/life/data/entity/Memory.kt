@@ -168,6 +168,20 @@ data class StoryRow(
     val key: String,
 )
 
+/**
+ * The morning brief (spec section 8): a few lines the coach writes each morning from finished facts. Inserted
+ * only after TextJobCheck passes (kind "brief"); one per day. Nothing else reads it but the screens.
+ */
+@Entity(tableName = "brief", indices = [Index(value = ["key"], unique = true)])
+data class BriefRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "day_key") val dayKey: String,
+    val body: String,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    /** brief:2026-10-20, so a day can only ever have one brief. */
+    val key: String,
+)
+
 /** Only inserted after QuoteCheck passes, so a stored quote is always word for word his. */
 @Entity(
     tableName = "quote",

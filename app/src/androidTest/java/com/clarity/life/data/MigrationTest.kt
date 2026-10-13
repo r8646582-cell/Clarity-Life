@@ -148,6 +148,42 @@ class MigrationTest {
     }
 
     @Test
+    fun version4To5KeepsEveryRowAndAddsBriefs() {
+        helper.createDatabase(TEST_DB, 4).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'First', 1760000000000)")
+            execSQL(
+                "INSERT INTO story (period_start, period_end, short, created_at, key) " +
+                    "VALUES ('2026-10-01', '2026-10-31', 'Short', 1760000000000, 'story:2026-10')",
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, Migrations.V4_TO_V5)
+        db.query("SELECT title FROM conversation WHERE id = 1").use {
+            assertTrue("the conversation is gone", it.moveToFirst())
+            assertEquals("First", it.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM story").use {
+            it.moveToFirst()
+            assertEquals("the story is gone", 1, it.getInt(0))
+        }
+        db.execSQL(
+            "INSERT INTO brief (day_key, body, created_at, key) " +
+                "VALUES ('2026-10-20', 'Today asks for 2.', 1760000000000, 'brief:2026-10-20')",
+        )
+        var second = false
+        try {
+            db.execSQL(
+                "INSERT INTO brief (day_key, body, created_at, key) " +
+                    "VALUES ('2026-10-20', 'Again', 1760000000000, 'brief:2026-10-20')",
+            )
+        } catch (e: android.database.sqlite.SQLiteConstraintException) {
+            second = true
+        }
+        assertTrue("a day can only have one brief", second)
+        db.close()
+    }
+
+    @Test
     fun everyMigrationStepIsWritten() {
         // One migration per version step, always. A gap would mean Room had nothing to run.
         val expected = DATABASE_VERSION - 1
@@ -176,6 +212,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
     }
 }

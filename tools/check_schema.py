@@ -41,6 +41,7 @@ checks = [
     ("bad job type rejected", fails("INSERT INTO job(key,type,created_at) VALUES ('x:1','summary',?)", (NOW,))),
     ("bad note confidence rejected", fails("INSERT INTO note(kind,text,confidence,first_seen,last_seen,created_at) VALUES ('pattern','x','sure','2026-10-10','2026-10-10',?)", (NOW,))),
     ("bad card type rejected", fails("INSERT INTO card(message_id,type,payload_json,created_at) VALUES (1,'reminder','{}',?)", (NOW,))),
+    ("a second brief for the same day rejected", (db.execute("INSERT INTO brief(day_key,body,created_at,key) VALUES ('2026-10-20','b',?,'brief:2026-10-20')", (NOW,)) and False) or fails("INSERT INTO brief(day_key,body,created_at,key) VALUES ('2026-10-20','c',?,'brief:2026-10-20')", (NOW,))),
     ("duplicate letter key rejected", None),
     ("duplicate job key rejected", None),
 ]

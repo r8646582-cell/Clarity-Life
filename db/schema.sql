@@ -263,6 +263,14 @@ CREATE TABLE story (                   -- Your story: the monthly story job's te
   key TEXT NOT NULL UNIQUE              -- story:2026-10, one per month
 );
 
+CREATE TABLE brief (                   -- the morning brief (schema version 5): a few checked lines each morning
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day_key TEXT NOT NULL,                -- the local day it is for
+  body TEXT NOT NULL,                   -- passed check_text_job kind brief (quotes his, numbers from the inputs)
+  created_at INTEGER NOT NULL,
+  key TEXT NOT NULL UNIQUE              -- brief:2026-10-20, one per day
+);
+
 CREATE TABLE quote (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   conversation_id INTEGER REFERENCES conversation(id) ON DELETE CASCADE,
@@ -318,7 +326,7 @@ CREATE TABLE usage_month (
 CREATE TABLE job (                     -- idempotence: one row per unit of background work
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL UNIQUE,            -- type + period or conversation + hash of inputs
-  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','gardening','backup','index')),
+  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','brief','gardening','backup','index')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','succeeded','failed','skipped')),
   attempts INTEGER NOT NULL DEFAULT 0,
   last_error TEXT,
