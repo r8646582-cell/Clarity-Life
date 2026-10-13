@@ -1,6 +1,5 @@
 package com.clarity.life.ai
 
-import com.clarity.life.settings.DefaultSettings
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
@@ -26,7 +25,7 @@ class AnthropicClient @Inject constructor(
     override fun stream(endpoint: Endpoint, request: ChatRequest): Flow<ChatChunk> = flow {
         val body = AnthropicWire.requestBody(endpoint, request).toRequestBody(JSON)
         val call = http.newBuilder()
-            .readTimeout(DefaultSettings.CHAT_GAP_TIMEOUT_S, TimeUnit.SECONDS)
+            .readTimeout(endpoint.readTimeoutS, TimeUnit.SECONDS)
             .build()
             .newCall(
                 Request.Builder()

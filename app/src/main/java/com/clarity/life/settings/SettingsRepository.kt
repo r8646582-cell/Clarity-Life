@@ -7,6 +7,8 @@ import com.clarity.life.data.entity.SettingRow
 import com.clarity.life.security.SecretStore
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Every setting the owner can change, with the defaults from [DefaultSettings]. Plain preferences live in the
@@ -40,7 +42,6 @@ class SettingsRepository @Inject constructor(
         const val USER_NAME = "user_name"
         const val WEEKLY_LETTER_ON = "weekly_letter_on"
         const val SUNDAY_ALERT_ON = "sunday_alert_on"
-        const val MORNING_BRIEF_ON = "morning_brief_on"
         const val TOUGH_LOVE = "tough_love"
         const val LISTEN_ONLY = "listen_only"
     }
@@ -65,6 +66,17 @@ class SettingsRepository @Inject constructor(
     suspend fun dayBoundaryHour(): Int = getInt(Keys.DAY_BOUNDARY_HOUR, DefaultSettings.DAY_BOUNDARY_HOUR)
 
     suspend fun timeZone(): String = get(Keys.TIME_ZONE, java.util.TimeZone.getDefault().id)
+
+    /**
+     * His time zone and day boundary, live. A screen that read them once kept the old day after he changed
+     * "when your day ends" in Settings, while the coach (which reads them on every message) had the new one.
+     */
+    fun watchDay(): kotlinx.coroutines.flow.Flow<Day> =
+        dao.watchAll()
+            .map { rows -> day(rows.associate { it.key to it.value }) }
+            .distinctUntilChanged()
+
+    data class Day(val timeZone: String, val boundaryHour: Int)
 
     /** The main provider, as a ready-to-use endpoint. Null when he has not pasted a key yet. */
     suspend fun chatEndpoint(): Endpoint? {
@@ -92,25 +104,13 @@ class SettingsRepository @Inject constructor(
      */
     suspend fun backgroundEndpoint(json: Boolean): Endpoint? {
         val base = chatEndpoint() ?: return null
-        val effort = if (json) Thinking.OFF else DefaultSettings.BACKGROUND_THINKING
-        return base.copy(
-            model = get(Keys.BACKGROUND_MODEL, DefaultSettings.BACKGROUND_MODEL).trim(),
-            temperature = if (json) DefaultSettings.BACKGROUND_TEMPERATURE else null,
-            thinking = !json,
-            effort = effort,
-        )
+        return background(base, get(Keys.BACKGROUND_MODEL, DefaultSettings.BACKGROUND_MODEL), json)
     }
 
     /** The weekly letter only: the bigger model (V4 Pro by default), thinking high. */
     suspend fun letterEndpoint(): Endpoint? {
         val base = chatEndpoint() ?: return null
-        val effort = letterThinking()
-        return base.copy(
-            model = get(Keys.LETTER_MODEL, DefaultSettings.LETTER_MODEL).trim(),
-            temperature = null,
-            thinking = effort != Thinking.OFF,
-            effort = effort,
-        )
+        return letter(base, get(Keys.LETTER_MODEL, DefaultSettings.LETTER_MODEL), letterThinking())
     }
 
     /**
@@ -128,4 +128,36 @@ class SettingsRepository @Inject constructor(
     fun hasKey(provider: String): Boolean = secrets.hasApiKey(provider)
 
     fun setKey(provider: String, value: String?) = secrets.setApiKey(provider, value?.trim())
+
+    companion object {
+        /** The same reading as [timeZone] and [dayBoundaryHour], from the stored rows. */
+        fun day(values: Map<String, String>): Day = Day(
+            timeZone = values[Keys.TIME_ZONE] ?: java.util.TimeZone.getDefault().id,
+            boundaryHour = values[Keys.DAY_BOUNDARY_HOUR]?.toIntOrNull() ?: DefaultSettings.DAY_BOUNDARY_HOUR,
+        )
+
+        /** Until the database answers: the phone's zone and the default boundary. */
+        fun defaultDay(): Day = day(emptyMap())
+
+        /**
+         * The chat endpoint made into a background one. Background calls wait up to
+         * [DefaultSettings.BACKGROUND_READ_TIMEOUT_S] for the next piece (CLAUDE.md, AI client rules); chat waits 120 s.
+         */
+        fun background(base: Endpoint, model: String, json: Boolean): Endpoint = base.copy(
+            model = model.trim(),
+            temperature = if (json) DefaultSettings.BACKGROUND_TEMPERATURE else null,
+            thinking = !json,
+            effort = if (json) Thinking.OFF else DefaultSettings.BACKGROUND_THINKING,
+            readTimeoutS = DefaultSettings.BACKGROUND_READ_TIMEOUT_S,
+        )
+
+        /** The chat endpoint made into the weekly letter's: its own model and thinking, the background timeout. */
+        fun letter(base: Endpoint, model: String, effort: String): Endpoint = base.copy(
+            model = model.trim(),
+            temperature = null,
+            thinking = effort != Thinking.OFF,
+            effort = effort,
+            readTimeoutS = DefaultSettings.BACKGROUND_READ_TIMEOUT_S,
+        )
+    }
 }

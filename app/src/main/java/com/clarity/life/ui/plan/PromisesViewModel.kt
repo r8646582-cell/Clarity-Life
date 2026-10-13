@@ -8,7 +8,6 @@ import com.clarity.life.core.PromiseTimes
 import com.clarity.life.core.TimeFacts
 import com.clarity.life.data.entity.PromiseRow
 import com.clarity.life.promise.PromiseRepository
-import com.clarity.life.settings.DefaultSettings
 import com.clarity.life.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -49,7 +49,10 @@ class PromisesViewModel @Inject constructor(
         val quietLine: String? = null,
     )
 
-    private val zone = MutableStateFlow(java.util.TimeZone.getDefault().id to DefaultSettings.DAY_BOUNDARY_HOUR)
+    /** His time zone and day boundary, live, so a change in Settings moves this screen's day at once. */
+    private val zone: StateFlow<Pair<String, Int>> = settings.watchDay()
+        .map { it.timeZone to it.boundaryHour }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, SettingsRepository.defaultDay().let { it.timeZone to it.boundaryHour })
     private val quietLine = MutableStateFlow<String?>(null)
 
     /** Labels such as "in 2 hours" age, so the lists are worked out again every minute. */
@@ -81,10 +84,6 @@ class PromisesViewModel @Inject constructor(
             quietLine = line,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
-
-    init {
-        viewModelScope.launch { zone.value = settings.timeZone() to settings.dayBoundaryHour() }
-    }
 
     val reasons: List<String> get() = PromiseText.REASONS
 

@@ -163,15 +163,15 @@ class LetterWriter @Inject constructor(
     private suspend fun alert() {
         if (!settings.getBool(SettingsRepository.Keys.SUNDAY_ALERT_ON, com.clarity.life.settings.DefaultSettings.SUNDAY_ALERT_ON)) return
         val manager = context.getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(CHANNEL) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Weekly letter", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "One silent line when your weekly letter is ready. Turn it off in Settings, Reminders, Sunday alert."
-                    setShowBadge(false)
-                    setSound(null, null)
-                },
-            )
-        }
+        // Created every time on purpose: Android then updates the name and description on a phone that already
+        // has the channel (his own choices for it, like turning it off, are kept).
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL, "Weekly letter", NotificationManager.IMPORTANCE_LOW).apply {
+                description = CHANNEL_DESCRIPTION
+                setShowBadge(false)
+                setSound(null, null)
+            },
+        )
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         val open = PendingIntent.getActivity(
             context,
@@ -209,6 +209,10 @@ class LetterWriter @Inject constructor(
         const val AREA = "letter"
         const val PROMPT = "letter_weekly.md"
         const val CHANNEL = "weekly_letter"
+
+        /** Shown in Android's notification settings; it names where the switch really is in Clarity. */
+        const val CHANNEL_DESCRIPTION =
+            "One silent line when your weekly letter is ready. Turn it off in Clarity: Settings, Letters and your day, Sunday alert."
         const val NOTIFICATION_ID = 7_001
 
         /** A letter that fails its checks twice is not published (spec section 8). */

@@ -91,7 +91,7 @@ class TalkViewModel @Inject constructor(
 
     private val cardsByMessage = MutableStateFlow(CardsView())
 
-    /** His time zone and day boundary, read once; a promise card resolves its "when" with them. */
+    /** His time zone and day boundary, kept up to date from Settings; a promise card resolves its "when" with them. */
     @Volatile private var timeZone: String = java.util.TimeZone.getDefault().id
 
     @Volatile private var boundaryHour: Int = com.clarity.life.settings.DefaultSettings.DAY_BOUNDARY_HOUR
@@ -168,6 +168,13 @@ class TalkViewModel @Inject constructor(
                 // one, and the home is never blank. The newest conversation is one tap away there.
             } finally {
                 opened.complete(Unit)
+            }
+        }
+        viewModelScope.launch {
+            // Live, so changing "when your day ends" in Settings reaches Talk at once, not after a restart.
+            settings.watchDay().collect { d ->
+                timeZone = d.timeZone
+                boundaryHour = d.boundaryHour
             }
         }
         viewModelScope.launch {

@@ -16,7 +16,6 @@ import com.clarity.life.data.entity.GoalRow
 import com.clarity.life.data.entity.PlanRow
 import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.planner.PlannerRepository
-import com.clarity.life.settings.DefaultSettings
 import com.clarity.life.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -104,7 +104,10 @@ class PlanViewModel @Inject constructor(
         val answeredToday: Int get() = todayRows.count { it.answer != null }
     }
 
-    private val zone = MutableStateFlow(java.util.TimeZone.getDefault().id to DefaultSettings.DAY_BOUNDARY_HOUR)
+    /** His time zone and day boundary, live, so a change in Settings moves this screen's day at once. */
+    private val zone: StateFlow<Pair<String, Int>> = settings.watchDay()
+        .map { it.timeZone to it.boundaryHour }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, SettingsRepository.defaultDay().let { it.timeZone to it.boundaryHour })
     private val quietLine = MutableStateFlow<String?>(null)
 
     /** The day changes at the day boundary, so the lists are worked out again every minute. */
@@ -137,10 +140,6 @@ class PlanViewModel @Inject constructor(
         build(r, checkins, tz, boundary, now, line)
     }.flowOn(kotlinx.coroutines.Dispatchers.Default) // the whole history is read; never on the main thread
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
-
-    init {
-        viewModelScope.launch { zone.value = settings.timeZone() to settings.dayBoundaryHour() }
-    }
 
     private fun build(r: Rows, checkins: List<CheckinRow>, tz: String, boundary: Int, now: Long, line: String?): State {
         val today = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, boundary)

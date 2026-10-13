@@ -389,13 +389,19 @@ private fun StepsCard(g: PlanViewModel.GoalView, state: PlanViewModel.State, mod
     }
 }
 
+/**
+ * The strip's heading counts every box it draws, days with nothing scheduled included, so a Mon/Wed/Fri target
+ * reads "Last 7 days" above seven boxes, not "Last 3 days".
+ */
+internal fun weekHeading(marks: List<PlanViewModel.DayMark>): String = "Last ${marks.size} days"
+
 /** The last seven days since tracking began: full days yellow, minimum days lighter, a miss outlined. */
 @Composable
 private fun WeekCard(b: PlanViewModel.BacklogView) {
     val days = b.recent.filter { it.level != "off" }
     if (days.size < 2) return // a strip of one day says nothing yet
     BoldCard(gap = 12) {
-        Text("Last ${days.size} days", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+        Text(weekHeading(b.recent), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             b.recent.forEach { m ->
                 Column(

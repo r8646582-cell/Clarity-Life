@@ -23,7 +23,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * - read whole UTF-8 lines with a buffered reader; never decode raw byte chunks
  * - a thinking chunk is a heartbeat: it resets the gap timer, so a long think is not a timeout
  * - handle finish_reason "length" and provider error objects instead of pretending the reply ended
- * - connect 30 s, no overall call timeout, read timeout = the gap timeout for chat
+ * - connect 30 s, no overall call timeout, read timeout = the gap timeout: 120 s for chat, 300 s for background calls ([Endpoint.readTimeoutS])
  *
  * Every request ends in a finished reply, an interrupted one, or a failure. There is no third way to
  * leave a spinner turning.
@@ -38,7 +38,7 @@ class OpenAiCompatibleClient @Inject constructor(
     override fun stream(endpoint: Endpoint, request: ChatRequest): Flow<ChatChunk> = flow {
         val body = OpenAiWire.requestBody(endpoint, request).toRequestBody(JSON)
         val call = http.newBuilder()
-            .readTimeout(DefaultSettings.CHAT_GAP_TIMEOUT_S, TimeUnit.SECONDS)
+            .readTimeout(endpoint.readTimeoutS, TimeUnit.SECONDS)
             .build()
             .newCall(
                 Request.Builder()
