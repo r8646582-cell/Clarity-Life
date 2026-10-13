@@ -271,72 +271,54 @@ internal fun planFieldColors() = TextFieldDefaults.colors(
 )
 
 /**
- * Today's check-ins on the due card at the top of Talk (spec section 2.1): written by the app, only the targets
- * scheduled today with no answer yet, in the places the promises left ([room]). Did it, Part, Not; the reason
- * chips and the amount are on Plan, Today.
+ * Today's check-ins at the top of Talk (the owner's approved mockup of 13 Oct 2026): one slim card per
+ * unanswered target scheduled today, in the places the promises left ([room]): the step and the amount, and
+ * Check in, which opens Plan, Today, where the amount, the reason chips and the note are.
  */
 @Composable
 fun DueCheckins(state: PlanViewModel.State, model: PlanViewModel, room: Int, onSeeAll: () -> Unit) {
     if (state.restToday || room <= 0) return
     val open = state.todayRows.filter { it.answer == null }
     if (open.isEmpty()) return
-    val shown = open.take(room)
     Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 6.dp)
-            .background(clarity.yellow, RoundedCornerShape(16.dp))
-            .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        shown.forEachIndexed { i, row ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "TODAY'S CHECK-IN",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = clarity.ground,
-                        modifier = Modifier.weight(1f),
+        open.take(room).forEachIndexed { i, row ->
+            val t = row.target
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(clarity.surface, RoundedCornerShape(18.dp))
+                    .clickable(onClick = onSeeAll)
+                    .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val more = open.size - room
+                    Quiet(
+                        (if (row.steps > 1) "Today, step ${row.step} of ${row.steps}" else "Today") +
+                            if (i == 0 && more > 0) " · $more more" else "",
                     )
-                    val more = open.size - shown.size
-                    if (i == 0 && more > 0) {
-                        Text(
-                            "$more more",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = clarity.ground,
-                            modifier = Modifier.clickable(onClick = onSeeAll).padding(4.dp),
-                        )
-                    }
+                    Text(
+                        "${model.n(t.target)}${if (t.unit.isBlank()) "" else " ${t.unit}"} · ${t.name}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = clarity.text,
+                    )
                 }
-                Text(row.target.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.ground)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    val t = row.target
-                    DueButton("Did it", filled = true, Modifier.weight(1f)) { model.answer(row, "target", state.today) }
-                    if (t.minimum > 0 && t.minimum < t.target) {
-                        DueButton("Part", filled = false, Modifier.weight(1f)) { model.answer(row, "minimum", state.today); onSeeAll() }
-                    }
-                    DueButton("Not", filled = false, Modifier.weight(1f)) { model.answer(row, "not", state.today); onSeeAll() }
-                }
+                Text(
+                    "Check in",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = clarity.ground,
+                    modifier = Modifier
+                        .heightIn(min = 44.dp)
+                        .background(clarity.yellow, RoundedCornerShape(14.dp))
+                        .clickable(onClick = onSeeAll)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                )
             }
         }
     }
-}
-
-@Composable
-private fun DueButton(label: String, filled: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(10.dp)
-    Text(
-        label,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
-        color = if (filled) clarity.text else clarity.ground,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .heightIn(min = 44.dp)
-            .then(if (filled) Modifier.background(clarity.ground, shape) else Modifier.border(2.dp, clarity.ground, shape))
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-    )
 }

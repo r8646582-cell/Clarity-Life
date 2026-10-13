@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.clarity.life.ui.PromiseTimeDialog
 import com.clarity.life.ui.theme.clarity
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
+import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.Headline
+import com.clarity.life.ui.theme.Kicker
+import com.clarity.life.ui.theme.OutlineCard
+import com.clarity.life.ui.theme.Quiet
+import com.clarity.life.ui.theme.TextAction
 
 /**
  * The due card at the top of Talk (docs/mockups/Talk.dc.html), written by the app, never by the coach:
@@ -38,36 +49,24 @@ fun DueCard(state: PromisesViewModel.State, model: PromisesViewModel, onSeeAll: 
     if (state.due.isEmpty()) return
     val shown = state.due.take(com.clarity.life.core.PromiseText.DUE_CARD_MAX)
     Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 6.dp)
-            .background(clarity.yellow, RoundedCornerShape(16.dp))
-            .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         shown.forEachIndexed { i, item ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(clarity.surface, RoundedCornerShape(18.dp))
+                    .padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        item.kicker.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = clarity.ground,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Box(Modifier.weight(1f)) { Kicker(item.kicker, clarity.danger) }
                     val more = state.due.size - shown.size
-                    if (i == 0 && more > 0) {
-                        Text(
-                            "$more more",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = clarity.ground,
-                            modifier = Modifier.clickable(onClick = onSeeAll).padding(4.dp),
-                        )
-                    }
+                    if (i == 0 && more > 0) TextAction("$more more", onClick = onSeeAll)
                 }
-                Text(item.row.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.ground)
-                Answers(item, model, onYellow = true, withLetGo = false)
+                Text(item.row.text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Answers(item, model, onYellow = false, withLetGo = false)
             }
         }
     }
@@ -164,77 +163,116 @@ internal fun Chip(label: String, ink: Color, onClick: () -> Unit) = Text(
 )
 
 /**
- * Plan, Promises (docs/mockups/Promises.dc.html): needs an answer, coming up, and past outcomes, which are
- * kept forever. An answer from the last day can be undone.
+ * Plan, Promises, redesigned (the owner's approved mockup of 13 Oct 2026): a headline that says what needs
+ * him now, a one-line record of the recent ones, what needs an answer as cards, what is coming as dated
+ * tiles, and the past folded into one line until he opens it. Past outcomes are kept forever; an answer
+ * from the last day can be undone.
  */
 @Composable
 fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    var showPast by rememberSaveable { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Headline(
+                when {
+                    state.due.size == 1 -> "One needs an answer."
+                    state.due.size > 1 -> "${state.due.size} need an answer."
+                    state.coming.isNotEmpty() -> "Nothing waiting."
+                    state.past.isNotEmpty() -> "All answered."
+                    else -> "No promises yet."
+                },
+            )
+            val week = state.coming.count { !model.localDue(it.row).first.isAfter(model.today().plusDays(6)) }
+            val recent = state.past.take(5)
+            val kept = recent.count { it.row.status == "kept" }
+            val parts = listOfNotNull(
+                when (week) {
+                    0 -> null
+                    1 -> "One coming up this week."
+                    else -> "$week coming up this week."
+                },
+                if (recent.size >= 2) "$kept of the last ${recent.size} kept." else null,
+            )
+            if (parts.isNotEmpty()) Quiet(parts.joinToString(" "))
+            if (state.due.isEmpty() && state.coming.isEmpty() && state.past.isEmpty()) {
+                Quiet("A promise is one thing you said you will do, at a time. They come only from cards you set in Talk.")
+            }
+        }
 
-        Heading("Needs an answer")
-        if (state.due.isEmpty()) Muted("Nothing waiting for an answer.")
         state.due.forEach { item ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(16.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(item.row.text, style = MaterialTheme.typography.titleMedium, color = clarity.text)
-                Muted(item.kicker)
+            BoldCard(gap = 12) {
+                Kicker(item.kicker, clarity.danger)
+                Text(item.row.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
                 Answers(item, model, onYellow = false, withLetGo = true)
             }
         }
 
-        Heading("Coming up")
-        if (state.coming.isEmpty()) Muted("No promises ahead. They come only from cards you set in Talk.")
-        state.coming.forEach { item -> ComingRow(item, model) }
-
-        Heading("Past")
-        if (state.past.isEmpty()) Muted("Answered promises stay here, with what happened.")
-        state.past.forEach { item ->
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(item.row.text, style = MaterialTheme.typography.bodyMedium, color = clarity.text)
-                    val reason = item.row.reason?.let { " · reason: $it" }.orEmpty()
-                    Muted(item.time + reason)
-                }
-                Text(OUTCOMES[item.row.status] ?: item.row.status, style = MaterialTheme.typography.labelMedium, color = clarity.muted)
-                if (model.canUndo(item.row)) {
-                    TextButton(onClick = { model.undo(item.row.id) }) { Text("Undo", color = clarity.yellow) }
+        if (state.coming.isNotEmpty()) {
+            Column {
+                Text("Coming up", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text, modifier = Modifier.padding(bottom = 6.dp))
+                state.coming.forEachIndexed { i, item ->
+                    if (i > 0) HorizontalDivider(color = clarity.hairline)
+                    ComingRow(item, model)
                 }
             }
         }
 
-        Text(
-            "Promises come only from cards you tapped. Reminders ring only for the ones you asked for.",
-            style = MaterialTheme.typography.bodySmall,
-            color = clarity.muted,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
-        )
+        if (state.past.isNotEmpty()) {
+            OutlineCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Past", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                        val kept = state.past.count { it.row.status == "kept" }
+                        Quiet("${state.past.size} ${if (state.past.size == 1) "promise" else "promises"} · $kept kept")
+                    }
+                    TextAction(if (showPast) "Hide" else "See all") { showPast = !showPast }
+                }
+                if (showPast) {
+                    state.past.forEach { item ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(item.row.text, style = MaterialTheme.typography.bodyMedium, color = clarity.text)
+                                val reason = item.row.reason?.let { " · reason: $it" }.orEmpty()
+                                Muted(item.time + reason)
+                            }
+                            Text(OUTCOMES[item.row.status] ?: item.row.status, style = MaterialTheme.typography.labelMedium, color = clarity.muted)
+                            if (model.canUndo(item.row)) {
+                                TextButton(onClick = { model.undo(item.row.id) }) { Text("Undo", color = clarity.yellow) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Quiet("Promises come only from cards you tapped. Reminders ring only for the ones you asked for.")
+        Spacer(Modifier.height(24.dp))
     }
 }
 
 private val OUTCOMES = mapOf("kept" to "Done", "not_done" to "Not done", "moved" to "Moved", "let_go" to "Let go")
+private val WEEKDAY_SHORT = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
 
+/** A promise ahead: a date tile, the words, the time and whether a reminder rings. Tap to answer it early. */
 @Composable
 private fun ComingRow(item: PromisesViewModel.Item, model: PromisesViewModel) {
     var open by rememberSaveable(item.row.id) { mutableStateOf(false) }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .border(1.dp, clarity.hairline, RoundedCornerShape(14.dp))
-            .clickable { open = !open }
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(item.row.text, style = MaterialTheme.typography.bodyMedium, color = clarity.text)
-        Muted(item.time + if (item.row.remind == 1) " · reminder on" else " · no reminder")
+    val (date, _) = model.localDue(item.row)
+    Column(Modifier.fillMaxWidth().clickable { open = !open }.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                Modifier.width(56.dp).background(clarity.surface, RoundedCornerShape(14.dp)).padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(WEEKDAY_SHORT[date.dayOfWeek.value - 1], style = MaterialTheme.typography.labelSmall, color = clarity.muted)
+                Text("${date.dayOfMonth}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = clarity.text)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(item.row.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Quiet(item.time + if (item.row.remind == 1) " · reminder on" else " · no reminder")
+            }
+        }
         if (open) Answers(item, model, onYellow = false, withLetGo = true)
     }
 }

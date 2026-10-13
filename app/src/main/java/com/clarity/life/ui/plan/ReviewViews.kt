@@ -29,6 +29,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.clarity.life.data.entity.ReviewRow
 import com.clarity.life.ui.theme.clarity
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.HorizontalDivider
+import com.clarity.life.ui.theme.BoldCard
+import com.clarity.life.ui.theme.Headline
+import com.clarity.life.ui.theme.Kicker
+import com.clarity.life.ui.theme.OutlineCard
+import com.clarity.life.ui.theme.Quiet
+import com.clarity.life.ui.theme.TextAction
 
 /**
  * Plan, Reviews (docs/mockups/Reviews.dc.html): Weeks (the letter and the numbers of each week, a yellow dot while
@@ -73,66 +82,91 @@ fun ReviewsSection(
         )
         return
     }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Heading("Weeks")
-        if (state.weeks.isEmpty()) Muted("The first review appears on Sunday evening, once something is tracked.")
-        state.weeks.forEachIndexed { i, w ->
-            if (i == 0 && state.delayedLetter != null && state.delayedLetter == w.monday && w.letter == null) {
-                DelayedLine("This week's letter is delayed") { model.retryLetter(w.monday) }
-            }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(clarity.surface, RoundedCornerShape(16.dp))
-                    .clickable {
-                        if (w.letter != null) onOpenLetter(w.letter.id) else w.review?.let { onOpenReview(it.id) }
-                    }
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Muted(model.weekRange(w.monday) + if (w.letter?.readAt == null && w.letter != null) " · new" else "")
-                    Text(
-                        w.letter?.title ?: "Weekly review",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = clarity.text,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (w.letter != null) SmallChip("Letter")
-                        if (w.review != null) {
-                            SmallChip("Numbers", Modifier.clickable { onOpenReview(w.review.id) })
-                        }
-                    }
-                }
-                if (w.letter != null && w.letter.readAt == null) {
-                    Box(Modifier.size(10.dp).background(clarity.yellow, CircleShape))
-                }
-            }
-        }
-        if (state.delayedLetter != null && state.weeks.none { it.monday == state.delayedLetter }) {
-            DelayedLine("This week's letter is delayed") { model.retryLetter(state.delayedLetter) }
-        }
-        Heading("Months")
-        if (state.months.isEmpty()) Muted("A monthly review appears once a month you tracked has ended.")
-        state.months.forEach { m ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, clarity.hairline, RoundedCornerShape(14.dp))
-                    .clickable { onOpenReview(m.id) }
-                    .padding(12.dp),
-            ) {
-                Muted(model.monthName(m.periodStart))
-                Text(model.headline(m) ?: "Monthly review", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-            }
-        }
-        Text(
-            "A new letter arrives on Sunday evening. Chapters, one every three months, arrive in What I know later.",
-            style = MaterialTheme.typography.bodySmall,
-            color = clarity.muted,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
+    val newest = state.weeks.firstOrNull()
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
+        Headline(
+            when {
+                newest?.letter != null && newest.letter.readAt == null -> "Your letter is here."
+                state.delayedLetter != null -> "This week's letter is a little late."
+                newest == null -> "Your first letter comes on Sunday."
+                else -> "Your weeks, in letters."
+            },
         )
+        if (newest == null) {
+            Quiet("Once something is tracked, a letter about your week arrives every Sunday evening, with the numbers behind it.")
+        }
+        state.delayedLetter?.let { d -> DelayedLine("This week's letter is delayed") { model.retryLetter(d) } }
+        newest?.let { w ->
+            BoldCard(gap = 10, onClick = { if (w.letter != null) onOpenLetter(w.letter.id) else w.review?.let { onOpenReview(it.id) } }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Kicker("Week of " + model.weekRange(w.monday), clarity.yellow)
+                    Spacer(Modifier.weight(1f))
+                    if (w.letter != null && w.letter.readAt == null) Box(Modifier.size(8.dp).background(clarity.yellow, CircleShape))
+                }
+                Text(
+                    w.letter?.title ?: "This week's numbers",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = clarity.text,
+                )
+                w.letter?.body?.let { excerpt(it) }?.takeIf { it.isNotBlank() }?.let { Quiet(it) }
+                Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    if (w.letter != null) TextAction("Read the letter") { onOpenLetter(w.letter.id) }
+                    w.review?.let { r -> TextAction("See the numbers", color = clarity.muted) { onOpenReview(r.id) } }
+                }
+            }
+        }
+        val earlier = state.weeks.drop(1)
+        if (earlier.isNotEmpty()) {
+            Column {
+                Text("Earlier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text, modifier = Modifier.padding(bottom = 4.dp))
+                earlier.forEachIndexed { i, w ->
+                    if (i > 0) HorizontalDivider(color = clarity.hairline)
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 64.dp)
+                            .clickable { if (w.letter != null) onOpenLetter(w.letter.id) else w.review?.let { onOpenReview(it.id) } }
+                            .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(w.letter?.title ?: "Weekly review", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                            Quiet(model.weekRange(w.monday) + if (w.letter != null && w.letter.readAt == null) " · new" else "")
+                        }
+                        Text("›", style = MaterialTheme.typography.titleLarge, color = clarity.muted)
+                    }
+                }
+            }
+        }
+        if (state.months.isEmpty()) {
+            OutlineCard {
+                Text("Your month in one page", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                Quiet("A monthly review arrives once a month you tracked has ended.")
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Months", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                state.months.forEach { m ->
+                    OutlineCard(modifier = Modifier.clickable { onOpenReview(m.id) }) {
+                        Quiet(model.monthName(m.periodStart))
+                        Text(model.headline(m) ?: "Monthly review", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+                    }
+                }
+            }
+        }
+        Quiet("A new letter arrives on Sunday evening. Chapters, one every three months, arrive in What I know.")
+        Spacer(Modifier.height(24.dp))
     }
+}
+
+/** The opening of a letter for its card: its first paragraph, plain, cut at a word near 170 characters. */
+private fun excerpt(body: String): String {
+    val first = body.trim().split(Regex("\\n\\s*\\n")).firstOrNull { it.isNotBlank() }.orEmpty()
+        .replace("**", "").replace(Regex("\\s+"), " ").trim()
+    if (first.length <= 170) return first
+    val cut = first.take(170)
+    return cut.substring(0, cut.lastIndexOf(' ').takeIf { it > 100 } ?: cut.length).trimEnd(',', ';', ':') + "…"
 }
 
 @Composable
@@ -284,48 +318,3 @@ private fun DelayedLine(text: String, onRetry: () -> Unit) {
     }
 }
 
-@Composable
-private fun SmallChip(text: String, modifier: Modifier = Modifier) = Text(
-    text,
-    style = MaterialTheme.typography.labelMedium,
-    color = clarity.text,
-    modifier = modifier
-        .border(1.dp, clarity.controlOutline, RoundedCornerShape(10.dp))
-        .padding(horizontal = 10.dp, vertical = 4.dp),
-)
-
-/**
- * The letter card at the top of Talk (docs/mockups/TalkLetter.dc.html): only while a new letter is unread; it
- * goes once the letter is opened.
- */
-@Composable
-fun LetterCard(state: ReviewsViewModel.State, model: ReviewsViewModel, onRead: () -> Unit) {
-    val letter = state.newLetter ?: return
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
-            .border(2.dp, clarity.yellow, RoundedCornerShape(16.dp))
-            .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Muted("Your weekly letter, ${model.range(letter.periodStart, letter.periodEnd)}")
-            Text(letter.title, style = MaterialTheme.typography.titleMedium, color = clarity.text)
-        }
-        Text(
-            "Read",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = clarity.ground,
-            modifier = Modifier
-                .heightIn(min = 44.dp)
-                .background(clarity.yellow, RoundedCornerShape(10.dp))
-                .clickable {
-                    model.showLetter(letter.id)
-                    onRead()
-                }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-    }
-}
