@@ -106,6 +106,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Talk, Plan and Promises follow the phone's zone too: back from a flight, they show the new day.
+        com.clarity.life.settings.SettingsRepository.refreshPhoneZone()
+    }
+
     override fun onStop() {
         super.onStop()
         leftAt = System.currentTimeMillis()

@@ -8,7 +8,6 @@ import com.clarity.life.security.SecretStore
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 /**
  * Every setting the owner can change, with the defaults from [DefaultSettings]. Plain preferences live in the
@@ -71,10 +70,7 @@ class SettingsRepository @Inject constructor(
      * His time zone and day boundary, live. A screen that read them once kept the old day after he changed
      * "when your day ends" in Settings, while the coach (which reads them on every message) had the new one.
      */
-    fun watchDay(): kotlinx.coroutines.flow.Flow<Day> =
-        dao.watchAll()
-            .map { rows -> day(rows.associate { it.key to it.value }) }
-            .distinctUntilChanged()
+    fun watchDay(): kotlinx.coroutines.flow.Flow<Day> = watchDay(dao.watchAll(), phoneZone)
 
     data class Day(val timeZone: String, val boundaryHour: Int)
 
@@ -130,9 +126,28 @@ class SettingsRepository @Inject constructor(
     fun setKey(provider: String, value: String?) = secrets.setApiKey(provider, value?.trim())
 
     companion object {
+        /**
+         * The phone's time zone as the screens last saw it. It is not a settings row, so a change of zone (a
+         * flight) never reached the screens while the coach, which reads it fresh, had the new one (bug scan
+         * 14 Oct 2026, full scan, finding 3). [refreshPhoneZone] runs each time the app comes to the front.
+         */
+        private val phoneZone = kotlinx.coroutines.flow.MutableStateFlow(java.util.TimeZone.getDefault().id)
+
+        fun refreshPhoneZone() {
+            phoneZone.value = java.util.TimeZone.getDefault().id
+        }
+
+        /** The live day from the stored rows and the phone's zone: a new value when either changes. */
+        fun watchDay(
+            rows: kotlinx.coroutines.flow.Flow<List<SettingRow>>,
+            zone: kotlinx.coroutines.flow.Flow<String>,
+        ): kotlinx.coroutines.flow.Flow<Day> =
+            kotlinx.coroutines.flow.combine(rows, zone) { r, z -> day(r.associate { it.key to it.value }, z) }
+                .distinctUntilChanged()
+
         /** The same reading as [timeZone] and [dayBoundaryHour], from the stored rows. */
-        fun day(values: Map<String, String>): Day = Day(
-            timeZone = values[Keys.TIME_ZONE] ?: java.util.TimeZone.getDefault().id,
+        fun day(values: Map<String, String>, phoneZone: String = java.util.TimeZone.getDefault().id): Day = Day(
+            timeZone = values[Keys.TIME_ZONE] ?: phoneZone,
             boundaryHour = values[Keys.DAY_BOUNDARY_HOUR]?.toIntOrNull() ?: DefaultSettings.DAY_BOUNDARY_HOUR,
         )
 
