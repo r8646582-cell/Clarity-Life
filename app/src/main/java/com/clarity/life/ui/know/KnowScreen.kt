@@ -43,6 +43,9 @@ import com.clarity.life.ui.know.KnowViewModel.Item
 import com.clarity.life.ui.know.KnowViewModel.Ref
 import com.clarity.life.ui.theme.clarity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Check
 import com.clarity.life.ui.theme.BoldCard
 import com.clarity.life.ui.theme.Kicker
 import com.clarity.life.ui.theme.PrimaryButton
@@ -52,9 +55,9 @@ import com.clarity.life.ui.theme.TextAction
 
 /**
  * What I know, redesigned (the owner's approved mockup of 13 Oct 2026): a short promise of what this is, the
- * search, one featured note the coach is not sure of yet (That's right / Not quite), then the sections as
- * tiles. A tile opens its section; a search opens every section that has a match. Each item opens to its
- * evidence with Edit, Delete and That's right. Deleting asks first, because a deletion is final.
+ * search, one featured note the coach is not sure of yet (That's right / Not quite), then the sections as one
+ * quiet list. A row opens its section; a search opens every section that has a match. A note opens its proof
+ * sheet (That's right, Not quite, Delete); other items open in place. Deleting asks first, because it is final.
  */
 @Composable
 fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) {
@@ -73,6 +76,8 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
     var expanded by remember { mutableStateOf<Ref?>(null) }
     var editing by remember { mutableStateOf<Item?>(null) }
     var deleting by remember { mutableStateOf<Item?>(null) }
+    // The note whose proof sheet is open, over whatever page he is on (Your story or a section).
+    var proof by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Long?>(null) }
     // The box shows what he typed at once; the filtered list follows (a field fed back from the model's
     // async state drops letters and makes the cursor jump while typing fast).
     var typed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(state.query) }
@@ -85,13 +90,7 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 showStory = false
                 onTalk()
             },
-            onProof = { n ->
-                showStory = false
-                typed = ""
-                model.search("")
-                section = "What helps"
-                expanded = Ref.Note(n.id)
-            },
+            onProof = { n -> proof = n.id },
             onChapter = { id ->
                 showStory = false
                 typed = ""
@@ -100,6 +99,7 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 expanded = Ref.Chapter(id)
             },
         )
+        proof?.let { id -> NoteProof(id, state, model) { proof = null } }
         return
     }
     val searching = state.query.isNotBlank()
@@ -139,15 +139,20 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 hits.forEach { s ->
                     item(key = "head:" + s.name) { SectionTitle(s.name) }
                     items(s.items, key = { s.name + ":" + it.ref.toString() }) { item ->
-                        ItemCard(
-                            item = item,
-                            expanded = expanded == item.ref,
-                            onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
-                            onEdit = { editing = item },
-                            onDelete = { deleting = item },
-                            onConfirm = { model.confirm(item.ref) },
-                            onStatus = { status -> model.setStatus(item.ref, status) },
-                        )
+                        val note = item.ref as? Ref.Note
+                        if (note != null) {
+                            NoteLine(item) { proof = note.id }
+                        } else {
+                            ItemCard(
+                                item = item,
+                                expanded = expanded == item.ref,
+                                onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
+                                onEdit = { editing = item },
+                                onDelete = { deleting = item },
+                                onConfirm = { model.confirm(item.ref) },
+                                onStatus = { status -> model.setStatus(item.ref, status) },
+                            )
+                        }
                     }
                 }
             }
@@ -162,15 +167,20 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                     item { Quiet("Nothing here yet. It fills in from your conversations.", Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
                 }
                 items(shownSection.items, key = { shownSection.name + ":" + it.ref.toString() }) { item ->
-                    ItemCard(
-                        item = item,
-                        expanded = expanded == item.ref,
-                        onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
-                        onEdit = { editing = item },
-                        onDelete = { deleting = item },
-                        onConfirm = { model.confirm(item.ref) },
-                        onStatus = { status -> model.setStatus(item.ref, status) },
-                    )
+                    val note = item.ref as? Ref.Note
+                    if (note != null) {
+                        NoteLine(item) { proof = note.id }
+                    } else {
+                        ItemCard(
+                            item = item,
+                            expanded = expanded == item.ref,
+                            onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
+                            onEdit = { editing = item },
+                            onDelete = { deleting = item },
+                            onConfirm = { model.confirm(item.ref) },
+                            onStatus = { status -> model.setStatus(item.ref, status) },
+                        )
+                    }
                 }
             }
             else -> {
@@ -208,24 +218,15 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                         }
                     }
                 }
-                item(key = "tiles") {
-                    val tiles = state.sections
-                    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        tiles.chunked(2).forEach { pair ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                pair.forEach { s -> Tile(s, Modifier.weight(1f)) { section = s.name } }
-                                if (pair.size == 1) Spacer(Modifier.weight(1f))
-                            }
-                        }
-                        if (state.archive.isNotEmpty()) {
-                            TextAction("Archive · ${state.archive.size}", color = clarity.muted) { section = "Archive" }
-                        }
-                    }
+                item(key = "sections") {
+                    SectionList(state, Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) { section = it }
                 }
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
+
+    proof?.let { id -> NoteProof(id, state, model) { proof = null } }
 
     editing?.let { item -> EditDialog(item, onDismiss = { editing = null }) { text, second ->
         model.edit(item.ref, text, second)
@@ -259,24 +260,130 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
     }
 }
 
-/** A section as a tile: how many, and its name; "Nothing yet" instead of a bare 0. */
+/**
+ * The sections as one quiet list: the name, and how many on the right in the same column, so a full year of
+ * notes reads as calmly as the first week. An empty section shows a dash, never a bare 0 or "Nothing yet".
+ */
 @Composable
-private fun Tile(s: KnowViewModel.Section, modifier: Modifier, onClick: () -> Unit) {
+private fun SectionList(state: KnowViewModel.State, modifier: Modifier, onOpen: (String) -> Unit) {
+    val rows = state.sections.map { it.name to it.items.size } +
+        (if (state.archive.isNotEmpty()) listOf("Archive" to state.archive.size) else emptyList())
     Column(
         modifier
-            .background(clarity.surface, RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-            .heightIn(min = 64.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+            .fillMaxWidth()
+            .background(clarity.surface, com.clarity.life.ui.theme.Bold.cardShape)
+            .border(1.dp, clarity.hairline, com.clarity.life.ui.theme.Bold.cardShape),
     ) {
-        if (s.items.isEmpty()) {
-            Text("Nothing yet", style = MaterialTheme.typography.bodySmall, color = clarity.muted)
-        } else {
-            Text("${s.items.size}", style = MaterialTheme.typography.headlineSmall, color = clarity.text)
+        rows.forEachIndexed { i, (name, count) ->
+            if (i > 0) HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .clickable(role = androidx.compose.ui.semantics.Role.Button) { onOpen(name) }
+                    .padding(start = 18.dp, end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (name == "Archive") clarity.muted else clarity.text,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    if (count == 0) "—" else "$count",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+                    color = clarity.muted,
+                )
+                androidx.compose.material3.Icon(
+                    Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = clarity.controlOutline,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
         }
-        Text(s.name, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
     }
+}
+
+/**
+ * A note in a list: its words on at most two lines, and one quiet line under it with its grade and how often it
+ * was seen. The whole row opens the proof sheet.
+ */
+@Composable
+internal fun NoteLine(item: Item, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    Row(
+        modifier
+            .padding(horizontal = 20.dp, vertical = 5.dp)
+            .fillMaxWidth()
+            .background(clarity.surface, RoundedCornerShape(16.dp))
+            .border(1.dp, clarity.hairline, RoundedCornerShape(16.dp))
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen)
+            .padding(start = 16.dp, end = 10.dp, top = 14.dp, bottom = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            item.label?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = clarity.muted) }
+            Text(
+                item.text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = clarity.text,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            NoteSeenLine(item.confidence, item.seen)
+        }
+        androidx.compose.material3.Icon(
+            Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            contentDescription = "See the proof",
+            tint = clarity.controlOutline,
+        )
+    }
+}
+
+/** "✓ Seen 9 times · Oct to Nov" for a confirmed note; "Likely · seen 3 times" otherwise. */
+@Composable
+internal fun NoteSeenLine(confidence: String?, seen: String?) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (confidence == "confirmed") {
+            androidx.compose.material3.Icon(
+                Icons.Outlined.Check,
+                contentDescription = "Confirmed by you",
+                tint = clarity.green,
+                modifier = Modifier.size(15.dp),
+            )
+        }
+        val grade = when (confidence) {
+            "likely" -> "Likely"
+            "guess", null -> "Guess"
+            else -> null
+        }
+        val text = listOfNotNull(grade, seen?.let { if (grade == null) it.replaceFirstChar { c -> c.uppercase() } else it }).joinToString(" · ")
+        Text(text, style = MaterialTheme.typography.bodySmall, color = clarity.muted, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+    }
+}
+
+/** The proof sheet for one note, found by id among the sections and the archive. */
+@Composable
+private fun NoteProof(id: Long, state: KnowViewModel.State, model: KnowViewModel, onClose: () -> Unit) {
+    val ref = Ref.Note(id)
+    val found = state.sections.firstNotNullOfOrNull { s -> s.items.firstOrNull { it.ref == ref }?.let { s.name to it } }
+        ?: state.archive.firstOrNull { it.ref == ref }?.let { "Archive" to it }
+    // Deleted, or forgotten with its conversation: the sheet closes by itself.
+    androidx.compose.runtime.LaunchedEffect(found == null, state.loaded) { if (found == null && state.loaded) onClose() }
+    val (sectionName, item) = found ?: return
+    ProofSheet(
+        item = item,
+        kind = item.label ?: sectionName,
+        onDismiss = onClose,
+        onConfirm = { model.confirm(ref) },
+        onEdit = { text -> model.edit(ref, text) },
+        onDelete = {
+            model.delete(ref)
+            onClose()
+        },
+    )
 }
 
 @Composable
@@ -359,11 +466,11 @@ private fun ItemCard(
 }
 
 @Composable
-private fun GradeTag(text: String, confidence: String?) {
-    val shape = RoundedCornerShape(6.dp)
+internal fun GradeTag(text: String, confidence: String?) {
+    val shape = RoundedCornerShape(999.dp)
     val (fill, fg, outline) = when (confidence) {
-        "confirmed" -> Triple(clarity.yellow, clarity.ground, clarity.yellow)
-        "likely" -> Triple(Color.Transparent, clarity.yellow, clarity.yellow)
+        "confirmed" -> Triple(clarity.greenTint, clarity.green, clarity.greenTint)
+        "likely" -> Triple(clarity.yellowTint, clarity.yellow, clarity.yellowEdge)
         else -> Triple(Color.Transparent, clarity.muted, clarity.controlOutline)
     }
     Text(
@@ -373,7 +480,7 @@ private fun GradeTag(text: String, confidence: String?) {
         modifier = Modifier
             .background(fill, shape)
             .border(1.dp, outline, shape)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
