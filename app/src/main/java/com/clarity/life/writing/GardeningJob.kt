@@ -98,7 +98,15 @@ class GardeningJob @Inject constructor(
             }
             val values = mapOf(
                 "USER_NAME" to settings.promptName(),
-                "NOTES" to GardeningInput.notes(notes, today),
+                // With the notes, the groups the code finds close (Max plan Phase 3 step 5): suggestions only.
+                "NOTES" to GardeningInput.notes(notes, today) + GardeningInput.closeGroups(
+                    GardeningInput.clusters(
+                        m.activeNotes().associate { n ->
+                            n.id to NoteFacts(n.kind, n.confidence, n.status, n.editedByUser == 1, n.text, n.timesSeen)
+                        },
+                        noteVectors::of,
+                    ),
+                ),
                 "PROFILE" to GardeningInput.profile(profile),
                 "PEOPLE" to GardeningInput.people(people),
                 "SUMMARIES" to GardeningInput.summaries(sessions),

@@ -169,3 +169,11 @@ near something he deleted is the safe side), and a duplicate by meaning needs th
 both, and 0.9. The word check now has the "not" guard too: before, "You never keep promises to your sister" was
 dropped as a repeat of "You keep promises to your sister". What stays: an opposite with no "not" in it, of the same
 kind, is still taken for a repeat. Results: `results/2026-10-14-phase3-note-meaning.json`.
+
+### Gardening's suggestions (`gardening_clusters` in `tools/appliers.py`)
+
+Before the monthly tidy, code groups notes that look like one (same kind, the same "not", meaning 0.85 or more or
+half their words shared, at most 4 to a group) and lists them under NOTES as merges to consider. On the same 68
+pairs (each taken as one kind): 17 of 31 rewordings are suggested, and 3 of 37 different notes are, which the model
+has to turn down (the prompt's own rule: never merge two notes about different things). The applier checks every
+merge as before; nothing is merged by code.

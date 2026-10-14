@@ -461,6 +461,50 @@ def apply_gardening(raw, ctx):
     return {"ok": True, "ops": ops, "dropped": dropped}
 
 
+CLUSTER_MEANING = 0.85   # cosine at or above which two notes are suggested to gardening as one
+CLUSTER_WORDS = 0.5      # or this share of words in common
+CLUSTER_SIZE = 4         # at most this many notes in one suggestion
+CLUSTERS = 10            # at most this many suggestions
+
+
+def gardening_clusters(notes, ctx):
+    """Notes the code finds close, for gardening to consider merging (Max plan Phase 3 step 5). Suggestions only:
+    the model decides, and apply_gardening checks every merge as before. notes: {id: {kind, confidence, status,
+    edited, text}}. Only notes a job may touch (active, not edited, not confirmed), of the same kind, saying "not"
+    the same way, close in meaning (CLUSTER_MEANING) or in words (CLUSTER_WORDS). The closest pairs join first,
+    a group never grows past CLUSTER_SIZE; groups come out by their lowest id, each id list sorted."""
+    free = sorted(int(i) for i, n in notes.items()
+                  if n["status"] == "active" and not n["edited"] and n["confidence"] != "confirmed")
+    text = {i: notes[str(i)]["text"] if str(i) in notes else notes[i]["text"] for i in free}
+    kind = {i: notes[str(i)]["kind"] if str(i) in notes else notes[i]["kind"] for i in free}
+    pairs = []
+    for x in range(len(free)):
+        for y in range(x + 1, len(free)):
+            a, b = free[x], free[y]
+            if kind[a] != kind[b] or negated(text[a]) != negated(text[b]):
+                continue
+            m = meaning(ctx, text[a], text[b])
+            w = similarity(text[a], text[b])
+            if (m is not None and m >= CLUSTER_MEANING) or w >= CLUSTER_WORDS:
+                pairs.append((m if m is not None else w, a, b))
+    pairs.sort(key=lambda p: (-p[0], p[1], p[2]))
+    group = {i: [i] for i in free}
+    for _, a, b in pairs:
+        ga, gb = group[a], group[b]
+        if ga is gb or len(ga) + len(gb) > CLUSTER_SIZE:
+            continue
+        ga.extend(gb)
+        for i in gb:
+            group[i] = ga
+    seen, out = set(), []
+    for i in free:
+        g = group[i]
+        if len(g) >= 2 and id(g) not in seen:
+            seen.add(id(g))
+            out.append(sorted(g))
+    return out[:CLUSTERS]
+
+
 def _plain_text_problems(text):
     probs = []
     if "[[" in text or "]]" in text:

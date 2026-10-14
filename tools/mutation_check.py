@@ -145,6 +145,15 @@ MUTATIONS = [
      "model sets a new note's confidence"),
     ("appliers.py", "        if similarity(text, d) >= DELETED_SIMILARITY:", "        if False:",
      "test_appliers.py", "deleted note re-created"),
+    # Gardening's suggestions (Max plan Phase 3 step 5).
+    ("appliers.py", "            if kind[a] != kind[b] or negated(text[a]) != negated(text[b]):",
+     "            if negated(text[a]) != negated(text[b]):", "test_appliers.py", "notes of different kinds suggested as one"),
+    ("appliers.py", "            if kind[a] != kind[b] or negated(text[a]) != negated(text[b]):",
+     "            if kind[a] != kind[b]:", "test_appliers.py", "a note and its opposite suggested as one"),
+    ("appliers.py", "        if ga is gb or len(ga) + len(gb) > CLUSTER_SIZE:", "        if ga is gb:", "test_appliers.py",
+     "a suggestion grows without end"),
+    ("appliers.py", "if n[\"status\"] == \"active\" and not n[\"edited\"] and n[\"confidence\"] != \"confirmed\")",
+     "if n[\"status\"] == \"active\")", "test_appliers.py", "his confirmed or edited note suggested for a merge"),
     # Meaning in the note checks (Max plan Phase 3).
     ("appliers.py", "        if m is not None and m >= DELETED_MEANING:", "        if False:", "test_appliers.py",
      "a reworded copy of a deleted note re-created"),

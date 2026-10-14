@@ -59,7 +59,7 @@ class ApplierTest {
     @Test
     fun vectorCountMatchesThePythonReference() {
         // A guard against the file failing to load silently: the contract has 69 cases today (7 for the morning brief).
-        assertEquals(81, Vectors.cases("contracts/applier_vectors.json").size)
+        assertEquals(84, Vectors.cases("contracts/applier_vectors.json").size)
     }
 
     private fun call(fn: String, args: JsonObject, fixtures: JsonObject): JsonObject {
@@ -70,6 +70,9 @@ class ApplierTest {
         return when (fn) {
             "apply_reflection" -> result(ReflectionApplier.apply(args.str("raw"), reflectionContext(ctx())))
             "apply_gardening" -> result(GardeningApplier.apply(args.str("raw"), gardeningContext(ctx())))
+            "gardening_clusters" -> obj(
+                "groups" to GardeningInput.clusters(notes(args["notes"]?.jsonObject), vectors(ctx())),
+            )
             "check_text_job" -> {
                 val r = TextJobCheck.check(
                     args.str("kind"), args.str("text"), args.strings("inputs"), args.strings("his_messages"),

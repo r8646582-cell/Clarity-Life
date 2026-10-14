@@ -70,4 +70,13 @@ class GardeningInputTest {
         assertEquals("gardening:full:2026-10-05", GardeningInput.capKey(today))
         assertEquals("gardening:full:2026-10-05", GardeningInput.capKey(LocalDate.of(2026, 10, 5)))
     }
+
+    /** Max plan Phase 3 step 5: the suggestions follow the notes, as ids only; none means nothing is added. */
+    @Test
+    fun closeGroupsAreSuggestionsUnderTheNotes() {
+        assertEquals("", GardeningInput.closeGroups(emptyList()))
+        val text = GardeningInput.closeGroups(listOf(listOf(2L, 3L), listOf(8L, 9L, 12L)))
+        assertTrue(text, text.startsWith("\n\nCLOSE IN MEANING OR WORDING (found by the app: notes to consider merging"))
+        assertTrue(text, text.endsWith("\n- [id 2], [id 3]\n- [id 8], [id 9], [id 12]"))
+    }
 }

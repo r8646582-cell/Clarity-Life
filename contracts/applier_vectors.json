@@ -2431,6 +2431,376 @@
     ],
     "dropped_count": 0
    }
+  },
+  {
+   "name": "gardening clusters: same kind, same \"not\", only notes a job may touch; the closest join first and a group stops at four",
+   "fn": "gardening_clusters",
+   "args": {
+    "notes": {
+     "1": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You scroll in bed after 11 and lose the morning",
+      "times_seen": 1
+     },
+     "2": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Late-night phone use costs you your mornings",
+      "times_seen": 1
+     },
+     "3": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Your phone at night ruins the next day's start",
+      "times_seen": 1
+     },
+     "4": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You do not scroll in bed any more",
+      "times_seen": 1
+     },
+     "5": {
+      "kind": "what_helps",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Late-night phone use costs you your mornings",
+      "times_seen": 1
+     },
+     "6": {
+      "kind": "pattern",
+      "confidence": "confirmed",
+      "status": "active",
+      "edited": false,
+      "text": "Phone in bed after midnight wrecks the morning",
+      "times_seen": 1
+     },
+     "7": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "retired",
+      "edited": false,
+      "text": "Bed scrolling eats your morning",
+      "times_seen": 1
+     },
+     "8": {
+      "kind": "thread",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You have not decided about the internship",
+      "times_seen": 1
+     },
+     "9": {
+      "kind": "thread",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You have not decided about the internship offer yet",
+      "times_seen": 1
+     },
+     "10": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Night phone time steals your early hours",
+      "times_seen": 1
+     },
+     "11": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Evening scrolling drains the next morning",
+      "times_seen": 1
+     }
+    },
+    "ctx": {
+     "vectors": {
+      "You scroll in bed after 11 and lose the morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Late-night phone use costs you your mornings": [
+       0.95,
+       0.31225,
+       0.0,
+       0.0
+      ],
+      "Your phone at night ruins the next day's start": [
+       0.9,
+       0.43589,
+       0.0,
+       0.0
+      ],
+      "You do not scroll in bed any more": [
+       0.97,
+       0.243105,
+       0.0,
+       0.0
+      ],
+      "Phone in bed after midnight wrecks the morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Bed scrolling eats your morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Night phone time steals your early hours": [
+       0.88,
+       0.474974,
+       0.0,
+       0.0
+      ],
+      "Evening scrolling drains the next morning": [
+       0.86,
+       0.510294,
+       0.0,
+       0.0
+      ],
+      "You have not decided about the internship": [
+       0.0,
+       0.0,
+       1.0,
+       0.0
+      ],
+      "You have not decided about the internship offer yet": [
+       0.0,
+       0.0,
+       0.0,
+       1.0
+      ]
+     }
+    }
+   },
+   "expect": {
+    "groups": [
+     [
+      2,
+      3,
+      10,
+      11
+     ],
+     [
+      8,
+      9
+     ]
+    ]
+   }
+  },
+  {
+   "name": "gardening clusters: meaning search off, shared words alone still group",
+   "fn": "gardening_clusters",
+   "args": {
+    "notes": {
+     "1": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You scroll in bed after 11 and lose the morning",
+      "times_seen": 1
+     },
+     "2": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Late-night phone use costs you your mornings",
+      "times_seen": 1
+     },
+     "3": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Your phone at night ruins the next day's start",
+      "times_seen": 1
+     },
+     "4": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You do not scroll in bed any more",
+      "times_seen": 1
+     },
+     "5": {
+      "kind": "what_helps",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Late-night phone use costs you your mornings",
+      "times_seen": 1
+     },
+     "6": {
+      "kind": "pattern",
+      "confidence": "confirmed",
+      "status": "active",
+      "edited": false,
+      "text": "Phone in bed after midnight wrecks the morning",
+      "times_seen": 1
+     },
+     "7": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "retired",
+      "edited": false,
+      "text": "Bed scrolling eats your morning",
+      "times_seen": 1
+     },
+     "8": {
+      "kind": "thread",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You have not decided about the internship",
+      "times_seen": 1
+     },
+     "9": {
+      "kind": "thread",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You have not decided about the internship offer yet",
+      "times_seen": 1
+     },
+     "10": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Night phone time steals your early hours",
+      "times_seen": 1
+     },
+     "11": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "Evening scrolling drains the next morning",
+      "times_seen": 1
+     }
+    },
+    "ctx": {}
+   },
+   "expect": {
+    "groups": [
+     [
+      8,
+      9
+     ]
+    ]
+   }
+  },
+  {
+   "name": "gardening clusters: nothing close, no suggestion",
+   "fn": "gardening_clusters",
+   "args": {
+    "notes": {
+     "1": {
+      "kind": "pattern",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You scroll in bed after 11 and lose the morning",
+      "times_seen": 1
+     },
+     "8": {
+      "kind": "thread",
+      "confidence": "guess",
+      "status": "active",
+      "edited": false,
+      "text": "You have not decided about the internship",
+      "times_seen": 1
+     }
+    },
+    "ctx": {
+     "vectors": {
+      "You scroll in bed after 11 and lose the morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Late-night phone use costs you your mornings": [
+       0.95,
+       0.31225,
+       0.0,
+       0.0
+      ],
+      "Your phone at night ruins the next day's start": [
+       0.9,
+       0.43589,
+       0.0,
+       0.0
+      ],
+      "You do not scroll in bed any more": [
+       0.97,
+       0.243105,
+       0.0,
+       0.0
+      ],
+      "Phone in bed after midnight wrecks the morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Bed scrolling eats your morning": [
+       1.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "Night phone time steals your early hours": [
+       0.88,
+       0.474974,
+       0.0,
+       0.0
+      ],
+      "Evening scrolling drains the next morning": [
+       0.86,
+       0.510294,
+       0.0,
+       0.0
+      ],
+      "You have not decided about the internship": [
+       0.0,
+       0.0,
+       1.0,
+       0.0
+      ],
+      "You have not decided about the internship offer yet": [
+       0.0,
+       0.0,
+       0.0,
+       1.0
+      ]
+     }
+    }
+   },
+   "expect": {
+    "groups": []
+   }
   }
  ]
 }
