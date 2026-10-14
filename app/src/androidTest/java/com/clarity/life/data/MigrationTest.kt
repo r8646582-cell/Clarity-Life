@@ -183,6 +183,110 @@ class MigrationTest {
         db.close()
     }
 
+    // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
+
+    /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
+    private fun sampleTables(file: String): org.json.JSONObject {
+        val ctx = InstrumentationRegistry.getInstrumentation().context
+        val vectors = org.json.JSONObject(ctx.assets.open("backup_vectors.json").use { it.readBytes().toString(Charsets.UTF_8) })
+        val bytes = ctx.assets.open(file).use { it.readBytes() }
+        val (_, json) = com.clarity.life.core.BackupFormat.opening(
+            java.io.ByteArrayInputStream(bytes),
+            vectors.getString("passphrase").toCharArray(),
+        )
+        return org.json.JSONObject(json.use { it.readBytes().toString(Charsets.UTF_8) }).getJSONObject("tables")
+    }
+
+    private fun insertAll(db: androidx.sqlite.db.SupportSQLiteDatabase, tables: org.json.JSONObject): Map<String, Int> {
+        val counts = mutableMapOf<String, Int>()
+        for (table in tables.keys()) {
+            val rows = tables.getJSONArray(table)
+            for (i in 0 until rows.length()) {
+                val row = rows.getJSONObject(i)
+                val values = android.content.ContentValues()
+                for (col in row.keys()) {
+                    when (val v = row.get(col)) {
+                        org.json.JSONObject.NULL -> values.putNull(col)
+                        is String -> values.put(col, v)
+                        is Int -> values.put(col, v.toLong())
+                        is Long -> values.put(col, v)
+                        is Double -> values.put(col, v)
+                        else -> error("unexpected value in $table.$col")
+                    }
+                }
+                db.insert(table, android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT, values)
+            }
+            if (rows.length() > 0) counts[table] = rows.length()
+        }
+        return counts
+    }
+
+    @Test
+    fun everyOldVersionWithRealRowsReachesTheNewest() {
+        // Version 2 only added a table, so version 1's rows are version 2's rows too.
+        val starts = listOf(1 to "format1-schema1.cbk", 2 to "format1-schema1.cbk", 3 to "format2-schema3.cbk", 4 to "format2-schema4.cbk")
+        for ((version, sample) in starts) {
+            val name = "migrate-from-$version.db"
+            val tables = sampleTables(sample)
+            val counts = helper.createDatabase(name, version).let { old ->
+                insertAll(old, tables).also { old.close() }
+            }
+            // Every migration from there on, then Room checks the result against today's entities.
+            val db = helper.runMigrationsAndValidate(name, DATABASE_VERSION, true, *ClarityDatabase.MIGRATIONS)
+            for ((table, n) in counts) {
+                db.query("SELECT COUNT(*) FROM `$table`").use {
+                    it.moveToFirst()
+                    assertEquals("from version $version: rows in $table", n, it.getInt(0))
+                }
+            }
+            db.query("SELECT content FROM message WHERE id = 1").use {
+                assertTrue(it.moveToFirst())
+                assertTrue("from version $version: the words changed", it.getString(0).startsWith("I only study well in the morning — before 10, with tea ✓"))
+            }
+            db.query("SELECT start_done, total FROM backlog WHERE id = 1").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(4.5, it.getDouble(0), 0.0)
+                assertEquals(50.0, it.getDouble(1), 0.0)
+            }
+            db.query("PRAGMA foreign_key_check").use { assertEquals("from version $version: broken links", 0, it.count) }
+            db.close()
+        }
+    }
+
+    @Test
+    fun aMissingMigrationStopsWithAnErrorAndKeepsEveryRow() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "no-migration.db"
+        helper.createDatabase(name, 1).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'Kept', 1760000000000)")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at) VALUES (1, 1, 'user', 'still here', 1760000000000)")
+            close()
+        }
+        // The app's database with no way from version 1: Room must refuse to open, never start empty.
+        val room = Room.databaseBuilder(context, ClarityDatabase::class.java, name).build()
+        var refused = false
+        try {
+            room.openHelper.writableDatabase
+        } catch (e: IllegalStateException) {
+            refused = true
+        } finally {
+            room.close()
+        }
+        assertTrue("a database with no migration path must not open", refused)
+        val raw = android.database.sqlite.SQLiteDatabase.openDatabase(
+            context.getDatabasePath(name).path,
+            null,
+            android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
+        )
+        raw.rawQuery("SELECT content FROM message WHERE id = 1", null).use {
+            assertTrue("the message is gone", it.moveToFirst())
+            assertEquals("still here", it.getString(0))
+        }
+        assertEquals(1, raw.version)
+        raw.close()
+        context.deleteDatabase(name)
+    }
+
     @Test
     fun everyMigrationStepIsWritten() {
         // One migration per version step, always. A gap would mean Room had nothing to run.

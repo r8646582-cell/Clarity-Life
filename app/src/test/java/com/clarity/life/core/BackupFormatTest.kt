@@ -136,6 +136,49 @@ class BackupFormatTest {
         expectBad { BackupFormat.opening(java.io.ByteArrayInputStream(stream()), "paper passphrase".toCharArray()) }
     }
 
+    /**
+     * The phone died, or the disk filled, while a backup was being written (Max plan, Phase 1, step 6): whatever
+     * part of the file got written must never open as a backup. Cut at every chunk edge and at many points between.
+     */
+    @Test
+    fun aBackupCutAtAnyPointNeverOpens() {
+        val file = stream()
+        val headerEnd = file.indexOf('\n'.code.toByte()) + 1
+        val cuts = (0 until file.size step 1499).toMutableSet()
+        var edge = headerEnd
+        while (edge < file.size) {
+            cuts += listOf(edge - 1, edge, edge + 1, edge + 4, edge + 5)
+            edge += 4 + java.nio.ByteBuffer.wrap(file, edge, 4).int
+        }
+        cuts += file.size - 1
+        for (cut in cuts.filter { it in 0 until file.size }.sorted()) {
+            try {
+                read(file.copyOfRange(0, cut))
+                fail("a file cut at byte $cut of ${file.size} opened")
+            } catch (e: BackupFormat.BadBackup) {
+                // expected
+            }
+        }
+    }
+
+    /** Writing stops with an error part way (a full disk): the error reaches the caller, nothing is swallowed. */
+    @Test
+    fun aFullDiskWhileWritingIsAnError() {
+        val out = object : java.io.OutputStream() {
+            var n = 0
+            override fun write(b: Int) {
+                if (++n > 100_000) throw java.io.IOException("No space left on device")
+            }
+        }
+        try {
+            BackupFormat.sealing(out, "paper passphrase".toCharArray(), schema = 3, createdAt = 1L, iterations = fast)
+                .use { it.write(big.toByteArray(Charsets.UTF_8)) }
+            fail("a full disk went unnoticed")
+        } catch (e: java.io.IOException) {
+            assertEquals("No space left on device", e.message)
+        }
+    }
+
     private fun expectBad(block: () -> Unit) {
         try {
             block()
