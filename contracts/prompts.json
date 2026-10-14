@@ -56,7 +56,8 @@
         "Do not use em dashes",
         "CARD_RESULTS",
         "use the weekday name",
-        "volunteered the commitment themselves"
+        "volunteered the commitment themselves",
+        "place their message in time"
       ],
       "max_words": 5600
     },
