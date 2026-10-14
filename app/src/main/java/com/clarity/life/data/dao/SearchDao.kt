@@ -101,6 +101,20 @@ interface SearchDao {
     )
     suspend fun deleteQuotesAndEventsOf(conversationId: Long)
 
+    /** The nightly check: his messages with words in them that the keyword index does not hold. */
+    @Query(
+        "SELECT COUNT(*) FROM message m JOIN conversation c ON c.id = m.conversation_id " +
+            "WHERE m.role = 'user' AND c.off_the_record = 0 AND TRIM(m.content) != '' " +
+            "AND CAST(m.id AS TEXT) NOT IN (SELECT ref_id FROM search_doc WHERE kind = 'message')",
+    )
+    suspend fun unindexedMessages(): Int
+
+    @Query(
+        "SELECT COUNT(*) FROM conversation WHERE summary != '' AND off_the_record = 0 " +
+            "AND CAST(id AS TEXT) NOT IN (SELECT ref_id FROM search_doc WHERE kind = 'summary')",
+    )
+    suspend fun unindexedSummaries(): Int
+
     /** Rebuild: every message of his, from every conversation that was not off the record. */
     @Query(
         "SELECT m.id AS messageId, m.conversation_id AS conversationId, c.title AS title, m.created_at AS at, " +

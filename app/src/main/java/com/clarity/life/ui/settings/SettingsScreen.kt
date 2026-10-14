@@ -311,6 +311,7 @@ fun SettingsScreen(
 @Composable
 private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     var passphraseDialog by remember { mutableStateOf(false) }
+    var testDialog by remember { mutableStateOf(false) }
     var confirmRestore by remember { mutableStateOf(false) }
     val folder = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree(),
@@ -323,15 +324,35 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     ) { uri -> uri?.let(model::export) }
     var warnExport by remember { mutableStateOf(false) }
 
-    Hint("Encrypted, weekly, to a folder you choose. Write the passphrase on paper: without it a backup cannot be restored.")
+    Hint("Encrypted, automatic, to a folder you choose. Each backup is read back and checked before older ones are removed.")
+    Hint(
+        "Write the passphrase on paper. If this phone is lost, reset or replaced, the backups are the only copy of " +
+            "your data, and only the passphrase opens them. Nobody can recover it, not even the app.",
+    )
     // Two-line rows: the name and its state on the left (a long folder path wraps, never squeezes), the button
     // on the right.
     BackupRow("Backup folder", state.backupFolder.ifBlank { "Not chosen yet" }) {
         SmallButton(if (state.backupFolder.isBlank()) "Choose" else "Change") { folder.launch(null) }
     }
     BackupRow("Backup passphrase", if (state.hasPassphrase) "Set. Keep a copy on paper too." else "Not set yet") {
-        SmallButton(if (state.hasPassphrase) "Change" else "Set up") { passphraseDialog = true }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (state.hasPassphrase) SmallButton("Test") { testDialog = true }
+            SmallButton(if (state.hasPassphrase) "Change" else "Set up") { passphraseDialog = true }
+        }
     }
+    Label("Back up")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        com.clarity.life.core.Maintenance.BACKUP_EVERY_DAYS.forEach { days ->
+            Chip(if (days == 1) "Every night" else "Every week", state.backupEveryDays == days) { model.setBackupEvery(days) }
+        }
+    }
+    Label("Keep the newest")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        com.clarity.life.core.Maintenance.BACKUP_KEEP.forEach { n ->
+            Chip("$n", state.backupKeep == n) { model.setBackupKeep(n) }
+        }
+    }
+    Hint("Made at night while the battery is not low, if the phone is on. Back up now makes one at once.")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 14.dp)) {
         com.clarity.life.ui.theme.PrimaryButton(if (state.backingUp) "Backing up" else "Back up now", Modifier.weight(1f)) {
             if (!state.backingUp) model.backUpNow()
@@ -403,6 +424,34 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
                 }) { Text("Export", color = clarity.yellow) }
             },
             dismissButton = { TextButton(onClick = { warnExport = false }) { Text("Cancel", color = clarity.text) } },
+        )
+    }
+
+    if (testDialog) {
+        var typed by remember { mutableStateOf("") }
+        var answer by remember { mutableStateOf<String?>(null) }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { testDialog = false },
+            containerColor = clarity.surface,
+            title = { Text("Test your passphrase", color = clarity.text) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Type it from your paper, not from memory. The app only says whether it matches.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = clarity.muted,
+                    )
+                    SecretField(typed, "Passphrase") {
+                        typed = it
+                        answer = null
+                    }
+                    answer?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.text) }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { answer = model.testPassphrase(typed) }) { Text("Check", color = clarity.yellow) }
+            },
+            dismissButton = { TextButton(onClick = { testDialog = false }) { Text("Close", color = clarity.text) } },
         )
     }
 

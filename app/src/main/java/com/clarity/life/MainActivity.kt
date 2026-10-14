@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settings: com.clarity.life.settings.SettingsRepository
 
+    @Inject lateinit var maintenance: com.clarity.life.maintenance.MaintenanceScheduler
+
     /** App lock (spec section 9): locked until he unlocks, again after more than a minute away. */
     private var locked by mutableStateOf(false)
 
@@ -75,6 +77,7 @@ class MainActivity : ComponentActivity() {
         val search = search
         val indexer = indexer
         val writing = writing
+        val maintenance = maintenance
         startup.launch {
             try {
                 // A saved deepseek-reasoner or deepseek-chat becomes the faster default (10 Oct 2026).
@@ -87,8 +90,9 @@ class MainActivity : ComponentActivity() {
                 indexer.schedule()
                 // Reviews and the weekly letter: catch up on anything missed, and keep next Sunday scheduled.
                 writing.onStart(System.currentTimeMillis())
-                // The weekly encrypted backup (it does nothing until a folder and a passphrase are set).
-                com.clarity.life.backup.BackupWorker.schedule(app)
+                // The nightly maintenance: database check, repairs, reminders, and the automatic encrypted
+                // backup when one is due (it does nothing for backups until a folder and a passphrase are set).
+                maintenance.schedule()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

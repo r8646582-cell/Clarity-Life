@@ -71,6 +71,10 @@ object DefaultSettings {
      */
     const val DAY_BOUNDARY_HOUR = 0
 
+    /** Automatic backups (spec section 9): weekly, keeping the last four; Settings offers daily and more. */
+    const val BACKUP_EVERY_DAYS = 7
+    const val BACKUP_KEEP = 4
+
     const val WEEKLY_LETTER_ON = true
     // On, silent: the spec's recommendation (section 17), chosen by the owner in the audit follow-up of 10 Oct 2026.
     // A phone that already saved the switch keeps what it saved.

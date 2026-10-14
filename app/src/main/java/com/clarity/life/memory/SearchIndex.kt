@@ -111,6 +111,16 @@ class SearchIndex @Inject constructor(
         n
     }
 
+    /**
+     * The nightly check: when any message of his or any summary is missing from the index (a write that failed,
+     * a crash between two steps), the index is rebuilt from the raw rows. Returns how many were missing.
+     */
+    suspend fun repairIfIncomplete(): Int {
+        val missing = dao.unindexedMessages() + dao.unindexedSummaries()
+        if (missing > 0) rebuild()
+        return missing
+    }
+
     /** On start: an empty index with messages behind it (the first start after an update) is built once. */
     suspend fun rebuildIfEmpty() {
         if (dao.count() == 0 && dao.allHisMessages().isNotEmpty()) rebuild()

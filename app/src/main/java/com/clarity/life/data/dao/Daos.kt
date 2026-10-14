@@ -272,6 +272,10 @@ interface RepairDao {
     @Query("UPDATE message SET status = 'interrupted' WHERE status = 'streaming'")
     suspend fun interruptStreamingMessages(): Int
 
+    /** The nightly check: a reply marked streaming that began long ago cannot still be running. */
+    @Query("UPDATE message SET status = 'interrupted' WHERE status = 'streaming' AND created_at < :before")
+    suspend fun interruptStaleStreaming(before: Long): Int
+
     /** Only jobs no worker has touched for a while: WorkManager may have started this process for a live one. */
     @Query("UPDATE job SET status = 'pending' WHERE status = 'running' AND (started_at IS NULL OR started_at < :staleBefore)")
     suspend fun requeueRunningJobs(staleBefore: Long): Int

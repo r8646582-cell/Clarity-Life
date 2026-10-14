@@ -326,7 +326,7 @@ CREATE TABLE usage_month (
 CREATE TABLE job (                     -- idempotence: one row per unit of background work
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL UNIQUE,            -- type + period or conversation + hash of inputs
-  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','brief','gardening','backup','index')),
+  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','brief','gardening','backup','index','maintenance')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','succeeded','failed','skipped')),
   attempts INTEGER NOT NULL DEFAULT 0,
   last_error TEXT,
