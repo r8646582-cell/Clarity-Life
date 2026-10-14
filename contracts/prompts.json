@@ -146,6 +146,7 @@
         "FOCUS_SUMMARY",
         "CHECKIN_FACTS",
         "DELETED_NOTES",
+        "PREVIOUS_SUMMARY",
         "TRANSCRIPT"
       ],
       "must_contain": [
@@ -156,7 +157,8 @@
         "in exactly this shape",
         "focus_summary",
         "Never set \"confirmed\"",
-        "\"quote\": \"their exact words, only for a correction\""
+        "\"quote\": \"their exact words, only for a correction\"",
+        "covers the WHOLE conversation"
       ],
       "max_words": 3200
     },

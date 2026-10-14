@@ -125,6 +125,9 @@ class ReflectionJob @Inject constructor(
                     "CHAT_TYPE" to conversation.chatType + if (conversation.focusId != null) " (inside a focus)" else "",
                     "CONTEXT" to inputs.contextText,
                     "FOCUS_SUMMARY" to inputs.focusSummary.ifBlank { "(none)" },
+                    // A later reflection rewrites the summary, so it must see the one it replaces, or the
+                    // start of a long conversation would fall out of it (and out of EARLIER).
+                    "PREVIOUS_SUMMARY" to com.clarity.life.core.ContextBuilder.escape(conversation.summary).ifBlank { "(none yet)" },
                     "CHECKIN_FACTS" to inputs.checkinFacts.ifBlank { "(none yet)" },
                     "DELETED_NOTES" to ReflectionInput.deleted(inputs.deletedNotes),
                     "TRANSCRIPT" to ReflectionInput.transcript(selection, conversation.reflectedUpToMessageId, tz),
