@@ -197,36 +197,12 @@ fun TalkScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
             if (home) {
-                // The date is centred on the screen, not between the icons (one on the left, two on the right).
-                Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        if (planState.ready) planner.longDay(planState.today) else "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = clarity.muted,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier.padding(horizontal = 104.dp),
-                    )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { drawer = !drawer }) {
-                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
-                    }
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = onOpenGuide) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.HelpOutline,
-                            contentDescription = "How Clarity works",
-                            tint = clarity.text,
-                        )
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
-                    }
-                }
-                }
+                HomeTopBar(
+                    date = if (planState.ready) planner.longDay(planState.today) else "",
+                    onDrawer = { drawer = !drawer },
+                    onGuide = onOpenGuide,
+                    onSettings = onOpenSettings,
+                )
             } else {
                 Row(
                     Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
@@ -470,6 +446,37 @@ fun TalkScreen(
  * a search box (titles and summaries), every conversation newest first under yellow day headings, the open
  * one lit, and a ⋯ button on each row for Rename and Forget.
  */
+/**
+ * Talk home's top bar: Conversations on the left, the guide and Settings on the right, and the date centred on
+ * the screen, not between one icon on the left and two on the right. Kept out of [TalkScreen] on purpose: that
+ * function is already very large, and growing it made Android's verifier reject the compiled screen.
+ */
+@Composable
+private fun HomeTopBar(date: String, onDrawer: () -> Unit, onGuide: () -> Unit, onSettings: () -> Unit) {
+    Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
+        Text(
+            date,
+            style = MaterialTheme.typography.bodyMedium,
+            color = clarity.muted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 104.dp),
+        )
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onDrawer) {
+                Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+            }
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = onGuide) {
+                Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = "How Clarity works", tint = clarity.text)
+            }
+            IconButton(onClick = onSettings) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ConversationsDrawer(
     state: TalkViewModel.State,

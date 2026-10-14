@@ -139,20 +139,15 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 hits.forEach { s ->
                     item(key = "head:" + s.name) { SectionTitle(s.name) }
                     items(s.items, key = { s.name + ":" + it.ref.toString() }) { item ->
-                        val note = item.ref as? Ref.Note
-                        if (note != null) {
-                            NoteLine(item) { proof = note.id }
-                        } else {
-                            ItemCard(
-                                item = item,
-                                expanded = expanded == item.ref,
-                                onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
-                                onEdit = { editing = item },
-                                onDelete = { deleting = item },
-                                onConfirm = { model.confirm(item.ref) },
-                                onStatus = { status -> model.setStatus(item.ref, status) },
-                            )
-                        }
+                        KnowRow(
+                            item = item,
+                            expanded = expanded == item.ref,
+                            model = model,
+                            onProof = { proof = it },
+                            onExpand = { expanded = if (expanded == item.ref) null else item.ref },
+                            onEdit = { editing = item },
+                            onDelete = { deleting = item },
+                        )
                     }
                 }
             }
@@ -167,20 +162,15 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                     item { Quiet("Nothing here yet. It fills in from your conversations.", Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
                 }
                 items(shownSection.items, key = { shownSection.name + ":" + it.ref.toString() }) { item ->
-                    val note = item.ref as? Ref.Note
-                    if (note != null) {
-                        NoteLine(item) { proof = note.id }
-                    } else {
-                        ItemCard(
-                            item = item,
-                            expanded = expanded == item.ref,
-                            onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: run { expanded = if (expanded == item.ref) null else item.ref } },
-                            onEdit = { editing = item },
-                            onDelete = { deleting = item },
-                            onConfirm = { model.confirm(item.ref) },
-                            onStatus = { status -> model.setStatus(item.ref, status) },
-                        )
-                    }
+                    KnowRow(
+                        item = item,
+                        expanded = expanded == item.ref,
+                        model = model,
+                        onProof = { proof = it },
+                        onExpand = { expanded = if (expanded == item.ref) null else item.ref },
+                        onEdit = { editing = item },
+                        onDelete = { deleting = item },
+                    )
                 }
             }
             else -> {
@@ -258,6 +248,33 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
             dismissButton = { TextButton(onClick = { deleting = null }) { Text("Keep it", color = clarity.text) } },
         )
     }
+}
+
+/** One item in a section or a search: a note opens its proof sheet, a focus its page, anything else opens in place. */
+@Composable
+private fun KnowRow(
+    item: Item,
+    expanded: Boolean,
+    model: KnowViewModel,
+    onProof: (Long) -> Unit,
+    onExpand: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val note = item.ref as? Ref.Note
+    if (note != null) {
+        NoteLine(item) { onProof(note.id) }
+        return
+    }
+    ItemCard(
+        item = item,
+        expanded = expanded,
+        onToggle = { (item.ref as? Ref.Focus)?.let { model.openFocus(it.id) } ?: onExpand() },
+        onEdit = onEdit,
+        onDelete = onDelete,
+        onConfirm = { model.confirm(item.ref) },
+        onStatus = { status -> model.setStatus(item.ref, status) },
+    )
 }
 
 /**
