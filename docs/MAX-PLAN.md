@@ -279,3 +279,42 @@ Not done, said plainly:
    phone, the app quietly falls back to keyword search and logs it there; tell Claude if you see that.)
 4. In Talk, ask about something from an older conversation in different words than you used then: the coach
    should still bring it up. Replies should not feel slower to start; if they do, say so.
+
+### Phase 6: planner, check-ins and reviews (14 Oct 2026, built; waiting for the owner's OK)
+
+Every rule was run through real-use cases first (`tools/planner.py`, then the Kotlin port running the same
+vectors). Planner vectors 91 to 164; planted bugs in `mutation_check.py` 107 to 145, none survive. Database
+version 8. No prompt was changed.
+
+| Step | What was built | How it is proven |
+|---|---|---|
+| 1. Rules reviewed on real use | A backlog's facts moved into the reference (`backlog_facts`). Fixed: a backlog fed by two targets on different days counted only the first one's days (a weekend target listed first hid every weekday answer from the pace); days before a plan starts counted as days left; after a gap his best fortnight was dropped; on the deadline day, once answered, the coach was told "the deadline has passed"; the plan line then said late steps "reach 4 of 4 by the deadline"; "Answer rate 0%" for a backlog nothing was linked to; the Plan screen read a backlog's start day from the clock again. | 24 new vectors, 9 planted bugs, PlannerTest |
+| 2. Plan changes mid-way | `target_version` (schema 8): a target's values from each day a change took effect, written with every change he taps. PLAN_STATE: "So far on the plan for B1: the steps asked for 20, done 18, behind by 2" (a ramp judged by what its steps asked each day, ended steps included). CHECKIN_FACTS: "changed on 12 Oct (target 1 → 2). In the 14 days before: done on 14 of 14 ... Since: done on 5 of 6". | 21 vectors, 14 planted bugs, MigrationTest 7 to 8, repository and PlanBlocks tests |
+| 3. Goals competing for the same hours | A session's minutes (its unit in minutes or hours, or his estimate, new field under Edit), his hours per weekday (new, in Plan, Goals). PLAN_STATE: the minutes every goal's targets take on each of the next 7 days against his hours, days over, targets with no time, the week in all; the Availability line says his hours. The same week on the Plan screen. | 20 vectors, 10 planted bugs, PlanBlocksTest |
+| 4. Better review facts | Per target: the period before, the 28-day done-rate trend the spec promised (section 6.2) and never had, the time of day he answered. Per backlog: plan versus actual for the period, under the values in force each day (spec section 8). | 8 vectors, 5 planted bugs, ReviewFactsTest |
+
+Not done, said plainly:
+- Pace windows still judge every past day by today's schedule. After a change from weekdays to daily, the next
+  14 days' answer rate counts the old weekends as unanswered (the pace itself is right). The history now exists
+  to fix this; it was left out because it touches every pace number and the gain is two weeks of a lower answer
+  rate after a schedule change.
+- Targets from before database version 8 have no history: they are read as their current values from their start
+  day, so a change made before this update is not seen.
+- The load counts only targets with a time. Until he gives his targets a time (or counts them in minutes) and sets
+  his hours, the coach gets no load line, exactly as before.
+- The coach's prompt still says "check the load against their hours" without naming the new line, and does not
+  know he can set his hours in Plan. A one-line prompt change would let it point him there; prompts change only
+  with the owner's OK, so it is proposed, not made: in `mode_plan.md`, under "Fit it to real days": "If PLAN_STATE
+  has no Time planned line, they can give a target the minutes a session takes and set their hours in Plan, Goals."
+- The Android build, lint and tests ran in GitHub Actions, not in this session (the owner's choice in Phase 0).
+  Nothing was tried on a phone.
+
+**What the owner checks on the phone** (after installing this build over the old one):
+1. Open the app once: it updates the database to version 8 (no data changes). Plan should look as before.
+2. Plan, Goals: a new card "Your time, next 7 days". Tap "Set your hours" and give the hours you really have each
+   day (1.5 is an hour and a half). Then, under Edit on a goal, give a target the minutes one session takes.
+   The card should show each day's minutes against your hours, and say "over" in words on a full day.
+3. In a Plan chat, ask "do my plans fit in my week?": the coach should use the app's minutes, not its own sums.
+4. Change a target with the coach (a target_change card). After a few days of check-ins the coach can say how it
+   has gone since the change, and a ramp says whether it is ahead or behind its steps.
+5. Next Sunday's review: each target has "The week before" and, after a few weeks, "Done rate by week".
