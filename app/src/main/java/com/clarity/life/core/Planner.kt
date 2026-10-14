@@ -118,6 +118,9 @@ data class ChangeCompare(
     val after: ChangeSide,
 )
 
+/** One 7-day stretch of a done-rate trend (done_trend). [rate] is null with fewer than 3 answered days. */
+data class TrendWeek(val first: LocalDate, val last: LocalDate, val answered: Int, val done: Int, val rate: Double?)
+
 /** One weekly review's figures, as the re-plan trigger reads them. */
 data class ReviewPace(val projectedDone: Double, val remaining: Double, val answeredDays: Int)
 
@@ -613,6 +616,32 @@ object Planner {
             return ChangeCompare(day, fields, java.time.temporal.ChronoUnit.DAYS.between(bFirst, day).toInt(), b, a)
         }
         return null
+    }
+
+    const val TREND_WEEKS = 4
+
+    /**
+     * The done rate of each of the last [weeks] 7-day stretches ending on [last], oldest first (spec 6.2, the
+     * 28-day trend per target; rest days left out). A rate needs [REASON_MIN_N] answered scheduled days; days
+     * before [start] are not part of a stretch.
+     */
+    fun doneTrend(
+        checkins: List<CheckIn>,
+        schedule: String,
+        last: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+        weeks: Int = TREND_WEEKS,
+        start: LocalDate? = null,
+    ): List<TrendWeek> = (weeks - 1 downTo 0).map { k ->
+        val b = last.minusDays(7L * k)
+        var a = b.minusDays(6)
+        if (start != null && start.isAfter(a)) a = start
+        if (a.isAfter(b)) {
+            TrendWeek(b.minusDays(6), b, 0, 0, null)
+        } else {
+            val w = window(checkins, schedule, a, b, restDates)
+            TrendWeek(a, b, w.answered, w.done, if (w.answered >= REASON_MIN_N) roundHalfUp(100.0 * w.done / w.answered) else null)
+        }
     }
 
     /** True when the last two weekly reviews both had enough data and both projected below 85% of what remained. */

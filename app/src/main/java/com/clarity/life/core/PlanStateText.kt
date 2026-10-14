@@ -168,6 +168,25 @@ object PlanStateText {
             "done on ${c.before.done} of ${c.before.answered} answered days, ${num(c.before.amount / c.before.answered)} per answered day. " +
             "Since: done on ${c.after.done} of ${c.after.answered}, ${num(c.after.amount / c.after.answered)} per answered day."
 
+    /** "Done rate by week, last 4 weeks (oldest first): 50%, 60%, too few answers, 67%." Null under two rates. */
+    fun trendLine(trend: List<TrendWeek>): String? {
+        if (trend.count { it.rate != null } < 2) return null
+        return "Done rate by week, last ${trend.size} weeks (oldest first): " +
+            trend.joinToString(", ") { t -> t.rate?.let { "${it.toInt()}%" } ?: "too few answers" } + "."
+    }
+
+    /** "B1 "Lectures": the plan asked for 14 in this period, done 12, behind by 2." (plan versus actual) */
+    fun planPeriodLine(bid: String, name: String, asked: Double, done: Double): String {
+        val gap = done - asked
+        val tail = when {
+            gap < -Planner.EPS -> "behind by ${g(Planner.roundHalfUp(-gap, 0.1))}"
+            gap > Planner.EPS -> "ahead by ${g(Planner.roundHalfUp(gap, 0.1))}"
+            else -> "exactly on it"
+        }
+        return "$bid \"$name\": the plan asked for ${g(Planner.roundHalfUp(asked, 0.1))} in this period, " +
+            "done ${g(Planner.roundHalfUp(done, 0.1))}, $tail."
+    }
+
     fun reviewOptionsLine(options: List<ReviewOption>): String =
         "Review options: " + options.joinToString(", ") { "${it.date} (${it.weekday}, ${it.after})" } + "."
 

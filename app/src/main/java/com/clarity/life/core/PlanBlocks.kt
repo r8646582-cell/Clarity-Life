@@ -331,6 +331,10 @@ object PlanBlocks {
         Band("late at night (22:00 to 4:00)") { it >= 1320 || it < 240 },
     )
 
+    /** The time-band lines for answers already chosen (a review's period): see [timeBandLines]. */
+    fun timeBandLinesOf(rows: List<CheckIn>): List<String> =
+        timeBandLines(Answers(rows, rows.filter { it.level in Planner.SHORT_LEVELS }))
+
     /**
      * Time-band lines: "answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them". Only
      * answers given on the day itself count (schema 6 records the time). A band is written when at least 3 of

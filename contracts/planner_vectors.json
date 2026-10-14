@@ -5679,6 +5679,597 @@
     "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 45 of 120 min; Thu 15 Oct 45 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 45 of 240 min; Sun 18 Oct 45 of 0 min, 45 over; Mon 19 Oct planned rest day; Tue 20 Oct 45 of 120 min.",
     "Next 7 days in all: 270 of 660 min available."
    ]
+  },
+  {
+   "name": "done rate trend: four 7-day stretches, oldest first; a stretch with fewer than 3 answers has no rate",
+   "fn": "done_trend",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-21",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-22",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-23",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-24",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-25",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-26",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-27",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-28",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-29",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-30",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-02",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-03",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-04",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-12",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-13",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-16",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-17",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "rest",
+      "amount": 0
+     }
+    ],
+    "schedule": "daily",
+    "last": "2026-10-18"
+   },
+   "expect": [
+    {
+     "first": "2026-09-21",
+     "last": "2026-09-27",
+     "answered": 7,
+     "done": 3,
+     "rate": 43.0
+    },
+    {
+     "first": "2026-09-28",
+     "last": "2026-10-04",
+     "answered": 7,
+     "done": 4,
+     "rate": 57.0
+    },
+    {
+     "first": "2026-10-05",
+     "last": "2026-10-11",
+     "answered": 2,
+     "done": 2,
+     "rate": null
+    },
+    {
+     "first": "2026-10-12",
+     "last": "2026-10-18",
+     "answered": 7,
+     "done": 4,
+     "rate": 57.0
+    }
+   ]
+  },
+  {
+   "name": "done rate trend: rest days and days off are not answers",
+   "fn": "done_trend",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-21",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-22",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-23",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-24",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-25",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-26",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-27",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-28",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-29",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-30",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-02",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-03",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-04",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-12",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-13",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-16",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-17",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "rest",
+      "amount": 0
+     }
+    ],
+    "schedule": "weekdays",
+    "last": "2026-10-18",
+    "rest_dates": [
+     "2026-10-12"
+    ]
+   },
+   "expect": [
+    {
+     "first": "2026-09-21",
+     "last": "2026-09-27",
+     "answered": 5,
+     "done": 3,
+     "rate": 60.0
+    },
+    {
+     "first": "2026-09-28",
+     "last": "2026-10-04",
+     "answered": 5,
+     "done": 4,
+     "rate": 80.0
+    },
+    {
+     "first": "2026-10-05",
+     "last": "2026-10-11",
+     "answered": 2,
+     "done": 2,
+     "rate": null
+    },
+    {
+     "first": "2026-10-12",
+     "last": "2026-10-18",
+     "answered": 4,
+     "done": 3,
+     "rate": 75.0
+    }
+   ]
+  },
+  {
+   "name": "done rate trend: stretches before the target started have no rate",
+   "fn": "done_trend",
+   "args": {
+    "checkins": [
+     {
+      "day": "2026-09-21",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-22",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-23",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-24",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-25",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-26",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-27",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-09-28",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-29",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-09-30",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-01",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-02",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-03",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-04",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-05",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-06",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-12",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-13",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-16",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-17",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-18",
+      "level": "rest",
+      "amount": 0
+     }
+    ],
+    "schedule": "daily",
+    "last": "2026-10-18",
+    "start": "2026-10-08"
+   },
+   "expect": [
+    {
+     "first": "2026-09-21",
+     "last": "2026-09-27",
+     "answered": 0,
+     "done": 0,
+     "rate": null
+    },
+    {
+     "first": "2026-09-28",
+     "last": "2026-10-04",
+     "answered": 0,
+     "done": 0,
+     "rate": null
+    },
+    {
+     "first": "2026-10-08",
+     "last": "2026-10-11",
+     "answered": 0,
+     "done": 0,
+     "rate": null
+    },
+    {
+     "first": "2026-10-12",
+     "last": "2026-10-18",
+     "answered": 7,
+     "done": 4,
+     "rate": 57.0
+    }
+   ]
+  },
+  {
+   "name": "trend text: a week with too few answers says so",
+   "fn": "trend_line",
+   "args": {
+    "trend": [
+     {
+      "first": "2026-09-21",
+      "last": "2026-09-27",
+      "answered": 7,
+      "done": 3,
+      "rate": 43.0
+     },
+     {
+      "first": "2026-09-28",
+      "last": "2026-10-04",
+      "answered": 7,
+      "done": 4,
+      "rate": 57.0
+     },
+     {
+      "first": "2026-10-05",
+      "last": "2026-10-11",
+      "answered": 2,
+      "done": 2,
+      "rate": null
+     },
+     {
+      "first": "2026-10-12",
+      "last": "2026-10-18",
+      "answered": 7,
+      "done": 4,
+      "rate": 57.0
+     }
+    ]
+   },
+   "expect": "Done rate by week, last 4 weeks (oldest first): 43%, 57%, too few answers, 57%."
+  },
+  {
+   "name": "trend text: nothing with fewer than two rates",
+   "fn": "trend_line",
+   "args": {
+    "trend": [
+     {
+      "first": "2026-09-21",
+      "last": "2026-09-27",
+      "answered": 0,
+      "done": 0,
+      "rate": null
+     },
+     {
+      "first": "2026-09-28",
+      "last": "2026-10-04",
+      "answered": 0,
+      "done": 0,
+      "rate": null
+     },
+     {
+      "first": "2026-10-05",
+      "last": "2026-10-11",
+      "answered": 0,
+      "done": 0,
+      "rate": null
+     },
+     {
+      "first": "2026-10-12",
+      "last": "2026-10-18",
+      "answered": 7,
+      "done": 4,
+      "rate": 57.0
+     }
+    ]
+   },
+   "expect": null
+  },
+  {
+   "name": "plan versus actual: behind",
+   "fn": "plan_period_line",
+   "args": {
+    "bid": "B1",
+    "name": "Lectures",
+    "asked": 14,
+    "done": 12
+   },
+   "expect": "B1 \"Lectures\": the plan asked for 14 in this period, done 12, behind by 2."
+  },
+  {
+   "name": "plan versus actual: ahead",
+   "fn": "plan_period_line",
+   "args": {
+    "bid": "B1",
+    "name": "Lectures",
+    "asked": 14,
+    "done": 15.5
+   },
+   "expect": "B1 \"Lectures\": the plan asked for 14 in this period, done 15.5, ahead by 1.5."
+  },
+  {
+   "name": "plan versus actual: on it",
+   "fn": "plan_period_line",
+   "args": {
+    "bid": "B1",
+    "name": "Lectures",
+    "asked": 14,
+    "done": 14
+   },
+   "expect": "B1 \"Lectures\": the plan asked for 14 in this period, done 14, exactly on it."
   }
  ]
 }

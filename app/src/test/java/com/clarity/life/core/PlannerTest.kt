@@ -147,6 +147,10 @@ class PlannerTest {
         side(o.getValue("after").jsonObject),
     )
 
+    private fun trendJson(t: TrendWeek): JsonElement = json(
+        mapOf("first" to t.first.toString(), "last" to t.last.toString(), "answered" to t.answered, "done" to t.done, "rate" to t.rate),
+    )
+
     private fun loadJson(l: PlanLoad.Load): JsonElement = json(
         mapOf(
             "days" to l.days.map {
@@ -349,6 +353,27 @@ class PlannerTest {
             val hours = args["hours"]?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.jsonArray?.map { it.jsonPrimitive.content.toDouble() }
             json(PlanLoad.loadLines(load, names, hours))
         }
+
+        "done_trend" -> json(
+            Planner.doneTrend(
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                args.str("schedule"),
+                LocalDate.parse(args.str("last")),
+                restDates(args),
+                args.intOr("weeks", Planner.TREND_WEEKS),
+                args.strOrNull("start")?.let(LocalDate::parse),
+            ).map(::trendJson),
+        )
+
+        "trend_line" -> json(
+            PlanStateText.trendLine(
+                args.getValue("trend").jsonArray.map { it.jsonObject }.map {
+                    TrendWeek(LocalDate.parse(it.str("first")), LocalDate.parse(it.str("last")), it.int("answered"), it.int("done"), it.dblOrNull("rate"))
+                },
+            ),
+        )
+
+        "plan_period_line" -> json(PlanStateText.planPeriodLine(args.str("bid"), args.str("name"), args.dbl("asked"), args.dbl("done")))
 
         "plan_progress_line" -> json(PlanStateText.planProgressLine(args.str("bid"), args.str("name"), progress(args.getValue("p").jsonObject)))
 

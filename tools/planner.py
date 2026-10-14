@@ -730,6 +730,51 @@ def load_lines(load, names, hours=None):
     return lines
 
 
+# ---------- review facts (Max plan Phase 6, step 4) ----------
+
+TREND_WEEKS = 4
+
+
+def done_trend(checkins, schedule, last, rest_dates=(), weeks=TREND_WEEKS, start=None):
+    """The done rate of each of the last `weeks` 7-day stretches ending on `last`, oldest first (spec 6.2: the
+    28-day trend per target, rest days left out). A stretch's rate needs at least REASON_MIN_N answered scheduled
+    days, else None; days before start (the target's first day) are not part of it."""
+    last = d(last)
+    out = []
+    for k in range(weeks - 1, -1, -1):
+        b = last - timedelta(days=7 * k)
+        a = b - timedelta(days=6)
+        if start is not None and d(start) > a:
+            a = d(start)
+        if a > b:
+            out.append({"first": (b - timedelta(days=6)).isoformat(), "last": b.isoformat(), "answered": 0,
+                        "done": 0, "rate": None})
+            continue
+        w = _window(checkins, schedule, a, b, rest_dates)
+        rate = round_half_up(100 * w["done"] / w["answered"]) if w["answered"] >= REASON_MIN_N else None
+        out.append({"first": a.isoformat(), "last": b.isoformat(), "answered": w["answered"], "done": w["done"],
+                    "rate": rate})
+    return out
+
+
+def trend_line(trend):
+    """'Done rate by week, last 4 weeks (oldest first): 50%, 60%, too few answers, 67%.' None when fewer than two
+    weeks have a rate (a trend needs two points)."""
+    if sum(1 for t in trend if t["rate"] is not None) < 2:
+        return None
+    return "Done rate by week, last %d weeks (oldest first): %s." % (
+        len(trend), ", ".join("%d%%" % t["rate"] if t["rate"] is not None else "too few answers" for t in trend))
+
+
+def plan_period_line(bid, name, asked, done):
+    """'B1 "Lectures": the plan asked for 14 in this period, done 12, behind by 2.' (plan versus actual)."""
+    gap = done - asked
+    tail = ("behind by %g" % round_half_up(-gap, 0.1) if gap < -EPS else
+            "ahead by %g" % round_half_up(gap, 0.1) if gap > EPS else "exactly on it")
+    return '%s "%s": the plan asked for %g in this period, done %g, %s.' % (
+        bid, name, round_half_up(asked, 0.1), round_half_up(done, 0.1), tail)
+
+
 # ---------- text for the context packet (code-written, so the coach only copies) ----------
 
 def _fmt(x):
