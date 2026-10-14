@@ -46,11 +46,30 @@ class LifetimeTimingTest {
         Log.i(TAG, text)
     }
 
+    /** The steps inside the last timed call ([Spans]): name to (total nanoseconds, times run). */
+    private val steps = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, Int>>()
+
     private inline fun <T> timed(label: String, block: () -> T): T {
+        steps.clear()
         val t0 = SystemClock.elapsedRealtimeNanos()
         val out = block()
         line("%-44s %8.1f ms".format(label, (SystemClock.elapsedRealtimeNanos() - t0) / 1e6))
+        // What it was made of (Max plan Phase 5): each step of 1 ms or more, slowest first.
+        for ((name, v) in steps.entries.sortedByDescending { it.value.first }) {
+            if (v.first < 1_000_000L) continue
+            line("    %-40s %8.1f ms%s".format(name, v.first / 1e6, if (v.second > 1) " (${v.second} times)" else ""))
+        }
+        steps.clear()
         return out
+    }
+
+    /** The steps recorded since the last [timed] call, slowest first, as a mean over [runs]. */
+    private fun breakdown(runs: Int) {
+        for ((name, v) in steps.entries.sortedByDescending { it.value.first }) {
+            if (v.first / runs < 1_000_000L) continue
+            line("    %-40s %8.1f ms on average".format(name, v.first / 1e6 / runs))
+        }
+        steps.clear()
     }
 
     private fun open(secrets: SecretStore): ClarityDatabase {
@@ -67,6 +86,7 @@ class LifetimeTimingTest {
         assumeTrue("runs only with clarity_timing=1", InstrumentationRegistry.getArguments().getString("clarity_timing") == "1")
         context.deleteDatabase(NAME)
         val secrets = SecretStore(context)
+        com.clarity.life.core.Spans.sink = { name, nanos -> steps.merge(name, nanos to 1) { x, y -> (x.first + y.first) to (x.second + y.second) } }
         val now = Instant.parse("2026-10-14T05:00:00Z")
         val nowMs = now.toEpochMilli()
         try {
@@ -113,12 +133,14 @@ class LifetimeTimingTest {
             )
             val first = timed("search: first (reads every vector)") { search.relevantPast(conversation, questions[0], "UTC", 0, nowMs) }
             assertTrue("ten years of messages must give search results", first.items.isNotEmpty())
+            steps.clear()
             val warm = questions.drop(1).map { q ->
                 val t0 = SystemClock.elapsedRealtimeNanos()
                 search.relevantPast(conversation, q, "UTC", 0, nowMs)
                 (SystemClock.elapsedRealtimeNanos() - t0) / 1e6
             }.sorted()
             line("%-44s %8.1f ms (median of %d, worst %.1f)".format("search: later", warm[warm.size / 2], warm.size, warm.last()))
+            breakdown(warm.size)
             val heap = Runtime.getRuntime()
             line("memory: %.0f MB in use of %.0f MB allowed, after search".format(
                 (heap.totalMemory() - heap.freeMemory()) / 1e6, heap.maxMemory() / 1e6))
@@ -140,6 +162,7 @@ class LifetimeTimingTest {
             line("database file: %.1f MB (+ %.1f MB write-ahead log)".format(file.length() / 1e6, wal.length() / 1e6))
             db.close()
         } finally {
+            com.clarity.life.core.Spans.sink = null
             context.deleteDatabase(NAME)
         }
     }

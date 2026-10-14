@@ -315,8 +315,15 @@ object Planner {
         val lastEnd = today.minusDays(1)
         var end = minOf(days.min().plusDays((WINDOW - 1).toLong()), lastEnd)
         var best: Double? = null
+        // Each window reads only the check-ins inside it (Max plan Phase 5): ten years of daily answers made this
+        // about 13 million steps. They go to [window] in their given order, so every sum is the same as before.
+        val byDay = checkins.withIndex().sortedBy { it.value.day }
+        val sortedDays = byDay.map { it.value.day }
         while (!end.isAfter(lastEnd)) {
-            val w = window(checkins, schedule, end.minusDays((WINDOW - 1).toLong()), end, restDates)
+            val first = end.minusDays((WINDOW - 1).toLong())
+            val inside = byDay.subList(firstAtOrAfter(sortedDays, first), firstAtOrAfter(sortedDays, end.plusDays(1)))
+                .sortedBy { it.index }.map { it.value }
+            val w = window(inside, schedule, first, end, restDates)
             if (w.answered >= MIN_ANSWERED) {
                 val p = w.amount / w.answered
                 if (best == null || p > best) best = p
@@ -324,6 +331,17 @@ object Planner {
             end = end.plusDays(1)
         }
         return best
+    }
+
+    /** The position of the first day in [sorted] on or after [day] ([sorted].size when there is none). */
+    private fun firstAtOrAfter(sorted: List<LocalDate>, day: LocalDate): Int {
+        var lo = 0
+        var hi = sorted.size
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (sorted[mid].isBefore(day)) lo = mid + 1 else hi = mid
+        }
+        return lo
     }
 
     private fun reach(pace: Double, left: Int, remaining: Double, step: Double): Double {

@@ -6,6 +6,7 @@ import com.clarity.life.core.PlanApply
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.Planner
 import com.clarity.life.core.PromiseText
+import com.clarity.life.core.Spans
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.Values
 import com.clarity.life.data.entity.BacklogRow
@@ -242,8 +243,8 @@ class PlannerRepository @Inject constructor(
 
     /** The active tracker as PLAN_STATE and CHECKIN_FACTS read it on [today]. */
     suspend fun tracker(today: LocalDate): PlanBlocks.Tracker {
-        val targets = liveTargets(today)
-        val checkins = if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id })
+        val targets = Spans.span("tracker: live targets read") { liveTargets(today) }
+        val checkins = Spans.span("tracker: their check-ins read") { if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id }) }
         val byTarget = checkins.groupBy { it.targetId }
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
@@ -260,7 +261,9 @@ class PlannerRepository @Inject constructor(
         val liveIds = targets.map { it.id }.toSet()
         // A paused or ended target's check-ins still count toward its backlog's done, never toward the pace.
         val offTargets = if (backlogs.isEmpty()) emptyList() else dao.targetsOfBacklogs(backlogs.map { it.id }).filter { it.id !in liveIds }
-        val offCheckins = if (offTargets.isEmpty()) emptyMap() else dao.checkinsOf(offTargets.map { it.id }).groupBy { it.targetId }
+        val offCheckins = Spans.span("tracker: ended targets' check-ins read") {
+            if (offTargets.isEmpty()) emptyMap() else dao.checkinsOf(offTargets.map { it.id }).groupBy { it.targetId }
+        }
         return PlanBlocks.Tracker(
             goals = dao.activeGoals().map { PlanBlocks.Goal(it.id, it.title, it.deadline?.let(LocalDate::parse)) },
             targets = targets.map { t ->

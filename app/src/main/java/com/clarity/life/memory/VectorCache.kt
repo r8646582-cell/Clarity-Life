@@ -1,6 +1,7 @@
 package com.clarity.life.memory
 
 import androidx.room.InvalidationTracker
+import com.clarity.life.core.Spans
 import com.clarity.life.core.VectorIndex
 import com.clarity.life.core.VectorMath
 import com.clarity.life.data.ClarityDatabase
@@ -50,7 +51,7 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         limit: Int,
         accept: (VectorIndex.Entry) -> Boolean,
     ): List<VectorIndex.Hit> = lock.withLock {
-        refresh()
+        Spans.span("meaning: vectors brought up to date") { refresh() }
         index.search(query, floor - VectorIndex.MARGIN, limit, accept)
     }
 

@@ -8,6 +8,7 @@ import com.clarity.life.core.RecallTime
 import com.clarity.life.core.Retrieval
 import com.clarity.life.core.ReviewFacts
 import com.clarity.life.core.SearchText
+import com.clarity.life.core.Spans
 import com.clarity.life.core.TimeFacts
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.dao.CheckinHit
@@ -293,7 +294,7 @@ class SearchIndex @Inject constructor(
         title: String = "",
         leftOutNotes: List<com.clarity.life.data.entity.NoteRow> = emptyList(),
     ): Block {
-        syncRecords()
+        Spans.span("search: records brought up to date") { syncRecords() }
         val resolver = Resolver(conversationId, tz, boundary, now)
         val today = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, boundary)
         val period = RecallTime.parse(newText, today)
@@ -301,20 +302,20 @@ class SearchIndex @Inject constructor(
 
         val lists = ArrayList<Pair<Double, List<Key>>>()
         if (period.start != null || period.promises) {
-            val items = datedItems(period, tz, boundary, resolver)
+            val items = Spans.span("search: the period's records") { datedItems(period, tz, boundary, resolver) }
             val chosen = Retrieval.dated(items, Retrieval.terms(rest), period.promises, period.outcome)
             lists += Retrieval.W_DATED to chosen.mapNotNull { Key.parse(it) }
         }
-        lists += Retrieval.W_NEW to keywordHits(Retrieval.terms(rest), resolver)
-        lists += Retrieval.W_NEW to meaningHits(newText, resolver)
+        lists += Retrieval.W_NEW to Spans.span("search: keyword (message)") { keywordHits(Retrieval.terms(rest), resolver) }
+        lists += Retrieval.W_NEW to Spans.span("search: meaning (message)") { meaningHits(newText, resolver) }
         if (leftOutNotes.isNotEmpty()) lists += Retrieval.W_NEW to leftOutNoteHits(leftOutNotes, Retrieval.terms(rest), resolver)
         Retrieval.conversationQuery(newText, earlier, title)?.let { q ->
-            lists += Retrieval.W_CONTEXT to keywordHits(Retrieval.terms(q), resolver)
-            lists += Retrieval.W_CONTEXT to meaningHits(q, resolver)
+            lists += Retrieval.W_CONTEXT to Spans.span("search: keyword (conversation)") { keywordHits(Retrieval.terms(q), resolver) }
+            lists += Retrieval.W_CONTEXT to Spans.span("search: meaning (conversation)") { meaningHits(q, resolver) }
         }
         val fused = Retrieval.fuse(lists)
         if (fused.isEmpty()) return Retrieval.block(emptyList())
-        val docs = resolver.resolve(fused)
+        val docs = Spans.span("search: results read") { resolver.resolve(fused) }
         val chosen = Retrieval.chooseFinal(fused, docs.mapValues { (_, d) -> Retrieval.Doc(d.candidate.text, d.conversation) })
         return Retrieval.block(chosen.mapNotNull { k -> docs[k]?.let { Retrieval.Hit(it.candidate, 0) } })
     }
@@ -615,17 +616,19 @@ class SearchIndex @Inject constructor(
      */
     private suspend fun meaningHits(text: String, r: Resolver): List<Key> {
         if (Retrieval.wordCount(text) < Retrieval.SEMANTIC_MIN_QUERY_WORDS) return emptyList()
-        val q = embedder.embed(text) ?: return emptyList()
-        val candidates = vectors.search(q, Retrieval.SEMANTIC_MIN, Retrieval.MEANING_CANDIDATES) { e ->
-            when (e.kind) {
-                MESSAGE, SUMMARY -> e.conversationId >= 0 && e.conversationId != r.conversationId
-                else -> true
+        val q = Spans.span("meaning: the message's vector made") { embedder.embed(text) } ?: return emptyList()
+        val candidates = Spans.span("meaning: in-memory scan") {
+            vectors.search(q, Retrieval.SEMANTIC_MIN, Retrieval.MEANING_CANDIDATES) { e ->
+                when (e.kind) {
+                    MESSAGE, SUMMARY -> e.conversationId >= 0 && e.conversationId != r.conversationId
+                    else -> true
+                }
             }
         }
         val keys = candidates.map { Key(it.entry.kind, it.entry.docId) }
         // Anything from the open conversation or gone since is dropped here; small talk is all alike, so a past
         // message needs a few words of substance to count, and twenty copies of one line count once.
-        val docs = r.resolve(keys)
+        val docs = Spans.span("meaning: candidates read") { r.resolve(keys) }
         val usable = keys.filter { k ->
             val d = docs[k] ?: return@filter false
             k.kind != MESSAGE || Retrieval.wordCount(d.candidate.text) >= Retrieval.SEMANTIC_MIN_DOC_WORDS
@@ -633,7 +636,7 @@ class SearchIndex @Inject constructor(
         val entries = candidates.associateBy { Key(it.entry.kind, it.entry.docId) }
         val out = ArrayList<Key>()
         for (k in Retrieval.distinctTexts(usable, usable.associateWith { docs.getValue(it).candidate.text })) {
-            val exact = vectors.exact(q, entries.getValue(k).entry) ?: continue
+            val exact = Spans.span("meaning: exact rescoring") { vectors.exact(q, entries.getValue(k).entry) } ?: continue
             if (exact >= Retrieval.SEMANTIC_MIN) out += k
             if (out.size >= Retrieval.FUSE_DEPTH) break
         }
