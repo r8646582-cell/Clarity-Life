@@ -44,7 +44,7 @@ jobs:
         # (Max plan Phase 7). Until the first ones are recorded they only run the other tests.
         run: |
           if ls app/src/test/screenshots/*.png >/dev/null 2>&1; then verify=-Proborazzi.test.verify=true
-          else verify=; echo "::warning::No approved screenshots yet: run the Record screenshots workflow."
+          else verify=-Proborazzi.test.record=true; echo "::warning::No approved screenshots yet: run the Record screenshots workflow."
           fi
           ./gradlew --no-daemon lintDebug testDebugUnitTest $verify assembleDebug
       - name: The database schema Room exported must be committed (prints it when it is not)
@@ -63,6 +63,14 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Keep this run's screenshots, to look at
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/src/test/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Keep test reports and changed screenshots when something fails
         if: failure()
         uses: actions/upload-artifact@v4

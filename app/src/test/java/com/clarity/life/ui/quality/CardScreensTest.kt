@@ -7,8 +7,8 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -36,8 +36,9 @@ class CardScreensTest {
 
     private val s = CardSamples()
 
+    /** Taps the [index]th button labelled [label]; a label that is not a button (a chip) is never tapped. */
     private fun click(label: String, index: Int = 0) {
-        compose.onAllNodesWithText(label)[index].performScrollTo().performClick()
+        compose.onAllNodes(hasText(label) and hasClickAction())[index].performScrollTo().performClick()
         compose.waitForIdle()
     }
 
@@ -116,10 +117,15 @@ class CardScreensTest {
         val texts = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
             .fetchSemanticsNodes()
         assertTrue("no text found", texts.isNotEmpty())
-        texts.forEach { node ->
+        val cut = texts.flatMap { node ->
             val layouts = mutableListOf<TextLayoutResult>()
             node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
-            layouts.forEach { assertTrue("text cut short: ${it.layoutInput.text}", !it.hasVisualOverflow) }
+            layouts.filter { it.hasVisualOverflow }.map {
+                "\"${it.layoutInput.text}\" (box ${it.size.width}x${it.size.height}px, text " +
+                    "${it.multiParagraph.width}x${it.multiParagraph.height}px, ${it.lineCount} lines, " +
+                    "wide ${it.didOverflowWidth}, tall ${it.didOverflowHeight})"
+            }
         }
+        assertTrue("text cut short:\n" + cut.joinToString("\n"), cut.isEmpty())
     }
 }
