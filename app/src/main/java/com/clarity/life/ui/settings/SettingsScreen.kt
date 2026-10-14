@@ -324,25 +324,13 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     var warnExport by remember { mutableStateOf(false) }
 
     Hint("Encrypted, weekly, to a folder you choose. Write the passphrase on paper: without it a backup cannot be restored.")
-    Label("Backup folder")
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            state.backupFolder.ifBlank { "Not chosen yet" },
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (state.backupFolder.isBlank()) clarity.muted else clarity.text,
-            modifier = Modifier.weight(1f),
-        )
-        SmallButton("Choose") { folder.launch(null) }
+    // Two-line rows: the name and its state on the left (a long folder path wraps, never squeezes), the button
+    // on the right.
+    BackupRow("Backup folder", state.backupFolder.ifBlank { "Not chosen yet" }) {
+        SmallButton(if (state.backupFolder.isBlank()) "Choose" else "Change") { folder.launch(null) }
     }
-    Label("Backup passphrase")
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            if (state.hasPassphrase) "Set" else "Not set yet",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (state.hasPassphrase) clarity.text else clarity.muted,
-            modifier = Modifier.weight(1f),
-        )
-        SmallButton(if (state.hasPassphrase) "Change" else "Set") { passphraseDialog = true }
+    BackupRow("Backup passphrase", if (state.hasPassphrase) "Set. Keep a copy on paper too." else "Not set yet") {
+        SmallButton(if (state.hasPassphrase) "Change" else "Set up") { passphraseDialog = true }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 14.dp)) {
         com.clarity.life.ui.theme.PrimaryButton(if (state.backingUp) "Backing up" else "Back up now", Modifier.weight(1f)) {
@@ -567,6 +555,27 @@ private fun Field(value: String, onChange: (String) -> Unit) {
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
     )
+}
+
+@Composable
+private fun BackupRow(title: String, value: String, button: @Composable () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+            Text(
+                value,
+                style = MaterialTheme.typography.bodySmall,
+                color = clarity.muted,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        button()
+    }
 }
 
 @Composable

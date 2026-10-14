@@ -197,20 +197,24 @@ fun TalkScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
             if (home) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { drawer = !drawer }) {
-                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
-                    }
+                // The date is centred on the screen, not between the icons (one on the left, two on the right).
+                Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
                     Text(
                         if (planState.ready) planner.longDay(planState.today) else "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = clarity.muted,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 104.dp),
                     )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { drawer = !drawer }) {
+                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
+                    }
+                    Spacer(Modifier.weight(1f))
                     IconButton(onClick = onOpenGuide) {
                         Icon(
                             Icons.AutoMirrored.Outlined.HelpOutline,
@@ -221,6 +225,7 @@ fun TalkScreen(
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = clarity.text)
                     }
+                }
                 }
             } else {
                 Row(
