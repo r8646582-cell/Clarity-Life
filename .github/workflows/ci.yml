@@ -106,6 +106,9 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
+          # A fixed emulator, fetched straight from Google (the stable one on 14 Oct 2026, 37.2.12, checksum
+          # checked). "Latest" went through sdkmanager, which twice failed to open the download on the runner.
+          emulator-build: 16428233
           script: |
             ./gradlew --no-daemon connectedDebugAndroidTest
             bash tools/emulator_smoke.sh
