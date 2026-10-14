@@ -166,3 +166,18 @@ Not done, said plainly:
   5 is part of the gain. The test bench on the real model is the check of the answers.
 - Broad periods ("what happened in March?") send at most 10 of what the period holds; patterns with no shared
   word or meaning are still missed.
+
+**Speed at ten years** (`LifetimeTimingTest`, CI emulator; runners vary by about 20% from run to run):
+
+| Measure | Phase 0 (run #125) | Phase 2, first build (run #133) | Phase 2, after the fix (run #136) |
+|---|---|---|---|
+| Search, later (median of 4) | 411 ms | 946 ms | 674 ms (worst 1,246) |
+| Search, first of the session | 5,745 ms | 7,057 ms | 5,307 ms |
+| Request, next message | 2,181 ms | 3,652 ms | 2,703 ms |
+| Request, new conversation | 5,866 ms | 5,835 ms | 5,433 ms |
+| Settings, rebuild search index | 2,939 ms | 3,313 ms | 2,378 ms |
+
+Phase 2 makes a message's search about half a second slower at ten years (it now searches up to five lists,
+not two, and brings the record index up to date after a check-in). The first build read up to 160 vectors from
+the database per search; that was fixed. What is left belongs to Phase 5 (speed), which also has the older
+costs: the plan tracker reading every check-in (about a second) and the first search reading every vector.
