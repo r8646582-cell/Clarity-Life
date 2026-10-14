@@ -74,7 +74,12 @@ class KnowViewModel @Inject constructor(
         val editValues: List<String> = listOf(text),
         /** A focus's status buttons: the words on the button and the status it sets. */
         val statusActions: List<Pair<String, String>> = emptyList(),
+        /** A note's proof, newest first, for the proof sheet: the day, the words, and whether he said them. */
+        val moments: List<Moment> = emptyList(),
     )
+
+    /** One evidence row as the proof sheet shows it: his own words ([said]) or the app's own count. */
+    data class Moment(val day: String, val text: String, val said: Boolean)
 
     data class Section(val name: String, val items: List<Item>)
 
@@ -169,7 +174,10 @@ class KnowViewModel @Inject constructor(
     private fun build(m: Memory, chapters: List<ChapterRow>, q: String, line: String?): State {
         val evidence = m.evidence.groupBy { it.noteId }
         fun noteItem(n: NoteRow, label: String? = null): Item {
-            val ev = (evidence[n.id] ?: emptyList()).map { KnowText.evidence(it.kind, it.text, it.day) }
+            val rows = evidence[n.id] ?: emptyList()
+            val ev = rows.map { KnowText.evidence(it.kind, it.text, it.day) }
+            val moments = rows.sortedWith(compareByDescending<NoteEvidenceRow> { it.day }.thenByDescending { it.id })
+                .map { Moment(KnowText.shortDay(it.day), it.text, it.kind != "count") }
             val active = n.status == "active"
             return Item(
                 ref = Ref.Note(n.id),
@@ -183,6 +191,7 @@ class KnowViewModel @Inject constructor(
                 canDelete = true,
                 canConfirm = active && n.confidence != "confirmed",
                 haystack = (listOf(label.orEmpty(), n.text) + ev).joinToString("\n"),
+                moments = moments,
             )
         }
 

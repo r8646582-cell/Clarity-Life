@@ -44,8 +44,6 @@ fun Answers(item: PromisesViewModel.Item, model: PromisesViewModel, onYellow: Bo
     var askingReason by rememberSaveable(item.row.id) { mutableStateOf(false) }
     var moving by rememberSaveable(item.row.id) { mutableStateOf(false) }
     val ink = if (onYellow) clarity.ground else clarity.text
-    val fill = if (onYellow) clarity.ground else clarity.text
-    val onFill = if (onYellow) clarity.text else clarity.ground
 
     if (askingReason) {
         Text("What got in the way?", style = MaterialTheme.typography.bodySmall, color = ink)
@@ -63,12 +61,20 @@ fun Answers(item: PromisesViewModel.Item, model: PromisesViewModel, onYellow: Bo
         }
         return
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        AnswerButton("Done", filled = true, fill = fill, onFill = onFill, ink = ink, Modifier.weight(1f)) { model.done(item.row.id) }
-        AnswerButton("Not done", filled = false, fill = fill, onFill = onFill, ink = ink, Modifier.weight(1f)) { askingReason = true }
-        AnswerButton("Moved", filled = false, fill = fill, onFill = onFill, ink = ink, Modifier.weight(1f)) { moving = true }
-        if (withLetGo) {
-            AnswerButton("Let go", filled = false, fill = fill, onFill = onFill, ink = ink, Modifier.weight(1f)) { model.letGo(item.row.id) }
+    // Two by two, so no word is squeezed on a narrow phone. Done is marked by a warm edge, not a bright fill:
+    // the four answers are equal choices, and none of them shouts.
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AnswerButton("Done", main = true, ink = ink, Modifier.weight(1f)) { model.done(item.row.id) }
+            AnswerButton("Not done", main = false, ink = ink, Modifier.weight(1f)) { askingReason = true }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AnswerButton("Moved", main = false, ink = ink, Modifier.weight(1f)) { moving = true }
+            if (withLetGo) {
+                AnswerButton("Let go", main = false, ink = ink, Modifier.weight(1f)) { model.letGo(item.row.id) }
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
     if (moving) {
@@ -94,9 +100,7 @@ fun Answers(item: PromisesViewModel.Item, model: PromisesViewModel, onYellow: Bo
 @Composable
 private fun AnswerButton(
     label: String,
-    filled: Boolean,
-    fill: Color,
-    onFill: Color,
+    main: Boolean,
     ink: Color,
     modifier: Modifier,
     onClick: () -> Unit,
@@ -105,19 +109,14 @@ private fun AnswerButton(
     Text(
         label,
         style = MaterialTheme.typography.labelLarge,
-        fontWeight = if (filled) FontWeight.SemiBold else FontWeight.Medium,
-        color = if (filled) onFill else ink,
+        fontWeight = if (main) FontWeight.SemiBold else FontWeight.Medium,
+        color = if (main) clarity.yellow else ink,
         modifier = modifier
             .heightIn(min = 48.dp)
-            .then(
-                if (filled) {
-                    Modifier.background(fill, shape)
-                } else {
-                    Modifier.background(clarity.raised, shape).border(1.dp, clarity.controlOutline, shape)
-                },
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .background(clarity.raised, shape)
+            .border(1.dp, if (main) clarity.yellowEdge else clarity.controlOutline, shape)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(vertical = 13.dp),
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
     )
 }
@@ -143,6 +142,7 @@ internal fun Chip(label: String, ink: Color, onClick: () -> Unit) = Text(
 @Composable
 fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
     var showPast by rememberSaveable { mutableStateOf(false) }
+    var pastShown by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(PAST_PAGE) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
         state.quietLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -175,7 +175,7 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
         state.due.forEach { item ->
             BoldCard(gap = 12) {
                 Kicker(item.kicker, clarity.yellow)
-                Text(item.row.text, style = MaterialTheme.typography.headlineSmall, color = clarity.text)
+                Text(item.row.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium, color = clarity.text)
                 Answers(item, model, onYellow = false, withLetGo = true)
             }
         }
@@ -201,7 +201,8 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
                     TextAction(if (showPast) "Hide" else "See all") { showPast = !showPast }
                 }
                 if (showPast) {
-                    state.past.forEach { item ->
+                    // After a year there can be hundreds: the newest first, a page at a time.
+                    state.past.take(pastShown).forEach { item ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(item.row.text, style = MaterialTheme.typography.bodyMedium, color = clarity.text)
@@ -214,6 +215,10 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
                             }
                         }
                     }
+                    val more = state.past.size - pastShown
+                    if (more > 0) {
+                        TextAction("Show ${minOf(more, PAST_PAGE)} earlier") { pastShown += PAST_PAGE }
+                    }
                 }
             }
         }
@@ -221,6 +226,9 @@ fun PromisesSection(state: PromisesViewModel.State, model: PromisesViewModel) {
         Spacer(Modifier.height(24.dp))
     }
 }
+
+/** Past promises shown at a time. */
+private const val PAST_PAGE = 12
 
 private val OUTCOMES = mapOf("kept" to "Done", "not_done" to "Not done", "moved" to "Moved", "let_go" to "Let go")
 private val WEEKDAY_SHORT = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")

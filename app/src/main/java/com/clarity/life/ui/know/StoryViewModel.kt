@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * Your story (spec 2.5, the owner's approved mockup of 13 Oct 2026). Every number comes from
  * [StoryRepository] and [Story]; the only AI text is the monthly story's short version and overcame lines,
  * which were checked before they were saved. The page never writes anything: That's right, Not quite and
- * Delete happen on the note itself in What I know, and Talk opens a new conversation.
+ * Delete happen in the proof sheet, through What I know's commands, and Talk opens a new conversation.
  */
 @HiltViewModel
 class StoryViewModel @Inject constructor(
@@ -81,8 +81,8 @@ class StoryViewModel @Inject constructor(
                         thenQuote = then,
                         nowQuote = now,
                         overcame = overcame,
-                        helps = notes.filter { n -> n.kind == "what_helps" },
-                        strengths = notes.filter { n -> n.kind == "strength" },
+                        helps = notes.filter { n -> n.kind == "what_helps" }.sortedWith(NOTE_ORDER),
+                        strengths = notes.filter { n -> n.kind == "strength" }.sortedWith(NOTE_ORDER),
                         chapters = chapters,
                     )
                 }
@@ -164,6 +164,11 @@ class StoryViewModel @Inject constructor(
     }
 
     companion object {
+        /** Confirmed first, then the most often seen, then the most recent: the first rows are the surest. */
+        private val NOTE_ORDER = compareByDescending<NoteRow> { it.confidence == "confirmed" }
+            .thenByDescending { it.timesSeen }
+            .thenByDescending { it.lastSeen }
+
         private val MONTHS = listOf(
             "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
             "November", "December",

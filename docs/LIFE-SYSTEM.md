@@ -319,6 +319,8 @@ Decided on 13 Oct 2026, the 0.1.6 redesign (the owner approved the mockups on th
 
 Decided on 13 Oct 2026, later the same day: the **morning brief is removed** (Talk home, Plan, Today and its Settings switch); its background job no longer runs. **Your story** is made cleaner: one title block, the range switch only once it matters, a counts card only once something is counted, and what helps and strengths as a list with their counts written out.
 
+Decided on 14 Oct 2026 (Clarity 0.1.11, the owner's request for a design that stays calm after a year of use): a note in **Your story** or in a What I know section opens its proof in a **sheet over the page** (the note, its grade, how often and when, the newest thing he said, every moment folded, eight at a time; That's right, Not quite, Delete), never a jump to another screen. Your story lists the three surest notes (confirmed, then most seen) on two lines each with "Show N more"; "What you overcame" shows Then and Now and unfolds what he did. **What I know** shows its sections as one list with counts. Promise answers are two by two, with Done marked by a warm edge. Past promises show twelve at a time. Coach cards keep the Saved receipt and get no Undo. Mockup: `docs/mockups/redesign/Screens.html`.
+
 ---
 
 ## 18. Designed for few bugs

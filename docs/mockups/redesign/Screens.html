@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clarity Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a spec bench. Controls on top, one phone in the middle, a short change log beside it on wide screens.
+   Single dark look on purpose: Clarity itself is a dark app, so the page commits to it. */
+:root {
+  color-scheme: dark;
+  --backdrop: #08070B;
+  --ground: #0F0E13;
+  --surface: #1A1820;
+  --raised: #24212C;
+  --hair: #2D2A36;
+  --outline: #3A3645;
+  --text: #F5F3F8;
+  --muted: #A9A4B6;
+  --faint: #6F6A7C;
+  --yellow: #FFD23F;
+  --yellow-ink: #1A1505;
+  --yellow-soft: rgba(255, 210, 63, 0.11);
+  --yellow-line: rgba(255, 210, 63, 0.38);
+  --coral: #FF7A66;
+  --coral-soft: rgba(255, 122, 102, 0.10);
+  --coral-line: rgba(255, 122, 102, 0.42);
+  --green: #8FD6A0;
+  --green-soft: rgba(143, 214, 160, 0.12);
+  --danger: #FF8A7C;
+  --tabbar: #0B0A0E;
+  --scrim: rgba(5, 4, 8, 0.62);
+  --sans: 'Instrument Sans', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--backdrop); color: var(--text);
+  font-family: var(--sans); font-size: 14px; -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; color: inherit; }
+button:focus-visible, [tabindex]:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+svg.i { width: 20px; height: 20px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- bench chrome ---------- */
+.bench { max-width: 1120px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+.bench-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px; }
+.bench-title { font-family: var(--serif); font-size: 34px; line-height: 1; letter-spacing: -0.01em; margin: 0; }
+.bench-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--hair); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 9px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--outline); }
+.picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.pick-group { background: var(--ground); border: 1px solid var(--hair); border-radius: 14px; padding: 10px; min-width: 0; }
+.pick-label { font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); font-weight: 600; margin: 2px 4px 8px; }
+.pick-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.pick { border: 1px solid var(--hair); background: var(--surface); color: var(--muted); font-size: 12.5px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.pick:hover { color: var(--text); border-color: var(--outline); }
+.pick[aria-current="true"] { color: var(--yellow); border-color: var(--yellow-line); background: var(--yellow-soft); }
+.pick .new { font-size: 10px; font-weight: 700; color: var(--coral); margin-left: 4px; }
+.stage { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 24px; }
+@media (min-width: 900px) { .stage { grid-template-columns: 410px minmax(0, 1fr); justify-items: start; align-items: start; } }
+.notes { max-width: 560px; min-width: 0; }
+.notes h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 4px 0 10px; }
+.notes p { color: var(--muted); line-height: 1.55; margin: 0 0 12px; font-size: 13.5px; }
+.notes ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.notes li { background: var(--ground); border: 1px solid var(--hair); border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.notes li b { color: var(--text); font-weight: 600; }
+.notes .tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--yellow); margin-right: 6px; }
+.notes .tag.fix { color: var(--coral); }
+
+/* ---------- phone ---------- */
+.phone { width: 400px; max-width: 100%; height: 852px; background: var(--ground); border-radius: 46px; border: 9px solid #1B1A21; box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+@media (max-width: 460px) { .phone { border-width: 0; border-radius: 22px; height: 800px; box-shadow: none; } }
+.statusbar { height: 36px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.statusbar .sys { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.viewport { flex: 1; min-height: 0; position: relative; }
+.screen { position: absolute; inset: 0; overflow-y: auto; padding: 4px 20px 24px; display: none; flex-direction: column; gap: 12px; scrollbar-width: none; }
+.screen::-webkit-scrollbar { display: none; }
+.screen.on { display: flex; }
+.d1, .d45 { }
+body[data-mode="d1"] .d45 { display: none !important; }
+body[data-mode="d45"] .d1 { display: none !important; }
+
+/* tab bar */
+.tabbar { height: 74px; flex-shrink: 0; background: var(--tabbar); border-top: 1px solid var(--hair); display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; padding: 0 10px 6px; }
+.tabbar[hidden] { display: none; }
+.tab { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 500; color: var(--muted); cursor: pointer; }
+.tab .pill { width: 58px; height: 30px; border-radius: 15px; display: grid; place-items: center; position: relative; }
+.tab[aria-current="true"] { color: var(--text); }
+.tab[aria-current="true"] .pill { background: var(--yellow-soft); color: var(--yellow); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); display: inline-block; }
+.tab .dot { position: absolute; top: 3px; right: 13px; box-shadow: 0 0 0 2px var(--tabbar); }
+
+/* type */
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.eyebrow.y { color: var(--yellow); }
+.eyebrow.c { color: var(--coral); }
+.h1 { font-family: var(--serif); font-weight: 400; font-size: 42px; line-height: 1.02; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.h2 { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.05; margin: 0; text-wrap: balance; }
+.h3 { font-size: 16px; font-weight: 600; margin: 0; }
+.lede { font-family: var(--serif); font-style: italic; font-size: 21px; color: var(--muted); margin: 0; }
+.meta { font-size: 12.5px; color: var(--muted); }
+.small { font-size: 12px; color: var(--faint); }
+.num { font-variant-numeric: tabular-nums; }
+.sec { font-size: 15px; font-weight: 600; margin: 10px 0 -2px; display: flex; justify-content: space-between; align-items: baseline; }
+.sec .meta { font-weight: 400; }
+
+/* surfaces */
+.card { background: var(--surface); border: 1px solid var(--hair); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card.y { background: linear-gradient(180deg, rgba(255,210,63,0.09), rgba(255,210,63,0.03)); border-color: var(--yellow-line); }
+.card.suggest { border-color: var(--coral-line); background: linear-gradient(180deg, rgba(255,122,102,0.08), rgba(255,122,102,0.02)); }
+.card.receipt { background: var(--ground); border-color: var(--hair); }
+.card.tight { padding: 12px 14px; gap: 6px; }
+.list { background: var(--surface); border: 1px solid var(--hair); border-radius: 18px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.row + .row { border-top: 1px solid var(--hair); }
+.row:hover { background: rgba(255,255,255,0.02); }
+.row .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row .t { font-size: 14.5px; font-weight: 500; line-height: 1.35; }
+.row .s { font-size: 12.5px; color: var(--muted); }
+.row .end { color: var(--faint); display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.badge { width: 38px; height: 38px; border-radius: 12px; background: var(--raised); color: var(--yellow); display: grid; place-items: center; flex-shrink: 0; }
+.badge.c { color: var(--coral); }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.quote { font-family: var(--serif); font-size: 17px; line-height: 1.35; color: var(--text); margin: 0; }
+.quote.m { color: var(--muted); }
+.quote .when { font-family: var(--sans); font-size: 11.5px; color: var(--faint); margin-left: 6px; white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); white-space: nowrap; }
+.chip.g { background: var(--green-soft); color: var(--green); }
+.chip.y { background: var(--yellow-soft); color: var(--yellow); }
+.chip.o { background: transparent; box-shadow: inset 0 0 0 1px var(--outline); color: var(--muted); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip-btn { border: 1px solid var(--hair); background: var(--surface); color: var(--muted); font-size: 12.5px; font-weight: 500; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.chip-btn[aria-pressed="true"] { border-color: var(--yellow-line); color: var(--yellow); background: var(--yellow-soft); }
+
+/* buttons */
+.btn { height: 46px; border-radius: 14px; border: 0; font-size: 14.5px; font-weight: 600; cursor: pointer; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn.primary { background: var(--yellow); color: var(--yellow-ink); }
+.btn.tonal { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--outline); font-weight: 500; }
+.btn.ghost { background: transparent; color: var(--muted); font-weight: 500; }
+.btn.danger { background: transparent; color: var(--danger); box-shadow: inset 0 0 0 1px rgba(255,138,124,0.35); font-weight: 500; }
+.btn.sm { height: 38px; font-size: 13px; border-radius: 11px; padding: 0 13px; }
+.btn.block { width: 100%; }
+.btn-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.link { border: 0; background: none; color: var(--yellow); font-weight: 600; font-size: 13.5px; cursor: pointer; padding: 0; text-align: left; }
+.back { border: 0; background: none; color: var(--muted); font-size: 14px; display: inline-flex; align-items: center; gap: 4px; padding: 6px 0; cursor: pointer; align-self: flex-start; }
+
+/* top bars */
+.topbar { display: flex; align-items: center; justify-content: space-between; height: 48px; flex-shrink: 0; }
+.topbar .mid { font-size: 14px; color: var(--muted); }
+.ibtn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: transparent; color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.ibtn:hover { background: var(--surface); }
+.subtabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--hair); border-radius: 999px; padding: 3px; flex-shrink: 0; margin-top: 4px; }
+.subtabs button { border: 0; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; height: 34px; border-radius: 999px; cursor: pointer; position: relative; }
+.subtabs button[aria-current="true"] { background: var(--raised); color: var(--text); font-weight: 600; }
+.subtabs .dot { position: absolute; top: 7px; right: 9px; width: 6px; height: 6px; }
+
+/* composer */
+.composer { margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 6px; }
+.composer input { flex: 1; min-width: 0; height: 50px; border-radius: 25px; background: var(--surface); border: 1px solid var(--hair); color: var(--text); padding: 0 18px; font: inherit; font-size: 14.5px; }
+.composer input::placeholder { color: var(--faint); }
+.send { width: 50px; height: 50px; border-radius: 50%; border: 0; background: var(--raised); color: var(--faint); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+.send.ready { background: var(--yellow); color: var(--yellow-ink); }
+.field { height: 44px; border-radius: 13px; background: var(--surface); border: 1px solid var(--hair); color: var(--text); padding: 0 14px 0 40px; font: inherit; width: 100%; }
+.search { position: relative; }
+.search svg { position: absolute; left: 13px; top: 12px; color: var(--faint); width: 19px; height: 19px; }
+
+/* chat */
+.msg-me { align-self: flex-end; max-width: 84%; background: var(--raised); border-radius: 18px 18px 6px 18px; padding: 11px 15px; font-size: 14.5px; line-height: 1.45; }
+.msg-coach { font-size: 15px; line-height: 1.6; }
+.msg-coach p { margin: 0 0 10px; }
+.thinking { border: 0; background: none; color: var(--faint); font-size: 12.5px; display: inline-flex; gap: 6px; align-items: center; padding: 0; cursor: pointer; margin-bottom: 8px; }
+.presence { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--ground); border: 1px solid var(--hair); border-radius: 14px; padding: 10px 14px; font-size: 13px; color: var(--muted); }
+.scroller { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.scroller::-webkit-scrollbar { display: none; }
+
+/* today */
+.segbig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.segbig button { height: 46px; border-radius: 13px; border: 1px solid var(--outline); background: var(--raised); color: var(--text); font-size: 14.5px; font-weight: 500; cursor: pointer; }
+.segbig button[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: var(--yellow-ink); font-weight: 600; }
+.stepper { display: flex; align-items: center; justify-content: space-between; background: var(--ground); border: 1px solid var(--hair); border-radius: 14px; padding: 6px; }
+.stepper button { width: 42px; height: 42px; border-radius: 11px; border: 0; background: var(--raised); color: var(--text); cursor: pointer; display: grid; place-items: center; }
+.stepper .v { font-family: var(--serif); font-size: 30px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* goal */
+.bar { height: 6px; border-radius: 3px; background: var(--raised); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--yellow); border-radius: 3px; }
+.pace { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; padding: 10px 0; }
+.pace + .pace { border-top: 1px solid var(--hair); }
+.pace .v { font-family: var(--serif); font-size: 22px; text-align: right; }
+.big { font-family: var(--serif); font-size: 34px; line-height: 1; }
+
+/* story */
+.story-head { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+.short { border-left: 2px solid var(--yellow); padding: 2px 0 2px 14px; font-family: var(--serif); font-size: 20px; line-height: 1.38; margin: 0; }
+.counts { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface); border: 1px solid var(--hair); border-radius: 18px; }
+.counts > div { padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; }
+.counts > div + div { border-left: 1px solid var(--hair); }
+.counts .n { font-family: var(--serif); font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.counts .l { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap; }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 6px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 2px; background: var(--yellow); }
+.legend .ln { width: 16px; border-top: 1.5px dashed var(--muted); }
+.caption { font-size: 12.5px; color: var(--muted); min-height: 18px; }
+.caption b { color: var(--text); font-weight: 600; }
+.over { border: 0; background: transparent; text-align: left; cursor: pointer; padding: 14px; display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.over + .over { border-top: 1px solid var(--hair); }
+.tn { display: grid; grid-template-columns: 42px 1fr; gap: 3px 10px; align-items: baseline; }
+.tn .k { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.tn .k.now { color: var(--yellow); }
+.tn .v { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.tn .v.now { color: var(--text); }
+.tn .v.q { font-family: var(--serif); font-size: 15.5px; }
+.over .more { display: none; }
+.over[aria-expanded="true"] .more { display: contents; }
+.over .hint { font-size: 12px; color: var(--faint); display: flex; align-items: center; gap: 4px; }
+.over[aria-expanded="true"] .hint svg { transform: rotate(180deg); }
+.note-row .s { display: flex; align-items: center; gap: 6px; }
+.note-row .ok { color: var(--green); width: 14px; height: 14px; }
+.words { display: grid; gap: 14px; }
+.words .w { display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: baseline; }
+.words .d { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.years .row .t { font-family: var(--serif); font-size: 19px; font-weight: 400; }
+
+/* sheet */
+.sheet-scrim { position: absolute; inset: 0; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 0.22s ease; z-index: 20; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-top: 1px solid var(--outline); border-radius: 26px 26px 0 0; padding: 10px 20px 22px; max-height: 82%; overflow-y: auto; transform: translateY(102%); transition: transform 0.28s cubic-bezier(.2,.8,.2,1); display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
+.sheet::-webkit-scrollbar { display: none; }
+.phone.sheet-open .sheet-scrim { opacity: 1; pointer-events: auto; }
+.phone.sheet-open .sheet { transform: translateY(0); }
+.grab { width: 38px; height: 4px; border-radius: 2px; background: var(--outline); align-self: center; margin-bottom: 4px; }
+.proof-q { background: var(--ground); border: 1px solid var(--hair); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+details.moments summary { list-style: none; cursor: pointer; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+details.moments summary::-webkit-details-marker { display: none; }
+details.moments[open] summary svg { transform: rotate(180deg); }
+.moment { display: grid; grid-template-columns: 46px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 13px; line-height: 1.45; }
+.moment .d { color: var(--faint); font-size: 11.5px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.moment .q { font-family: var(--serif); font-size: 15px; }
+.moment .n { color: var(--muted); }
+.confirm-del { display: none; background: rgba(255,138,124,0.07); border: 1px solid rgba(255,138,124,0.28); border-radius: 14px; padding: 12px 14px; gap: 10px; flex-direction: column; font-size: 13px; color: var(--muted); }
+.confirm-del.on { display: flex; }
+textarea.edit { width: 100%; min-height: 78px; background: var(--ground); border: 1px solid var(--outline); border-radius: 12px; color: var(--text); font: inherit; font-size: 14px; line-height: 1.45; padding: 10px 12px; resize: vertical; }
+
+/* misc */
+.status-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13.5px; }
+.okdot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 8px; }
+.warndot { background: var(--yellow); }
+.switch { width: 44px; height: 26px; border-radius: 13px; background: var(--outline); position: relative; border: 0; cursor: pointer; flex-shrink: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform 0.18s; }
+.switch[aria-checked="true"] { background: var(--yellow); }
+.switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--yellow-ink); }
+.code { font-family: var(--mono); font-size: 12px; line-height: 1.55; width: 100%; min-height: 250px; background: var(--ground); color: var(--text); border: 1px solid var(--outline); border-radius: 14px; padding: 12px; resize: vertical; }
+.kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 9px 0; }
+.kv + .kv { border-top: 1px solid var(--hair); }
+.kv .v { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.letter p { font-family: var(--serif); font-size: 19px; line-height: 1.5; margin: 0 0 14px; }
+.letter .said { color: var(--yellow); }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet-scrim, .switch::after { transition: none; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-talk" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 2.5v3M16 2.5v3M8 11h8M8 15h5"/></symbol>
+  <symbol id="i-know" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.2v.1"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/></symbol>
+  <symbol id="i-resume" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-tangle" viewBox="0 0 24 24"><path d="M4 12c3-6 6 6 9 0s5-3 7 0M4 17c3-3 6 3 9 0"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M7 10.5v3M10 10.5v3"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8M7 6.5a7 7 0 1 0 10 0"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M4 5l3-2.5M20 5l-3-2.5"/></symbol>
+  <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol>
+  <symbol id="i-coach" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0 5 5L13 18a2.1 2.1 0 0 1-3-3zM14.5 6.5l-3-3a4 4 0 0 0-5 5l3 3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-quote" viewBox="0 0 24 24"><path d="M7 17c-2 0-3-1.5-3-3.5C4 10 6 7.5 9 6.5M16 17c-2 0-3-1.5-3-3.5 0-3.5 2-6 5-7"/></symbol>
+</svg>
+
+<div class="bench">
+  <header class="bench-head">
+    <div>
+      <h1 class="bench-title">Clarity, every screen</h1>
+      <div class="bench-sub">Clarity 0.1.11. The 0.1.6 look, matched to the spec. Sample names and numbers only.</div>
+    </div>
+    <div class="seg" role="group" aria-label="Sample data">
+      <button id="m-d1" aria-pressed="false" onclick="setMode('d1')">Day 1</button>
+      <button id="m-d45" aria-pressed="true" onclick="setMode('d45')">Day 45</button>
+    </div>
+  </header>
+
+  <nav class="picker" aria-label="Screens">
+    <div class="pick-group"><div class="pick-label">Talk</div><div class="pick-list">
+      <button class="pick" data-go="talk-home">Home</button>
+      <button class="pick" data-go="talk-chat">Conversation</button>
+      <button class="pick" data-go="talk-drawer">Conversations</button>
+      <button class="pick" data-go="talk-time">Promise time</button>
+    </div></div>
+    <div class="pick-group"><div class="pick-label">Plan</div><div class="pick-list">
+      <button class="pick" data-go="plan-today">Today</button>
+      <button class="pick" data-go="plan-goal">Goal</button>
+      <button class="pick" data-go="plan-promises">Promises</button>
+      <button class="pick" data-go="plan-reviews">Reviews</button>
+      <button class="pick" data-go="plan-letter">Letter</button>
+    </div></div>
+    <div class="pick-group"><div class="pick-label">What I know</div><div class="pick-list">
+      <button class="pick" data-go="know-hub">Hub</button>
+      <button class="pick" data-go="know-section">What helps</button>
+      <button class="pick" data-go="know-story">Your story<span class="new">NEW</span></button>
+    </div></div>
+    <div class="pick-group"><div class="pick-label">Settings and more</div><div class="pick-list">
+      <button class="pick" data-go="settings">Settings</button>
+      <button class="pick" data-go="reliable">Reminders</button>
+      <button class="pick" data-go="health">Health</button>
+      <button class="pick" data-go="bench">Test bench</button>
+      <button class="pick" data-go="prompts">Prompts</button>
+      <button class="pick" data-go="guide">How it works</button>
+      <button class="pick" data-go="lock">Lock</button>
+    </div></div>
+  </nav>
+
+  <div class="stage">
+  <div class="phone" id="phone">
+    <div class="statusbar"><span class="num">8:05</span><span class="sys">
+      <svg class="i" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0M12 19.5h0"/></svg>
+      <svg class="i" style="width:17px;height:17px" viewBox="0 0 24 24"><rect x="2.5" y="7" width="17" height="10" rx="2.5"/><rect x="5" y="9.5" width="10" height="5" rx="1" style="fill:currentColor;stroke:none"/><path d="M22 10.5v3"/></svg>
+    </span></div>
+
+    <div class="viewport" id="viewport">
+
+<!-- ===================== TALK HOME ===================== -->
+<section class="screen" id="talk-home" data-tab="talk">
+  <div class="topbar">
+    <button class="ibtn" data-go="talk-drawer" aria-label="Conversations"><svg class="i"><use href="#i-menu"/></svg></button>
+    <span class="mid"><span class="d1">Wednesday 14 October</span><span class="d45">Friday 27 November</span></span>
+    <span style="display:flex">
+      <button class="ibtn" data-go="guide" aria-label="How Clarity works"><svg class="i"><use href="#i-help"/></svg></button>
+      <button class="ibtn" data-go="settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
+    </span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px;margin:6px 0 6px">
+    <h1 class="h1">Good morning, Umair.</h1>
+    <p class="lede d1">Day 1 of the CAF plan.</p>
+    <p class="lede d45">Day 45. 118 of 300 lectures done.</p>
+  </div>
+
+  <button class="card y row d45" style="padding:14px" data-go="plan-letter">
+    <span class="badge"><svg class="i"><use href="#i-mail"/></svg></span>
+    <span class="body"><span class="t" style="color:var(--yellow)">Your Sunday letter is ready</span><span class="s">The quiet shift in week six</span></span>
+    <span class="end"><svg class="i"><use href="#i-right"/></svg></span>
+  </button>
+
+  <div class="eyebrow" style="margin-top:6px">Start a conversation</div>
+  <div class="list">
+    <button class="row d45" data-go="talk-chat"><span class="badge"><svg class="i"><use href="#i-resume"/></svg></span><span class="body"><span class="t">Taxation backlog or Company Law first</span><span class="s">Pick up where you left off</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row" data-go="talk-chat"><span class="badge"><svg class="i"><use href="#i-plan"/></svg></span><span class="body"><span class="t">Look at my plan</span><span class="s">Plan and track</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row" data-go="talk-chat"><span class="badge"><svg class="i"><use href="#i-tangle"/></svg></span><span class="body"><span class="t">Something is on my mind</span><span class="s">Untangle</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row d45" data-go="talk-chat"><span class="badge"><svg class="i"><use href="#i-target"/></svg></span><span class="body"><span class="t">How the phone nights are going</span><span class="s">Focus · Phone out at night</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+  </div>
+
+  <div class="composer">
+    <input id="home-input" type="text" placeholder="Message the coach" oninput="sendReady(this,'home-send')" aria-label="Message the coach">
+    <button id="home-send" class="send" data-go="talk-chat" aria-label="Send"><svg class="i"><use href="#i-up"/></svg></button>
+  </div>
+</section>
+
+<!-- ===================== TALK CHAT ===================== -->
+<section class="screen" id="talk-chat" data-tab="none">
+  <div class="topbar" style="border-bottom:1px solid var(--hair);margin:0 -20px;padding:0 10px">
+    <button class="ibtn" data-go="talk-home" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button>
+    <button class="chip-btn" style="display:inline-flex;gap:6px;align-items:center"><span class="presence"></span>Plan and track<svg class="i" style="width:16px;height:16px"><use href="#i-down"/></svg></button>
+    <button class="ibtn" data-go="talk-drawer" aria-label="Conversations"><svg class="i"><use href="#i-menu"/></svg></button>
+  </div>
+  <div class="msg-me" style="margin-top:8px">Mornings have been hard this week because I check my phone first. Can we lock in tomorrow at 8?</div>
+  <div class="msg-coach">
+    <button class="thinking" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden"><svg class="i" style="width:15px;height:15px"><use href="#i-clock"/></svg>Thought for 6 seconds</button>
+    <p class="small" hidden style="margin:-4px 0 10px;border-left:2px solid var(--hair);padding-left:10px">Looked at where the plan stands and at the mornings that went well last week.</p>
+    <p>You are at 118 of 300 with 66 days left. At your usual pace you reach about 289; at your best fortnight you clear all 300 by Mon 25 Jan.</p>
+    <p>You already named 8:00 yourself, and the mornings you started at 8 were your strongest. Here it is, if you want it.</p>
+  </div>
+
+  <div class="scroller" role="group" aria-label="Card types">
+    <button class="chip-btn" aria-pressed="true" data-card="promise">Promise</button>
+    <button class="chip-btn" aria-pressed="false" data-card="plan">Plan</button>
+    <button class="chip-btn" aria-pressed="false" data-card="target">Target</button>
+    <button class="chip-btn" aria-pressed="false" data-card="backlog">Backlog</button>
+    <button class="chip-btn" aria-pressed="false" data-card="note">Note</button>
+    <button class="chip-btn" aria-pressed="false" data-card="focus">Focus</button>
+    <button class="chip-btn" aria-pressed="false" data-card="mode">Chat type</button>
+  </div>
+  <div class="card suggest" id="sugg">
+    <div class="eyebrow c" id="sugg-k">Promise</div>
+    <div class="h3" id="sugg-t" style="font-size:17px;line-height:1.35">Start lecture 119 before opening the phone</div>
+    <div class="meta" id="sugg-m">Tomorrow, Sat 28 Nov, 8:00 am · reminder at 8:00 am</div>
+    <div class="btn-row"><button class="btn primary sm" onclick="saveCard()">Set it</button><button class="btn tonal sm" data-go="talk-time">Change time</button></div>
+  </div>
+  <div class="card receipt tight" id="receipt" hidden>
+    <div class="status-row"><span><span class="okdot"></span><b style="font-weight:600">Saved</b> <span class="meta" id="receipt-t">· promise for Sat 28 Nov, 8:00 am</span></span></div>
+  </div>
+  <div class="notice"><span>That reply was cut off.</span><button class="link">Try again</button></div>
+  <div class="composer">
+    <input type="text" placeholder="Reply" aria-label="Reply" oninput="sendReady(this,'chat-send')">
+    <button id="chat-send" class="send" aria-label="Send"><svg class="i"><use href="#i-up"/></svg></button>
+  </div>
+</section>
+
+<!-- ===================== DRAWER ===================== -->
+<section class="screen" id="talk-drawer" data-tab="none">
+  <div class="topbar"><h2 class="h2">Conversations</h2><button class="ibtn" data-go="talk-home" aria-label="Close"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="grid2"><button class="btn primary sm" data-go="talk-chat"><svg class="i" style="width:17px;height:17px"><use href="#i-plus"/></svg>New</button><button class="btn tonal sm" data-go="talk-chat"><svg class="i" style="width:17px;height:17px"><use href="#i-lock"/></svg>Off the record</button></div>
+  <div class="search"><svg class="i"><use href="#i-search"/></svg><input class="field" placeholder="Search conversations" aria-label="Search conversations"></div>
+  <div class="eyebrow">Today</div>
+  <div class="list">
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Taxation backlog or Company Law first</span><span class="s">Plan and track · 8 messages</span></span><button class="ibtn" aria-label="More" onclick="document.getElementById('dmenu').hidden=!document.getElementById('dmenu').hidden"><svg class="i"><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></svg></button></div>
+    <div id="dmenu" style="border-top:1px solid var(--hair);background:var(--ground)">
+      <button class="row"><span class="body"><span class="t">Rename</span></span></button>
+      <button class="row"><span class="body"><span class="t">Delete</span><span class="s">Removes the messages. What was learned stays.</span></span></button>
+      <button class="row"><span class="body"><span class="t" style="color:var(--danger)">Forget</span><span class="s">Also removes everything learned from it.</span></span></button>
+    </div>
+  </div>
+  <div class="eyebrow">Earlier</div>
+  <div class="list">
+    <button class="row d45" data-go="talk-chat"><span class="body"><span class="t">Phone scrolling after 11 pm</span><span class="s">Untangle · 14 Nov</span></span></button>
+    <button class="row" data-go="talk-chat"><span class="body"><span class="t">Late night doubt before the first lecture</span><span class="s">Free talk · 13 Oct</span></span></button>
+  </div>
+</section>
+
+<!-- ===================== PROMISE TIME ===================== -->
+<section class="screen" id="talk-time" data-tab="none" style="justify-content:flex-end;background:var(--scrim)">
+  <div class="card" style="border-radius:26px 26px 18px 18px;gap:14px">
+    <div class="grab"></div>
+    <div class="eyebrow c">Promise</div>
+    <h2 class="h2" style="font-size:28px">When should it be due?</h2>
+    <div class="meta">Start lecture 119 before opening the phone</div>
+    <div class="chips" role="group" aria-label="Day">
+      <button class="chip-btn" aria-pressed="false">Today</button>
+      <button class="chip-btn" aria-pressed="true">Tomorrow, Sat 28 Nov</button>
+      <button class="chip-btn" aria-pressed="false">Pick a day</button>
+    </div>
+    <div class="stepper"><button aria-label="Earlier"><svg class="i"><use href="#i-minus"/></svg></button><span class="v num">8:00 am</span><button aria-label="Later"><svg class="i"><use href="#i-plus"/></svg></button></div>
+    <div class="status-row"><span>Remind me at 8:00 am</span><button class="switch" role="switch" aria-checked="true" aria-label="Reminder" onclick="flip(this)"></button></div>
+    <div class="btn-row"><button class="btn tonal" data-go="talk-chat">Cancel</button><button class="btn primary" data-go="talk-chat">Set it</button></div>
+  </div>
+</section>
+
+<!-- ===================== PLAN TODAY ===================== -->
+<section class="screen" id="plan-today" data-tab="plan">
+  <div class="subtabs">
+    <button aria-current="true" data-go="plan-today">Today<span class="dot"></span></button>
+    <button data-go="plan-goal">Goals</button>
+    <button data-go="plan-promises">Promises<span class="dot d45"></span></button>
+    <button data-go="plan-reviews">Reviews<span class="dot d45"></span></button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+    <span class="meta"><span class="d1">Wednesday 14 October</span><span class="d45">Friday 27 November</span></span>
+    <h1 class="h2"><span class="d1">The first step is small on purpose.</span><span class="d45">One more day of step three.</span></h1>
+  </div>
+  <div class="card">
+    <div><div class="h3" style="font-size:17px">CAF lectures</div><div class="meta"><span class="d1">aim 2 · bad day 1 · step 1 of 3</span><span class="d45">aim 4 · bad day 1 · step 3 of 3</span></div></div>
+    <div class="segbig" role="group" aria-label="How did it go">
+      <button aria-pressed="false" data-today="did">Did it</button>
+      <button aria-pressed="true" data-today="part">Part</button>
+      <button aria-pressed="false" data-today="not">Not</button>
+    </div>
+    <div id="today-part">
+      <div class="meta" style="margin-bottom:6px">How many</div>
+      <div class="stepper"><button aria-label="Fewer" onclick="step(-1)"><svg class="i"><use href="#i-minus"/></svg></button><span class="v num" id="today-n">2</span><button aria-label="More" onclick="step(1)"><svg class="i"><use href="#i-plus"/></svg></button></div>
+    </div>
+    <div id="today-not" hidden>
+      <div class="meta" style="margin-bottom:8px">What got in the way?</div>
+      <div class="chips">
+        <button class="chip-btn" aria-pressed="true">Tired</button><button class="chip-btn" aria-pressed="false">No time</button><button class="chip-btn" aria-pressed="false">Forgot</button><button class="chip-btn" aria-pressed="false">Avoided it</button><button class="chip-btn" aria-pressed="false">Felt too big</button><button class="chip-btn" aria-pressed="false">Sick</button><button class="chip-btn" aria-pressed="false">Plans changed</button><button class="chip-btn" aria-pressed="false">Low mood</button><button class="chip-btn" aria-pressed="false">Other</button>
+      </div>
+    </div>
+    <button class="btn primary block sm">Save</button>
+  </div>
+  <div class="card tight d45">
+    <div class="eyebrow c">Due tomorrow · 8:00 am</div>
+    <div style="font-size:15px;font-weight:500">Start lecture 119 before opening the phone</div>
+  </div>
+  <div class="grid2"><button class="btn tonal">Rest day</button><button class="btn tonal" data-go="talk-chat">Plan with coach</button></div>
+</section>
+
+<!-- ===================== PLAN GOAL ===================== -->
+<section class="screen" id="plan-goal" data-tab="plan">
+  <div class="subtabs">
+    <button data-go="plan-today">Today<span class="dot"></span></button>
+    <button aria-current="true" data-go="plan-goal">Goals</button>
+    <button data-go="plan-promises">Promises<span class="dot d45"></span></button>
+    <button data-go="plan-reviews">Reviews<span class="dot d45"></span></button>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+    <span class="chip d1">No pace yet</span><span class="chip y d45">Needs your best fortnight</span>
+    <button class="link" style="color:var(--muted);font-weight:500">Edit</button>
+  </div>
+  <div><h1 class="h2">Clear the CAF course</h1><div class="meta" style="margin-top:4px">300 lectures by Mon 1 Feb · studies and career</div></div>
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+      <span style="font-weight:600" class="num"><span class="d1">0 of 300 done</span><span class="d45">118 of 300 done</span></span>
+      <span class="meta num"><span class="d1">110 days left</span><span class="d45">66 days left</span></span>
+    </div>
+    <div class="bar"><i class="d1" style="width:0.8%"></i><i class="d45" style="width:39.3%"></i></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Where each pace lands</div>
+    <div class="d1">
+      <div class="pace"><span>You need</span><span class="v num">2.8 a day</span></div>
+      <div class="pace"><span>Your saved plan<br><span class="meta">2, then 3, then 4 a day</span></span><span class="v num">done Fri 1 Jan</span></div>
+      <div class="meta" style="padding-top:6px">Your usual and best pace show after 7 answered days.</div>
+    </div>
+    <div class="d45">
+      <div class="pace"><span>You need</span><span class="v num">2.8 a day</span></div>
+      <div class="pace"><span>Your usual pace<br><span class="meta num">2.6 a day, last 14 days</span></span><span class="v num">reaches 289</span></div>
+      <div class="pace"><span>Your best fortnight<br><span class="meta num">3.1 a day</span></span><span class="v num" style="color:var(--yellow)">done Mon 25 Jan</span></div>
+    </div>
+    <div class="meta d45" style="border-top:1px solid var(--hair);padding-top:10px;line-height:1.5">Reachable at your best fortnight. At your usual pace you finish 11 short.</div>
+  </div>
+  <div class="card">
+    <div class="status-row"><span class="h3">The plan</span><span class="meta">version 2</span></div>
+    <div class="kv"><span>2 a day</span><span class="v">14 to 19 Oct</span></div>
+    <div class="kv"><span>3 a day</span><span class="v">20 to 26 Oct</span></div>
+    <div class="kv"><span style="color:var(--yellow);font-weight:600">4 a day</span><span class="v">27 Oct to 1 Feb</span></div>
+    <div class="meta">On a bad day, 1 still counts.</div>
+  </div>
+  <button class="btn primary block" data-go="talk-chat">Plan with coach</button>
+</section>
+
+<!-- ===================== PLAN PROMISES ===================== -->
+<section class="screen" id="plan-promises" data-tab="plan">
+  <div class="subtabs">
+    <button data-go="plan-today">Today<span class="dot"></span></button>
+    <button data-go="plan-goal">Goals</button>
+    <button aria-current="true" data-go="plan-promises">Promises<span class="dot d45"></span></button>
+    <button data-go="plan-reviews">Reviews<span class="dot d45"></span></button>
+  </div>
+  <h1 class="h2 d45" style="margin-top:6px">One needs an answer.</h1>
+  <h1 class="h2 d1" style="margin-top:6px">No promises yet.</h1>
+  <p class="meta d1" style="line-height:1.5;margin:0">When you agree to something in a conversation, tap Set it on its card and it shows here.</p>
+  <div class="card d45">
+    <div class="eyebrow c">Was due last night · 10:30 pm</div>
+    <div style="font-size:18px;font-weight:500;line-height:1.35">Phone on the desk outside the bedroom</div>
+    <div class="grid2">
+      <button class="btn tonal sm" style="color:var(--yellow);box-shadow:inset 0 0 0 1px var(--yellow-line)">Done</button><button class="btn tonal sm">Not done</button>
+      <button class="btn tonal sm">Moved</button><button class="btn tonal sm">Let go</button>
+    </div>
+  </div>
+  <div class="eyebrow d45">Coming up</div>
+  <div class="list d45"><div class="row" style="cursor:default"><span class="body"><span class="t">Start lecture 119 before opening the phone</span><span class="s">Tomorrow, 8:00 am · reminder on</span></span><svg class="i" style="color:var(--faint)"><use href="#i-bell"/></svg></div></div>
+  <div class="eyebrow d45">Past</div>
+  <div class="list d45">
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Open tomorrow's lecture link before bed</span><span class="s">Thu 26 Nov</span></span><span class="chip g">Done</span></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Two lectures before Jumu'ah</span><span class="s">Fri 20 Nov</span></span><span class="chip">Moved</span></div>
+  </div>
+</section>
+
+<!-- ===================== PLAN REVIEWS ===================== -->
+<section class="screen" id="plan-reviews" data-tab="plan">
+  <div class="subtabs">
+    <button data-go="plan-today">Today<span class="dot"></span></button>
+    <button data-go="plan-goal">Goals</button>
+    <button data-go="plan-promises">Promises<span class="dot d45"></span></button>
+    <button aria-current="true" data-go="plan-reviews">Reviews<span class="dot d45"></span></button>
+  </div>
+  <div class="d1" style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
+    <h1 class="h2">Your first letter comes on Sunday.</h1>
+    <p class="meta" style="line-height:1.55;margin:0">Each Sunday evening a letter about your week arrives here, with the numbers behind it. A month review follows each month you tracked.</p>
+  </div>
+  <div class="d45" style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
+    <div class="eyebrow">Weeks</div>
+    <div class="list">
+      <button class="row" data-go="plan-letter"><span class="body"><span class="s num">16 to 22 Nov</span><span class="t">The quiet shift in week six</span><span class="chips" style="margin-top:4px"><span class="chip y">Letter</span><span class="chip">Review</span></span></span><span class="end"><span class="dot" style="background:var(--yellow)"></span><svg class="i"><use href="#i-right"/></svg></span></button>
+      <button class="row"><span class="body"><span class="s num">9 to 15 Nov</span><span class="t">Travel week, and the floor held</span><span class="chips" style="margin-top:4px"><span class="chip">Letter</span><span class="chip">Review</span></span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+      <button class="row"><span class="body"><span class="s num">2 to 8 Nov</span><span class="t">Four a day for the first time</span><span class="chips" style="margin-top:4px"><span class="chip">Letter</span><span class="chip">Review</span></span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    </div>
+    <div class="eyebrow">Months</div>
+    <div class="list"><button class="row"><span class="body"><span class="t">October</span><span class="s num">44 lectures over 18 answered days</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button></div>
+  </div>
+</section>
+
+<!-- ===================== LETTER ===================== -->
+<section class="screen" id="plan-letter" data-tab="plan">
+  <button class="back" data-go="plan-reviews"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Reviews</button>
+  <div class="eyebrow y">Weekly letter · 16 to 22 Nov</div>
+  <h1 class="h1" style="font-size:38px">The quiet shift in week six.</h1>
+  <div class="letter">
+    <p>Umair, you did 20 lectures across six days this week, and Thursday was a rest day you planned.</p>
+    <p>On Tuesday night you wrote: <span class="said">"If I don't start before 8:30, the whole morning slips into my phone."</span> On Wednesday, Friday and Saturday you started at 8.</p>
+    <p>One small thing to try: leave tomorrow's lecture open on the laptop before you close it at night.</p>
+  </div>
+  <div class="grid2"><button class="btn primary" data-go="talk-chat">Talk about this letter</button><button class="btn tonal">See the numbers</button></div>
+</section>
+
+<!-- ===================== KNOW HUB ===================== -->
+<section class="screen" id="know-hub" data-tab="know">
+  <h1 class="h1" style="margin-top:8px">What I know</h1>
+  <div class="search"><svg class="i"><use href="#i-search"/></svg><input class="field" placeholder="Search what I know" aria-label="Search what I know"></div>
+
+  <button class="card y" style="text-align:left;cursor:pointer;gap:6px" data-go="know-story">
+    <span class="eyebrow y"><span class="d1">Your story · day 1</span><span class="d45">Your story · six weeks</span></span>
+    <span class="h2" style="font-size:28px"><span class="d1">The first pages.</span><span class="d45">Six weeks of real ground.</span></span>
+    <span class="meta d45">118 lectures · 2 things you got through</span>
+    <span class="link" style="display:inline-flex;align-items:center;gap:2px;margin-top:2px">Open your story<svg class="i" style="width:16px;height:16px"><use href="#i-right"/></svg></span>
+  </button>
+
+  <div class="card suggest d45">
+    <div class="status-row"><span class="eyebrow c">Is this right?</span><span class="chip y">Likely</span></div>
+    <div style="font-size:15px;line-height:1.45">When a lecture slips to the evening, it usually doesn't happen.</div>
+    <p class="quote m" style="font-size:15px">"if I don't do it before lunch it's gone"<span class="when">15 Oct</span></p>
+    <div class="btn-row"><button class="btn primary sm">That's right</button><button class="btn tonal sm">Not quite</button></div>
+  </div>
+
+  <div class="list">
+    <button class="row"><span class="body"><span class="t">About you</span></span><span class="end num"><span class="d1">2</span><span class="d45">8</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">Patterns</span></span><span class="end num"><span class="d1">—</span><span class="d45">4</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row" data-go="know-section"><span class="body"><span class="t">What helps</span></span><span class="end num"><span class="d1">1</span><span class="d45">8</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">What doesn't</span></span><span class="end num"><span class="d1">—</span><span class="d45">3</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">Open threads</span></span><span class="end num"><span class="d1">1</span><span class="d45">3</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">People</span></span><span class="end num"><span class="d1">—</span><span class="d45">4</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">Focuses</span></span><span class="end num"><span class="d1">—</span><span class="d45">1 active</span><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="body"><span class="t">Chapters</span></span><span class="end"><span class="d1">January</span><span class="d45">January</span><svg class="i"><use href="#i-right"/></svg></span></button>
+  </div>
+</section>
+
+<!-- ===================== KNOW SECTION ===================== -->
+<section class="screen" id="know-section" data-tab="know">
+  <button class="back" data-go="know-hub"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>What I know</button>
+  <h1 class="h2">What helps</h1>
+  <p class="meta" style="margin:-4px 0 0">Tap one to see the proof.</p>
+  <div class="list" id="section-list"></div>
+</section>
+
+<!-- ===================== YOUR STORY ===================== -->
+<section class="screen" id="know-story" data-tab="know">
+  <button class="back" data-go="know-hub"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>What I know</button>
+
+  <div class="story-head">
+    <div class="eyebrow y">Your story</div>
+    <h1 class="h1"><span class="d1">The first pages.</span><span class="d45">Six weeks of real ground.</span></h1>
+    <div class="meta num"><span class="d1">Day 1 · since 14 Oct 2026</span><span class="d45">Six weeks · since 14 Oct 2026</span></div>
+  </div>
+
+  <div class="seg d45" role="group" aria-label="Range" style="align-self:flex-start">
+    <button aria-pressed="false" data-range="month">This month</button>
+    <button aria-pressed="false" data-range="year">This year</button>
+    <button aria-pressed="true" data-range="all">All of it</button>
+  </div>
+
+  <!-- short version -->
+  <div class="d45" style="display:flex;flex-direction:column;gap:8px">
+    <div class="eyebrow">The short version · October</div>
+    <p class="short">You began in October sure that 300 lectures was already lost. You built a ramp of 2, then 3, then 4 a day, kept 1 as the floor for bad days, and ended the month with 44 done.</p>
+  </div>
+  <div class="card tight d1"><div style="font-size:14px">Your first short version comes in early November, once October is over.</div></div>
+
+  <!-- counts -->
+  <div class="counts d45">
+    <div><span class="n" id="c-done">118</span><span class="l">lectures done</span></div>
+    <div><span class="n" id="c-kept">19</span><span class="l">promises kept</span></div>
+    <div><span class="n" id="c-over">1</span><span class="l">thing overcome</span></div>
+  </div>
+
+  <!-- week by week -->
+  <div class="card">
+    <div class="status-row"><span class="h3">Week by week</span><span class="meta num" id="chart-total"></span></div>
+    <div class="chips d45" role="group" aria-label="Backlog">
+      <button class="chip-btn" aria-pressed="true" data-bl="caf">CAF lectures</button>
+      <button class="chip-btn" aria-pressed="false" data-bl="tax">Tax practice sets</button>
+    </div>
+    <div class="chart-wrap" id="chart"></div>
+    <div class="caption" id="chart-cap"></div>
+    <div class="legend"><span><i class="sw"></i>What you did</span><span><i class="ln"></i>What your plan asked</span></div>
+  </div>
+
+  <!-- overcame -->
+  <div class="d45" style="display:contents">
+    <div class="sec">What you overcame<span class="meta">2</span></div>
+    <div class="list" id="overcame"></div>
+  </div>
+
+  <!-- helps / good at -->
+  <div class="sec">What helps you<span class="meta" id="helps-n"></span></div>
+  <div class="list" id="helps"></div>
+  <button class="link d45" id="helps-more" style="margin-top:-4px"></button>
+
+  <div class="d45" style="display:contents">
+    <div class="sec">What you're good at<span class="meta">2</span></div>
+    <div class="list" id="good"></div>
+  </div>
+
+  <!-- in your words -->
+  <div class="d45" style="display:contents">
+    <div class="sec">How you've changed, in your words</div>
+    <div class="card words">
+      <div class="w"><span class="d">14 Oct</span><p class="quote m">"I keep staring at 300 lectures and thinking I've already lost before starting."</p></div>
+      <div class="w"><span class="d" style="color:var(--yellow)">29 Oct</span><p class="quote">"Even on a tired day, doing one lecture keeps the fear from coming back."</p></div>
+    </div>
+  </div>
+
+  <!-- years -->
+  <div class="sec">Your years</div>
+  <div class="list years">
+    <div class="row" style="cursor:default"><span class="body"><span class="s">2026</span><span class="t">Chapter 1 · being written</span><span class="s">Oct to Dec · arrives in January</span></span></div>
+  </div>
+
+  <button class="btn primary block" data-go="talk-chat" style="margin-top:6px">Talk about how far you've come</button>
+</section>
+
+<!-- ===================== SETTINGS ===================== -->
+<section class="screen" id="settings" data-tab="none">
+  <div class="topbar" style="justify-content:flex-start;gap:6px"><button class="ibtn" data-go="talk-home" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button><h1 class="h2">Settings</h1></div>
+  <div class="card tight">
+    <div class="status-row"><span><span class="okdot"></span>Coach connected</span><span class="meta">DeepSeek</span></div>
+    <div class="status-row"><span><span class="okdot"></span>Reminders can ring on time</span><button class="link" data-go="reliable">Check</button></div>
+    <div class="status-row"><span><span class="okdot d45"></span><span class="okdot warndot d1"></span><span class="d45">Backed up Sunday</span><span class="d1">No backup yet</span></span><button class="link">Set up</button></div>
+  </div>
+  <div class="eyebrow">Coach</div>
+  <div class="list">
+    <button class="row"><span class="badge"><svg class="i"><use href="#i-coach"/></svg></span><span class="body"><span class="t">Provider and key</span><span class="s">DeepSeek · key saved on this phone</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row"><span class="badge"><svg class="i"><use href="#i-talk"/></svg></span><span class="body"><span class="t">Test connection</span><span class="s">Last test: worked</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+  </div>
+  <div class="eyebrow">Letters and your day</div>
+  <div class="list">
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Weekly letter</span><span class="s">Every Sunday evening</span></span><button class="switch" role="switch" aria-checked="true" aria-label="Weekly letter" onclick="flip(this)"></button></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Sunday alert</span><span class="s">One silent notification</span></span><button class="switch" role="switch" aria-checked="true" aria-label="Sunday alert" onclick="flip(this)"></button></div>
+    <button class="row"><span class="body"><span class="t">Day ends at</span><span class="s">Pick 1 to 6 am if you're often up late</span></span><span class="end" style="color:var(--text)">Midnight<svg class="i"><use href="#i-right"/></svg></span></button>
+  </div>
+  <div class="eyebrow">Your data</div>
+  <div class="list">
+    <div class="row" style="cursor:default"><span class="body"><span class="t">App lock</span></span><button class="switch" role="switch" aria-checked="true" aria-label="App lock" onclick="flip(this)"></button></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Hide in recent apps</span></span><button class="switch" role="switch" aria-checked="true" aria-label="Hide in recent apps" onclick="flip(this)"></button></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Weekly backup</span><span class="s">Encrypted, to Documents/Clarity</span></span><button class="switch" role="switch" aria-checked="true" aria-label="Weekly backup" onclick="flip(this)"></button></div>
+  </div>
+  <div class="grid2"><button class="btn primary sm">Back up now</button><button class="btn tonal sm">Restore</button><button class="btn tonal sm">Export all</button><button class="btn danger sm">Erase everything</button></div>
+  <div class="eyebrow">Advanced</div>
+  <div class="list">
+    <button class="row" data-go="health"><span class="badge"><svg class="i"><use href="#i-data"/></svg></span><span class="body"><span class="t">Health</span><span class="s">Background work, search, errors</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row" data-go="bench"><span class="badge"><svg class="i"><use href="#i-check"/></svg></span><span class="body"><span class="t">Test bench</span><span class="s">Try the coach on set scenarios</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+    <button class="row" data-go="prompts"><span class="badge"><svg class="i"><use href="#i-wrench"/></svg></span><span class="body"><span class="t">Prompts</span><span class="s">Built-in, no changes</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span></button>
+  </div>
+  <div class="small" style="text-align:center;padding:6px 0">Clarity 0.1.10 · <button class="link" style="font-size:12px" data-go="guide">How Clarity works</button></div>
+</section>
+
+<!-- ===================== RELIABLE ===================== -->
+<section class="screen" id="reliable" data-tab="none">
+  <button class="back" data-go="settings"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Settings</button>
+  <h1 class="h2">Keep reminders on time.</h1>
+  <p class="meta" style="line-height:1.55;margin:0">Xiaomi phones stop apps in the background to save battery. Fix these once and your reminders ring when you set them.</p>
+  <div class="list">
+    <div class="row" style="cursor:default"><span class="badge"><svg class="i"><use href="#i-battery"/></svg></span><span class="body"><span class="t">Battery</span><span class="s" style="color:var(--green)">No restrictions</span></span><button class="btn tonal sm">Open</button></div>
+    <div class="row" style="cursor:default"><span class="badge"><svg class="i"><use href="#i-power"/></svg></span><span class="body"><span class="t">Autostart</span><span class="s">Android can't tell us. Please check it's on.</span></span><button class="btn tonal sm">Open</button></div>
+    <div class="row" style="cursor:default"><span class="badge"><svg class="i"><use href="#i-alarm"/></svg></span><span class="body"><span class="t">Exact alarms</span><span class="s" style="color:var(--green)">Allowed</span></span><button class="btn tonal sm">Open</button></div>
+    <div class="row" style="cursor:default"><span class="badge"><svg class="i"><use href="#i-bell"/></svg></span><span class="body"><span class="t">Notifications</span><span class="s" style="color:var(--green)">On</span></span><button class="btn tonal sm">Open</button></div>
+  </div>
+  <div class="card tight"><div class="h3" style="font-size:14px">On HyperOS</div><div class="meta" style="line-height:1.55">Settings, Apps, Manage apps, Clarity. Turn on Autostart. Under Battery saver, pick No restrictions.</div></div>
+</section>
+
+<!-- ===================== HEALTH ===================== -->
+<section class="screen" id="health" data-tab="none">
+  <button class="back" data-go="settings"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Settings</button>
+  <h1 class="h2">Health</h1>
+  <div class="card">
+    <div class="eyebrow">November</div>
+    <div style="display:flex;align-items:baseline;gap:10px"><span class="big num" style="color:var(--yellow)">91%</span><span class="meta">of what was sent came from the cache</span></div>
+    <div class="kv"><span>Replies</span><span class="v">64</span></div>
+    <div class="kv"><span>Tokens sent</span><span class="v">842,100</span></div>
+    <div class="kv"><span>Tokens received</span><span class="v">28,450</span></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Caught before saving</div>
+    <div class="kv"><span>A quote that wasn't word for word</span><span class="v">1 removed</span></div>
+    <div class="kv"><span>A number the app didn't count</span><span class="v">0</span></div>
+    <div class="kv"><span>A card that didn't follow the rules</span><span class="v">0</span></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Background work</div>
+    <div class="kv"><span>Learning from conversations</span><span class="v" style="color:var(--green)">2 h ago</span></div>
+    <div class="kv"><span>Tidying notes</span><span class="v" style="color:var(--green)">Sunday</span></div>
+    <div class="kv"><span>Search</span><span class="v">142 items</span></div>
+  </div>
+  <div class="grid2"><button class="btn tonal sm">Rebuild search</button><button class="btn tonal sm">Re-index</button></div>
+</section>
+
+<!-- ===================== BENCH ===================== -->
+<section class="screen" id="bench" data-tab="none">
+  <button class="back" data-go="settings"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Settings</button>
+  <h1 class="h2">Test bench</h1>
+  <div class="card y">
+    <div class="eyebrow y">Last run · Thu 26 Nov</div>
+    <div class="status-row"><span class="big num">85 of 85</span><button class="btn primary sm">Run again</button></div>
+    <div class="meta">passed the automatic checks</div>
+  </div>
+  <div class="list">
+    <div class="row" style="cursor:default"><span class="body"><span class="t">The syllabus gap</span><span class="s">Doesn't answer with only a tiny start</span></span><span class="chip g">Pass</span></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Weak commitment, no card</span></span><span class="chip g">Pass</span></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Untangle: no commitment card</span></span><span class="chip g">Pass</span></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Time awareness</span><span class="s">12:40 am is late night, not morning</span></span><span class="chip g">Pass</span></div>
+    <div class="row" style="cursor:default"><span class="body"><span class="t">Memory is quoted exactly</span></span><span class="chip o">You judge</span></div>
+  </div>
+</section>
+
+<!-- ===================== PROMPTS ===================== -->
+<section class="screen" id="prompts" data-tab="none">
+  <button class="back" data-go="settings"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Settings</button>
+  <h1 class="h2">Prompts</h1>
+  <div class="scroller"><button class="chip-btn" aria-pressed="true">persona</button><button class="chip-btn" aria-pressed="false">cards</button><button class="chip-btn" aria-pressed="false">mode_plan</button><button class="chip-btn" aria-pressed="false">letter_weekly</button><button class="chip-btn" aria-pressed="false">story</button></div>
+  <textarea class="code" id="prompt-text" aria-label="Prompt text">You are Clarity, a private coach for one person.
+Before every reply, check privately: what they need, the real question, what you know and how well, the other side, and what a wise person would leave out.
+Ask one question at most.
+Use only the numbers in PLAN_STATE and NOW. Never count days yourself.</textarea>
+  <div class="meta" style="color:var(--green);display:flex;gap:6px;align-items:center"><svg class="i" style="width:16px;height:16px"><use href="#i-check"/></svg>Fits the rules. Ready to save.</div>
+  <div class="grid2"><button class="btn tonal">Reset to built-in</button><button class="btn primary">Save</button></div>
+</section>
+
+<!-- ===================== GUIDE ===================== -->
+<section class="screen" id="guide" data-tab="none">
+  <button class="back" data-go="talk-home"><svg class="i" style="width:17px;height:17px"><use href="#i-back"/></svg>Back</button>
+  <h1 class="h1" style="font-size:38px">How Clarity works.</h1>
+  <div class="list">
+    <div class="row" style="cursor:default;align-items:flex-start"><span class="badge"><svg class="i"><use href="#i-talk"/></svg></span><span class="body"><span class="t">The coach only talks. You decide.</span><span class="s" style="line-height:1.5">Nothing in your goals, plans or promises changes until you tap a button on a card.</span></span></div>
+    <div class="row" style="cursor:default;align-items:flex-start"><span class="badge"><svg class="i"><use href="#i-target"/></svg></span><span class="body"><span class="t">The numbers come from what you did.</span><span class="s" style="line-height:1.5">The app counts every day and pace from your check-ins, so a plan that can't work shows early.</span></span></div>
+    <div class="row" style="cursor:default;align-items:flex-start"><span class="badge"><svg class="i"><use href="#i-lock"/></svg></span><span class="body"><span class="t">It stays on your phone.</span><span class="s" style="line-height:1.5">Locked and encrypted. No account, no tracking, no streaks, no nagging. Only your messages to the coach leave the phone.</span></span></div>
+  </div>
+</section>
+
+<!-- ===================== LOCK ===================== -->
+<section class="screen" id="lock" data-tab="none" style="justify-content:center;align-items:center;text-align:center;gap:16px">
+  <span class="badge" style="width:64px;height:64px;border-radius:20px"><svg class="i" style="width:28px;height:28px"><use href="#i-lock"/></svg></span>
+  <h1 class="h1" style="font-size:40px">Clarity is locked.</h1>
+  <p class="meta" style="max-width:250px;line-height:1.5;margin:0">Use your fingerprint or screen lock to open it.</p>
+  <button class="btn primary" style="min-width:200px" data-go="talk-home">Unlock</button>
+</section>
+
+    </div>
+
+    <nav class="tabbar" id="tabbar" aria-label="Tabs">
+      <button class="tab" data-go="talk-home" data-t="talk"><span class="pill"><svg class="i"><use href="#i-talk"/></svg></span>Talk</button>
+      <button class="tab" data-go="plan-today" data-t="plan"><span class="pill"><svg class="i"><use href="#i-plan"/></svg><span class="dot"></span></span>Plan</button>
+      <button class="tab" data-go="know-hub" data-t="know"><span class="pill"><svg class="i"><use href="#i-know"/></svg></span>What I know</button>
+    </nav>
+
+    <div class="sheet-scrim" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-title"></div>
+  </div>
+
+  <aside class="notes">
+    <h2>How it holds up after a year</h2>
+    <p>The same screens with a year of notes, promises and check-ins in them. Long things fold; nothing grows into a wall.</p>
+    <ul>
+      <li><span class="tag">Story</span><b>What helps you</b> and <b>What you're good at</b> show the three surest rows (confirmed first, then the most often seen), each on at most two lines, then "Show N more".</li>
+      <li><span class="tag">Story</span>Tapping a note opens its proof in a sheet over the page: the note, its grade, how often and when, the newest thing you said about it, and every moment folded under one line, eight at a time. That's right, Not quite and Delete work right there.</li>
+      <li><span class="tag">Story</span><b>What you overcame</b> shows Then and Now; tap to unfold what you did. The chart has round gridlines; tap a bar to read that week, tap again to let go. Past 26 weeks it counts by month.</li>
+      <li><span class="tag">Know</span>The sections are one quiet list with the counts in a column; an empty one shows a dash. Notes in a section open the same proof sheet.</li>
+      <li><span class="tag">Plan</span>Promise answers are two by two; Done has a warm edge, not a bright fill. Past promises come twelve at a time. The goal shows done and days left on one line, then where each pace lands.</li>
+      <li><span class="tag fix">Same rules</span>Every number is the app's. The coach's cards become a Saved receipt after your tap; there is no Undo on them.</li>
+    </ul>
+  </aside>
+  </div>
+</div>
+
+<script>
+/* ---------- sample data (all counted numbers agree with each other) ---------- */
+const BACKLOGS = {
+  caf: { name: 'CAF lectures', unit: 'lectures', weeks: [
+    { d: '14 Oct', did: 13, plan: 15 }, { d: '21 Oct', did: 18, plan: 22 }, { d: '28 Oct', did: 22, plan: 28 },
+    { d: '4 Nov', did: 14, plan: 28, why: 'the travel week' }, { d: '11 Nov', did: 23, plan: 28 }, { d: '18 Nov', did: 20, plan: 28 },
+    { d: '25 Nov', did: 8, plan: 12, part: true } ] },
+  tax: { name: 'Tax practice sets', unit: 'sets', weeks: [
+    { d: '9 Nov', did: 3, plan: 10 }, { d: '16 Nov', did: 5, plan: 10 }, { d: '23 Nov', did: 4, plan: 7, part: true } ] }
+};
+const DAY1 = { caf: { name: 'CAF lectures', unit: 'lectures', weeks: [ { d: '14 Oct', did: 0, plan: 2, part: true } ] } };
+const COUNTS = { month: [74, 11, 1], year: [118, 19, 1], all: [118, 19, 1] };
+const MONTH_FROM = { caf: 2, tax: 0 };
+
+const NOTES = {
+  helps: [
+    { id: 'h1', text: 'Starting the first lecture at 8:00, before opening messages', grade: 'confirmed', seen: 9, first: '19 Oct', last: '26 Nov',
+      best: { q: 'When I sit at 8 with the link ready, I finish two before breakfast without fighting myself.', d: '19 Nov' },
+      all: [ ['26 Nov', 'n', 'Check-in: 4 of 4, started 8:05'], ['24 Nov', 'q', 'Did it at 8 again. Easier than I thought.'], ['19 Nov', 'q', 'When I sit at 8 with the link ready, I finish two before breakfast without fighting myself.'], ['17 Nov', 'n', 'Check-in: 4 of 4, started 8:00'], ['12 Nov', 'q', 'The 8 o’clock start is the only thing that worked this week.'], ['3 Nov', 'n', 'Check-in: 4 of 4, started 7:55'], ['29 Oct', 'q', 'If the first one is done before messages, the rest follow.'], ['24 Oct', 'n', 'Check-in: 3 of 3, started 8:10'], ['19 Oct', 'q', 'If I don’t start before 8:30, the whole morning slips into my phone.'] ] },
+    { id: 'h2', text: 'Doing just one lecture on a tired day', grade: 'confirmed', seen: 6, first: '22 Oct', last: '25 Nov',
+      best: { q: 'Even on a tired day, doing one lecture keeps the fear from coming back.', d: '29 Oct' },
+      all: [ ['25 Nov', 'n', 'Check-in: Part, 1 of 4, tired'], ['8 Nov', 'q', 'One in the car park in Abbottabad. Still counts.'], ['6 Nov', 'n', 'Check-in: Part, 1 of 4, plans changed'], ['29 Oct', 'q', 'Even on a tired day, doing one lecture keeps the fear from coming back.'], ['26 Oct', 'n', 'Check-in: Part, 1 of 3, tired'], ['22 Oct', 'q', 'I almost skipped, did one, felt fine.'] ] },
+    { id: 'h3', text: 'Leaving tomorrow’s lecture open on the laptop the night before', grade: 'likely', seen: 3, first: '20 Nov', last: '26 Nov',
+      best: { q: 'Link was already open, so I just pressed play.', d: '21 Nov' },
+      all: [ ['26 Nov', 'n', 'Promise kept: open tomorrow’s lecture link before bed'], ['21 Nov', 'q', 'Link was already open, so I just pressed play.'], ['20 Nov', 'q', 'Tried leaving it open last night. Morning was smoother.'] ] },
+    { id: 'h4', text: 'Studying at the desk, not on the bed', grade: 'likely', seen: 2, first: '2 Nov', last: '15 Nov',
+      best: { q: 'On the bed I fall asleep by the second lecture.', d: '2 Nov' },
+      all: [ ['15 Nov', 'q', 'Desk again. Two done, awake.'], ['2 Nov', 'q', 'On the bed I fall asleep by the second lecture.'] ] },
+    { id: 'h5', text: 'Saying the day’s plan out loud in the morning', grade: 'guess', seen: 1, first: '23 Nov', last: '23 Nov',
+      best: { q: 'Told my brother I’d do four today. Did four.', d: '23 Nov' },
+      all: [ ['23 Nov', 'q', 'Told my brother I’d do four today. Did four.'] ] },
+    { id: 'h6', text: 'A short walk after the second lecture', grade: 'guess', seen: 1, first: '18 Nov', last: '18 Nov',
+      best: { q: 'Ten minutes outside and the third one went fine.', d: '18 Nov' },
+      all: [ ['18 Nov', 'q', 'Ten minutes outside and the third one went fine.'] ] }
+  ],
+  good: [
+    { id: 'g1', text: 'Coming back the day after a bad one', grade: 'confirmed', seen: 4, first: '27 Oct', last: '19 Nov',
+      best: { q: 'Yesterday was nothing. Today I did three. That’s the deal.', d: '19 Nov' },
+      all: [ ['19 Nov', 'q', 'Yesterday was nothing. Today I did three. That’s the deal.'], ['11 Nov', 'n', 'Check-in: Did it, 4 of 4, after a Not on 10 Nov'], ['5 Nov', 'n', 'Check-in: Did it, 4 of 4, after a Not on 4 Nov'], ['27 Oct', 'n', 'Check-in: Did it, 4 of 4, after a Not on 26 Oct'] ] },
+    { id: 'g2', text: 'Giving real numbers when asked, not vague ones', grade: 'likely', seen: 3, first: '16 Oct', last: '14 Nov',
+      best: { q: 'Honestly it’s 2.5 a day on a normal week, not 4.', d: '14 Nov' },
+      all: [ ['14 Nov', 'q', 'Honestly it’s 2.5 a day on a normal week, not 4.'], ['30 Oct', 'q', 'Four hours on Saturdays, two on weekdays, that’s real.'], ['16 Oct', 'q', 'I can do 2 a day for now, 3 once the first week is done.'] ] }
+  ]
+};
+const NOTES_D1 = { helps: [ { id: 'd1h', text: 'Knowing the exact first step before sitting down', grade: 'guess', seen: 1, first: '14 Oct', last: '14 Oct',
+  best: { q: 'If I know which lecture is first I can start. If not I scroll.', d: '14 Oct' }, all: [ ['14 Oct', 'q', 'If I know which lecture is first I can start. If not I scroll.'] ] } ], good: [] };
+
+const OVERCAME = [
+  { title: 'The 300 felt like a wall', then: 'Every time I open the list I close it again.', thenD: '15 Oct',
+    did: 'Split it into a ramp: 2 a day, then 3, then 4, with 1 as the floor on bad days.', now: '44 lectures done in October.' },
+  { title: 'Mornings lost to the phone', then: 'If I don’t start before 8:30, the whole morning slips into my phone.', thenD: '19 Oct',
+    did: 'Phone on the desk outside the bedroom at 10:30 pm, and the first lecture before messages.', now: 'Started by 8:00 on 9 of the last 12 October mornings.' }
+];
+
+let mode = 'd45', range = 'all', backlog = 'caf', helpsOpen = false, sel = null;
+const deleted = new Set(), confirmed = new Set();
+
+/* ---------- navigation ---------- */
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  const scr = document.getElementById(id); scr.scrollTop = 0;
+  const tab = scr.dataset.tab;
+  const bar = document.getElementById('tabbar'); bar.hidden = tab === 'none';
+  bar.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', String(t.dataset.t === tab)));
+  document.querySelectorAll('.pick').forEach(p => p.setAttribute('aria-current', String(p.dataset.go === id)));
+  closeSheet();
+  try { localStorage.setItem('clarity-screen', id); } catch (e) {}
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go]');
+  if (t) { e.preventDefault(); go(t.dataset.go); }
+});
+function setMode(m) {
+  mode = m; document.body.dataset.mode = m;
+  document.getElementById('m-d1').setAttribute('aria-pressed', String(m === 'd1'));
+  document.getElementById('m-d45').setAttribute('aria-pressed', String(m === 'd45'));
+  if (m === 'd1') { range = 'all'; backlog = 'caf'; }
+  renderStory(); renderSection();
+}
+
+/* ---------- small interactions ---------- */
+function sendReady(inp, id) { document.getElementById(id).classList.toggle('ready', inp.value.trim().length > 0); }
+function flip(sw) { sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true')); }
+let todayN = 2;
+function step(d) { todayN = Math.max(0, Math.min(4, todayN + d)); document.getElementById('today-n').textContent = todayN; }
+document.querySelectorAll('[data-today]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-today]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.getElementById('today-part').hidden = b.dataset.today !== 'part';
+  document.getElementById('today-not').hidden = b.dataset.today !== 'not';
+}));
+document.querySelectorAll('.chips .chip-btn:not([data-bl]), #prompts .scroller .chip-btn').forEach(b => b.addEventListener('click', () => {
+  if (b.closest('#today-not')) { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); return; }
+  b.parentElement.querySelectorAll('.chip-btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+
+const CARDS = {
+  promise: ['Promise', 'Start lecture 119 before opening the phone', 'Tomorrow, Sat 28 Nov, 8:00 am · reminder at 8:00 am', 'Set it', 'promise for Sat 28 Nov, 8:00 am'],
+  plan: ['Plan · version 3', 'CAF lectures: 4 a day, Monday to Saturday', 'Bad day 1 · Sunday off · looked at again Tue 8 Dec', 'Save plan', 'plan version 3'],
+  target: ['Target change', 'Bad-day floor for CAF lectures: 1 to 2', 'Aim stays 4 a day', 'Change it', 'bad-day floor is now 2'],
+  backlog: ['Backlog', 'Tax practice sets: 80 by Fri 15 Jan', '12 already done · needs 1.4 a day', 'Add it', 'backlog Tax practice sets'],
+  note: ['Note · what helps', 'Phone outside the bedroom at 10:30 pm protects the 8:00 start', 'From what you said tonight', 'Save note', 'note in What helps'],
+  focus: ['Focus', 'Phone out at night', 'Why: mornings start better when the night ends early', 'Start focus', 'focus Phone out at night'],
+  mode: ['Chat type', 'Switch to Decide', 'Whether to take a two-day revision pause this weekend', 'Switch', 'now in Decide']
+};
+let cardKey = 'promise';
+document.querySelectorAll('[data-card]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-card]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  cardKey = b.dataset.card; const c = CARDS[cardKey];
+  document.getElementById('sugg-k').textContent = c[0]; document.getElementById('sugg-t').textContent = c[1]; document.getElementById('sugg-m').textContent = c[2];
+  document.querySelector('#sugg .btn.primary').textContent = c[3];
+  document.querySelector('#sugg .btn.tonal').textContent = cardKey === 'promise' ? 'Change time' : 'Not now';
+  document.querySelector('#sugg .btn.tonal').dataset.go = cardKey === 'promise' ? 'talk-time' : '';
+  if (cardKey !== 'promise') delete document.querySelector('#sugg .btn.tonal').dataset.go;
+  undoCard();
+}));
+function saveCard() { document.getElementById('sugg').hidden = true; document.getElementById('receipt').hidden = false; document.getElementById('receipt-t').textContent = '· ' + CARDS[cardKey][4]; }
+function undoCard() { document.getElementById('sugg').hidden = false; document.getElementById('receipt').hidden = true; }
+
+/* ---------- story ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function renderChart() {
+  const src = mode === 'd1' ? DAY1 : BACKLOGS;
+  const b = src[backlog] || src.caf;
+  let weeks = b.weeks;
+  if (mode === 'd45' && range === 'month') weeks = weeks.slice(MONTH_FROM[backlog] || 0);
+  const total = weeks.reduce((s, w) => s + w.did, 0);
+  document.getElementById('chart-total').textContent = mode === 'd1' ? 'Day 1' : total + ' ' + b.unit;
+
+  const W = 320, H = 164, L = 26, R = 6, T = 10, B = 24;
+  const iw = W - L - R, ih = H - T - B;
+  const maxV = Math.max(...weeks.map(w => Math.max(w.did, w.plan)), 1);
+  const top = Math.max(10, Math.ceil(maxV / 10) * 10);
+  const tickStep = top <= 10 ? 5 : 10;
+  const y = v => T + ih - (v / top) * ih;
+  const slot = iw / Math.max(weeks.length, 4);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${b.name}, week by week` });
+  const muted = cssVar('--muted'), faint = cssVar('--faint'), hair = cssVar('--hair'), yellow = cssVar('--yellow');
+  for (let v = 0; v <= top; v += tickStep) {
+    el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: hair, 'stroke-width': 1 }, svg);
+    const t = el('text', { x: L - 6, y: y(v) + 3.5, 'text-anchor': 'end', fill: faint, 'font-size': 10, 'font-family': 'Instrument Sans, sans-serif' }, svg); t.textContent = v;
+  }
+  let path = '';
+  weeks.forEach((w, i) => {
+    const x0 = L + i * slot, bw = slot * 0.54, bx = x0 + (slot - bw) / 2;
+    const h = Math.max(0, y(0) - y(w.did));
+    const r = el('rect', { x: bx, y: y(w.did), width: bw, height: h, rx: 3, fill: yellow, 'fill-opacity': w.part ? 0.42 : 1, tabindex: 0, style: 'cursor:pointer;outline:none' }, svg);
+    r.addEventListener('click', () => caption(w, b)); r.addEventListener('focus', () => caption(w, b));
+    path += (i === 0 ? `M ${x0 + 3} ${y(w.plan)}` : ` L ${x0} ${y(w.plan)}`) + ` L ${x0 + slot - (i === weeks.length - 1 ? 3 : 0)} ${y(w.plan)}`;
+    const show = weeks.length <= 5 || i % 2 === 0 || i === weeks.length - 1;
+    if (show) { const t = el('text', { x: x0 + slot / 2, y: H - 7, 'text-anchor': 'middle', fill: faint, 'font-size': 10, 'font-family': 'Instrument Sans, sans-serif' }, svg); t.textContent = w.d; }
+  });
+  el('path', { d: path, fill: 'none', stroke: muted, 'stroke-width': 1.6, 'stroke-dasharray': '4 3.5' }, svg);
+  const wrap = document.getElementById('chart'); wrap.replaceChildren(svg);
+  if (mode === 'd1') document.getElementById('chart-cap').textContent = 'Bars start with your first check-in. The dashed line is what step one asks for.';
+  else caption(weeks.filter(w => !w.part).slice(-1)[0] || weeks[0], b);
+}
+function caption(w, b) {
+  const cap = document.getElementById('chart-cap');
+  cap.innerHTML = `Week of ${w.d}${w.part ? ' (so far)' : ''}: <b>${w.did} ${b.unit}</b>, the plan asked ${w.plan}${w.why ? ', ' + w.why : ''}.`;
+}
+
+function renderCounts() {
+  const c = COUNTS[range];
+  document.getElementById('c-done').textContent = c[0];
+  document.getElementById('c-kept').textContent = c[1];
+  document.getElementById('c-over').textContent = c[2];
+  document.querySelector('#c-over + .l').textContent = c[2] === 1 ? 'thing overcome' : 'things overcome';
+}
+
+function renderOvercame() {
+  const box = document.getElementById('overcame'); box.replaceChildren();
+  OVERCAME.forEach(o => {
+    const b = document.createElement('button'); b.className = 'over'; b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = `<span class="h3" style="font-size:15px">${o.title}</span>
+      <span class="tn">
+        <span class="k">Then</span><span class="v q">"${o.then}"</span>
+        <span class="more"><span class="k">You</span><span class="v">${o.did}</span></span>
+        <span class="k now">Now</span><span class="v now">${o.now}</span>
+      </span>
+      <span class="hint"><span class="lbl">What you did</span><svg class="i" style="width:14px;height:14px"><use href="#i-down"/></svg></span>`;
+    b.addEventListener('click', () => {
+      const open = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(open));
+      b.querySelector('.lbl').textContent = open ? `Then was ${o.thenD}` : 'What you did';
+    });
+    box.appendChild(b);
+  });
+}
+
+function noteRow(n, kind) {
+  const b = document.createElement('button'); b.className = 'row note-row';
+  const isConf = n.grade === 'confirmed' || confirmed.has(n.id);
+  b.innerHTML = `<span class="body"><span class="t clamp2"></span><span class="s">${isConf ? '<svg class="i ok"><use href="#i-check"/></svg>' : ''}Seen ${n.seen === 1 ? 'once' : n.seen + ' times'} in your own words</span></span><span class="end"><svg class="i"><use href="#i-right"/></svg></span>`;
+  b.querySelector('.t').textContent = n.text;
+  b.addEventListener('click', () => openSheet(n, kind));
+  return b;
+}
+function renderNotes() {
+  const src = mode === 'd1' ? NOTES_D1 : NOTES;
+  const helps = src.helps.filter(n => !deleted.has(n.id));
+  const good = src.good.filter(n => !deleted.has(n.id));
+  const hb = document.getElementById('helps'); hb.replaceChildren();
+  (helpsOpen ? helps : helps.slice(0, 3)).forEach(n => hb.appendChild(noteRow(n, 'What helps you')));
+  document.getElementById('helps-n').textContent = helps.length;
+  const more = document.getElementById('helps-more');
+  more.hidden = helps.length <= 3;
+  more.textContent = helpsOpen ? 'Show fewer' : `Show ${helps.length - 3} more`;
+  const gb = document.getElementById('good'); gb.replaceChildren();
+  good.forEach(n => gb.appendChild(noteRow(n, 'What you’re good at')));
+}
+document.getElementById('helps-more').addEventListener('click', () => { helpsOpen = !helpsOpen; renderNotes(); });
+
+function renderStory() {
+  document.querySelectorAll('[data-range]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.range === range)));
+  document.querySelectorAll('[data-bl]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.bl === backlog)));
+  renderCounts(); renderChart(); renderOvercame(); renderNotes();
+}
+document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', () => { range = b.dataset.range; renderStory(); }));
+document.querySelectorAll('[data-bl]').forEach(b => b.addEventListener('click', () => { backlog = b.dataset.bl; renderStory(); }));
+
+/* ---------- What helps section in What I know (same rows, same sheet) ---------- */
+function renderSection() {
+  const src = mode === 'd1' ? NOTES_D1 : NOTES;
+  const box = document.getElementById('section-list'); box.replaceChildren();
+  src.helps.filter(n => !deleted.has(n.id)).forEach(n => box.appendChild(noteRow(n, 'What helps')));
+}
+
+/* ---------- proof sheet ---------- */
+function gradeChip(n) {
+  if (n.grade === 'confirmed' || confirmed.has(n.id)) return '<span class="chip g">Confirmed</span>';
+  if (n.grade === 'likely') return '<span class="chip y">Likely</span>';
+  return '<span class="chip o">Guess</span>';
+}
+function openSheet(n, kind) {
+  sel = n;
+  const isConf = n.grade === 'confirmed' || confirmed.has(n.id);
+  const sh = document.getElementById('sheet');
+  const moments = n.all.map(([d, t, s]) => `<div class="moment"><span class="d">${d}</span><span class="${t === 'q' ? 'q' : 'n'}">${t === 'q' ? '“' + s + '”' : s}</span></div>`).join('');
+  sh.innerHTML = `
+    <div class="grab"></div>
+    <div class="status-row"><span class="eyebrow">${kind}</span>${gradeChip(n)}</div>
+    <h2 id="sh-title" class="h2" style="font-size:27px;line-height:1.15">${n.text}</h2>
+    <div class="meta num">Seen ${n.seen === 1 ? 'once' : n.seen + ' times'} · first ${n.first}${n.seen > 1 ? ' · last ' + n.last : ''}</div>
+    <div class="proof-q"><svg class="i" style="color:var(--yellow);width:18px;height:18px"><use href="#i-quote"/></svg><p class="quote">${n.best.q}</p><span class="small">You, ${n.best.d}</span></div>
+    ${n.all.length > 1 ? `<details class="moments"><summary>All ${n.all.length} moments<svg class="i" style="width:16px;height:16px"><use href="#i-down"/></svg></summary>${moments}</details>` : ''}
+    <div id="sh-edit" hidden style="display:flex;flex-direction:column;gap:8px"><label class="meta" for="sh-edit-t">Say it your way</label><textarea class="edit" id="sh-edit-t"></textarea><div class="btn-row"><button class="btn tonal sm" id="sh-edit-cancel">Cancel</button><button class="btn primary sm" id="sh-edit-save">Save</button></div></div>
+    <div class="btn-row" id="sh-actions">
+      ${isConf ? '' : '<button class="btn primary sm" id="sh-yes">That’s right</button>'}
+      <button class="btn tonal sm" id="sh-edit-b">Not quite</button>
+      <button class="btn danger sm" id="sh-del">Delete</button>
+    </div>
+    <div class="confirm-del" id="sh-confirm"><span>Delete this for good? Clarity won't learn it again.</span><div class="btn-row"><button class="btn tonal sm" id="sh-keep">Keep it</button><button class="btn danger sm" id="sh-del-yes">Delete</button></div></div>`;
+  sh.querySelector('#sh-edit-t').value = n.text;
+  const yes = sh.querySelector('#sh-yes');
+  if (yes) yes.addEventListener('click', () => { confirmed.add(n.id); renderNotes(); renderSection(); openSheet(n, kind); });
+  sh.querySelector('#sh-edit-b').addEventListener('click', () => { sh.querySelector('#sh-edit').hidden = false; sh.querySelector('#sh-actions').hidden = true; sh.querySelector('#sh-edit-t').focus(); });
+  sh.querySelector('#sh-edit-cancel').addEventListener('click', () => { sh.querySelector('#sh-edit').hidden = true; sh.querySelector('#sh-actions').hidden = false; });
+  sh.querySelector('#sh-edit-save').addEventListener('click', () => { const v = sh.querySelector('#sh-edit-t').value.trim(); if (v) { n.text = v; confirmed.add(n.id); } renderNotes(); renderSection(); openSheet(n, kind); });
+  sh.querySelector('#sh-del').addEventListener('click', () => { sh.querySelector('#sh-confirm').classList.add('on'); sh.querySelector('#sh-actions').hidden = true; });
+  sh.querySelector('#sh-keep').addEventListener('click', () => { sh.querySelector('#sh-confirm').classList.remove('on'); sh.querySelector('#sh-actions').hidden = false; });
+  sh.querySelector('#sh-del-yes').addEventListener('click', () => { deleted.add(n.id); closeSheet(); renderNotes(); renderSection(); });
+  document.getElementById('phone').classList.add('sheet-open');
+  sh.scrollTop = 0;
+}
+function closeSheet() { document.getElementById('phone').classList.remove('sheet-open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+/* ---------- start ---------- */
+let start = 'know-story';
+try { const s = localStorage.getItem('clarity-screen'); if (s && document.getElementById(s)) start = s; } catch (e) {}
+document.body.dataset.mode = mode;
+renderStory(); renderSection(); go(start);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderChart);
+</script>
+
+</html>

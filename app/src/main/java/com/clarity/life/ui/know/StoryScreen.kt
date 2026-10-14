@@ -26,12 +26,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -44,7 +50,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,8 +76,9 @@ import com.clarity.life.ui.theme.clarity
  * Your story (spec 2.5, the owner's approved mockup of 13 Oct 2026, made cleaner at the owner's request the same day):
  * how long his story is and a This month / This year / All of it switch (once the views differ); the monthly
  * short version; the counts (once one is not zero); a week-by-week chart per goal with the
- * plan's line under it; what he overcame; what helps him and what he is good at, each opening its proof in
- * What I know; then and now in his own words; his chapters by year. No scores, levels or streaks.
+ * plan's line under it; what he overcame, folded to Then and Now; what helps him and what he is good at, each
+ * opening its proof in a sheet over this page; then and now in his own words; his chapters by year. No scores,
+ * levels or streaks.
  */
 @Composable
 fun StoryScreen(
@@ -136,16 +149,7 @@ fun StoryScreen(
         if (s.overcame.isNotEmpty() || s.doneFocuses.isNotEmpty()) {
             item { SectionTitle("What you overcame") }
             if (s.overcame.isNotEmpty()) {
-                s.overcame.forEach { o ->
-                    item {
-                        BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 6.dp), gap = 12) {
-                            Text(o.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
-                            o.then?.let { q -> ThenNow("Then", "\"${q.text}\" ${StoryViewModel.shortDay(java.time.LocalDate.parse(q.saidDay))}", false) }
-                            ThenNow("You", o.did, false)
-                            ThenNow("Now", o.now, true)
-                        }
-                    }
-                }
+                s.overcame.forEach { o -> item { OvercameCard(o) } }
             } else {
                 s.doneFocuses.forEach { d ->
                     item {
@@ -298,7 +302,8 @@ private fun ChartCard(s: StoryViewModel.State, onChart: (Int) -> Unit) {
             )
             c.finishedOn?.let { Kicker("Done ${StoryViewModel.day(it)}") }
         }
-        Bars(chart.bars)
+        var picked by rememberSaveable(s.chart, chart.bars.size) { mutableStateOf<Int?>(null) }
+        Bars(chart.bars, partialLast = c.finishedOn == null, picked = picked) { i -> picked = if (picked == i) null else i }
         Row {
             Text(StoryViewModel.shortDay(chart.bars.first().start), style = MaterialTheme.typography.bodySmall, color = clarity.muted)
             Spacer(Modifier.weight(1f))
@@ -323,32 +328,68 @@ private fun ChartCard(s: StoryViewModel.State, onChart: (Int) -> Unit) {
                 }
             }
         }
-        chartLine(chart)?.let { Quiet(it) }
+        (picked?.let { barLine(chart, it) } ?: chartLine(chart))?.let { Quiet(it) }
     }
 }
 
-/** The bars and the plan's stairs. Counted by [Story.series]; drawn here, nothing worked out. */
+/**
+ * The bars and the plan's stairs, over a few quiet gridlines with round numbers. Counted by [Story.series];
+ * drawn here, nothing worked out. The stretch still under way is drawn lighter. Tapping a bar picks it: the
+ * others dim and the line under the chart reads that stretch; tapping it again lets go.
+ */
 @Composable
-private fun Bars(bars: List<Story.Bar>) {
-    val top = (bars.maxOf { maxOf(it.done, it.planned) }).coerceAtLeast(1.0) * 1.1
+private fun Bars(bars: List<Story.Bar>, partialLast: Boolean, picked: Int?, onPick: (Int) -> Unit) {
+    val most = bars.maxOf { maxOf(it.done, it.planned) }.coerceAtLeast(1.0)
+    val step = gridStep(most)
+    val top = kotlin.math.ceil(most / step) * step
     val yellow = clarity.yellow
     val line = clarity.text
     val hair = clarity.hairline
+    val label = MaterialTheme.typography.labelSmall.copy(color = clarity.muted, fontWeight = FontWeight.Normal, letterSpacing = 0.sp)
+    val measurer = rememberTextMeasurer()
     val described = bars.joinToString("; ") { "${StoryViewModel.shortDay(it.start)}: ${PlanStateText.g(it.done)} of ${PlanStateText.g(it.planned)}" }
-    Canvas(Modifier.fillMaxWidth().height(150.dp).semantics { contentDescription = described }) {
-        val slot = size.width / bars.size
-        val gap = (slot * 0.18f).coerceAtMost(6.dp.toPx())
+    val n = bars.size
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(168.dp)
+            .semantics { contentDescription = described }
+            .pointerInput(n) {
+                detectTapGestures { pos ->
+                    val gutter = 30.dp.toPx()
+                    val slot = (size.width - gutter) / n
+                    val i = ((pos.x - gutter) / slot).toInt()
+                    if (i in 0 until n) onPick(i)
+                }
+            },
+    ) {
+        val gutter = 30.dp.toPx()
         val h = size.height - 2f
+        val w = size.width - gutter
         fun y(v: Double) = (h - (v / top * h)).toFloat()
-        drawLine(hair, Offset(0f, h + 1f), Offset(size.width, h + 1f), 1.dp.toPx())
+        var v = 0.0
+        while (v <= top + 1e-9) {
+            val yy = y(v)
+            drawLine(hair, Offset(gutter, yy), Offset(size.width, yy), 1.dp.toPx())
+            val t = measurer.measure(PlanStateText.g(v), label)
+            drawText(t, topLeft = Offset(gutter - 8.dp.toPx() - t.size.width, (yy - t.size.height / 2f).coerceIn(0f, size.height - t.size.height)))
+            v += step
+        }
+        val slot = w / n
+        val gap = (slot * 0.36f).coerceAtMost(14.dp.toPx())
         bars.forEachIndexed { i, b ->
             if (b.done > 0) {
                 val bh = (b.done / top * h).toFloat()
+                val alpha = when {
+                    picked != null && picked != i -> 0.32f
+                    partialLast && i == n - 1 && picked != i -> 0.45f
+                    else -> 1f
+                }
                 drawRoundRect(
-                    yellow,
-                    topLeft = Offset(i * slot + gap / 2, h - bh),
+                    yellow.copy(alpha = alpha),
+                    topLeft = Offset(gutter + i * slot + gap / 2, h - bh),
                     size = Size(slot - gap, bh),
-                    cornerRadius = CornerRadius(3.dp.toPx()),
+                    cornerRadius = CornerRadius(4.dp.toPx()),
                 )
             }
         }
@@ -356,15 +397,43 @@ private fun Bars(bars: List<Story.Bar>) {
             val path = Path()
             bars.forEachIndexed { i, b ->
                 val yy = y(b.planned)
-                if (i == 0) path.moveTo(0f, yy) else path.lineTo(i * slot, yy)
-                path.lineTo((i + 1) * slot, yy)
+                if (i == 0) path.moveTo(gutter, yy) else path.lineTo(gutter + i * slot, yy)
+                path.lineTo(gutter + (i + 1) * slot, yy)
             }
             drawPath(
                 path,
-                line.copy(alpha = 0.75f),
-                style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))),
+                line.copy(alpha = 0.7f),
+                style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(9f, 7f))),
             )
         }
+    }
+}
+
+/** A round gridline step (1, 2 or 5 times a power of ten) that gives about three lines up to [most]. */
+internal fun gridStep(most: Double): Double {
+    val raw = most / 3.0
+    if (raw <= 1.0) return 1.0
+    val pow = Math.pow(10.0, kotlin.math.floor(kotlin.math.log10(raw)))
+    val f = raw / pow
+    return pow * when {
+        f <= 1.0 -> 1.0
+        f <= 2.0 -> 2.0
+        f <= 5.0 -> 5.0
+        else -> 10.0
+    }
+}
+
+/** The line for a bar he tapped: that stretch, what he did and what the plan asked for. */
+private fun barLine(chart: StoryViewModel.Chart, i: Int): String? {
+    val b = chart.bars.getOrNull(i) ?: return null
+    val c = chart.data
+    val g = PlanStateText::g
+    val what = if (c.series.by == "week") "The week of ${StoryViewModel.shortDay(b.start)}" else StoryViewModel.monthName(b.start)
+    val sofar = if (c.finishedOn == null && i == chart.bars.size - 1) " so far" else ""
+    return if (b.planned > 0) {
+        "$what$sofar: you did ${g(b.done)} and your plan asked for ${g(b.planned)}."
+    } else {
+        "$what$sofar: you did ${g(b.done)}."
     }
 }
 
@@ -382,6 +451,13 @@ private fun chartLine(chart: StoryViewModel.Chart): String? {
         }
     }
     val bars = chart.bars
+    if (bars.all { it.done <= 0.0 }) {
+        return if (bars.any { it.planned > 0 }) {
+            "Bars start with your first check-in. The dashed line is what your plan asks for."
+        } else {
+            "Bars start with your first check-in."
+        }
+    }
     val last = if (bars.size >= 2) bars[bars.size - 2] else return null
     val what = if (c.series.by == "week") "The week of ${StoryViewModel.shortDay(last.start)}" else StoryViewModel.monthName(last.start)
     return if (last.planned > 0) {
@@ -391,16 +467,71 @@ private fun chartLine(chart: StoryViewModel.Chart): String? {
     }
 }
 
+/**
+ * One thing he overcame, folded: the title, Then in his own words and Now. Tapping it unfolds what he did in
+ * between, in place. Without a Then quote there is nothing to fold, so what he did shows from the start.
+ */
 @Composable
-private fun ThenNow(label: String, text: String, now: Boolean) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (now) clarity.yellow else clarity.muted, modifier = Modifier.width(44.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = clarity.text, modifier = Modifier.weight(1f))
+private fun OvercameCard(o: StoryViewModel.Overcame) {
+    val then = o.then
+    var open by rememberSaveable(o.title) { mutableStateOf(false) }
+    val folds = then != null
+    BoldCard(
+        Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+        gap = 10,
+        onClick = if (folds) ({ open = !open }) else null,
+    ) {
+        Text(o.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+        if (then != null) {
+            ThenNow("Then", "“${then.text}”", false, quote = true)
+            if (open) ThenNow("You", o.did, false)
+        } else {
+            ThenNow("You", o.did, false)
+        }
+        ThenNow("Now", o.now, true)
+        if (folds) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    if (open) "You said it on ${StoryViewModel.shortDay(java.time.LocalDate.parse(then!!.saidDay))}" else "What you did",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.muted,
+                )
+                Icon(
+                    if (open) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = clarity.muted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
     }
 }
 
 @Composable
+private fun ThenNow(label: String, text: String, now: Boolean, quote: Boolean = false) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (now) clarity.yellow else clarity.muted, modifier = Modifier.width(44.dp))
+        Text(
+            text,
+            style = if (quote) MaterialTheme.typography.headlineSmall.copy(fontSize = 18.sp, lineHeight = 24.sp) else MaterialTheme.typography.bodyMedium,
+            color = if (now || quote) clarity.text else clarity.muted,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/** How many notes a list shows before "Show N more": after a year the list stays a short read. */
+private const val SHOWN_NOTES = 3
+
+/**
+ * What helps him, or what he is good at: one row each, its words on at most two lines, and how often he said it
+ * written out under it (a tick when he confirmed it). The surest come first; after three, "Show N more". A row
+ * opens its proof sheet over this page.
+ */
+@Composable
 private fun NoteList(title: String, notes: List<NoteRow>, onProof: (NoteRow) -> Unit) {
+    var all by rememberSaveable(title) { mutableStateOf(false) }
+    val shown = if (all) notes else notes.take(SHOWN_NOTES)
     Column {
         SectionTitle(title)
         Column(
@@ -410,28 +541,39 @@ private fun NoteList(title: String, notes: List<NoteRow>, onProof: (NoteRow) -> 
                 .background(clarity.surface, Bold.cardShape)
                 .border(1.dp, clarity.hairline, Bold.cardShape),
         ) {
-            notes.forEachIndexed { i, n ->
+            shown.forEachIndexed { i, n ->
                 if (i > 0) HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
                         .clickable(role = Role.Button) { onProof(n) }
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                        .padding(start = 18.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(n.text, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
-                        Text(
-                            if (n.timesSeen == 1) "Seen once in your own words" else "Seen ${n.timesSeen} times in your own words",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = clarity.muted,
-                        )
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(n.text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (n.confidence == "confirmed") {
+                                Icon(Icons.Outlined.Check, contentDescription = "Confirmed by you", tint = clarity.green, modifier = Modifier.size(15.dp))
+                            }
+                            Text(
+                                if (n.timesSeen == 1) "Seen once in your own words" else "Seen ${n.timesSeen} times in your own words",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = clarity.muted,
+                            )
+                        }
                     }
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.muted)
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.controlOutline)
                 }
             }
+        }
+        if (notes.size > SHOWN_NOTES) {
+            TextAction(
+                if (all) "Show fewer" else "Show ${notes.size - SHOWN_NOTES} more",
+                modifier = Modifier.padding(horizontal = 20.dp),
+            ) { all = !all }
         }
     }
 }
