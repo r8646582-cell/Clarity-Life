@@ -47,7 +47,7 @@ import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.UsageMonthRow
 
 /**
- * The whole database, version 6, exactly the 32 tables of db/schema.sql.
+ * The whole database, version 7, exactly the 32 tables of db/schema.sql.
  *
  * Rules that never break here (CLAUDE.md rule 8): the schema is exported and committed, and every future
  * change is a written migration plus a MigrationTest. The destructive-migration escape hatch Room offers is
@@ -55,7 +55,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 6,
+    version = 7,
     exportSchema = true,
     entities = [
         // chat
@@ -99,6 +99,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V3_TO_V4,
             Migrations.V4_TO_V5,
             Migrations.V5_TO_V6,
+            Migrations.V6_TO_V7,
         )
     }
 }

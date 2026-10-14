@@ -1,4 +1,4 @@
--- Clarity: database schema, version 6 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 7 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
@@ -38,6 +38,8 @@ CREATE TABLE conversation (
   history_start_id INTEGER NOT NULL DEFAULT 0  -- first message id in the history window; only moves forward
 );
 
+CREATE INDEX idx_conversation_started ON conversation(started_at);  -- schema 7: the drawer, newest first
+
 CREATE TABLE message (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   conversation_id INTEGER NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
@@ -50,6 +52,7 @@ CREATE TABLE message (
   tokens_out INTEGER
 );
 CREATE INDEX idx_message_conv ON message(conversation_id, id);
+CREATE INDEX idx_message_status ON message(status);           -- schema 7: the start-up sweep finds 'streaming' replies
 
 CREATE TABLE goal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,6 +153,7 @@ CREATE TABLE promise (
   resolved_at INTEGER
 );
 CREATE INDEX idx_promise_status ON promise(status, due_at);
+CREATE INDEX idx_promise_due ON promise(due_at);              -- schema 7: promises due in a period, answered since a day
 
 CREATE TABLE card (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -292,6 +296,7 @@ CREATE TABLE quote (
   text TEXT NOT NULL,                   -- only inserted after QuoteCheck passes
   said_day TEXT NOT NULL
 );
+CREATE INDEX idx_quote_day ON quote(said_day, id);            -- schema 7: Your story and letters read quotes by day
 
 CREATE TABLE reflection_item (         -- what reflection learns that is neither a note nor a quote (schema version 2)
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -329,6 +334,7 @@ CREATE TABLE error_log (               -- never any message text, key or persona
   code TEXT NOT NULL,                  -- http_429, json_rejected, card_dropped, quote_rejected ...
   detail TEXT NOT NULL DEFAULT ''
 );
+CREATE INDEX idx_error_at ON error_log(at);                   -- schema 7: Health and the yearly clean-up
 
 CREATE TABLE usage_month (
   month TEXT PRIMARY KEY NOT NULL,     -- 2026-10
@@ -349,3 +355,4 @@ CREATE TABLE job (                     -- idempotence: one row per unit of backg
   started_at INTEGER,
   finished_at INTEGER
 );
+CREATE INDEX idx_job_status ON job(status);                  -- schema 7: waiting and running jobs

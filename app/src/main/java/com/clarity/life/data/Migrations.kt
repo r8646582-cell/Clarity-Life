@@ -85,4 +85,23 @@ object Migrations {
             db.execSQL("ALTER TABLE `checkin` ADD COLUMN `entered_day` TEXT")
         }
     }
+
+    /**
+     * Max plan Phase 5: indexes only, for the queries the ten-year database showed reading a whole table
+     * (tools/query_plans.py). No row and no column changes; building them reads each table once.
+     */
+    val V6_TO_V7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            for (sql in V7_INDEXES) db.execSQL(sql)
+        }
+    }
+
+    val V7_INDEXES = listOf(
+        "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
+        "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",
+        "CREATE INDEX IF NOT EXISTS `idx_promise_due` ON `promise` (`due_at`)",
+        "CREATE INDEX IF NOT EXISTS `idx_quote_day` ON `quote` (`said_day`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `idx_job_status` ON `job` (`status`)",
+        "CREATE INDEX IF NOT EXISTS `idx_error_at` ON `error_log` (`at`)",
+    )
 }

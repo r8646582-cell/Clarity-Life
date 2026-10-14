@@ -217,6 +217,39 @@ class MigrationTest {
         db.close()
     }
 
+    /** Max plan Phase 5: indexes only. Every row stays, and each new index is there and used. */
+    @Test
+    fun version6To7KeepsEveryRowAndAddsIndexes() {
+        helper.createDatabase(TEST_DB, 6).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'Kept', 1760000000000)")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at, status) VALUES (1, 1, 'user', 'still here', 1760000000000, 'complete')")
+            execSQL("INSERT INTO promise (text, due_at, due_text, created_at) VALUES ('Call Ammi', 1760100000000, 'tomorrow 7 pm', 1760000000000)")
+            execSQL("INSERT INTO quote (conversation_id, text, said_day) VALUES (1, 'still here', '2026-10-09')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 7, true, Migrations.V6_TO_V7)
+        db.query("SELECT content FROM message WHERE id = 1").use {
+            assertTrue("the message is gone", it.moveToFirst())
+            assertEquals("still here", it.getString(0))
+        }
+        for (table in listOf("conversation", "message", "promise", "quote")) {
+            db.query("SELECT COUNT(*) FROM `$table`").use {
+                it.moveToFirst()
+                assertEquals("rows in $table", 1, it.getInt(0))
+            }
+        }
+        val names = mutableSetOf<String>()
+        db.query("SELECT name FROM sqlite_master WHERE type = 'index'").use { while (it.moveToNext()) names += it.getString(0) }
+        for (name in listOf("idx_conversation_started", "idx_message_status", "idx_promise_due", "idx_quote_day", "idx_job_status", "idx_error_at")) {
+            assertTrue("index $name is missing", name in names)
+        }
+        db.query("EXPLAIN QUERY PLAN UPDATE message SET status = 'interrupted' WHERE status = 'streaming'").use {
+            val plan = buildString { while (it.moveToNext()) append(it.getString(3)).append(' ') }
+            assertTrue("the start-up sweep must use the index: $plan", "idx_message_status" in plan)
+        }
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -260,7 +293,7 @@ class MigrationTest {
         // Version 2 only added a table, so version 1's rows are version 2's rows too.
         val starts = listOf(
             1 to "format1-schema1.cbk", 2 to "format1-schema1.cbk", 3 to "format2-schema3.cbk", 4 to "format2-schema4.cbk",
-            5 to "format2-schema5.cbk",
+            5 to "format2-schema5.cbk", 6 to "format2-schema6.cbk",
         )
         for ((version, sample) in starts) {
             val name = "migrate-from-$version.db"
@@ -353,6 +386,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 6
+        private const val DATABASE_VERSION = 7
     }
 }

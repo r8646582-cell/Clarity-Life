@@ -206,7 +206,8 @@ data class BriefRow(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("conversation_id")],
+    // Schema 7: Your story and the letters read quotes by day.
+    indices = [Index("conversation_id"), Index(value = ["said_day", "id"], name = "idx_quote_day")],
 )
 data class QuoteRow(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

@@ -214,6 +214,8 @@ data class CheckinRow(
     indices = [
         Index(value = ["status", "due_at"], name = "idx_promise_status"),
         Index("source_conversation_id"),
+        // Schema 7: every message reads the promises due in a period (OPEN_PROMISES, search) by due_at alone.
+        Index(value = ["due_at"], name = "idx_promise_due"),
     ],
 )
 data class PromiseRow(

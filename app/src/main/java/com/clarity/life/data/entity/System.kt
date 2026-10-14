@@ -25,7 +25,8 @@ data class PromptOverrideRow(
 )
 
 /** Never any message text, key or personal content: an area, a code and a short content-free detail. */
-@Entity(tableName = "error_log")
+// Schema 7: Health and the yearly clean-up read the log by time.
+@Entity(tableName = "error_log", indices = [Index(value = ["at"], name = "idx_error_at")])
 data class ErrorLogRow(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val at: Long,
@@ -50,7 +51,8 @@ data class UsageMonthRow(
  * One row per unit of background work, with a deterministic key and a unique index, so a job that runs
  * twice is a no-op the second time (spec section 18, point 7).
  */
-@Entity(tableName = "job", indices = [Index(value = ["key"], unique = true)])
+// Schema 7: start-up and Health find waiting or running jobs without reading every job ever run.
+@Entity(tableName = "job", indices = [Index(value = ["key"], unique = true), Index(value = ["status"], name = "idx_job_status")])
 data class JobRow(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     /** type + period or conversation + a hash of the inputs. */
