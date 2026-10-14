@@ -61,7 +61,19 @@ object ContextBuilder {
      * Python counts them. Measured against DeepSeek's tokenizer: plain English about 1.4 times its real count, and
      * numbers, dates and emoji no longer under-counted.
      */
-    fun estimateTokens(text: String): Int {
+    fun estimateTokens(text: String): Int = count(text).tokens()
+
+    /**
+     * What [estimateTokens] counts: code points, digits and other (non-ASCII) characters. Counts of joined texts
+     * add up, so [trimBlocks] keeps running totals instead of counting the whole text again after every drop.
+     */
+    private data class Count(val all: Int, val digits: Int, val other: Int) {
+        operator fun plus(o: Count) = Count(all + o.all, digits + o.digits, other + o.other)
+        operator fun minus(o: Count) = Count(all - o.all, digits - o.digits, other - o.other)
+        fun tokens(): Int = ceil((all - digits - other) / 3.0 + digits + 2 * other).toInt()
+    }
+
+    private fun count(text: String): Count {
         var digits = 0
         var other = 0
         var all = 0
@@ -72,7 +84,7 @@ object ContextBuilder {
             if (cp in '0'.code..'9'.code) digits++ else if (cp > 127) other++
             i += Character.charCount(cp)
         }
-        return ceil((all - digits - other) / 3.0 + digits + 2 * other).toInt()
+        return Count(all, digits, other)
     }
 
     /** Make text from him or from the model safe inside a block: it can never open a card or a block. */
@@ -104,6 +116,60 @@ object ContextBuilder {
     fun trimBlocks(blocks: List<Block>, order: List<String>, budget: Int): TrimResult {
         val names = blocks.map { it.name }
         val items = blocks.map { it.items.toMutableList() }
+        fun snapshot() = names.indices.map { Block(names[it], items[it].toList()) }
+        // Two blocks with one name render as one (the last wins): rare, and then the plain way below is used.
+        if (names.toSet().size != names.size) return trimByRendering(names, items, order, budget)
+        // Fails on an unknown block, as rendering always did.
+        render(snapshot(), order)
+        // The rendered size as running totals (Max plan Phase 5): rendering and counting the whole text again after
+        // every drop took 2.6 s for a ten-year memory. Each block is "## NAME\n" and its escaped items joined by
+        // "\n"; blocks with items are joined by "\n\n". Dropping an item takes off its count and one "\n"; the
+        // last item of a block takes the whole block and one "\n\n" with it. The total is exactly what
+        // estimateTokens(render(...)) gives.
+        val newline = count("\n")
+        val gap = count("\n\n")
+        val itemCounts = items.map { list -> list.map { count(escape(it.text)) }.toMutableList() }
+        var total = Count(0, 0, 0)
+        var shown = 0
+        for (b in names.indices) {
+            if (items[b].isEmpty()) continue
+            total += count("## ${names[b]}\n")
+            for ((i, c) in itemCounts[b].withIndex()) total += if (i == 0) c else c + newline
+            shown++
+        }
+        repeat(maxOf(0, shown - 1)) { total += gap }
+        var dropped = 0
+        while (total.tokens() > budget) {
+            var bestBlock = -1
+            var bestIndex = -1
+            var bestRank = 0
+            for (b in names.indices.sortedBy { order.indexOf(names[it]) }) {
+                if (names[b] in NEVER_TRIM) continue
+                for ((idx, item) in items[b].withIndex()) {
+                    if (item.drop > 0 && item.drop > bestRank) {
+                        bestBlock = b
+                        bestIndex = idx
+                        bestRank = item.drop
+                    }
+                }
+            }
+            if (bestBlock < 0) return TrimResult(snapshot(), dropped, true)
+            items[bestBlock].removeAt(bestIndex)
+            val gone = itemCounts[bestBlock].removeAt(bestIndex)
+            if (items[bestBlock].isEmpty()) {
+                total -= gone + count("## ${names[bestBlock]}\n")
+                shown--
+                if (shown > 0) total -= gap
+            } else {
+                total -= gone + newline
+            }
+            dropped++
+        }
+        return TrimResult(snapshot(), dropped, false)
+    }
+
+    /** The plain way: render and count everything after each drop (blocks that share a name). */
+    private fun trimByRendering(names: List<String>, items: List<MutableList<BlockItem>>, order: List<String>, budget: Int): TrimResult {
         fun snapshot() = names.indices.map { Block(names[it], items[it].toList()) }
         var dropped = 0
         while (estimateTokens(render(snapshot(), order)) > budget) {

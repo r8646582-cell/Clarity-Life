@@ -39,8 +39,10 @@ object VectorMath {
 
     fun fromBytes(bytes: ByteArray, dim: Int): FloatArray? {
         if (bytes.size != dim * 4) return null
-        val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        return FloatArray(dim) { buf.getFloat() }
+        // One bulk copy, not one call per number (Max plan Phase 5: ten years of vectors are 33 million numbers).
+        val out = FloatArray(dim)
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(out)
+        return out
     }
 
     /**

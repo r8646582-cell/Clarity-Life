@@ -69,12 +69,15 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         // Cleared before reading, so a change made while this reads is picked up next time.
         if (!changed.getAndSet(false)) return
         val e = db.embeddings()
+        // The first load knows how many rows are coming: room for all of them at once.
+        if (seen == 0) index.reserve(e.countAll())
         readNew()
         if (seen != e.countAll()) {
             // Something was removed (or replaced): start again from nothing.
             index.clear()
             seen = 0
             lastRowSeen = 0L
+            index.reserve(e.countAll())
             readNew()
         }
     }

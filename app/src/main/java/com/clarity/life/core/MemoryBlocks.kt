@@ -126,7 +126,9 @@ object MemoryBlocks {
     fun relevantNotes(notes: List<Note>, text: String): Set<Long> {
         val terms = Retrieval.terms(text)
         if (terms.isEmpty()) return emptySet()
-        return notes.filter { Retrieval.score(it.text, terms) > 0 }.map { it.id }.toSet()
+        // The same as Retrieval.score(note, terms) > 0, with the words' stems made once, not once per note.
+        val wanted = terms.map { Retrieval.stem(it) }.toSet()
+        return notes.filter { n -> Retrieval.stems(n.text).any { it in wanted } }.map { it.id }.toSet()
     }
 
     private val NOTE_LINE = Regex("^note (\\d+), ")

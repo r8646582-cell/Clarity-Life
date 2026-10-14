@@ -114,8 +114,7 @@ object PlanBlocks {
         val schedule = linked.firstOrNull()?.schedule ?: "daily"
         // The pace reads every answer given toward it, ended ramp steps included, so it does not reset each step.
         val merged = mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-        val done = b.startDone + mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-            .filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
+        val done = b.startDone + merged.filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
         val remaining = b.total - done
         val todayAnswered = merged.any { it.day == today }
         val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
