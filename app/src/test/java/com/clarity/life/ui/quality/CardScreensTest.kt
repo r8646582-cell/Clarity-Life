@@ -22,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * The suggestion cards drawn for real (Max plan Phase 7): nothing is saved without a tap, each button does only
@@ -30,6 +31,8 @@ import org.robolectric.annotation.Config
  * keystore, background work) out of a screen test.
  */
 @RunWith(RobolectricTestRunner::class)
+// Real text drawing, so text sizes are measured as on a phone (the default mode only estimates them).
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], application = Application::class, qualifiers = "w393dp-h851dp-xhdpi")
 class CardScreensTest {
     @get:Rule val compose = createComposeRule()
@@ -112,7 +115,16 @@ class CardScreensTest {
         assertTrue("buttons smaller than 48 dp ($min px): $small", small.isEmpty())
     }
 
-    /** No text is clipped or cut short: with the largest text every line still wraps and shows whole. */
+    /** A line ends in the middle of a word ("Re" / "minder"): the text had too little room to wrap at a space. */
+    private fun brokenWord(t: TextLayoutResult): Boolean {
+        val text = t.layoutInput.text.text
+        return (0 until t.lineCount - 1).any { line ->
+            val end = t.getLineEnd(line)
+            end in 1 until text.length && text[end - 1].isLetterOrDigit() && text[end].isLetterOrDigit()
+        }
+    }
+
+    /** No text is clipped or cut short, and no word is split across lines, with the largest text. */
     private fun checkNoTextIsCut() {
         val texts = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
             .fetchSemanticsNodes()
@@ -120,10 +132,10 @@ class CardScreensTest {
         val cut = texts.flatMap { node ->
             val layouts = mutableListOf<TextLayoutResult>()
             node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
-            layouts.filter { it.hasVisualOverflow }.map {
+            layouts.filter { it.hasVisualOverflow || brokenWord(it) }.map {
                 "\"${it.layoutInput.text}\" (box ${it.size.width}x${it.size.height}px, text " +
                     "${it.multiParagraph.width}x${it.multiParagraph.height}px, ${it.lineCount} lines, " +
-                    "wide ${it.didOverflowWidth}, tall ${it.didOverflowHeight})"
+                    "wide ${it.didOverflowWidth}, tall ${it.didOverflowHeight}, word broken ${brokenWord(it)})"
             }
         }
         assertTrue("text cut short:\n" + cut.joinToString("\n"), cut.isEmpty())
