@@ -342,7 +342,7 @@ class ChatRepository @Inject constructor(
             if (start > 0) add(Blocks.earlier(conversation.summary))
             // Keyword matches from his other conversations. Retrieval can never be what fails a reply.
             try {
-                add(search.relevantPast(conversationId, newText, tz))
+                add(search.relevantPast(conversationId, newText, tz, boundary, now))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -442,9 +442,12 @@ class ChatRepository @Inject constructor(
                 (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
             )
         }
+        // Dated by the last message, with the clock times: "today" alone left a plan made at 9 am and a message
+        // at 11 am in no order the coach could see.
         val sessions = m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS).map { c ->
-            val day = Planner.dayKey(Instant.ofEpochMilli(c.startedAt).toString(), tz, boundary).toString()
-            MemoryBlocks.Session(day, c.title, c.summary, ago(day))
+            val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
+            val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
+            MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
         }
         return listOf(
             MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),

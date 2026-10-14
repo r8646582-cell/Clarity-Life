@@ -39,6 +39,11 @@ class MemoryBlocksTest {
         )
         val s = MemoryBlocks.recentSessions(listOf(MemoryBlocks.Session("2026-10-12", "Ramp", "Set a ramp.", "yesterday")))
         assertEquals("12 Oct (yesterday) \"Ramp\": Set a ramp.", s.items.single().text)
+        // With the times the app counted, the line says when, not only which day.
+        val timed = MemoryBlocks.recentSessions(
+            listOf(MemoryBlocks.Session("2026-10-14", "Nap", "Nap until 11.", "today", "Wed 14 Oct, 9:05 am to 9:40 am")),
+        )
+        assertEquals("Wed 14 Oct, 9:05 am to 9:40 am (today) \"Nap\": Nap until 11.", timed.items.single().text)
     }
 
     @Test

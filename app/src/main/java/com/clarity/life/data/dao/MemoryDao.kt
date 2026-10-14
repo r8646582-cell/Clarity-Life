@@ -146,12 +146,29 @@ interface MemoryDao {
 
     // ---------- the conversation and its focus ----------
 
-    /** RECENT_SESSIONS: the latest summaries of other conversations (an off-the-record one has none). */
+    /**
+     * RECENT_SESSIONS: the latest summaries of other conversations (an off-the-record one has none), newest by
+     * their last message, so a conversation he came back to today counts as today's.
+     */
     @Query(
-        "SELECT * FROM conversation WHERE id != :exceptId AND off_the_record = 0 AND summary != '' " +
-            "ORDER BY started_at DESC LIMIT :limit",
+        "SELECT c.id AS id, c.title AS title, c.summary AS summary, MIN(m.created_at) AS firstAt, " +
+            "MAX(m.created_at) AS lastAt FROM conversation c JOIN message m ON m.conversation_id = c.id " +
+            "WHERE c.id != :exceptId AND c.off_the_record = 0 AND c.summary != '' " +
+            "GROUP BY c.id ORDER BY lastAt DESC LIMIT :limit",
     )
-    suspend fun recentSessions(exceptId: Long, limit: Int): List<ConversationRow>
+    suspend fun recentSessions(exceptId: Long, limit: Int): List<RecentSession>
+
+    /**
+     * LAST_CHAT: the other conversation with the newest message, and that message's time (contracts/context.md).
+     * Null when there is none, or only off-the-record ones.
+     */
+    @Query(
+        "SELECT c.id AS id, c.title AS title, c.summary AS summary, MIN(m.created_at) AS firstAt, " +
+            "MAX(m.created_at) AS lastAt FROM conversation c JOIN message m ON m.conversation_id = c.id " +
+            "WHERE c.id != :exceptId AND c.off_the_record = 0 " +
+            "GROUP BY c.id ORDER BY lastAt DESC LIMIT 1",
+    )
+    suspend fun lastOtherConversation(exceptId: Long): RecentSession?
 
     @Query("SELECT * FROM focus ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END, updated_at DESC")
     fun watchFocuses(): Flow<List<FocusRow>>
@@ -209,6 +226,9 @@ interface MemoryDao {
     )
     suspend fun unreflected(): List<Unreflected>
 }
+
+/** A conversation with the time of its first and its last message. */
+data class RecentSession(val id: Long, val title: String, val summary: String, val firstAt: Long, val lastAt: Long)
 
 /** A conversation with words of his not reflected yet, and the time of its last message. */
 data class Unreflected(val conversationId: Long, val lastAt: Long)

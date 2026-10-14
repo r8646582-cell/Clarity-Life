@@ -106,4 +106,35 @@ class TimeFactsTest {
         assertEquals("2 hours 5 minutes", TimeFacts.spell(Duration.ofMinutes(125)))
         assertEquals("less than a minute", TimeFacts.spell(Duration.ofSeconds(20)))
     }
+
+    @Test
+    fun aPastMomentCarriesItsTimeAndHowLongAgo() {
+        val now = Instant.parse("2026-10-14T06:20:00Z") // Wed 11:20 am in Karachi
+        // Earlier the same day: the time and the hours, so the coach can see which came first.
+        assertEquals(
+            "Wed 14 Oct, 9:10 am (today, 2 hours 10 minutes ago)",
+            TimeFacts.pastStamp(Instant.parse("2026-10-14T04:10:00Z"), now, tz, 0),
+        )
+        // Longer ago than a day: the day count alone.
+        assertEquals("Mon 12 Oct, 9:10 pm (2 days ago)", TimeFacts.pastStamp(Instant.parse("2026-10-12T16:10:00Z"), now, tz, 0))
+        // "Today" follows his day: at 1:00 am with a 4 am boundary, 11:30 pm the evening before is still today.
+        assertEquals(
+            "Tue 13 Oct, 11:30 pm (today, 1 hour 30 minutes ago)",
+            TimeFacts.pastStamp(Instant.parse("2026-10-13T18:30:00Z"), Instant.parse("2026-10-13T20:00:00Z"), tz, 4),
+        )
+        // A moment still ahead (a promise's due time) names only its day.
+        assertEquals("Thu 15 Oct, 8:00 am (tomorrow)", TimeFacts.pastStamp(Instant.parse("2026-10-15T03:00:00Z"), now, tz, 0))
+    }
+
+    @Test
+    fun aConversationSpanNamesItsFirstAndLastTimes() {
+        assertEquals(
+            "Wed 14 Oct, 9:05 am to 9:40 am",
+            TimeFacts.span(Instant.parse("2026-10-14T04:05:00Z"), Instant.parse("2026-10-14T04:40:00Z"), tz),
+        )
+        assertEquals(
+            "Tue 13 Oct, 10:30 pm to Wed 14 Oct, 12:40 am",
+            TimeFacts.span(Instant.parse("2026-10-13T17:30:00Z"), Instant.parse("2026-10-13T19:40:00Z"), tz),
+        )
+    }
 }
