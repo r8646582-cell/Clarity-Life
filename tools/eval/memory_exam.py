@@ -35,34 +35,62 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..", "..")
 MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "bge-small-en-v1.5")
 
-# ---- mirror of core/Retrieval.kt ----
-MAX_TERMS, MAX_RESULTS, CANDIDATES, FUSE_DEPTH = 8, 5, 200, 20
+# ---- mirror of core/Retrieval.kt (Clarity 0.1.12) ----
+MAX_TERMS, MAX_RESULTS, CANDIDATES_PER_TERM, FUSE_DEPTH = 8, 5, 100, 20
 SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.62, 3, 4, 60
 RECENT_SESSIONS = 5
 STOP = set("""about after again also always because been before being could didn does doesn doing done dont even ever
 every from going gonna have having here into just know like make many maybe more most much need never only other
 really said same should some still such sure than that their them then there these they thing things think this those
-today very want wanna well were what when where which while will with would yeah your yours okay""".split())
+today very want wanna well were what when where which while will with would yeah your yours okay
+the and you for but not are was has had his her she him our out can all any get got did its one too now how why who let
+yes lol way off lot bit use see say put new own try ive don isn won ain hey huh omg idk btw may yet via per etc ill
+whom youre cant wont didnt isnt thats""".split())
 WORD = re.compile(r"[a-z0-9]+")
 
 
 def norm(s):
     s = unicodedata.normalize("NFKC", s).lower()
-    s = s.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    s = s.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return " ".join(s.split())
 
 
 def terms(text):
     out = []
     for w in WORD.findall(norm(text)):
-        if len(w) >= 4 and w not in STOP and not w.isdigit() and w not in out:
+        if len(w) >= 3 and w not in STOP and not w.isdigit() and w not in out:
             out.append(w)
     return sorted(out, key=lambda w: (-len(w), w))[:MAX_TERMS]
 
 
+def stem(word):
+    """Mirror of Retrieval.stem."""
+    w = word.lower()
+    if len(w) > 4 and (w.endswith("ies") or w.endswith("ied")):
+        w = w[:-3] + "y"
+    elif len(w) > 5 and w.endswith("ing"):
+        w = w[:-3]
+    elif len(w) > 4 and w.endswith("ed"):
+        w = w[:-2]
+    elif len(w) > 3 and w.endswith("s") and not w.endswith("ss") and not w.endswith("us") and not w.endswith("is"):
+        w = w[:-1]
+    if len(w) > 3 and w[-1] == w[-2] and w[-1] not in "lsz":
+        w = w[:-1]
+    if len(w) > 3 and w.endswith("e"):
+        w = w[:-1]
+    return w
+
+
+def term_query(term):
+    """Mirror of Retrieval.termQuery: a prefix search on the stem, body and title only."""
+    s = stem(term)
+    prefix = s[:-1] if len(s) > 3 and s.endswith("y") else s
+    return "body:%s* OR title:%s*" % (prefix, prefix)
+
+
 def score(text, ts):
-    words = set(WORD.findall(norm(text)))
-    return sum(1 for t in ts if t in words)
+    stems = {stem(w) for w in WORD.findall(norm(text))}
+    return sum(1 for t in ts if stem(t) in stems)
 
 
 def strong(s, n):
@@ -143,22 +171,27 @@ class Index:
         self.docs[(kind, ident)] = {"text": text, "session": session, "at": at}
 
     def keyword(self, ts):
+        """Mirror of SearchIndex.keywordHits and Retrieval.choose: one read per word, newest first."""
         if not ts:
             return []
-        q = " OR ".join("body:%s OR title:%s" % (t, t) for t in ts)
-        rows = self.db.execute("SELECT kind, ref_id FROM search_doc WHERE search_doc MATCH ? ORDER BY rowid DESC LIMIT ?",
-                               (q, CANDIDATES)).fetchall()
-        cands = [(k, int(r)) for k, r in rows]
+        cands = []
+        for t in ts:
+            rows = self.db.execute("SELECT kind, ref_id FROM search_doc WHERE search_doc MATCH ? ORDER BY rowid DESC LIMIT ?",
+                                   (term_query(t), CANDIDATES_PER_TERM)).fetchall()
+            for k, r in rows:
+                c = (k, int(r))
+                if c not in cands:
+                    cands.append(c)
         scored = [(c, score(self.docs[c]["text"], ts)) for c in cands]
         scored = [p for p in scored if strong(p[1], len(ts))]
-        scored.sort(key=lambda p: (-p[1], -self.docs[p[0]]["at"]))
         out, seen = [], set()
-        for c, _ in scored:
+        for c, sc in scored:  # distinctBy before the sort, as the Kotlin does
             t = norm(self.docs[c]["text"])
             if t not in seen:
                 seen.add(t)
-                out.append(c)
-        return out[:FUSE_DEPTH]
+                out.append((c, sc))
+        out.sort(key=lambda p: (-p[1], -self.docs[p[0]]["at"]))
+        return [c for c, _ in out][:FUSE_DEPTH]
 
     def meaning(self, text):
         if self.emb is None or word_count(text) < SEMANTIC_MIN_QUERY_WORDS:
@@ -166,7 +199,7 @@ class Index:
         q = self.emb.embed(text)
         sims = [(k, float(q @ v)) for k, v in self.vecs.items()]
         best = [k for k, s in sorted(sims, key=lambda p: -p[1]) if s >= SEMANTIC_MIN][:FUSE_DEPTH * 2]
-        best = [k for k in best if k[0] == "summary" or word_count(self.docs[k]["text"]) >= SEMANTIC_MIN_DOC_WORDS]
+        best = [k for k in best if k[0] != "message" or word_count(self.docs[k]["text"]) >= SEMANTIC_MIN_DOC_WORDS]
         return best[:FUSE_DEPTH]
 
     def relevant_past(self, question):

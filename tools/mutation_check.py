@@ -36,6 +36,12 @@ MUTATIONS = [
      "a month counted before its day comes round"),
     ("story.py", "return {\"from\": max(a, first).isoformat()", "return {\"from\": a.isoformat()", "test_story.py",
      "a view that starts before the story began"),
+    # Memory exam 2's leak guard: what he deleted or said off the record must never reach the coach.
+    ("eval/memory_exam2.py", 'if m["role"] == "user" and m["conversation"] not in off:', 'if m["role"] == "user":',
+     "test_memory_exam2.py", "an off-the-record conversation's words indexed for search"),
+    ("eval/memory_exam2.py", 'active = [n for n in h["notes"] if n["status"] == "active"]',
+     'active = [n for n in h["notes"] if n["status"] != "retired"]', "test_memory_exam2.py",
+     "a note he deleted sent in NOTES"),
     # (file, exact text, replacement, test to run, what the bug would be)
     ("cards.py", "if not opts:", "if False:", "test_cards.py", "plan card accepted without review options"),
     ("cards.py", 'limit = 2 if t == "promise" else 1', "limit = 2", "test_cards.py", "two plans in one reply"),

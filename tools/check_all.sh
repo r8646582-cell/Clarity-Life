@@ -16,4 +16,5 @@ python3 tools/test_appliers.py
 python3 tools/test_bench.py
 python3 tools/check_schema.py
 python3 tools/mutation_check.py
+python3 tools/test_memory_exam2.py
 echo "ALL CONTRACT CHECKS PASSED"

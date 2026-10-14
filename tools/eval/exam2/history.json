@@ -1,0 +1,6110 @@
+{
+ "backlogs": [
+  {
+   "deadline": "2026-11-30",
+   "goal": 2,
+   "id": 1,
+   "name": "Tax lectures",
+   "start_done": 0,
+   "status": "active",
+   "total": 60,
+   "unit": "lectures"
+  },
+  {
+   "deadline": "2026-06-13",
+   "goal": 1,
+   "id": 2,
+   "name": "CAF 1 past papers",
+   "start_done": 0,
+   "status": "done",
+   "total": 12,
+   "unit": "papers"
+  }
+ ],
+ "boundary_hour": 0,
+ "chapters": [
+  {
+   "body": "He left Pellow Freight, studied full time, moved to Millbrook and passed CAF 1 with 61.",
+   "end": "2026-06-30",
+   "id": 1,
+   "start": "2026-03-01",
+   "title": "The resit months"
+  },
+  {
+   "body": "Omar left for Dubai, Law was dropped, and the phone habit came back without the gym.",
+   "end": "2026-08-31",
+   "id": 2,
+   "start": "2026-07-01",
+   "title": "Settling in Millbrook"
+  },
+  {
+   "body": "Power cuts, a UPS, and a steady push through Sir Waqas's lectures.",
+   "end": "2026-10-14",
+   "id": 3,
+   "start": "2026-09-01",
+   "title": "The Tax push"
+  }
+ ],
+ "checkins": [
+  {
+   "amount": 2,
+   "day": "2026-08-15",
+   "id": 1,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-17",
+   "id": 2,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-08-18",
+   "id": 3,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-19",
+   "id": 4,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-20",
+   "id": 5,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-21",
+   "id": 6,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-22",
+   "id": 7,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-08-25",
+   "id": 9,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-26",
+   "id": 10,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-28",
+   "id": 11,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-08-31",
+   "id": 12,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-09-01",
+   "id": 13,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-03",
+   "id": 14,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-04",
+   "id": 15,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-07",
+   "id": 16,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-09-08",
+   "id": 17,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-09",
+   "id": 18,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-11",
+   "id": 19,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-14",
+   "id": 20,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-09-15",
+   "id": 21,
+   "level": "not",
+   "note": "Khala's family visited",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-16",
+   "id": 22,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-17",
+   "id": 23,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-18",
+   "id": 24,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-19",
+   "id": 25,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-21",
+   "id": 26,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-09-22",
+   "id": 27,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-23",
+   "id": 28,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 1,
+   "day": "2026-09-24",
+   "id": 29,
+   "level": "minimum",
+   "note": "router off",
+   "reason": "power cut",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-25",
+   "id": 30,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-26",
+   "id": 31,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-28",
+   "id": 32,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-09-29",
+   "id": 33,
+   "level": "not",
+   "note": "Khala's family visited",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-09-30",
+   "id": 34,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-02",
+   "id": 35,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-05",
+   "id": 36,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-10-06",
+   "id": 37,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-07",
+   "id": 38,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-08",
+   "id": 39,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-09",
+   "id": 40,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 2,
+   "day": "2026-10-12",
+   "id": 41,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-10-13",
+   "id": 42,
+   "level": "not",
+   "note": "",
+   "reason": "family",
+   "target": 1
+  },
+  {
+   "amount": 0,
+   "day": "2026-08-24",
+   "id": 43,
+   "level": "not",
+   "note": "stayed up scrolling till 3",
+   "reason": "tired",
+   "target": 1
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-01",
+   "id": 44,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-03",
+   "id": 45,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-04",
+   "id": 46,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-05",
+   "id": 47,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-06",
+   "id": 48,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-07",
+   "id": 49,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-08",
+   "id": 50,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-09",
+   "id": 51,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-11",
+   "id": 52,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-12",
+   "id": 53,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-13",
+   "id": 54,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-14",
+   "id": 55,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-15",
+   "id": 56,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-16",
+   "id": 57,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-17",
+   "id": 58,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-18",
+   "id": 59,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-19",
+   "id": 60,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-20",
+   "id": 61,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-21",
+   "id": 62,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-22",
+   "id": 63,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-23",
+   "id": 64,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-24",
+   "id": 65,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-25",
+   "id": 66,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-26",
+   "id": 67,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-27",
+   "id": 68,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-09-30",
+   "id": 69,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-02",
+   "id": 70,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-03",
+   "id": 71,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-05",
+   "id": 72,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-06",
+   "id": 73,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-08",
+   "id": 74,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-09",
+   "id": 75,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-10",
+   "id": 76,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-11",
+   "id": 77,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-12",
+   "id": 78,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  },
+  {
+   "amount": 20,
+   "day": "2026-10-13",
+   "id": 79,
+   "level": "target",
+   "note": "",
+   "reason": null,
+   "target": 2
+  }
+ ],
+ "conversations": [
+  {
+   "chat_type": "free",
+   "id": 1,
+   "off_the_record": false,
+   "start": 1762195200000,
+   "summary": "He scrolls his phone in bed past midnight most nights, then is late and foggy for work at Pellow Freight; his manager Mrs. Danvers has noticed him arriving late.",
+   "title": "Can't sleep again"
+  },
+  {
+   "chat_type": "free",
+   "id": 2,
+   "off_the_record": false,
+   "start": 1762697700000,
+   "summary": "He is studying for the CAF qualification to move beyond his accounts assistant job; first paper CAF 1 Financial Accounting on 8 December; manages about an hour of study after work.",
+   "title": "Why CAF"
+  },
+  {
+   "chat_type": "free",
+   "id": 3,
+   "off_the_record": false,
+   "start": 1763273100000,
+   "summary": "His sister Hina in Islamabad calls every Sunday and backs his CAF plan; he feels she is the one in the family who understands it.",
+   "title": "Hina's call"
+  },
+  {
+   "chat_type": "free",
+   "id": 4,
+   "off_the_record": false,
+   "start": 1763915400000,
+   "summary": "His mother worries about money and the cost of the exams; he pays each paper's fee (about 15,000) from his salary.",
+   "title": "Money worries"
+  },
+  {
+   "chat_type": "free",
+   "id": 5,
+   "off_the_record": false,
+   "start": 1765292400000,
+   "summary": "The day after sitting CAF 1 he felt the consolidation question went badly and he ran out of time on the last two questions.",
+   "title": "After the exam"
+  },
+  {
+   "chat_type": "free",
+   "id": 6,
+   "off_the_record": false,
+   "start": 1768225500000,
+   "summary": "He failed CAF 1 with 46 (pass 50) and decided to resit in June, practising past papers under time.",
+   "title": "Result day"
+  },
+  {
+   "chat_type": "free",
+   "id": 7,
+   "off_the_record": false,
+   "start": 1768703400000,
+   "summary": "He joined Ironline gym near the office and plans to go before work on Monday, Wednesday and Friday at 6:30.",
+   "title": "Starting the gym"
+  },
+  {
+   "chat_type": "free",
+   "id": 8,
+   "off_the_record": false,
+   "start": 1770052200000,
+   "summary": "Three weeks into the gym; on gym days he sleeps before midnight, and the gym has helped his phone-in-bed habit more than app blockers did.",
+   "title": "Gym is working"
+  },
+  {
+   "chat_type": "free",
+   "id": 9,
+   "off_the_record": true,
+   "start": 1771095000000,
+   "summary": "",
+   "title": "Sana"
+  },
+  {
+   "chat_type": "free",
+   "id": 10,
+   "off_the_record": false,
+   "start": 1772460000000,
+   "summary": "He resigned from Pellow Freight (last day 31 March) to study full time for the June resit on about 120,000 of savings; Mrs. Danvers was kind and left the door open.",
+   "title": "Quitting Pellow"
+  },
+  {
+   "chat_type": "free",
+   "id": 11,
+   "off_the_record": false,
+   "start": 1774005600000,
+   "summary": "His left knee hurts and swells after squats; he booked the physio Dr. Saleh.",
+   "title": "Knee pain"
+  },
+  {
+   "chat_type": "free",
+   "id": 12,
+   "off_the_record": false,
+   "start": 1774339200000,
+   "summary": "Dr. Saleh ruled out squats and running for two months (patellar tendon), so he stopped the gym and switched to a 20-minute daily walk.",
+   "title": "Physio verdict"
+  },
+  {
+   "chat_type": "free",
+   "id": 13,
+   "off_the_record": false,
+   "start": 1775448600000,
+   "summary": "Studying full time from 9 to 4 at the Model Town library, where he focuses far better than at home.",
+   "title": "Library routine"
+  },
+  {
+   "chat_type": "free",
+   "id": 14,
+   "off_the_record": false,
+   "start": 1776614400000,
+   "summary": "His friend Omar, also resitting CAF 1 in June, does past papers with him on Thursdays at the library; it keeps him accountable.",
+   "title": "Omar study buddy"
+  },
+  {
+   "chat_type": "free",
+   "id": 15,
+   "off_the_record": false,
+   "start": 1777815000000,
+   "summary": "The family is moving from the Kestrel Road flat to his aunt Khala Rukhsana's house in Millbrook after another rent rise; he will have the quiet rooftop room.",
+   "title": "Moving to Millbrook"
+  },
+  {
+   "chat_type": "free",
+   "id": 16,
+   "off_the_record": false,
+   "start": 1779585600000,
+   "summary": "After the move he studies in the rooftop room from 5:30 to 8 am before the heat, with his best focus ever; the library is now 90 minutes away by bus.",
+   "title": "Rooftop mornings"
+  },
+  {
+   "chat_type": "free",
+   "id": 17,
+   "off_the_record": false,
+   "start": 1781110800000,
+   "summary": "Four days before the resit he had done eleven timed past papers, scores rising from 44 to 58.",
+   "title": "Resit nerves"
+  },
+  {
+   "chat_type": "free",
+   "id": 18,
+   "off_the_record": false,
+   "start": 1783514400000,
+   "summary": "He passed the CAF 1 resit with 61; Omar passed with 55 and is moving to Dubai for a job.",
+   "title": "Passed"
+  },
+  {
+   "chat_type": "plan",
+   "id": 19,
+   "off_the_record": false,
+   "start": 1784560500000,
+   "summary": "He planned to sit CAF 5 Tax and CAF 3 Law together in December; Sir Waqas's online Tax course has 60 recorded lectures.",
+   "title": "Next papers"
+  },
+  {
+   "chat_type": "free",
+   "id": 20,
+   "off_the_record": false,
+   "start": 1785869700000,
+   "summary": "The phone-in-bed habit is back since the gym stopped; he scrolls till 2 am and loses his rooftop mornings to the heat.",
+   "title": "Phone again"
+  },
+  {
+   "chat_type": "plan",
+   "id": 21,
+   "off_the_record": false,
+   "start": 1786545000000,
+   "summary": "He dropped CAF 3 Law to sit only CAF 5 Tax in December, with Sir Waqas's agreement.",
+   "title": "Dropping Law"
+  },
+  {
+   "chat_type": "free",
+   "id": 22,
+   "off_the_record": false,
+   "start": 1787328000000,
+   "summary": "He missed the 20 August exam form deadline because of an evening power cut and a bank website outage; the late fee is 3,000.",
+   "title": "Missed the form"
+  },
+  {
+   "chat_type": "focus",
+   "id": 23,
+   "off_the_record": false,
+   "start": 1788094800000,
+   "summary": "He started a focus on stopping phone use in bed; first idea is charging the phone in the kitchen from 11 pm.",
+   "title": "Focus: phone in bed"
+  },
+  {
+   "chat_type": "focus",
+   "id": 24,
+   "off_the_record": false,
+   "start": 1788663600000,
+   "summary": "First week of charging the phone in the kitchen: asleep by midnight four nights of seven; failures came from taking the phone back 'for the alarm'.",
+   "title": "Kitchen charger works"
+  },
+  {
+   "chat_type": "free",
+   "id": 25,
+   "off_the_record": false,
+   "start": 1789310700000,
+   "summary": "Load shedding returned (two hours most evenings, sometimes mornings), which stops his lectures because the router goes off.",
+   "title": "Power cuts"
+  },
+  {
+   "chat_type": "free",
+   "id": 26,
+   "off_the_record": false,
+   "start": 1789905600000,
+   "summary": "He paid the Tax exam fee, 18,000 including the 3,000 late fee, which upset his mother; plans a small UPS for the router.",
+   "title": "Paid the fee"
+  },
+  {
+   "chat_type": "free",
+   "id": 27,
+   "off_the_record": false,
+   "start": 1790526000000,
+   "summary": "He bought a router UPS for 9,500, giving about three hours of internet; did two lectures during an evening power cut for the first time.",
+   "title": "Bought the UPS"
+  },
+  {
+   "chat_type": "free",
+   "id": 28,
+   "off_the_record": false,
+   "start": 1791127800000,
+   "summary": "Omar called from Dubai (long hours, saving well); he misses their Thursday study sessions and finds studying alone lonelier.",
+   "title": "Omar in Dubai"
+  },
+  {
+   "chat_type": "plan",
+   "id": 29,
+   "off_the_record": false,
+   "start": 1791654000000,
+   "summary": "He is at Tax lecture 31 of 60 with the exam on 1 December and Sir Waqas's advice to finish lectures by end of November; Tuesdays go badly because of family visits.",
+   "title": "Behind on lectures"
+  },
+  {
+   "chat_type": "free",
+   "id": 30,
+   "off_the_record": false,
+   "start": 1791947400000,
+   "summary": "",
+   "title": "Morning plan"
+  },
+  {
+   "chat_type": "free",
+   "id": 101,
+   "off_the_record": false,
+   "start": 1762399380000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 102,
+   "off_the_record": false,
+   "start": 1762536420000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 103,
+   "off_the_record": false,
+   "start": 1762571640000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 104,
+   "off_the_record": false,
+   "start": 1763194020000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 105,
+   "off_the_record": false,
+   "start": 1763573700000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 106,
+   "off_the_record": false,
+   "start": 1763609220000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 107,
+   "off_the_record": false,
+   "start": 1764058740000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 108,
+   "off_the_record": false,
+   "start": 1764523860000,
+   "summary": "An ordinary day: did some revision of old notes, felt okay",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 109,
+   "off_the_record": false,
+   "start": 1764560220000,
+   "summary": "An ordinary day: family dinner tonight, cousins came over",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 110,
+   "off_the_record": false,
+   "start": 1764647160000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 111,
+   "off_the_record": false,
+   "start": 1765805100000,
+   "summary": "An ordinary day: my head hurts a bit, probably not enough water",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 112,
+   "off_the_record": false,
+   "start": 1765902420000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 113,
+   "off_the_record": false,
+   "start": 1765987500000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 114,
+   "off_the_record": false,
+   "start": 1766045460000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 115,
+   "off_the_record": false,
+   "start": 1766131680000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 116,
+   "off_the_record": false,
+   "start": 1767343080000,
+   "summary": "An ordinary day: did some revision of old notes, felt okay",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 117,
+   "off_the_record": false,
+   "start": 1767460980000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 118,
+   "off_the_record": false,
+   "start": 1767515880000,
+   "summary": "An ordinary day: the weather is crazy hot today, hard to concentrate",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 119,
+   "off_the_record": false,
+   "start": 1767715500000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 120,
+   "off_the_record": false,
+   "start": 1767790860000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 121,
+   "off_the_record": false,
+   "start": 1768066860000,
+   "summary": "An ordinary day: helped my cousin with his maths homework",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 122,
+   "off_the_record": false,
+   "start": 1768311240000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 123,
+   "off_the_record": false,
+   "start": 1768551120000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 124,
+   "off_the_record": false,
+   "start": 1769187900000,
+   "summary": "An ordinary day: study session was slow, kept rereading the same page",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 125,
+   "off_the_record": false,
+   "start": 1769272200000,
+   "summary": "An ordinary day: family dinner tonight, cousins came over",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 126,
+   "off_the_record": false,
+   "start": 1769521800000,
+   "summary": "An ordinary day: watched a cricket match instead of studying, not proud of it",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 127,
+   "off_the_record": false,
+   "start": 1769779500000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 128,
+   "off_the_record": false,
+   "start": 1770107340000,
+   "summary": "An ordinary day: the weather is crazy hot today, hard to concentrate",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 129,
+   "off_the_record": false,
+   "start": 1770226500000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 130,
+   "off_the_record": false,
+   "start": 1770261180000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 131,
+   "off_the_record": false,
+   "start": 1770383760000,
+   "summary": "An ordinary day: prayed Fajr on time and studied after, good start",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 132,
+   "off_the_record": false,
+   "start": 1770557520000,
+   "summary": "An ordinary day: prayed Fajr on time and studied after, good start",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 133,
+   "off_the_record": false,
+   "start": 1770828540000,
+   "summary": "An ordinary day: spent too long on YouTube tonight",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 134,
+   "off_the_record": false,
+   "start": 1770913200000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 135,
+   "off_the_record": false,
+   "start": 1771348620000,
+   "summary": "An ordinary day: my head hurts a bit, probably not enough water",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 136,
+   "off_the_record": false,
+   "start": 1772990760000,
+   "summary": "An ordinary day: study session was slow, kept rereading the same page",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 137,
+   "off_the_record": false,
+   "start": 1773407340000,
+   "summary": "An ordinary day: the weather is crazy hot today, hard to concentrate",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 138,
+   "off_the_record": false,
+   "start": 1773630600000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 139,
+   "off_the_record": false,
+   "start": 1774099260000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 140,
+   "off_the_record": false,
+   "start": 1774580700000,
+   "summary": "An ordinary day: my head hurts a bit, probably not enough water",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 141,
+   "off_the_record": false,
+   "start": 1774686300000,
+   "summary": "An ordinary day: the weather is crazy hot today, hard to concentrate",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 142,
+   "off_the_record": false,
+   "start": 1775119200000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 143,
+   "off_the_record": false,
+   "start": 1775291340000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 144,
+   "off_the_record": false,
+   "start": 1775722020000,
+   "summary": "An ordinary day: helped my cousin with his maths homework",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 145,
+   "off_the_record": false,
+   "start": 1775809980000,
+   "summary": "An ordinary day: cleaned my room finally, feels better",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 146,
+   "off_the_record": false,
+   "start": 1775926860000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 147,
+   "off_the_record": false,
+   "start": 1775963700000,
+   "summary": "An ordinary day: helped my cousin with his maths homework",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 148,
+   "off_the_record": false,
+   "start": 1776097140000,
+   "summary": "An ordinary day: feeling low energy, not sure why",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 149,
+   "off_the_record": false,
+   "start": 1776154920000,
+   "summary": "An ordinary day: had chai with the neighbours, nice evening",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 150,
+   "off_the_record": false,
+   "start": 1776346920000,
+   "summary": "An ordinary day: did some revision of old notes, felt okay",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 151,
+   "off_the_record": false,
+   "start": 1776672600000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 152,
+   "off_the_record": false,
+   "start": 1776863580000,
+   "summary": "An ordinary day: my head hurts a bit, probably not enough water",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 153,
+   "off_the_record": false,
+   "start": 1776951120000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 154,
+   "off_the_record": false,
+   "start": 1777050300000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 155,
+   "off_the_record": false,
+   "start": 1777174620000,
+   "summary": "An ordinary day: cleaned my room finally, feels better",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 156,
+   "off_the_record": false,
+   "start": 1777396680000,
+   "summary": "An ordinary day: family dinner tonight, cousins came over",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 157,
+   "off_the_record": false,
+   "start": 1777571280000,
+   "summary": "An ordinary day: helped my cousin with his maths homework",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 158,
+   "off_the_record": false,
+   "start": 1777914120000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 159,
+   "off_the_record": false,
+   "start": 1778295600000,
+   "summary": "An ordinary day: rain today, the roads flooded near the market",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 160,
+   "off_the_record": false,
+   "start": 1778863560000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 161,
+   "off_the_record": false,
+   "start": 1778949780000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 162,
+   "off_the_record": false,
+   "start": 1779264000000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 163,
+   "off_the_record": false,
+   "start": 1779369480000,
+   "summary": "An ordinary day: had chai with the neighbours, nice evening",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 164,
+   "off_the_record": false,
+   "start": 1779816600000,
+   "summary": "An ordinary day: cleaned my room finally, feels better",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 165,
+   "off_the_record": false,
+   "start": 1779851580000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 166,
+   "off_the_record": false,
+   "start": 1780075020000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 167,
+   "off_the_record": false,
+   "start": 1780245060000,
+   "summary": "An ordinary day: long day. I'm tired but I got one study block done",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 168,
+   "off_the_record": false,
+   "start": 1780491600000,
+   "summary": "An ordinary day: family dinner tonight, cousins came over",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 169,
+   "off_the_record": false,
+   "start": 1780734180000,
+   "summary": "An ordinary day: cleaned my room finally, feels better",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 170,
+   "off_the_record": false,
+   "start": 1781322000000,
+   "summary": "An ordinary day: watched a cricket match instead of studying, not proud of it",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 171,
+   "off_the_record": false,
+   "start": 1781444940000,
+   "summary": "An ordinary day: helped my cousin with his maths homework",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 172,
+   "off_the_record": false,
+   "start": 1781714760000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 173,
+   "off_the_record": false,
+   "start": 1782012360000,
+   "summary": "An ordinary day: did some revision of old notes, felt okay",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 174,
+   "off_the_record": false,
+   "start": 1782135000000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 175,
+   "off_the_record": false,
+   "start": 1782289860000,
+   "summary": "An ordinary day: had chai with the neighbours, nice evening",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 176,
+   "off_the_record": false,
+   "start": 1782393120000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 177,
+   "off_the_record": false,
+   "start": 1782480180000,
+   "summary": "An ordinary day: family dinner tonight, cousins came over",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 178,
+   "off_the_record": false,
+   "start": 1782616380000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 179,
+   "off_the_record": false,
+   "start": 1782702480000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 180,
+   "off_the_record": false,
+   "start": 1783086060000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 181,
+   "off_the_record": false,
+   "start": 1783613040000,
+   "summary": "An ordinary day: prayed Fajr on time and studied after, good start",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 182,
+   "off_the_record": false,
+   "start": 1784190900000,
+   "summary": "An ordinary day: study session was slow, kept rereading the same page",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 183,
+   "off_the_record": false,
+   "start": 1784277660000,
+   "summary": "An ordinary day: prayed Fajr on time and studied after, good start",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 184,
+   "off_the_record": false,
+   "start": 1784467140000,
+   "summary": "An ordinary day: watched a cricket match instead of studying, not proud of it",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 185,
+   "off_the_record": false,
+   "start": 1784725200000,
+   "summary": "An ordinary day: spent too long on YouTube tonight",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 186,
+   "off_the_record": false,
+   "start": 1785312180000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 187,
+   "off_the_record": false,
+   "start": 1785429720000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 188,
+   "off_the_record": false,
+   "start": 1785553920000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 189,
+   "off_the_record": false,
+   "start": 1786004040000,
+   "summary": "An ordinary day: had chai with the neighbours, nice evening",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 190,
+   "off_the_record": false,
+   "start": 1786210260000,
+   "summary": "An ordinary day: spent too long on YouTube tonight",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 191,
+   "off_the_record": false,
+   "start": 1786381980000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 192,
+   "off_the_record": false,
+   "start": 1786591680000,
+   "summary": "An ordinary day: did some revision of old notes, felt okay",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 193,
+   "off_the_record": false,
+   "start": 1787160180000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 194,
+   "off_the_record": false,
+   "start": 1787368020000,
+   "summary": "An ordinary day: ate too much at dinner and now I feel sluggish",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 195,
+   "off_the_record": false,
+   "start": 1787579100000,
+   "summary": "An ordinary day: slept early for once, felt great this morning",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 196,
+   "off_the_record": false,
+   "start": 1787680020000,
+   "summary": "An ordinary day: had chai with the neighbours, nice evening",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 197,
+   "off_the_record": false,
+   "start": 1787761440000,
+   "summary": "An ordinary day: went to the market for groceries with Ammi",
+   "title": "Quick check-in"
+  },
+  {
+   "chat_type": "free",
+   "id": 198,
+   "off_the_record": false,
+   "start": 1787991780000,
+   "summary": "An ordinary day: spent too long on YouTube tonight",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 199,
+   "off_the_record": false,
+   "start": 1788354060000,
+   "summary": "An ordinary day: cleaned my room finally, feels better",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 200,
+   "off_the_record": false,
+   "start": 1788451680000,
+   "summary": "An ordinary day: i kept checking my phone during the study session",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 201,
+   "off_the_record": false,
+   "start": 1788528000000,
+   "summary": "An ordinary day: spent too long on YouTube tonight",
+   "title": "Evening thoughts"
+  },
+  {
+   "chat_type": "free",
+   "id": 202,
+   "off_the_record": false,
+   "start": 1789144500000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Small win"
+  },
+  {
+   "chat_type": "free",
+   "id": 203,
+   "off_the_record": false,
+   "start": 1789615860000,
+   "summary": "An ordinary day: watched a cricket match instead of studying, not proud of it",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 204,
+   "off_the_record": false,
+   "start": 1789807740000,
+   "summary": "An ordinary day: study session was slow, kept rereading the same page",
+   "title": "Rough morning"
+  },
+  {
+   "chat_type": "free",
+   "id": 205,
+   "off_the_record": false,
+   "start": 1790169120000,
+   "summary": "An ordinary day: bit anxious about the exam today for no clear reason",
+   "title": "Tired"
+  },
+  {
+   "chat_type": "free",
+   "id": 206,
+   "off_the_record": false,
+   "start": 1790239020000,
+   "summary": "An ordinary day: the weather is crazy hot today, hard to concentrate",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 207,
+   "off_the_record": false,
+   "start": 1790739000000,
+   "summary": "An ordinary day: woke up late again, the morning felt wasted",
+   "title": "Ordinary day"
+  },
+  {
+   "chat_type": "free",
+   "id": 208,
+   "off_the_record": false,
+   "start": 1791033120000,
+   "summary": "An ordinary day: watched a cricket match instead of studying, not proud of it",
+   "title": "Small win"
+  }
+ ],
+ "events": [
+  {
+   "action": "could not submit",
+   "at": 1787328000000,
+   "conversation": 22,
+   "feeling": "annoyed",
+   "id": 1,
+   "outcome": "late fee of 3,000",
+   "payoff": "",
+   "situation": "exam form deadline during a power cut",
+   "whenText": "20 August evening"
+  },
+  {
+   "action": "did two lectures",
+   "at": 1790526000000,
+   "conversation": 27,
+   "feeling": "",
+   "id": 2,
+   "outcome": "first lectures during a cut",
+   "payoff": "kept the evening",
+   "situation": "router on the new UPS",
+   "whenText": "evening power cut"
+  }
+ ],
+ "goals": [
+  {
+   "created": "2026-01-12",
+   "deadline": "2026-06-14",
+   "id": 1,
+   "status": "done",
+   "title": "Pass CAF 1 Financial Accounting"
+  },
+  {
+   "created": "2026-07-20",
+   "deadline": "2026-12-01",
+   "id": 2,
+   "status": "active",
+   "title": "Pass CAF 5 Tax"
+  },
+  {
+   "created": "2026-03-24",
+   "deadline": null,
+   "id": 3,
+   "status": "active",
+   "title": "Look after my knee"
+  }
+ ],
+ "letters": [
+  {
+   "body": "Three evenings lost to power cuts, and still eight lectures. The kitchen charger held five nights.",
+   "id": 1,
+   "title": "The week the lights went out",
+   "week_of": "2026-09-21"
+  },
+  {
+   "body": "The UPS changed the evenings: two lectures during a cut for the first time.",
+   "id": 2,
+   "title": "A box that keeps the router on",
+   "week_of": "2026-09-28"
+  },
+  {
+   "body": "Every Tuesday this month ended at zero; the other days averaged close to two.",
+   "id": 3,
+   "title": "Tuesdays",
+   "week_of": "2026-10-05"
+  }
+ ],
+ "messages": [
+  {
+   "at": 1762195200000,
+   "conversation": 1,
+   "id": 1,
+   "k": 1,
+   "role": "user",
+   "text": "It's almost midnight and I'm still scrolling reels in bed. Tomorrow I have to be at Pellow Freight by nine."
+  },
+  {
+   "at": 1762195680000,
+   "conversation": 1,
+   "id": 2,
+   "k": 2,
+   "role": "user",
+   "text": "This happens every night. I tell myself ten minutes and it's suddenly 2 am."
+  },
+  {
+   "at": 1762196160000,
+   "conversation": 1,
+   "id": 3,
+   "k": 3,
+   "role": "user",
+   "text": "Mrs. Danvers already noticed I came in late twice last week."
+  },
+  {
+   "at": 1762697700000,
+   "conversation": 2,
+   "id": 4,
+   "k": 1,
+   "role": "user",
+   "text": "I want to finish CAF so I'm not stuck as an accounts assistant forever."
+  },
+  {
+   "at": 1762698180000,
+   "conversation": 2,
+   "id": 5,
+   "k": 2,
+   "role": "user",
+   "text": "My first paper is CAF 1 Financial Accounting, the exam is on 8 December."
+  },
+  {
+   "at": 1762698660000,
+   "conversation": 2,
+   "id": 6,
+   "k": 3,
+   "role": "user",
+   "text": "Studying after work is hard, I only manage maybe an hour on good days."
+  },
+  {
+   "at": 1763273100000,
+   "conversation": 3,
+   "id": 7,
+   "k": 1,
+   "role": "user",
+   "text": "Hina called from Islamabad, she always calls on Sundays. She said she believes I'll pass."
+  },
+  {
+   "at": 1763273580000,
+   "conversation": 3,
+   "id": 8,
+   "k": 2,
+   "role": "user",
+   "text": "She's the only one in the family who gets why I'm doing this."
+  },
+  {
+   "at": 1763915400000,
+   "conversation": 4,
+   "id": 9,
+   "k": 1,
+   "role": "user",
+   "text": "Ammi keeps asking how much the exams cost. She worries about money all the time."
+  },
+  {
+   "at": 1763915880000,
+   "conversation": 4,
+   "id": 10,
+   "k": 2,
+   "role": "user",
+   "text": "Each paper's fee is around 15,000 and I pay it from my salary."
+  },
+  {
+   "at": 1765292400000,
+   "conversation": 5,
+   "id": 11,
+   "k": 1,
+   "role": "user",
+   "text": "The CAF 1 exam was yesterday. The consolidation question destroyed me."
+  },
+  {
+   "at": 1765292880000,
+   "conversation": 5,
+   "id": 12,
+   "k": 2,
+   "role": "user",
+   "text": "I think I ran out of time on the last two questions."
+  },
+  {
+   "at": 1768225500000,
+   "conversation": 6,
+   "id": 13,
+   "k": 1,
+   "role": "user",
+   "text": "Result came. 46 in CAF 1. Pass is 50. I missed by four marks."
+  },
+  {
+   "at": 1768225980000,
+   "conversation": 6,
+   "id": 14,
+   "k": 2,
+   "role": "user",
+   "text": "I want to resit in June and this time actually do past papers under time."
+  },
+  {
+   "at": 1768703400000,
+   "conversation": 7,
+   "id": 15,
+   "k": 1,
+   "role": "user",
+   "text": "I joined Ironline gym near the office, going before work at 6:30."
+  },
+  {
+   "at": 1768703880000,
+   "conversation": 7,
+   "id": 16,
+   "k": 2,
+   "role": "user",
+   "text": "The plan is three mornings a week, Monday Wednesday Friday."
+  },
+  {
+   "at": 1770052200000,
+   "conversation": 8,
+   "id": 17,
+   "k": 1,
+   "role": "user",
+   "text": "Three weeks of gym now. On gym days I actually sleep before midnight because I'm tired."
+  },
+  {
+   "at": 1770052680000,
+   "conversation": 8,
+   "id": 18,
+   "k": 2,
+   "role": "user",
+   "text": "Funny how the gym fixed my phone-in-bed problem more than any app blocker."
+  },
+  {
+   "at": 1771095000000,
+   "conversation": 9,
+   "id": 19,
+   "k": 1,
+   "role": "user",
+   "text": "Sana and I ended it tonight. I don't want this remembered."
+  },
+  {
+   "at": 1771095480000,
+   "conversation": 9,
+   "id": 20,
+   "k": 2,
+   "role": "user",
+   "text": "We'd been together two years."
+  },
+  {
+   "at": 1772460000000,
+   "conversation": 10,
+   "id": 21,
+   "k": 1,
+   "role": "user",
+   "text": "I handed in my notice at Pellow Freight today. Last day is 31 March."
+  },
+  {
+   "at": 1772460480000,
+   "conversation": 10,
+   "id": 22,
+   "k": 2,
+   "role": "user",
+   "text": "Mrs. Danvers was kind about it, she said come back if it doesn't work out."
+  },
+  {
+   "at": 1772460960000,
+   "conversation": 10,
+   "id": 23,
+   "k": 3,
+   "role": "user",
+   "text": "I'll study full time until the resit and live on my savings, about 120,000."
+  },
+  {
+   "at": 1774005600000,
+   "conversation": 11,
+   "id": 24,
+   "k": 1,
+   "role": "user",
+   "text": "My left knee hurts after squats. It's been swelling since Tuesday."
+  },
+  {
+   "at": 1774006080000,
+   "conversation": 11,
+   "id": 25,
+   "k": 2,
+   "role": "user",
+   "text": "I'll see a physio, Dr. Saleh, on Monday."
+  },
+  {
+   "at": 1774339200000,
+   "conversation": 12,
+   "id": 26,
+   "k": 1,
+   "role": "user",
+   "text": "Dr. Saleh says no squats or running for two months. Patellar tendon thing."
+  },
+  {
+   "at": 1774339680000,
+   "conversation": 12,
+   "id": 27,
+   "k": 2,
+   "role": "user",
+   "text": "So the gym is basically over for now. I'll walk instead, twenty minutes a day."
+  },
+  {
+   "at": 1775448600000,
+   "conversation": 13,
+   "id": 28,
+   "k": 1,
+   "role": "user",
+   "text": "Full-time study, day 5. I go to the Model Town library at 9 and stay till 4."
+  },
+  {
+   "at": 1775449080000,
+   "conversation": 13,
+   "id": 29,
+   "k": 2,
+   "role": "user",
+   "text": "I focus way better at the library than at home, home has too many interruptions."
+  },
+  {
+   "at": 1776614400000,
+   "conversation": 14,
+   "id": 30,
+   "k": 1,
+   "role": "user",
+   "text": "Omar and I are doing past papers together on Thursdays at the library."
+  },
+  {
+   "at": 1776614880000,
+   "conversation": 14,
+   "id": 31,
+   "k": 2,
+   "role": "user",
+   "text": "He's sitting CAF 1 in June too. Having him there keeps me honest."
+  },
+  {
+   "at": 1777815000000,
+   "conversation": 15,
+   "id": 32,
+   "k": 1,
+   "role": "user",
+   "text": "We're moving to Khala Rukhsana's house in Millbrook. The Kestrel Road flat rent went up again."
+  },
+  {
+   "at": 1777815480000,
+   "conversation": 15,
+   "id": 33,
+   "k": 2,
+   "role": "user",
+   "text": "I'll get the small room on the roof. It's quiet up there."
+  },
+  {
+   "at": 1779585600000,
+   "conversation": 16,
+   "id": 34,
+   "k": 1,
+   "role": "user",
+   "text": "Since the move I study on the roof from 5:30 to 8 before it gets hot. Best focus I've ever had."
+  },
+  {
+   "at": 1779586080000,
+   "conversation": 16,
+   "id": 35,
+   "k": 2,
+   "role": "user",
+   "text": "The library is too far from Millbrook now, ninety minutes by bus."
+  },
+  {
+   "at": 1781110800000,
+   "conversation": 17,
+   "id": 36,
+   "k": 1,
+   "role": "user",
+   "text": "Resit is in four days. I've done eleven past papers under time."
+  },
+  {
+   "at": 1781111280000,
+   "conversation": 17,
+   "id": 37,
+   "k": 2,
+   "role": "user",
+   "text": "My scores went from 44 to 58 across them."
+  },
+  {
+   "at": 1783514400000,
+   "conversation": 18,
+   "id": 38,
+   "k": 1,
+   "role": "user",
+   "text": "I PASSED. 61 in CAF 1."
+  },
+  {
+   "at": 1783514880000,
+   "conversation": 18,
+   "id": 39,
+   "k": 2,
+   "role": "user",
+   "text": "Omar passed too, 55. He's moving to Dubai next week for a job though."
+  },
+  {
+   "at": 1784560500000,
+   "conversation": 19,
+   "id": 40,
+   "k": 1,
+   "role": "user",
+   "text": "Next I'm doing CAF 5 Tax and CAF 3 Law together in December."
+  },
+  {
+   "at": 1784560980000,
+   "conversation": 19,
+   "id": 41,
+   "k": 2,
+   "role": "user",
+   "text": "Sir Waqas teaches Tax online, his course has 60 recorded lectures."
+  },
+  {
+   "at": 1785869700000,
+   "conversation": 20,
+   "id": 42,
+   "k": 1,
+   "role": "user",
+   "text": "I'm back to scrolling in bed till 2. Without the gym I'm never tired at night."
+  },
+  {
+   "at": 1785870180000,
+   "conversation": 20,
+   "id": 43,
+   "k": 2,
+   "role": "user",
+   "text": "Mornings on the roof are ruined, I wake up at 9 and it's already too hot."
+  },
+  {
+   "at": 1786545000000,
+   "conversation": 21,
+   "id": 44,
+   "k": 1,
+   "role": "user",
+   "text": "Two papers at once is too much. I'm dropping Law, just Tax in December."
+  },
+  {
+   "at": 1786545480000,
+   "conversation": 21,
+   "id": 45,
+   "k": 2,
+   "role": "user",
+   "text": "Sir Waqas agreed, he said Tax alone is plenty for one sitting."
+  },
+  {
+   "at": 1787328000000,
+   "conversation": 22,
+   "id": 46,
+   "k": 1,
+   "role": "user",
+   "text": "I missed the exam form deadline on the 20th. There was a power cut all evening and the bank site was down."
+  },
+  {
+   "at": 1787328480000,
+   "conversation": 22,
+   "id": 47,
+   "k": 2,
+   "role": "user",
+   "text": "Late fee is 3,000 extra. So annoying."
+  },
+  {
+   "at": 1788094800000,
+   "conversation": 23,
+   "id": 48,
+   "k": 1,
+   "role": "user",
+   "text": "I want to properly fix the phone thing this time, not just try for a few days."
+  },
+  {
+   "at": 1788095280000,
+   "conversation": 23,
+   "id": 49,
+   "k": 2,
+   "role": "user",
+   "text": "Idea: phone charges in the kitchen from 11 pm."
+  },
+  {
+   "at": 1788663600000,
+   "conversation": 24,
+   "id": 50,
+   "k": 1,
+   "role": "user",
+   "text": "Week one of the kitchen charger. Slept by 12 four nights out of seven."
+  },
+  {
+   "at": 1788664080000,
+   "conversation": 24,
+   "id": 51,
+   "k": 2,
+   "role": "user",
+   "text": "The nights it failed were when I took the phone 'just for an alarm'."
+  },
+  {
+   "at": 1789310700000,
+   "conversation": 25,
+   "id": 52,
+   "k": 1,
+   "role": "user",
+   "text": "Load shedding is back, two hours every evening, sometimes in the morning too."
+  },
+  {
+   "at": 1789311180000,
+   "conversation": 25,
+   "id": 53,
+   "k": 2,
+   "role": "user",
+   "text": "When the power goes, the lectures stop because the router dies."
+  },
+  {
+   "at": 1789905600000,
+   "conversation": 26,
+   "id": 54,
+   "k": 1,
+   "role": "user",
+   "text": "Paid the Tax exam fee today, 18,000 with the late fee. Ammi was upset about the extra 3,000."
+  },
+  {
+   "at": 1789906080000,
+   "conversation": 26,
+   "id": 55,
+   "k": 2,
+   "role": "user",
+   "text": "I'm going to buy a small UPS for the router so power cuts don't stop lectures."
+  },
+  {
+   "at": 1790526000000,
+   "conversation": 27,
+   "id": 56,
+   "k": 1,
+   "role": "user",
+   "text": "Got the UPS for 9,500. Router stays on for about three hours now."
+  },
+  {
+   "at": 1790526480000,
+   "conversation": 27,
+   "id": 57,
+   "k": 2,
+   "role": "user",
+   "text": "Did two lectures during the evening cut for the first time."
+  },
+  {
+   "at": 1791127800000,
+   "conversation": 28,
+   "id": 58,
+   "k": 1,
+   "role": "user",
+   "text": "Omar video called from Dubai. He says the job is long hours but he's saving well."
+  },
+  {
+   "at": 1791128280000,
+   "conversation": 28,
+   "id": 59,
+   "k": 2,
+   "role": "user",
+   "text": "I miss our Thursday sessions, studying alone is lonelier."
+  },
+  {
+   "at": 1791654000000,
+   "conversation": 29,
+   "id": 60,
+   "k": 1,
+   "role": "user",
+   "text": "I'm at lecture 31 of 60 and the exam is 1 December. Sir Waqas said finish lectures by end of November."
+  },
+  {
+   "at": 1791654480000,
+   "conversation": 29,
+   "id": 61,
+   "k": 2,
+   "role": "user",
+   "text": "Tuesdays are always bad because Khala's family visits."
+  },
+  {
+   "at": 1791947400000,
+   "conversation": 30,
+   "id": 62,
+   "k": 1,
+   "role": "user",
+   "text": "Plan for today: two lectures before noon if the power holds, then nap after Zuhr."
+  },
+  {
+   "at": 1791947640000,
+   "conversation": 30,
+   "id": 63,
+   "k": null,
+   "role": "coach",
+   "text": "Good plan. Two lectures before noon, nap after Zuhr, practice questions on paper if the power goes."
+  },
+  {
+   "at": 1791947880000,
+   "conversation": 30,
+   "id": 64,
+   "k": 2,
+   "role": "user",
+   "text": "If the power goes I'll do the practice questions on paper instead."
+  },
+  {
+   "at": 1791948120000,
+   "conversation": 30,
+   "id": 65,
+   "k": null,
+   "role": "coach",
+   "text": "That's a solid fallback."
+  },
+  {
+   "at": 1791948360000,
+   "conversation": 30,
+   "id": 66,
+   "k": 3,
+   "role": "user",
+   "text": "Lectures 32 and 33 are both on sales tax."
+  },
+  {
+   "at": 1791948600000,
+   "conversation": 30,
+   "id": 67,
+   "k": null,
+   "role": "coach",
+   "text": "Sales tax it is. Tell me how it goes."
+  },
+  {
+   "at": 1762399380000,
+   "conversation": 101,
+   "id": 68,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1762399860000,
+   "conversation": 101,
+   "id": 69,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1762536420000,
+   "conversation": 102,
+   "id": 70,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1762536900000,
+   "conversation": 102,
+   "id": 71,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1762571640000,
+   "conversation": 103,
+   "id": 72,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1762572120000,
+   "conversation": 103,
+   "id": 73,
+   "k": 2,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1762572600000,
+   "conversation": 103,
+   "id": 74,
+   "k": 3,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1763194020000,
+   "conversation": 104,
+   "id": 75,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1763194500000,
+   "conversation": 104,
+   "id": 76,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1763194980000,
+   "conversation": 104,
+   "id": 77,
+   "k": 3,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1763573700000,
+   "conversation": 105,
+   "id": 78,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1763574180000,
+   "conversation": 105,
+   "id": 79,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1763609220000,
+   "conversation": 106,
+   "id": 80,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1763609700000,
+   "conversation": 106,
+   "id": 81,
+   "k": 2,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1764058740000,
+   "conversation": 107,
+   "id": 82,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1764059220000,
+   "conversation": 107,
+   "id": 83,
+   "k": 2,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1764523860000,
+   "conversation": 108,
+   "id": 84,
+   "k": 1,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1764524340000,
+   "conversation": 108,
+   "id": 85,
+   "k": 2,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1764524820000,
+   "conversation": 108,
+   "id": 86,
+   "k": 3,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1764560220000,
+   "conversation": 109,
+   "id": 87,
+   "k": 1,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1764560700000,
+   "conversation": 109,
+   "id": 88,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1764561180000,
+   "conversation": 109,
+   "id": 89,
+   "k": 3,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1764647160000,
+   "conversation": 110,
+   "id": 90,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1764647640000,
+   "conversation": 110,
+   "id": 91,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1764648120000,
+   "conversation": 110,
+   "id": 92,
+   "k": 3,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1765805100000,
+   "conversation": 111,
+   "id": 93,
+   "k": 1,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1765805580000,
+   "conversation": 111,
+   "id": 94,
+   "k": 2,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1765902420000,
+   "conversation": 112,
+   "id": 95,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1765902900000,
+   "conversation": 112,
+   "id": 96,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1765903380000,
+   "conversation": 112,
+   "id": 97,
+   "k": 3,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1765987500000,
+   "conversation": 113,
+   "id": 98,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1765987980000,
+   "conversation": 113,
+   "id": 99,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1765988460000,
+   "conversation": 113,
+   "id": 100,
+   "k": 3,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1766045460000,
+   "conversation": 114,
+   "id": 101,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1766045940000,
+   "conversation": 114,
+   "id": 102,
+   "k": 2,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1766131680000,
+   "conversation": 115,
+   "id": 103,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1766132160000,
+   "conversation": 115,
+   "id": 104,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1766132640000,
+   "conversation": 115,
+   "id": 105,
+   "k": 3,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1767343080000,
+   "conversation": 116,
+   "id": 106,
+   "k": 1,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1767343560000,
+   "conversation": 116,
+   "id": 107,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1767344040000,
+   "conversation": 116,
+   "id": 108,
+   "k": 3,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1767460980000,
+   "conversation": 117,
+   "id": 109,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1767461460000,
+   "conversation": 117,
+   "id": 110,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1767515880000,
+   "conversation": 118,
+   "id": 111,
+   "k": 1,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1767516360000,
+   "conversation": 118,
+   "id": 112,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1767516840000,
+   "conversation": 118,
+   "id": 113,
+   "k": 3,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1767715500000,
+   "conversation": 119,
+   "id": 114,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1767715980000,
+   "conversation": 119,
+   "id": 115,
+   "k": 2,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1767716460000,
+   "conversation": 119,
+   "id": 116,
+   "k": 3,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1767790860000,
+   "conversation": 120,
+   "id": 117,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1767791340000,
+   "conversation": 120,
+   "id": 118,
+   "k": 2,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1767791820000,
+   "conversation": 120,
+   "id": 119,
+   "k": 3,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1768066860000,
+   "conversation": 121,
+   "id": 120,
+   "k": 1,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1768067340000,
+   "conversation": 121,
+   "id": 121,
+   "k": 2,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1768311240000,
+   "conversation": 122,
+   "id": 122,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1768311720000,
+   "conversation": 122,
+   "id": 123,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1768551120000,
+   "conversation": 123,
+   "id": 124,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1768551600000,
+   "conversation": 123,
+   "id": 125,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1769187900000,
+   "conversation": 124,
+   "id": 126,
+   "k": 1,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1769188380000,
+   "conversation": 124,
+   "id": 127,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1769188860000,
+   "conversation": 124,
+   "id": 128,
+   "k": 3,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1769272200000,
+   "conversation": 125,
+   "id": 129,
+   "k": 1,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1769272680000,
+   "conversation": 125,
+   "id": 130,
+   "k": 2,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1769521800000,
+   "conversation": 126,
+   "id": 131,
+   "k": 1,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1769522280000,
+   "conversation": 126,
+   "id": 132,
+   "k": 2,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1769779500000,
+   "conversation": 127,
+   "id": 133,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1769779980000,
+   "conversation": 127,
+   "id": 134,
+   "k": 2,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1770107340000,
+   "conversation": 128,
+   "id": 135,
+   "k": 1,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1770107820000,
+   "conversation": 128,
+   "id": 136,
+   "k": 2,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1770226500000,
+   "conversation": 129,
+   "id": 137,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1770226980000,
+   "conversation": 129,
+   "id": 138,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1770227460000,
+   "conversation": 129,
+   "id": 139,
+   "k": 3,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1770261180000,
+   "conversation": 130,
+   "id": 140,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1770261660000,
+   "conversation": 130,
+   "id": 141,
+   "k": 2,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1770383760000,
+   "conversation": 131,
+   "id": 142,
+   "k": 1,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1770384240000,
+   "conversation": 131,
+   "id": 143,
+   "k": 2,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1770557520000,
+   "conversation": 132,
+   "id": 144,
+   "k": 1,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1770558000000,
+   "conversation": 132,
+   "id": 145,
+   "k": 2,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1770558480000,
+   "conversation": 132,
+   "id": 146,
+   "k": 3,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1770828540000,
+   "conversation": 133,
+   "id": 147,
+   "k": 1,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1770829020000,
+   "conversation": 133,
+   "id": 148,
+   "k": 2,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1770913200000,
+   "conversation": 134,
+   "id": 149,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1770913680000,
+   "conversation": 134,
+   "id": 150,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1771348620000,
+   "conversation": 135,
+   "id": 151,
+   "k": 1,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1771349100000,
+   "conversation": 135,
+   "id": 152,
+   "k": 2,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1772990760000,
+   "conversation": 136,
+   "id": 153,
+   "k": 1,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1772991240000,
+   "conversation": 136,
+   "id": 154,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1773407340000,
+   "conversation": 137,
+   "id": 155,
+   "k": 1,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1773407820000,
+   "conversation": 137,
+   "id": 156,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1773630600000,
+   "conversation": 138,
+   "id": 157,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1773631080000,
+   "conversation": 138,
+   "id": 158,
+   "k": 2,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1773631560000,
+   "conversation": 138,
+   "id": 159,
+   "k": 3,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1774099260000,
+   "conversation": 139,
+   "id": 160,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1774099740000,
+   "conversation": 139,
+   "id": 161,
+   "k": 2,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1774580700000,
+   "conversation": 140,
+   "id": 162,
+   "k": 1,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1774581180000,
+   "conversation": 140,
+   "id": 163,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1774686300000,
+   "conversation": 141,
+   "id": 164,
+   "k": 1,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1774686780000,
+   "conversation": 141,
+   "id": 165,
+   "k": 2,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1774687260000,
+   "conversation": 141,
+   "id": 166,
+   "k": 3,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1775119200000,
+   "conversation": 142,
+   "id": 167,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1775119680000,
+   "conversation": 142,
+   "id": 168,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1775120160000,
+   "conversation": 142,
+   "id": 169,
+   "k": 3,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1775291340000,
+   "conversation": 143,
+   "id": 170,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1775291820000,
+   "conversation": 143,
+   "id": 171,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1775722020000,
+   "conversation": 144,
+   "id": 172,
+   "k": 1,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1775722500000,
+   "conversation": 144,
+   "id": 173,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1775809980000,
+   "conversation": 145,
+   "id": 174,
+   "k": 1,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1775810460000,
+   "conversation": 145,
+   "id": 175,
+   "k": 2,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1775926860000,
+   "conversation": 146,
+   "id": 176,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1775927340000,
+   "conversation": 146,
+   "id": 177,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1775963700000,
+   "conversation": 147,
+   "id": 178,
+   "k": 1,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1775964180000,
+   "conversation": 147,
+   "id": 179,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1776097140000,
+   "conversation": 148,
+   "id": 180,
+   "k": 1,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1776097620000,
+   "conversation": 148,
+   "id": 181,
+   "k": 2,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1776098100000,
+   "conversation": 148,
+   "id": 182,
+   "k": 3,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1776154920000,
+   "conversation": 149,
+   "id": 183,
+   "k": 1,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1776155400000,
+   "conversation": 149,
+   "id": 184,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1776155880000,
+   "conversation": 149,
+   "id": 185,
+   "k": 3,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1776346920000,
+   "conversation": 150,
+   "id": 186,
+   "k": 1,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1776347400000,
+   "conversation": 150,
+   "id": 187,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1776347880000,
+   "conversation": 150,
+   "id": 188,
+   "k": 3,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1776672600000,
+   "conversation": 151,
+   "id": 189,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1776673080000,
+   "conversation": 151,
+   "id": 190,
+   "k": 2,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1776673560000,
+   "conversation": 151,
+   "id": 191,
+   "k": 3,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1776863580000,
+   "conversation": 152,
+   "id": 192,
+   "k": 1,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1776864060000,
+   "conversation": 152,
+   "id": 193,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1776864540000,
+   "conversation": 152,
+   "id": 194,
+   "k": 3,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1776951120000,
+   "conversation": 153,
+   "id": 195,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1776951600000,
+   "conversation": 153,
+   "id": 196,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1776952080000,
+   "conversation": 153,
+   "id": 197,
+   "k": 3,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1777050300000,
+   "conversation": 154,
+   "id": 198,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1777050780000,
+   "conversation": 154,
+   "id": 199,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1777174620000,
+   "conversation": 155,
+   "id": 200,
+   "k": 1,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1777175100000,
+   "conversation": 155,
+   "id": 201,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1777175580000,
+   "conversation": 155,
+   "id": 202,
+   "k": 3,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1777396680000,
+   "conversation": 156,
+   "id": 203,
+   "k": 1,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1777397160000,
+   "conversation": 156,
+   "id": 204,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1777397640000,
+   "conversation": 156,
+   "id": 205,
+   "k": 3,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1777571280000,
+   "conversation": 157,
+   "id": 206,
+   "k": 1,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1777571760000,
+   "conversation": 157,
+   "id": 207,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1777572240000,
+   "conversation": 157,
+   "id": 208,
+   "k": 3,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1777914120000,
+   "conversation": 158,
+   "id": 209,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1777914600000,
+   "conversation": 158,
+   "id": 210,
+   "k": 2,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1778295600000,
+   "conversation": 159,
+   "id": 211,
+   "k": 1,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1778296080000,
+   "conversation": 159,
+   "id": 212,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1778863560000,
+   "conversation": 160,
+   "id": 213,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1778864040000,
+   "conversation": 160,
+   "id": 214,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1778864520000,
+   "conversation": 160,
+   "id": 215,
+   "k": 3,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1778949780000,
+   "conversation": 161,
+   "id": 216,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1778950260000,
+   "conversation": 161,
+   "id": 217,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1778950740000,
+   "conversation": 161,
+   "id": 218,
+   "k": 3,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1779264000000,
+   "conversation": 162,
+   "id": 219,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1779264480000,
+   "conversation": 162,
+   "id": 220,
+   "k": 2,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1779264960000,
+   "conversation": 162,
+   "id": 221,
+   "k": 3,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1779369480000,
+   "conversation": 163,
+   "id": 222,
+   "k": 1,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1779369960000,
+   "conversation": 163,
+   "id": 223,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1779816600000,
+   "conversation": 164,
+   "id": 224,
+   "k": 1,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1779817080000,
+   "conversation": 164,
+   "id": 225,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1779851580000,
+   "conversation": 165,
+   "id": 226,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1779852060000,
+   "conversation": 165,
+   "id": 227,
+   "k": 2,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1779852540000,
+   "conversation": 165,
+   "id": 228,
+   "k": 3,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1780075020000,
+   "conversation": 166,
+   "id": 229,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1780075500000,
+   "conversation": 166,
+   "id": 230,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1780075980000,
+   "conversation": 166,
+   "id": 231,
+   "k": 3,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1780245060000,
+   "conversation": 167,
+   "id": 232,
+   "k": 1,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1780245540000,
+   "conversation": 167,
+   "id": 233,
+   "k": 2,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1780246020000,
+   "conversation": 167,
+   "id": 234,
+   "k": 3,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1780491600000,
+   "conversation": 168,
+   "id": 235,
+   "k": 1,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1780492080000,
+   "conversation": 168,
+   "id": 236,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1780492560000,
+   "conversation": 168,
+   "id": 237,
+   "k": 3,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1780734180000,
+   "conversation": 169,
+   "id": 238,
+   "k": 1,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1780734660000,
+   "conversation": 169,
+   "id": 239,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1781322000000,
+   "conversation": 170,
+   "id": 240,
+   "k": 1,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1781322480000,
+   "conversation": 170,
+   "id": 241,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1781322960000,
+   "conversation": 170,
+   "id": 242,
+   "k": 3,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1781444940000,
+   "conversation": 171,
+   "id": 243,
+   "k": 1,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1781445420000,
+   "conversation": 171,
+   "id": 244,
+   "k": 2,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1781445900000,
+   "conversation": 171,
+   "id": 245,
+   "k": 3,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1781714760000,
+   "conversation": 172,
+   "id": 246,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1781715240000,
+   "conversation": 172,
+   "id": 247,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1782012360000,
+   "conversation": 173,
+   "id": 248,
+   "k": 1,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1782012840000,
+   "conversation": 173,
+   "id": 249,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1782135000000,
+   "conversation": 174,
+   "id": 250,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1782135480000,
+   "conversation": 174,
+   "id": 251,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1782135960000,
+   "conversation": 174,
+   "id": 252,
+   "k": 3,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1782289860000,
+   "conversation": 175,
+   "id": 253,
+   "k": 1,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1782290340000,
+   "conversation": 175,
+   "id": 254,
+   "k": 2,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1782393120000,
+   "conversation": 176,
+   "id": 255,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1782393600000,
+   "conversation": 176,
+   "id": 256,
+   "k": 2,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1782394080000,
+   "conversation": 176,
+   "id": 257,
+   "k": 3,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1782480180000,
+   "conversation": 177,
+   "id": 258,
+   "k": 1,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1782480660000,
+   "conversation": 177,
+   "id": 259,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1782616380000,
+   "conversation": 178,
+   "id": 260,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1782616860000,
+   "conversation": 178,
+   "id": 261,
+   "k": 2,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1782617340000,
+   "conversation": 178,
+   "id": 262,
+   "k": 3,
+   "role": "user",
+   "text": "Helped my cousin with his maths homework."
+  },
+  {
+   "at": 1782702480000,
+   "conversation": 179,
+   "id": 263,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1782702960000,
+   "conversation": 179,
+   "id": 264,
+   "k": 2,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1782703440000,
+   "conversation": 179,
+   "id": 265,
+   "k": 3,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1783086060000,
+   "conversation": 180,
+   "id": 266,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1783086540000,
+   "conversation": 180,
+   "id": 267,
+   "k": 2,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1783613040000,
+   "conversation": 181,
+   "id": 268,
+   "k": 1,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1783613520000,
+   "conversation": 181,
+   "id": 269,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1783614000000,
+   "conversation": 181,
+   "id": 270,
+   "k": 3,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1784190900000,
+   "conversation": 182,
+   "id": 271,
+   "k": 1,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1784191380000,
+   "conversation": 182,
+   "id": 272,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1784277660000,
+   "conversation": 183,
+   "id": 273,
+   "k": 1,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1784278140000,
+   "conversation": 183,
+   "id": 274,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1784467140000,
+   "conversation": 184,
+   "id": 275,
+   "k": 1,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1784467620000,
+   "conversation": 184,
+   "id": 276,
+   "k": 2,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1784468100000,
+   "conversation": 184,
+   "id": 277,
+   "k": 3,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1784725200000,
+   "conversation": 185,
+   "id": 278,
+   "k": 1,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1784725680000,
+   "conversation": 185,
+   "id": 279,
+   "k": 2,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1785312180000,
+   "conversation": 186,
+   "id": 280,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1785312660000,
+   "conversation": 186,
+   "id": 281,
+   "k": 2,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1785429720000,
+   "conversation": 187,
+   "id": 282,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1785430200000,
+   "conversation": 187,
+   "id": 283,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1785553920000,
+   "conversation": 188,
+   "id": 284,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1785554400000,
+   "conversation": 188,
+   "id": 285,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1785554880000,
+   "conversation": 188,
+   "id": 286,
+   "k": 3,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1786004040000,
+   "conversation": 189,
+   "id": 287,
+   "k": 1,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1786004520000,
+   "conversation": 189,
+   "id": 288,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1786005000000,
+   "conversation": 189,
+   "id": 289,
+   "k": 3,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1786210260000,
+   "conversation": 190,
+   "id": 290,
+   "k": 1,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1786210740000,
+   "conversation": 190,
+   "id": 291,
+   "k": 2,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1786211220000,
+   "conversation": 190,
+   "id": 292,
+   "k": 3,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1786381980000,
+   "conversation": 191,
+   "id": 293,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1786382460000,
+   "conversation": 191,
+   "id": 294,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1786591680000,
+   "conversation": 192,
+   "id": 295,
+   "k": 1,
+   "role": "user",
+   "text": "Did some revision of old notes, felt okay."
+  },
+  {
+   "at": 1786592160000,
+   "conversation": 192,
+   "id": 296,
+   "k": 2,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1787160180000,
+   "conversation": 193,
+   "id": 297,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1787160660000,
+   "conversation": 193,
+   "id": 298,
+   "k": 2,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1787161140000,
+   "conversation": 193,
+   "id": 299,
+   "k": 3,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1787368020000,
+   "conversation": 194,
+   "id": 300,
+   "k": 1,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1787368500000,
+   "conversation": 194,
+   "id": 301,
+   "k": 2,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1787368980000,
+   "conversation": 194,
+   "id": 302,
+   "k": 3,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1787579100000,
+   "conversation": 195,
+   "id": 303,
+   "k": 1,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1787579580000,
+   "conversation": 195,
+   "id": 304,
+   "k": 2,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1787580060000,
+   "conversation": 195,
+   "id": 305,
+   "k": 3,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1787680020000,
+   "conversation": 196,
+   "id": 306,
+   "k": 1,
+   "role": "user",
+   "text": "Had chai with the neighbours, nice evening."
+  },
+  {
+   "at": 1787680500000,
+   "conversation": 196,
+   "id": 307,
+   "k": 2,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1787680980000,
+   "conversation": 196,
+   "id": 308,
+   "k": 3,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1787761440000,
+   "conversation": 197,
+   "id": 309,
+   "k": 1,
+   "role": "user",
+   "text": "Went to the market for groceries with Ammi."
+  },
+  {
+   "at": 1787761920000,
+   "conversation": 197,
+   "id": 310,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1787991780000,
+   "conversation": 198,
+   "id": 311,
+   "k": 1,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1787992260000,
+   "conversation": 198,
+   "id": 312,
+   "k": 2,
+   "role": "user",
+   "text": "Family dinner tonight, cousins came over."
+  },
+  {
+   "at": 1788354060000,
+   "conversation": 199,
+   "id": 313,
+   "k": 1,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1788354540000,
+   "conversation": 199,
+   "id": 314,
+   "k": 2,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1788355020000,
+   "conversation": 199,
+   "id": 315,
+   "k": 3,
+   "role": "user",
+   "text": "Ate too much at dinner and now I feel sluggish."
+  },
+  {
+   "at": 1788451680000,
+   "conversation": 200,
+   "id": 316,
+   "k": 1,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1788452160000,
+   "conversation": 200,
+   "id": 317,
+   "k": 2,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1788452640000,
+   "conversation": 200,
+   "id": 318,
+   "k": 3,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1788528000000,
+   "conversation": 201,
+   "id": 319,
+   "k": 1,
+   "role": "user",
+   "text": "Spent too long on YouTube tonight."
+  },
+  {
+   "at": 1788528480000,
+   "conversation": 201,
+   "id": 320,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1789144500000,
+   "conversation": 202,
+   "id": 321,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1789144980000,
+   "conversation": 202,
+   "id": 322,
+   "k": 2,
+   "role": "user",
+   "text": "Rain today, the roads flooded near the market."
+  },
+  {
+   "at": 1789615860000,
+   "conversation": 203,
+   "id": 323,
+   "k": 1,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1789616340000,
+   "conversation": 203,
+   "id": 324,
+   "k": 2,
+   "role": "user",
+   "text": "Slept early for once, felt great this morning."
+  },
+  {
+   "at": 1789807740000,
+   "conversation": 204,
+   "id": 325,
+   "k": 1,
+   "role": "user",
+   "text": "Study session was slow, kept rereading the same page."
+  },
+  {
+   "at": 1789808220000,
+   "conversation": 204,
+   "id": 326,
+   "k": 2,
+   "role": "user",
+   "text": "My head hurts a bit, probably not enough water."
+  },
+  {
+   "at": 1789808700000,
+   "conversation": 204,
+   "id": 327,
+   "k": 3,
+   "role": "user",
+   "text": "Feeling low energy, not sure why."
+  },
+  {
+   "at": 1790169120000,
+   "conversation": 205,
+   "id": 328,
+   "k": 1,
+   "role": "user",
+   "text": "Bit anxious about the exam today for no clear reason."
+  },
+  {
+   "at": 1790169600000,
+   "conversation": 205,
+   "id": 329,
+   "k": 2,
+   "role": "user",
+   "text": "I kept checking my phone during the study session."
+  },
+  {
+   "at": 1790170080000,
+   "conversation": 205,
+   "id": 330,
+   "k": 3,
+   "role": "user",
+   "text": "Prayed Fajr on time and studied after, good start."
+  },
+  {
+   "at": 1790239020000,
+   "conversation": 206,
+   "id": 331,
+   "k": 1,
+   "role": "user",
+   "text": "The weather is crazy hot today, hard to concentrate."
+  },
+  {
+   "at": 1790239500000,
+   "conversation": 206,
+   "id": 332,
+   "k": 2,
+   "role": "user",
+   "text": "Cleaned my room finally, feels better."
+  },
+  {
+   "at": 1790739000000,
+   "conversation": 207,
+   "id": 333,
+   "k": 1,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  },
+  {
+   "at": 1790739480000,
+   "conversation": 207,
+   "id": 334,
+   "k": 2,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1790739960000,
+   "conversation": 207,
+   "id": 335,
+   "k": 3,
+   "role": "user",
+   "text": "Long day. I'm tired but I got one study block done."
+  },
+  {
+   "at": 1791033120000,
+   "conversation": 208,
+   "id": 336,
+   "k": 1,
+   "role": "user",
+   "text": "Watched a cricket match instead of studying, not proud of it."
+  },
+  {
+   "at": 1791033600000,
+   "conversation": 208,
+   "id": 337,
+   "k": 2,
+   "role": "user",
+   "text": "Woke up late again, the morning felt wasted."
+  }
+ ],
+ "notes": [
+  {
+   "confidence": "confirmed",
+   "evidence": [
+    [
+     "quote",
+     "I tell myself ten minutes and it's suddenly 2 am.",
+     "2025-11-03"
+    ],
+    [
+     "quote",
+     "Mornings on the roof are ruined, I wake up at 9",
+     "2026-08-04"
+    ]
+   ],
+   "first": "2025-11-03",
+   "id": 1,
+   "kind": "pattern",
+   "last": "2026-09-06",
+   "status": "active",
+   "text": "Phone in bed after 11 pm costs him his next morning.",
+   "times_seen": 6
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "On gym days I actually sleep before midnight because I'm tired.",
+     "2026-02-02"
+    ]
+   ],
+   "first": "2026-02-02",
+   "id": 2,
+   "kind": "what_helps",
+   "last": "2026-09-06",
+   "status": "active",
+   "text": "Physical tiredness (gym days) gets him to sleep before midnight.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "confirmed",
+   "evidence": [
+    [
+     "quote",
+     "Best focus I've ever had.",
+     "2026-05-24"
+    ]
+   ],
+   "first": "2026-05-24",
+   "id": 3,
+   "kind": "what_helps",
+   "last": "2026-09-27",
+   "status": "active",
+   "text": "Early mornings in the rooftop room give his best focus.",
+   "times_seen": 4
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "I focus way better at the library than at home",
+     "2026-04-06"
+    ]
+   ],
+   "first": "2026-04-06",
+   "id": 4,
+   "kind": "what_helps",
+   "last": "2026-05-03",
+   "status": "retired",
+   "text": "He focuses far better at the Model Town library than at home.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Two papers at once is too much.",
+     "2026-08-12"
+    ]
+   ],
+   "first": "2026-07-20",
+   "id": 5,
+   "kind": "what_doesnt",
+   "last": "2026-08-12",
+   "status": "active",
+   "text": "Taking on two papers at once overwhelms him.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "My scores went from 44 to 58 across them.",
+     "2026-06-10"
+    ]
+   ],
+   "first": "2026-06-10",
+   "id": 6,
+   "kind": "strength",
+   "last": "2026-07-08",
+   "status": "active",
+   "text": "Timed past papers steadily raise his scores.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "studying alone is lonelier.",
+     "2026-10-04"
+    ]
+   ],
+   "first": "2026-10-04",
+   "id": 7,
+   "kind": "thread",
+   "last": "2026-10-04",
+   "status": "active",
+   "text": "Studying alone since Omar left feels lonely.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [],
+   "first": "2026-09-20",
+   "id": 8,
+   "kind": "pattern",
+   "last": "2026-09-20",
+   "status": "deleted_by_user",
+   "text": "He resents his mother for worrying about money.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "confirmed",
+   "evidence": [
+    [
+     "quote",
+     "I want to finish CAF so I'm not stuck as an accounts assistant forever.",
+     "2025-11-09"
+    ]
+   ],
+   "first": "2025-11-09",
+   "id": 9,
+   "kind": "value",
+   "last": "2026-07-20",
+   "status": "active",
+   "text": "Wants a qualified career, not to stay an assistant.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Woke up late again, the morning felt wasted.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-02-19",
+   "id": 10,
+   "kind": "what_doesnt",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 10: Had chai with the neighbours, nice evening.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Had chai with the neighbours, nice evening.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-04-14",
+   "id": 11,
+   "kind": "what_doesnt",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 11: Spent too long on YouTube tonight.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Had chai with the neighbours, nice evening.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-06-12",
+   "id": 12,
+   "kind": "what_doesnt",
+   "last": "2026-09-24",
+   "status": "active",
+   "text": "Ordinary note 12: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Feeling low energy, not sure why.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-02-16",
+   "id": 13,
+   "kind": "thread",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 13: Went to the market for groceries with Ammi.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Cleaned my room finally, feels better.",
+     "2026-09-16"
+    ]
+   ],
+   "first": "2026-07-14",
+   "id": 14,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 14: Cleaned my room finally, feels better.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Bit anxious about the exam today for no clear reason.",
+     "2026-09-13"
+    ]
+   ],
+   "first": "2026-06-16",
+   "id": 15,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 15: Long day. I'm tired but I got one study block done.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Slept early for once, felt great this morning.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-04-10",
+   "id": 16,
+   "kind": "thread",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 16: Did some revision of old notes, felt okay.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Long day. I'm tired but I got one study block done.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-06-17",
+   "id": 17,
+   "kind": "pattern",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 17: The weather is crazy hot today, hard to concentrate.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Did some revision of old notes, felt okay.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-02-19",
+   "id": 18,
+   "kind": "what_helps",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 18: Helped my cousin with his maths homework.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Went to the market for groceries with Ammi.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-09-12",
+   "id": 19,
+   "kind": "what_doesnt",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 19: Watched a cricket match instead of studying, not proud of it.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Spent too long on YouTube tonight.",
+     "2026-09-16"
+    ]
+   ],
+   "first": "2026-01-17",
+   "id": 20,
+   "kind": "what_helps",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 20: Woke up late again, the morning felt wasted.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Had chai with the neighbours, nice evening.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-03-13",
+   "id": 21,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 21: Spent too long on YouTube tonight.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Went to the market for groceries with Ammi.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-01-16",
+   "id": 22,
+   "kind": "what_helps",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 22: Did some revision of old notes, felt okay.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Family dinner tonight, cousins came over.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-04-10",
+   "id": 23,
+   "kind": "pattern",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 23: Woke up late again, the morning felt wasted.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Prayed Fajr on time and studied after, good start.",
+     "2026-09-13"
+    ]
+   ],
+   "first": "2026-09-14",
+   "id": 24,
+   "kind": "thread",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 24: Cleaned my room finally, feels better.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Did some revision of old notes, felt okay.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-06-17",
+   "id": 25,
+   "kind": "thread",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 25: Study session was slow, kept rereading the same page.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Study session was slow, kept rereading the same page.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-08-13",
+   "id": 26,
+   "kind": "pattern",
+   "last": "2026-09-27",
+   "status": "active",
+   "text": "Ordinary note 26: Spent too long on YouTube tonight.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Bit anxious about the exam today for no clear reason.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-02-12",
+   "id": 27,
+   "kind": "thread",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 27: Slept early for once, felt great this morning.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Family dinner tonight, cousins came over.",
+     "2026-09-18"
+    ]
+   ],
+   "first": "2026-01-10",
+   "id": 28,
+   "kind": "thread",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 28: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Spent too long on YouTube tonight.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-07-12",
+   "id": 29,
+   "kind": "pattern",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 29: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Bit anxious about the exam today for no clear reason.",
+     "2026-09-19"
+    ]
+   ],
+   "first": "2026-05-12",
+   "id": 30,
+   "kind": "what_helps",
+   "last": "2026-09-23",
+   "status": "active",
+   "text": "Ordinary note 30: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Helped my cousin with his maths homework.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-05-17",
+   "id": 31,
+   "kind": "what_doesnt",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 31: I kept checking my phone during the study session.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Woke up late again, the morning felt wasted.",
+     "2026-09-13"
+    ]
+   ],
+   "first": "2026-09-13",
+   "id": 32,
+   "kind": "what_helps",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 32: Bit anxious about the exam today for no clear reason.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "I kept checking my phone during the study session.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-05-15",
+   "id": 33,
+   "kind": "what_helps",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 33: Did some revision of old notes, felt okay.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Watched a cricket match instead of studying, not proud of it.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-08-18",
+   "id": 34,
+   "kind": "pattern",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 34: Prayed Fajr on time and studied after, good start.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "The weather is crazy hot today, hard to concentrate.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-05-16",
+   "id": 35,
+   "kind": "thread",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 35: Prayed Fajr on time and studied after, good start.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Helped my cousin with his maths homework.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-04-12",
+   "id": 36,
+   "kind": "what_doesnt",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 36: Cleaned my room finally, feels better.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "The weather is crazy hot today, hard to concentrate.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-06-10",
+   "id": 37,
+   "kind": "what_doesnt",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 37: My head hurts a bit, probably not enough water.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "My head hurts a bit, probably not enough water.",
+     "2026-09-19"
+    ]
+   ],
+   "first": "2026-06-10",
+   "id": 38,
+   "kind": "thread",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 38: Rain today, the roads flooded near the market.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Watched a cricket match instead of studying, not proud of it.",
+     "2026-09-18"
+    ]
+   ],
+   "first": "2026-01-19",
+   "id": 39,
+   "kind": "pattern",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 39: Cleaned my room finally, feels better.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "The weather is crazy hot today, hard to concentrate.",
+     "2026-09-13"
+    ]
+   ],
+   "first": "2026-07-19",
+   "id": 40,
+   "kind": "what_doesnt",
+   "last": "2026-09-24",
+   "status": "active",
+   "text": "Ordinary note 40: Prayed Fajr on time and studied after, good start.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "The weather is crazy hot today, hard to concentrate.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-03-12",
+   "id": 41,
+   "kind": "what_doesnt",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 41: My head hurts a bit, probably not enough water.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Long day. I'm tired but I got one study block done.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-03-14",
+   "id": 42,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 42: I kept checking my phone during the study session.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "My head hurts a bit, probably not enough water.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-08-19",
+   "id": 43,
+   "kind": "what_doesnt",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 43: Rain today, the roads flooded near the market.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "My head hurts a bit, probably not enough water.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-09-10",
+   "id": 44,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 44: Did some revision of old notes, felt okay.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Had chai with the neighbours, nice evening.",
+     "2026-09-18"
+    ]
+   ],
+   "first": "2026-09-13",
+   "id": 45,
+   "kind": "pattern",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 45: Slept early for once, felt great this morning.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Woke up late again, the morning felt wasted.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-09-14",
+   "id": 46,
+   "kind": "thread",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 46: Cleaned my room finally, feels better.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "My head hurts a bit, probably not enough water.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-08-11",
+   "id": 47,
+   "kind": "pattern",
+   "last": "2026-09-27",
+   "status": "active",
+   "text": "Ordinary note 47: Did some revision of old notes, felt okay.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Woke up late again, the morning felt wasted.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-01-11",
+   "id": 48,
+   "kind": "what_doesnt",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 48: I kept checking my phone during the study session.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Helped my cousin with his maths homework.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-05-14",
+   "id": 49,
+   "kind": "thread",
+   "last": "2026-09-23",
+   "status": "active",
+   "text": "Ordinary note 49: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Went to the market for groceries with Ammi.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-04-12",
+   "id": 50,
+   "kind": "what_helps",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 50: Had chai with the neighbours, nice evening.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Long day. I'm tired but I got one study block done.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-09-17",
+   "id": 51,
+   "kind": "what_helps",
+   "last": "2026-09-27",
+   "status": "active",
+   "text": "Ordinary note 51: Helped my cousin with his maths homework.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Prayed Fajr on time and studied after, good start.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-05-13",
+   "id": 52,
+   "kind": "thread",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 52: Spent too long on YouTube tonight.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Did some revision of old notes, felt okay.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-01-11",
+   "id": 53,
+   "kind": "what_helps",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 53: Spent too long on YouTube tonight.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Ate too much at dinner and now I feel sluggish.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-01-10",
+   "id": 54,
+   "kind": "what_helps",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 54: Woke up late again, the morning felt wasted.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Watched a cricket match instead of studying, not proud of it.",
+     "2026-09-13"
+    ]
+   ],
+   "first": "2026-04-18",
+   "id": 55,
+   "kind": "pattern",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 55: Went to the market for groceries with Ammi.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Rain today, the roads flooded near the market.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-01-10",
+   "id": 56,
+   "kind": "what_helps",
+   "last": "2026-09-21",
+   "status": "active",
+   "text": "Ordinary note 56: Cleaned my room finally, feels better.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Slept early for once, felt great this morning.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-04-14",
+   "id": 57,
+   "kind": "what_helps",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 57: Family dinner tonight, cousins came over.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Spent too long on YouTube tonight.",
+     "2026-09-18"
+    ]
+   ],
+   "first": "2026-05-10",
+   "id": 58,
+   "kind": "pattern",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 58: Family dinner tonight, cousins came over.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Helped my cousin with his maths homework.",
+     "2026-09-11"
+    ]
+   ],
+   "first": "2026-01-16",
+   "id": 59,
+   "kind": "thread",
+   "last": "2026-09-20",
+   "status": "active",
+   "text": "Ordinary note 59: Slept early for once, felt great this morning.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Prayed Fajr on time and studied after, good start.",
+     "2026-09-14"
+    ]
+   ],
+   "first": "2026-01-18",
+   "id": 60,
+   "kind": "what_doesnt",
+   "last": "2026-09-23",
+   "status": "active",
+   "text": "Ordinary note 60: Ate too much at dinner and now I feel sluggish.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Long day. I'm tired but I got one study block done.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-09-13",
+   "id": 61,
+   "kind": "what_helps",
+   "last": "2026-09-24",
+   "status": "active",
+   "text": "Ordinary note 61: Woke up late again, the morning felt wasted.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "I kept checking my phone during the study session.",
+     "2026-09-19"
+    ]
+   ],
+   "first": "2026-03-17",
+   "id": 62,
+   "kind": "thread",
+   "last": "2026-09-25",
+   "status": "active",
+   "text": "Ordinary note 62: Helped my cousin with his maths homework.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Ate too much at dinner and now I feel sluggish.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-04-17",
+   "id": 63,
+   "kind": "what_helps",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 63: Watched a cricket match instead of studying, not proud of it.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Ate too much at dinner and now I feel sluggish.",
+     "2026-09-16"
+    ]
+   ],
+   "first": "2026-06-11",
+   "id": 64,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 64: Went to the market for groceries with Ammi.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Helped my cousin with his maths homework.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-05-14",
+   "id": 65,
+   "kind": "pattern",
+   "last": "2026-09-26",
+   "status": "active",
+   "text": "Ordinary note 65: Feeling low energy, not sure why.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Spent too long on YouTube tonight.",
+     "2026-09-10"
+    ]
+   ],
+   "first": "2026-08-12",
+   "id": 66,
+   "kind": "thread",
+   "last": "2026-09-28",
+   "status": "active",
+   "text": "Ordinary note 66: Spent too long on YouTube tonight.",
+   "times_seen": 1
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "Family dinner tonight, cousins came over.",
+     "2026-09-12"
+    ]
+   ],
+   "first": "2026-09-12",
+   "id": 67,
+   "kind": "what_doesnt",
+   "last": "2026-09-27",
+   "status": "active",
+   "text": "Ordinary note 67: Feeling low energy, not sure why.",
+   "times_seen": 2
+  },
+  {
+   "confidence": "guess",
+   "evidence": [
+    [
+     "quote",
+     "Family dinner tonight, cousins came over.",
+     "2026-09-17"
+    ]
+   ],
+   "first": "2026-05-19",
+   "id": 68,
+   "kind": "thread",
+   "last": "2026-09-23",
+   "status": "active",
+   "text": "Ordinary note 68: The weather is crazy hot today, hard to concentrate.",
+   "times_seen": 3
+  },
+  {
+   "confidence": "likely",
+   "evidence": [
+    [
+     "quote",
+     "My head hurts a bit, probably not enough water.",
+     "2026-09-15"
+    ]
+   ],
+   "first": "2026-05-14",
+   "id": 69,
+   "kind": "what_helps",
+   "last": "2026-09-22",
+   "status": "active",
+   "text": "Ordinary note 69: The weather is crazy hot today, hard to concentrate.",
+   "times_seen": 1
+  }
+ ],
+ "now": 1791954000000,
+ "old_profile": [
+  {
+   "key": "work",
+   "sources": [
+    1,
+    2,
+    10
+   ],
+   "value": "accounts assistant at Pellow Freight"
+  },
+  {
+   "key": "home",
+   "sources": [
+    15
+   ],
+   "value": "flat on Kestrel Road"
+  },
+  {
+   "key": "exercise",
+   "sources": [
+    7,
+    8
+   ],
+   "value": "Ironline gym, Mon/Wed/Fri 6:30"
+  },
+  {
+   "key": "studying",
+   "sources": [
+    19
+   ],
+   "value": "CAF 5 Tax and CAF 3 Law in December"
+  }
+ ],
+ "people": [
+  {
+   "name": "Hina",
+   "notes": "calls every Sunday; backs his CAF plan",
+   "relation": "sister, Islamabad",
+   "updated": 1763273100000
+  },
+  {
+   "name": "Ammi",
+   "notes": "worries about money and exam costs",
+   "relation": "mother",
+   "updated": 1789905600000
+  },
+  {
+   "name": "Omar",
+   "notes": "passed CAF 1 with 55; moved to Dubai in July 2026",
+   "relation": "friend, former study buddy",
+   "updated": 1791127800000
+  },
+  {
+   "name": "Khala Rukhsana",
+   "notes": "the family lives in her Millbrook house; her family visits on Tuesdays",
+   "relation": "aunt",
+   "updated": 1791654000000
+  },
+  {
+   "name": "Mrs. Danvers",
+   "notes": "kind when he resigned",
+   "relation": "former manager at Pellow Freight",
+   "updated": 1772460000000
+  },
+  {
+   "name": "Dr. Saleh",
+   "notes": "patellar tendon; no squats or running",
+   "relation": "physio",
+   "updated": 1774339200000
+  },
+  {
+   "name": "Sir Waqas",
+   "notes": "60 recorded lectures; finish by end of November",
+   "relation": "Tax tutor",
+   "updated": 1791654000000
+  }
+ ],
+ "profile": [
+  {
+   "confirmed": true,
+   "key": "name",
+   "value": "Rafi"
+  },
+  {
+   "confirmed": true,
+   "key": "studying",
+   "value": "CAF; passed CAF 1, now CAF 5 Tax for the 1 December 2026 sitting"
+  },
+  {
+   "confirmed": true,
+   "key": "work",
+   "value": "studying full time since April 2026"
+  },
+  {
+   "confirmed": true,
+   "key": "home",
+   "value": "Khala Rukhsana's house in Millbrook, the rooftop room"
+  },
+  {
+   "confirmed": false,
+   "key": "exercise",
+   "value": "20-minute daily walk (no squats or running, knee)"
+  },
+  {
+   "confirmed": false,
+   "key": "tutor",
+   "value": "Sir Waqas, online Tax course"
+  }
+ ],
+ "promises": [
+  {
+   "conversation": 1,
+   "due": 1762279200000,
+   "id": 1,
+   "reason": "forgot",
+   "status": "not_done",
+   "text": "Put the phone on the kitchen charger by 11 pm"
+  },
+  {
+   "conversation": 14,
+   "due": 1777093200000,
+   "id": 2,
+   "reason": null,
+   "status": "kept",
+   "text": "Do one timed past paper on Saturday"
+  },
+  {
+   "conversation": 11,
+   "due": 1774076400000,
+   "id": 3,
+   "reason": null,
+   "status": "kept",
+   "text": "Book the physio appointment"
+  },
+  {
+   "conversation": 20,
+   "due": 1786107600000,
+   "id": 4,
+   "reason": "forgot",
+   "status": "not_done",
+   "text": "Email Sir Waqas about the Law syllabus"
+  },
+  {
+   "conversation": 21,
+   "due": 1787227200000,
+   "id": 5,
+   "reason": "power cut",
+   "status": "not_done",
+   "text": "Submit the exam form"
+  },
+  {
+   "conversation": 23,
+   "due": 1788631200000,
+   "id": 6,
+   "reason": null,
+   "status": "kept",
+   "text": "Phone in the kitchen from 11 pm for a week"
+  },
+  {
+   "conversation": 26,
+   "due": 1790254800000,
+   "id": 7,
+   "reason": null,
+   "status": "moved",
+   "text": "Buy the router UPS"
+  },
+  {
+   "conversation": 26,
+   "due": 1790514000000,
+   "id": 8,
+   "reason": null,
+   "status": "kept",
+   "text": "Buy the router UPS"
+  },
+  {
+   "conversation": 21,
+   "due": 1786892400000,
+   "id": 9,
+   "reason": null,
+   "status": "let_go",
+   "text": "Call Hina back about the wedding dates"
+  },
+  {
+   "conversation": 29,
+   "due": 1791648000000,
+   "id": 10,
+   "reason": null,
+   "status": "kept",
+   "text": "Finish Tax lecture 31"
+  },
+  {
+   "conversation": 30,
+   "due": 1791961200000,
+   "id": 11,
+   "reason": null,
+   "status": "open",
+   "text": "Two Tax lectures before noon"
+  },
+  {
+   "conversation": 29,
+   "due": 1792065600000,
+   "id": 12,
+   "reason": null,
+   "status": "open",
+   "text": "Walk 20 minutes after Asr"
+  },
+  {
+   "conversation": 21,
+   "due": 1788015600000,
+   "id": 13,
+   "reason": "tired",
+   "status": "not_done",
+   "text": "Do the sales tax practice set"
+  }
+ ],
+ "quotes": [
+  {
+   "at": 1768225500000,
+   "conversation": 6,
+   "id": 1,
+   "text": "I missed by four marks."
+  },
+  {
+   "at": 1783514400000,
+   "conversation": 18,
+   "id": 2,
+   "text": "I PASSED. 61 in CAF 1."
+  }
+ ],
+ "rest_days": [
+  "2026-09-05",
+  "2026-10-03"
+ ],
+ "reviews": [
+  {
+   "facts": "Tax lectures: 38 of 52 planned. Reasons when short: power cut 7, family 4.",
+   "id": 1,
+   "kind": "month",
+   "note": "Power cuts were the main thing this month.",
+   "period": "2026-09"
+  },
+  {
+   "facts": "Tax lectures: 9 of 12 planned. Tuesday: not done (family).",
+   "id": 2,
+   "kind": "week",
+   "note": "A steady week apart from Tuesday.",
+   "period": "2026-10-05"
+  }
+ ],
+ "revisions": [
+  {
+   "at": "2026-07-20",
+   "goal": 2,
+   "id": 1,
+   "reason": "created",
+   "text": "Pass CAF 5 Tax and CAF 3 Law (deadline 2026-12-01)"
+  },
+  {
+   "at": "2026-08-12",
+   "goal": 2,
+   "id": 2,
+   "reason": "two papers at once is too much",
+   "text": "Pass CAF 5 Tax (deadline 2026-12-01)"
+  }
+ ],
+ "special_checkins": {
+  "scrolling": 43
+ },
+ "synthetic": "Invented person for Clarity's memory exam 2. Not a real person.",
+ "targets": [
+  {
+   "backlog": 1,
+   "end": null,
+   "goal": 2,
+   "id": 1,
+   "minimum": 1,
+   "name": "Tax lectures",
+   "schedule": "mon,tue,wed,thu,fri,sat",
+   "start": "2026-08-15",
+   "status": "active",
+   "target": 2,
+   "unit": "lectures"
+  },
+  {
+   "backlog": null,
+   "end": null,
+   "goal": 3,
+   "id": 2,
+   "minimum": 10,
+   "name": "Walk",
+   "schedule": "daily",
+   "start": "2026-03-25",
+   "status": "active",
+   "target": 20,
+   "unit": "minutes"
+  },
+  {
+   "backlog": 2,
+   "end": "2026-06-13",
+   "goal": 1,
+   "id": 3,
+   "minimum": 1,
+   "name": "Timed past paper",
+   "schedule": "3/week",
+   "start": "2026-04-01",
+   "status": "ended",
+   "target": 1,
+   "unit": "papers"
+  }
+ ],
+ "today": "2026-10-14",
+ "tz": "Asia/Karachi"
+}
