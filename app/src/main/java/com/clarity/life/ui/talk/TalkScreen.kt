@@ -301,7 +301,11 @@ fun TalkScreen(
                 }
             }
 
-            if (home) {
+            if (home && !(state.loaded && planState.ready && userName != null)) {
+                // Still reading the database (a moment after opening the app): an empty space, not a home
+                // drawn from empty values that then jumps to the real one.
+                Spacer(Modifier.fillMaxWidth().weight(1f))
+            } else if (home) {
                 TalkHome(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     plan = planState,
@@ -309,7 +313,7 @@ fun TalkScreen(
                     latest = state.conversations.firstOrNull(),
                     hasKey = state.hasKey,
                     provider = providerName,
-                    userName = userName,
+                    userName = userName.orEmpty(),
                     onSetUp = onOpenSettings,
                     onOpenGuide = onOpenGuide,
                     focuses = state.focuses,

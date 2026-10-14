@@ -64,6 +64,11 @@ class TalkViewModel @Inject constructor(
         /** The focus this conversation belongs to, if any, and the active focuses the dropdown lists. */
         val focusId: Long? = null,
         val focuses: List<com.clarity.life.data.entity.FocusRow> = emptyList(),
+        /**
+         * False only for the empty starting value, before the database has answered. Talk home waits for it,
+         * so it never flashes the first-visit welcome to someone who has conversations.
+         */
+        val loaded: Boolean = false,
     )
 
     private val conversationId = MutableStateFlow(0L)
@@ -135,6 +140,7 @@ class TalkViewModel @Inject constructor(
             hasKey = extra.hasKey,
             focusId = extra.focusId,
             focuses = extra.focuses,
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
 
@@ -299,9 +305,12 @@ class TalkViewModel @Inject constructor(
         }
     }
 
-    /** His name from Settings, Coach, for the greeting on Talk home; empty until he sets one. */
-    private val _userName = MutableStateFlow("")
-    val userName: StateFlow<String> = _userName
+    /**
+     * His name from Settings, Coach, for the greeting on Talk home; empty until he sets one. Null until it has
+     * been read, so the greeting does not show "Hello." and then change to "Hello, Sam.".
+     */
+    private val _userName = MutableStateFlow<String?>(null)
+    val userName: StateFlow<String?> = _userName
 
     /** The chosen provider, so the setup card names the right service and key page. */
     private val _provider = MutableStateFlow(com.clarity.life.settings.DefaultSettings.PROVIDER)
