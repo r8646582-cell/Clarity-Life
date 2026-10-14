@@ -111,12 +111,6 @@ class MemoryBlocksTest {
         val block = MemoryBlocks.recentSessions(listOf(MemoryBlocks.Session("2026-10-09", "t", "")))
         assertTrue(block.items.isEmpty())
     }
-}
-
-/** Renders blocks the way the prefix does, to measure them. */
-private object ContextBuilderRender {
-    fun render(blocks: List<Block>): String =
-        blocks.filter { it.items.isNotEmpty() }.joinToString("\n\n") { ContextBuilder.renderBlock(it.name, it.items) }
 
     @Test
     fun notesAboutTheConversationAreTheLastOfTheirGradeToGo() {
@@ -140,4 +134,10 @@ private object ContextBuilderRender {
             "note 12, what_helps, guess, seen once: The roof\n\n## RECENT_SESSIONS\nnote 5, a summary line"
         assertEquals(setOf(4L, 12L), MemoryBlocks.idsIn(system))
     }
+}
+
+/** Renders blocks the way the prefix does, to measure them. */
+private object ContextBuilderRender {
+    fun render(blocks: List<Block>): String =
+        blocks.filter { it.items.isNotEmpty() }.joinToString("\n\n") { ContextBuilder.renderBlock(it.name, it.items) }
 }

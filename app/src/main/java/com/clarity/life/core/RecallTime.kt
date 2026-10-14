@@ -155,11 +155,11 @@ object RecallTime {
         val year = g.opt("y")?.toInt()
         when (name) {
             "week_of", "part_of", "since_month", "last_month_name", "month", "month_year" -> {
-                val (y, m) = recentMonth(MONTHS.getValue(g.group("m")), today, year, last = name == "last_month_name")
+                val (y, m) = recentMonth(MONTHS.getValue(g.group("m")!!), today, year, last = name == "last_month_name")
                 val end = monthEnd(y, m)
                 return when (name) {
                     "week_of" -> {
-                        val k = ORDINAL_WEEK.getValue(g.group("o"))
+                        val k = ORDINAL_WEEK.getValue(g.group("o")!!)
                         if (k == 5) end.minusDays(6) to end else LocalDate.of(y, m, 7 * k - 6) to LocalDate.of(y, m, 7 * k)
                     }
                     "part_of" -> when (g.group("p")) {
@@ -177,7 +177,7 @@ object RecallTime {
                 val yword = if (name == "day_month") g.opt("y") else g.opt("y2")
                 // "I may 2 hours" is not 2 May (DayCounts).
                 if (name == "month_day" && mword == "may" && yword == null) return null
-                val m = MONTHS.getValue(mword)
+                val m = MONTHS.getValue(mword!!)
                 return try {
                     val d = if (yword != null) {
                         LocalDate.of(yword.toInt(), m, dnum)
