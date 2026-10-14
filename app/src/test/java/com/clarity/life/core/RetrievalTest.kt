@@ -2,7 +2,6 @@ package com.clarity.life.core
 
 import com.clarity.life.core.Retrieval.Candidate
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -15,18 +14,35 @@ class RetrievalTest {
             Retrieval.terms("I just can't do the chemistry lectures in the evening, you know?"),
         )
         assertEquals(emptyList<String>(), Retrieval.terms("ok yes it is what it is"))
-        assertNull(Retrieval.matchQuery(emptyList()))
-        assertEquals(
-            "body:chemistry OR title:chemistry OR body:lectures OR title:lectures",
-            Retrieval.matchQuery(listOf("chemistry", "lectures")),
-        )
+        assertEquals("body:chemistr* OR title:chemistr*", Retrieval.termQuery("chemistry"))
+        assertEquals("a word is searched in all its forms", "body:lectur* OR title:lectur*", Retrieval.termQuery("lectures"))
+        assertEquals("body:stud* OR title:stud*", Retrieval.termQuery("studied"))
+    }
+
+    @Test
+    fun threeLetterWordsAreSearchedUnlessTheyAreCommon() {
+        // The owner's subject and the nap of 14 Oct 2026 were never searched before: they have 3 letters.
+        assertEquals(listOf("lectures", "caf", "nap"), Retrieval.terms("did the CAF lectures after my nap, you see"))
+        assertEquals(emptyList<String>(), Retrieval.terms("and the way you can get out"))
+    }
+
+    @Test
+    fun theFormsOfAWordMeet() {
+        val lectur = listOf("lecture", "lectures", "lecturing", "lectured").map(Retrieval::stem).toSet()
+        assertEquals(setOf("lectur"), lectur)
+        assertEquals(setOf("nap"), listOf("nap", "naps", "napping").map(Retrieval::stem).toSet())
+        assertEquals(setOf("study"), listOf("study", "studies", "studied", "studying").map(Retrieval::stem).toSet())
+        assertEquals("class", Retrieval.stem("class"))
+        assertEquals(2, Retrieval.score("Two CAF lectures done before the nap", listOf("lecture", "naps")))
     }
 
     @Test
     fun aQuotedTermCannotBreakTheQuery() {
         // Only letters and digits survive, so no quote mark or operator reaches FTS4.
-        val q = Retrieval.matchQuery(Retrieval.terms("\"hina\" OR NEAR(*) sister's"))!!
-        assertTrue(q, q.split(" OR ").all { it.matches(Regex("(body|title):[a-z0-9]+")) })
+        for (t in Retrieval.terms("\"hina\" OR NEAR(*) sister's")) {
+            val q = Retrieval.termQuery(t)
+            assertTrue(q, q.split(" OR ").all { it.matches(Regex("(body|title):[a-z0-9]+\\*")) })
+        }
     }
 
     @Test

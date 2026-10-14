@@ -199,14 +199,19 @@ class SearchIndex @Inject constructor(
     private data class Key(val kind: String, val id: Long)
 
     private suspend fun keywordHits(conversationId: Long, terms: List<String>): List<Key> {
-        val query = Retrieval.matchQuery(terms) ?: return emptyList()
-        val rows = try {
-            dao.match(query, Retrieval.CANDIDATES)
-        } catch (e: Exception) {
-            // A query FTS cannot read is a reason to send nothing, never a reason to fail the reply.
-            return emptyList()
+        if (terms.isEmpty()) return emptyList()
+        // One read per word, so the newest matches of a common word never crowd out a rare one.
+        val rows = LinkedHashMap<Pair<String, String>, SearchDocRow>()
+        for (term in terms) {
+            val found = try {
+                dao.match(Retrieval.termQuery(term), conversationId, Retrieval.CANDIDATES_PER_TERM)
+            } catch (e: Exception) {
+                // A query FTS cannot read is a reason to send nothing for that word, never to fail the reply.
+                emptyList()
+            }
+            for (r in found) rows.putIfAbsent(r.kind to r.refId, r)
         }
-        val keys = rows.mapNotNull { r -> r.refId.toLongOrNull()?.let { Key(r.kind, it) } }
+        val keys = rows.values.mapNotNull { r -> r.refId.toLongOrNull()?.let { Key(r.kind, it) } }
         val docs = resolve(keys, conversationId, "UTC")
         // The key goes with its candidate through the scoring, so two equal texts can never be confused.
         val tagged = keys.mapNotNull { k -> docs[k]?.let { c -> k to c.copy(label = k.kind + ":" + k.id) } }
