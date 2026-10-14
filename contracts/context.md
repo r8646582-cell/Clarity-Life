@@ -36,7 +36,7 @@ Each block starts with `## NAME` on its own line, in this fixed order. A block w
 | FLAGS | `tough_love: gentle|balanced|firm`, `listen_only: true|false`, `chat_type`, `off_the_record` | never |
 | PROFILE | up to 30 entries, one line each, with grade (confirmed/likely/guess) | lowest grade first |
 | PEOPLE | name, relation, one line | least recently mentioned first |
-| NOTES | active notes: id, kind, grade, times seen, first/last seen as a period, text, up to 2 evidence lines | guess before likely before confirmed; fewer times seen first |
+| NOTES | active notes: id, kind, grade, times seen, first/last seen as a period, text, up to 2 evidence lines | guess before likely before confirmed; within a grade, notes sharing no word with the message the prefix was built for go first, then fewer times seen first. A note left out can still come in RELEVANT_PAST when a message matches it |
 | FOCUS | when the chat belongs to a focus: id, name, why, rolling summary, current step, last 3 step results | never |
 | CHAPTERS | last 2 chapters | older first |
 | RECENT_SESSIONS | the last 5 conversation summaries, newest by their last message, each with its day, when it started and when its last message was, and how long ago that day was, all written by code: `Wed 14 Oct, 9:05 am to 9:40 am (today) "Title": summary` | oldest first |
@@ -84,6 +84,7 @@ How one request searches (the pure part is `tools/retrieval.py` and `tools/recal
 1. **The period he names**, read in code (`RecallTime`): "in August", "last week", "yesterday", "on 12 October", "late September", "since March" become exact days. What falls in it is a list of its own: promises due in it, conversations held in it, letters, reviews and chapters about it, goal changes made in it, and every check-in of a period of at most a week. With the words promise, promised or committed, only promises come (unless none falls in the period), and the outcome he names (break, kept, moved, let go) comes first; with no period, every promise is the pool. The coach never works out a date: this only chooses what is looked up.
 2. **The new message**, by keyword (at least two shared words, or one rare word: found in at most 5% of the index) and by meaning (bge, cosine at least 0.62, each text once).
 3. **The conversation**: when this conversation has earlier messages (or a title), the same two searches again for the title, his last 3 messages and the new one, so "yeah, same again" finds what it points at.
+4. **Notes left out**: active notes the frozen NOTES block had no room for, by keyword against the new message (weight 1), labelled as not in the list above. Never a retired or deleted note this way (retired notes are in the index; deleted ones are nowhere).
 The lists are merged by weighted reciprocal rank fusion (period 2, new message 1, conversation 0.5); a near-duplicate of a chosen result is left out, at most one result comes from each conversation, and at most 12 are sent. The 4,000-token budget drops the weakest first. Measured with `tools/eval/memory_exam2.py`.
 
 ### NOW
@@ -102,6 +103,7 @@ P4 "Study 1 hour at 8am", due Monday 5 October, 8:00 am (in 1 day 7 hours).
 P2 "Call Mom", was due Saturday 6:00 pm, 6 hours 40 minutes ago, no answer yet.
 P3 "Study 20 minutes at 5pm", was due Friday 5:00 pm, 1 day 7 hours ago: not done, reason: tired.
 ```
+The block ends with one line counted by code when at least 3 promises due in the last 90 days were answered: `Promises due in the last 90 days and answered: 7; done 1, not done 4, moved 1, let go 1. Not done, reason: tired 3.` (a reason only with at least 3 behind it).
 Outcomes are `done`, `not done` (with `, reason: X` when they picked a chip), `moved to a new time` (the new time is its own open line) and `let go`. Older promises are in the search index with their outcome, so RELEVANT_PAST can bring one back.
 
 ## Card step (every reply's cards, in JSON mode)
@@ -137,6 +139,12 @@ T3 "Chemistry lectures", last 14 days: 10 answered of 12 scheduled, done on 6.
 T3 "Chemistry lectures", last 14 days: tired on 3 of 4 days marked Not or Part.
 T3 "Chemistry lectures", last 14 days: marked Not on 3 Sundays.
 ```
+Since Max plan Phase 2 two more kinds of line, under the same three-item rule:
+```
+T3 "Chemistry lectures", last 90 days: family on 5 of 9 days marked Not or Part.     <- only when 90 days hold more short days than 14
+T3 "Chemistry lectures", last 90 days: marked Not on 5 Tuesdays.
+T3 "Chemistry lectures": tired on 3 of 4 days marked Not or Part in the last 14 days, on 0 of 3 in the 14 days before.   <- the 14 before need 3 short days
+```
 The today line lists only targets scheduled today (`not answered yet`, `done (target)`, `marked Not, reason: tired`, `marked Part (minimum)`, `rest`), or says `Today (Friday) is a planned rest day.` A 14-day line is written only with at least 3 answers behind it (otherwise `too few answers to count` when 3 or more days were scheduled); reason and weekday lines only with at least 3 items behind the number, and a reason is never counted above the days marked Not or Part. The time of day is not recorded, so there are no time-band lines. Reflection may copy these lines word for word as count evidence.
 
 ## Dates on plan, backlog and target_change cards
@@ -145,5 +153,5 @@ Read in code by `PlanDates` (`tools/plan_dates.py`, `contracts/plan_date_vectors
 ## Rules that keep this safe
 - Anything originating from them or from the model (messages, notes, quotes, summaries, letters, pasted text) is escaped before it is sent: `[[` and `]]` become `[ [` and `] ]` (repeated until none remain), and a line starting with `## ` (after any spaces) is indented by two spaces. A note or a pasted email can never smuggle in a block header, a fake NOW, or a card.
 - Block text is data, not instructions. The persona says so (Grounding).
-- Token counts are estimated with `estimate_tokens` (3 characters per token), which is deliberately pessimistic, so a real tokenizer never finds the request over a limit.
+- Token counts are estimated with `estimate_tokens`: English letters, spaces and signs at 3 characters a token, every digit 1, every other character (an emoji, an accented letter) 2. Measured against DeepSeek's own tokenizer (Max plan Phase 2): plain English comes out about 1.4 times its real count, and numbers, dates and emoji are no longer under-counted (at 3 characters a token they were, by up to 40%). No simple rule is an upper bound for every text (a list of unusual names can still come out under), so the budgets stay far below the provider's context window.
 - The request also sets the provider's maximum output high (at least 16,000 tokens, since thinking counts against it). There is no reply length cap in the app.

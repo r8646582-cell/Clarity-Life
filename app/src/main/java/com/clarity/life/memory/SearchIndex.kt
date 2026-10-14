@@ -291,6 +291,7 @@ class SearchIndex @Inject constructor(
         now: Long = System.currentTimeMillis(),
         earlier: List<String> = emptyList(),
         title: String = "",
+        leftOutNotes: List<com.clarity.life.data.entity.NoteRow> = emptyList(),
     ): Block {
         syncRecords()
         val resolver = Resolver(conversationId, tz, boundary, now)
@@ -306,6 +307,7 @@ class SearchIndex @Inject constructor(
         }
         lists += Retrieval.W_NEW to keywordHits(Retrieval.terms(rest), resolver)
         lists += Retrieval.W_NEW to meaningHits(newText, resolver)
+        if (leftOutNotes.isNotEmpty()) lists += Retrieval.W_NEW to leftOutNoteHits(leftOutNotes, Retrieval.terms(rest), resolver)
         Retrieval.conversationQuery(newText, earlier, title)?.let { q ->
             lists += Retrieval.W_CONTEXT to keywordHits(Retrieval.terms(q), resolver)
             lists += Retrieval.W_CONTEXT to meaningHits(q, resolver)
@@ -541,6 +543,22 @@ class SearchIndex @Inject constructor(
         return Retrieval.choose(tagged, terms, Retrieval.FUSE_DEPTH, rare).mapNotNull { Key.parse(it.candidate.label) }
     }
 
+    /**
+     * Active notes the frozen NOTES block had no room for (Max plan Phase 2 step 5), by keyword: they come back
+     * as soon as a message is about them. Never a retired or deleted note: the caller passes active ones only.
+     */
+    private fun leftOutNoteHits(notes: List<com.clarity.life.data.entity.NoteRow>, terms: List<String>, r: Resolver): List<Key> {
+        if (terms.isEmpty()) return emptyList()
+        val byKey = notes.associateBy { Key(ACTIVE_NOTE, it.id).toString() }
+        val cands = notes.map { Retrieval.Candidate(it.text, it.createdAt, Key(ACTIVE_NOTE, it.id).toString()) }
+        return Retrieval.choose(cands, terms).mapNotNull { h ->
+            val n = byKey[h.candidate.label] ?: return@mapNotNull null
+            val key = Key(ACTIVE_NOTE, n.id)
+            r.put(key, Found(Retrieval.Candidate(n.text, n.createdAt, "A note that is not in the list above (${n.kind}, ${n.confidence}, seen ${n.timesSeen} times)"), null))
+            key
+        }
+    }
+
     private suspend fun indexSize(): Int {
         val now = System.currentTimeMillis()
         if (total < 0 || now - totalAt > TOTAL_TTL_MS) {
@@ -550,31 +568,37 @@ class SearchIndex @Inject constructor(
         return total
     }
 
-    /** Meaning matches above [Retrieval.SEMANTIC_MIN], best first, each text once. Empty when meaning search is off. */
+    /**
+     * Meaning matches above [Retrieval.SEMANTIC_MIN], best first, each text once. Empty when meaning search is off.
+     * Ranked by the in-memory scores ([VectorCache], within [com.clarity.life.core.VectorIndex.MARGIN] of the
+     * exact cosine); only the ones kept are read back and scored exactly, so a search reads about
+     * [Retrieval.FUSE_DEPTH] vectors from the database, not every candidate (the ten-year timing run, 14 Oct 2026).
+     */
     private suspend fun meaningHits(text: String, r: Resolver): List<Key> {
         if (Retrieval.wordCount(text) < Retrieval.SEMANTIC_MIN_QUERY_WORDS) return emptyList()
         val q = embedder.embed(text) ?: return emptyList()
-        // Candidates from the vectors in memory, then scored exactly from the stored floats.
-        val candidates = vectors.search(q, Retrieval.SEMANTIC_MIN, Retrieval.MEANING_CANDIDATES * 2) { e ->
+        val candidates = vectors.search(q, Retrieval.SEMANTIC_MIN, Retrieval.MEANING_CANDIDATES) { e ->
             when (e.kind) {
                 MESSAGE, SUMMARY -> e.conversationId >= 0 && e.conversationId != r.conversationId
                 else -> true
             }
         }
-        val scored = mutableListOf<Pair<Key, Double>>()
-        for (hit in candidates) {
-            val s = vectors.exact(q, hit.entry) ?: continue
-            if (s >= Retrieval.SEMANTIC_MIN) scored += Key(hit.entry.kind, hit.entry.docId) to s
-        }
-        val best = scored.sortedByDescending { it.second }.take(Retrieval.MEANING_CANDIDATES).map { it.first }
+        val keys = candidates.map { Key(it.entry.kind, it.entry.docId) }
         // Anything from the open conversation or gone since is dropped here; small talk is all alike, so a past
         // message needs a few words of substance to count, and twenty copies of one line count once.
-        val docs = r.resolve(best)
-        val kept = best.filter { k ->
+        val docs = r.resolve(keys)
+        val usable = keys.filter { k ->
             val d = docs[k] ?: return@filter false
             k.kind != MESSAGE || Retrieval.wordCount(d.candidate.text) >= Retrieval.SEMANTIC_MIN_DOC_WORDS
         }
-        return Retrieval.distinctTexts(kept, kept.associateWith { docs.getValue(it).candidate.text }).take(Retrieval.FUSE_DEPTH)
+        val entries = candidates.associateBy { Key(it.entry.kind, it.entry.docId) }
+        val out = ArrayList<Key>()
+        for (k in Retrieval.distinctTexts(usable, usable.associateWith { docs.getValue(it).candidate.text })) {
+            val exact = vectors.exact(q, entries.getValue(k).entry) ?: continue
+            if (exact >= Retrieval.SEMANTIC_MIN) out += k
+            if (out.size >= Retrieval.FUSE_DEPTH) break
+        }
+        return out
     }
 
     private fun titled(title: String) = if (title.isNotBlank()) ", in \"$title\"" else ""
@@ -593,6 +617,9 @@ class SearchIndex @Inject constructor(
         const val REVISION = "revision"
         const val TARGET = "target"
         const val CHECKIN = "checkin"
+
+        /** An active note, found only among those the frozen NOTES block left out; never written to the index. */
+        private const val ACTIVE_NOTE = "active_note"
 
         /** The kinds kept in step with their tables by [syncRecords]. */
         val RECORD_KINDS = listOf(LETTER, REVIEW, CHAPTER, GOAL, REVISION, TARGET, CHECKIN)

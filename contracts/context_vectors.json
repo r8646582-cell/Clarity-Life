@@ -50,12 +50,36 @@
    "expect": "Hash # and [one] bracket"
   },
   {
-   "name": "estimate: 3 characters per token, rounded up",
+   "name": "estimate: letters at 3 characters per token, rounded up",
    "fn": "estimate_tokens",
    "args": {
     "text": "abcdefg"
    },
    "expect": 3
+  },
+  {
+   "name": "estimate: every digit is a token",
+   "fn": "estimate_tokens",
+   "args": {
+    "text": "38 of 52"
+   },
+   "expect": 6
+  },
+  {
+   "name": "estimate: an emoji or accented letter is two",
+   "fn": "estimate_tokens",
+   "args": {
+    "text": "ok 😅 café"
+   },
+   "expect": 7
+  },
+  {
+   "name": "estimate: a date line",
+   "fn": "estimate_tokens",
+   "args": {
+    "text": "Wed 14 Oct, 9:05 am (today, 2 hours ago)"
+   },
+   "expect": 18
   },
   {
    "name": "estimate: empty is zero",

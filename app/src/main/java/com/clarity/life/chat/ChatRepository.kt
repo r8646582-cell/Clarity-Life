@@ -302,7 +302,7 @@ class ChatRepository @Inject constructor(
 
         var prefix = conversation.prefixJson?.let { readPrefix(it) }
         if (prefix == null || conversation.prefixDay != today) {
-            prefix = buildPrefix(conversation)
+            prefix = buildPrefix(conversation, newText)
             conversations.setPrefix(conversationId, writePrefix(prefix), today)
         }
 
@@ -366,7 +366,10 @@ class ChatRepository @Inject constructor(
             // fails a reply.
             try {
                 val earlierHis = stored.filter { it.role == "user" }.map { it.content }
-                add(search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title))
+                // Active notes the frozen NOTES block had no room for can still come, when they match.
+                val sent = MemoryBlocks.idsIn(prefix)
+                val leftOut = db.memory().activeNotes().filter { it.id !in sent }
+                add(search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title, leftOut))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -393,7 +396,7 @@ class ChatRepository @Inject constructor(
         )
     }
 
-    private suspend fun buildPrefix(conversation: ConversationRow): String {
+    private suspend fun buildPrefix(conversation: ConversationRow, text: String): String {
         val name = settings.promptName()
         val allowed = CardParser.CHAT_TYPES[conversation.chatType]?.joinToString(", ").orEmpty()
         val persona = prompts.fill(prompts.text(PromptStore.PERSONA), mapOf("USER_NAME" to name))
@@ -417,7 +420,7 @@ class ChatRepository @Inject constructor(
                 chatType = conversation.chatType,
                 offTheRecord = conversation.offTheRecord == 1,
             ),
-        ) + focusBlocks(conversation) + memoryBlocks(conversation.id) + openedFromBlocks(conversation)
+        ) + focusBlocks(conversation) + memoryBlocks(conversation.id, text) + openedFromBlocks(conversation)
         val built = Blocks.systemMessage(persona, examples, cardsPrompt, mode, part2)
         if (built.overBudget) {
             db.diagnostics().log(
@@ -453,7 +456,7 @@ class ChatRepository @Inject constructor(
      * PROFILE, PEOPLE, NOTES, RECENT_SESSIONS and IDEAS_RECENT: one shared memory for every conversation
      * (spec section 3). Read when the prefix is built, so it is frozen for the conversation's day.
      */
-    private suspend fun memoryBlocks(conversationId: Long): List<com.clarity.life.core.Block> {
+    private suspend fun memoryBlocks(conversationId: Long, text: String): List<com.clarity.life.core.Block> {
         val m = db.memory()
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
@@ -476,7 +479,8 @@ class ChatRepository @Inject constructor(
         return listOf(
             MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),
             MemoryBlocks.people(m.people().map { MemoryBlocks.Person(it.name, it.relation, it.notes, it.updatedAt) }),
-            MemoryBlocks.notes(notes),
+            // Notes about what this conversation is about are the last to go when memory is large.
+            MemoryBlocks.notes(notes, MemoryBlocks.relevantNotes(notes, text)),
             // The last two quarterly chapters: what the coach carries forward for years (spec section 8).
             com.clarity.life.core.Chapters.block(
                 db.writing().latestChapters(com.clarity.life.core.Chapters.IN_CONTEXT).map {
@@ -520,6 +524,9 @@ class ChatRepository @Inject constructor(
             answered = p.answeredSince(since).map { com.clarity.life.promise.PromiseRepository.model(it) },
             now = Instant.ofEpochMilli(now),
             tz = tz,
+            // How his promises usually go, counted by code (Max plan Phase 2 step 6).
+            longer = p.answeredSince(now - java.time.Duration.ofDays(com.clarity.life.core.PromiseText.TALLY_DAYS).toMillis())
+                .map { com.clarity.life.promise.PromiseRepository.model(it) },
         )
     }
 

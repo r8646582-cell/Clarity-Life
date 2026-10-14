@@ -55,8 +55,25 @@ object ContextBuilder {
     /** When the window must move, it moves until the history is at most this share of the budget. */
     const val HISTORY_REFILL = 0.75
 
-    /** Deliberately pessimistic (3 characters per token) so a real tokenizer never finds us over a limit. */
-    fun estimateTokens(text: String): Int = ceil(text.length / 3.0).toInt()
+    /**
+     * Estimated tokens (tools/context.py estimate_tokens): English letters, spaces and signs at 3 characters a
+     * token, every digit 1, every other character (an emoji, an accented letter) 2, counted by code point as
+     * Python counts them. Measured against DeepSeek's tokenizer: plain English about 1.4 times its real count, and
+     * numbers, dates and emoji no longer under-counted.
+     */
+    fun estimateTokens(text: String): Int {
+        var digits = 0
+        var other = 0
+        var all = 0
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            all++
+            if (cp in '0'.code..'9'.code) digits++ else if (cp > 127) other++
+            i += Character.charCount(cp)
+        }
+        return ceil((all - digits - other) / 3.0 + digits + 2 * other).toInt()
+    }
 
     /** Make text from him or from the model safe inside a block: it can never open a card or a block. */
     fun escape(text: String): String {

@@ -212,22 +212,55 @@ object PlanBlocks {
             } else if (w.scheduled != null && w.scheduled >= Planner.REASON_MIN_N) {
                 lines += "$head: ${w.answered} answered of ${w.scheduled} scheduled; too few answers to count."
             }
-            val scheduled = scheduledIn(x, first, last, t.restDays)
-            val rows = x.checkins.filter {
-                !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" &&
-                    (scheduled == null || it.day in scheduled)
+            val recent = answers(x, first, last, t.restDays)
+            windowLines(recent).forEach { lines += "$head: $it." }
+            // The longer view (Max plan Phase 2 step 6): the same counts over the last LONG_WINDOW days, when they
+            // hold more than the last 14 do, so a pattern months long is counted by code too.
+            val long = answers(x, today.minusDays(LONG_WINDOW.toLong()), last, t.restDays)
+            if (long.short.size > recent.short.size) {
+                windowLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
             }
-            val short = rows.filter { it.level in Planner.SHORT_LEVELS }
-            val reasons = short.mapNotNull { it.reason }.groupingBy { it }.eachCount()
-                .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
-                .take(3).map { it.key to it.value }
-            Planner.reasonLines(reasons, short.size).forEach { lines += "$head: $it." }
-            val missed = rows.filter { it.level == "not" }
-            missed.groupingBy { it.day.dayOfWeek.value - 1 }.eachCount()
-                .filter { it.value >= Planner.REASON_MIN_N }.toSortedMap()
-                .forEach { (wd, n) -> lines += "$head: marked Not on $n ${DAY_NAMES[wd]}s." }
+            // A reason that has grown or shrunk: the last 14 days against the 14 before them.
+            val before = answers(x, first.minusDays(Planner.WINDOW.toLong()), first.minusDays(1), t.restDays)
+            if (before.short.size >= Planner.REASON_MIN_N) {
+                for ((reason, n) in topReasons(recent.short)) {
+                    if (n < Planner.REASON_MIN_N || n > recent.short.size) continue
+                    val m = before.short.count { it.reason == reason }
+                    lines += "T${x.id} \"${clean(x.name)}\": $reason on $n of ${recent.short.size} days marked Not or Part " +
+                        "in the last ${Planner.WINDOW} days, on $m of ${before.short.size} in the ${Planner.WINDOW} days before."
+                }
+            }
         }
         return Block("CHECKIN_FACTS", lines.map { BlockItem(it, 0) })
+    }
+
+    /** Days counted in the longer view of CHECKIN_FACTS. */
+    const val LONG_WINDOW = 90
+
+    private class Answers(val rows: List<CheckIn>, val short: List<CheckIn>)
+
+    /** The answers on scheduled days from [first] to [last], rest days left out. */
+    private fun answers(x: Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): Answers {
+        val scheduled = scheduledIn(x, first, last, rest)
+        val rows = x.checkins.filter {
+            !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" &&
+                (scheduled == null || it.day in scheduled)
+        }
+        return Answers(rows, rows.filter { it.level in Planner.SHORT_LEVELS })
+    }
+
+    private fun topReasons(short: List<CheckIn>): List<Pair<String, Int>> =
+        short.mapNotNull { it.reason }.groupingBy { it }.eachCount()
+            .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .take(3).map { it.key to it.value }
+
+    /** Reason counts and weekday Not counts of one window, each with at least 3 items behind it. */
+    private fun windowLines(a: Answers): List<String> {
+        val out = Planner.reasonLines(topReasons(a.short), a.short.size).toMutableList()
+        a.rows.filter { it.level == "not" }.groupingBy { it.day.dayOfWeek.value - 1 }.eachCount()
+            .filter { it.value >= Planner.REASON_MIN_N }.toSortedMap()
+            .forEach { (wd, n) -> out += "marked Not on $n ${DAY_NAMES[wd]}s" }
+        return out
     }
 
     private fun scheduledIn(x: Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): Set<LocalDate>? =

@@ -122,6 +122,29 @@ class PlanBlocksTest {
     }
 
     @Test
+    fun theLongerViewAndAGrowingReasonAreCountedToo() {
+        fun c(day: String, level: String, reason: String?) = CheckIn(LocalDate.parse(day), level, 0.0, reason)
+        val rows = listOf(
+            c("2026-08-04", "not", "family"), c("2026-08-11", "not", "family"),
+            c("2026-09-15", "not", "family"), c("2026-09-16", "minimum", "family"), c("2026-09-22", "not", "family"),
+            c("2026-10-03", "not", "tired"), c("2026-10-04", "not", "tired"), c("2026-10-05", "minimum", "tired"),
+            c("2026-10-06", "not", "no time"),
+            CheckIn(LocalDate.parse("2026-10-07"), "target", 1.0), CheckIn(LocalDate.parse("2026-10-08"), "target", 1.0),
+        )
+        assertEquals(
+            """
+            T3 "Chemistry lectures", last 14 days: 6 answered of 12 scheduled, done on 3.
+            T3 "Chemistry lectures", last 14 days: tired on 3 of 4 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: family on 5 of 9 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: tired on 3 of 9 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: marked Not on 5 Tuesdays.
+            T3 "Chemistry lectures": tired on 3 of 4 days marked Not or Part in the last 14 days, on 0 of 3 in the 14 days before.
+            """.trimIndent(),
+            text(PlanBlocks.checkinFacts(syllabus(rows), today)),
+        )
+    }
+
+    @Test
     fun aTargetThatHasNotStartedHasNoTodayLine() {
         val sat = LocalDate.parse("2026-10-10")
         val t = syllabus().let { it.copy(targets = it.targets.map { x -> x.copy(start = LocalDate.parse("2026-10-11")) }) }

@@ -117,4 +117,27 @@ class MemoryBlocksTest {
 private object ContextBuilderRender {
     fun render(blocks: List<Block>): String =
         blocks.filter { it.items.isNotEmpty() }.joinToString("\n\n") { ContextBuilder.renderBlock(it.name, it.items) }
+
+    @Test
+    fun notesAboutTheConversationAreTheLastOfTheirGradeToGo() {
+        val notes = listOf(
+            MemoryBlocks.Note(1, "pattern", "likely", 9, "2026-09-01", "2026-10-01", "Phone in bed costs the morning", emptyList()),
+            MemoryBlocks.Note(2, "what_helps", "likely", 1, "2026-09-01", "2026-10-01", "Lectures go better on the roof", emptyList()),
+            MemoryBlocks.Note(3, "pattern", "guess", 1, "2026-09-01", "2026-10-01", "Lectures stall on Tuesdays", emptyList()),
+        )
+        val relevant = MemoryBlocks.relevantNotes(notes, "how do I get through two lectures today?")
+        assertEquals(setOf(2L, 3L), relevant)
+        val ranks = MemoryBlocks.notes(notes, relevant).items.map { it.drop }
+        assertTrue("a relevant likely note stays longer than one seen more often: $ranks", ranks[1] < ranks[0])
+        assertTrue("a relevant guess still goes before any likely note: $ranks", ranks[2] > ranks[0])
+        assertEquals(emptySet<Long>(), MemoryBlocks.relevantNotes(notes, "ok"))
+    }
+
+    @Test
+    fun theNotesAStoredPrefixSendsAreReadBack() {
+        val system = "persona text\nnote 9, not a note line outside NOTES\n\n## PROFILE\nname (confirmed): Rafi\n\n" +
+            "## NOTES\nnote 4, pattern, likely, seen 3 times: Phone in bed\n  their words, 4 Oct: \"note 7, quoted\"\n" +
+            "note 12, what_helps, guess, seen once: The roof\n\n## RECENT_SESSIONS\nnote 5, a summary line"
+        assertEquals(setOf(4L, 12L), MemoryBlocks.idsIn(system))
+    }
 }

@@ -83,6 +83,8 @@ MUTATIONS = [
      "\"what happened\" searched for the word happened"),
     ("retrieval.py", '    if reason and reason.strip():\n        parts.append("reason: " + reason.strip())\n', "", "test_retrieval.py",
      "a check-in's reason not searchable"),
+    ("context.py", "    return math.ceil((len(text) - digits - other) / 3 + digits + 2 * other)", "    return math.ceil(len(text) / 3)",
+     "test_context.py", "numbers and dates counted as a third of their real tokens"),
     # Memory exam 2's leak guard: what he deleted or said off the record must never reach the coach.
     ("eval/memory_exam2.py", 'if m["role"] == "user" and m["conversation"] not in off:', 'if m["role"] == "user":',
      "test_memory_exam2.py", "an off-the-record conversation's words indexed for search"),
