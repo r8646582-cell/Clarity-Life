@@ -318,3 +318,39 @@ Not done, said plainly:
 4. Change a target with the coach (a target_change card). After a few days of check-ins the coach can say how it
    has gone since the change, and a ramp says whether it is ahead or behind its steps.
 5. Next Sunday's review: each target has "The week before" and, after a few weeks, "Done rate by week".
+
+### Phase 7: quality gates (14 Oct 2026, built; waiting for the owner's OK)
+
+New test-only tools, approved by the owner on 14 Oct 2026: Robolectric 4.14.1 (draws Compose screens on the
+build machine), Roborazzi 1.36.0 (screenshots) and Compose's own test library. None of them is in the APK. Pitest
+was not used: its Android support is unofficial; a planted-bug script like `tools/mutation_check.py` does the job.
+
+| Gate | What it checks | Where |
+|---|---|---|
+| Screen tests | The suggestion cards drawn for real: nothing saves without a tap; each button does only what it says; Not now only says not now; opening the time picker saves nothing; every button at least 48 dp; with 2x text every button can be reached, no line is hidden and no word is split | `CardScreensTest` (unit tests, every push) |
+| Screenshots | Cards of every kind, after a tap, at 2x text, and the Bold building blocks; CI fails when a picture changes | `ScreenshotTest`, approved pictures in `app/src/test/screenshots/` |
+| Contrast | Every text colour on every background it sits on, at least 4.5 to 1 (WCAG AA). Lowest: PaperMuted on Paper, 5.26 | `ContrastTest` |
+| Emulator, large text | A second walk through Talk, Plan, What I know and Settings with the phone's font at 2x | `tools/emulator_large_text.sh` |
+| Kotlin planted bugs | 12 known bugs planted in the app's code one at a time (cards, quotes, packet escaping, note confidence, brief length, rest days, story chart, "in November", rare words, late night, Keep it, faint text); each must be caught | `tools/kotlin_mutation_check.py`, CI job `kotlin-mutants` |
+| Memory exam floor | CI fails when either memory exam's score drops: exam 1 77.78%, exam 2 92.99% (keyword search). Raise the floor in the same commit when a change raises a score | `tools/test_memory_floor.py`, `tools/eval/exam_floor.json`; a planted smaller packet proves it bites (146 Python planted bugs, none survive) |
+
+Found and fixed by the new gates:
+- At 2x text the "Reminder on" chip on a promise card was squeezed until the word broke into pieces ("Re / mi /
+  nd / er / on"). The chips now move to a second line; at normal size the card is unchanged.
+
+Not done, said plainly:
+- The screen tests cover the suggestion cards and the building blocks, not whole screens (Talk, Plan, What I know
+  need their database and view models; the emulator walks cover those screens instead).
+- The outline around input boxes (ControlOutline on Ground) is 1.6 to 1; the guideline for outlines is 3 to 1.
+  It is the mockups' colour, so it was left for the owner to decide.
+- The screenshots are compared with the approved ones, not with the mockups themselves: the owner compares them
+  with `docs/mockups/redesign/` by eye once.
+- The "Record screenshots" workflow can only be started from the main branch, so it works after this is merged.
+  Until then, each CI run keeps its pictures under "screenshots" on the run's page.
+- Nothing was built or run in this session (the owner's choice): every result above is from GitHub Actions.
+
+**What the owner checks** (on GitHub and on the phone):
+1. On GitHub, open `app/src/test/screenshots/` and compare the cards with the mockups in `docs/mockups/redesign/`.
+2. On the phone: Settings, Display, Font size at the largest. Open Talk and get a promise card from the coach
+   ("remind me to call Sam tomorrow at 9"): the time and Reminder chips should sit on two lines, words whole.
+3. Put the font size back.
