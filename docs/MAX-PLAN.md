@@ -77,3 +77,39 @@ All checks pass (`bash tools/check_all.sh`, `bash tools/forbidden_patterns.sh`, 
 
 ## Results log
 (Each phase adds its before and after numbers here.)
+
+### Phase 0 baseline (14 Oct 2026, Clarity 0.1.12 plus the Phase 0 fixes)
+
+**Step 1, build tools:** not set up in the cloud session, at the owner's request (14 Oct 2026): Gradle lint, unit tests and emulator tests run in GitHub Actions on every push.
+
+**Step 2, bug scan:** `docs/audits/bug-scan-2026-10-14-full.md`. Four findings, all fixed with a test each: a reply stuck on "thinking" when the key read failed, the start-up sweep cut short by a turn of the phone, screens missing a time zone change, the Focus week counted by the phone's date. CI run #124 green.
+
+**Step 3, what the AI sees** (`tools/eval/README.md`):
+
+| Exam | Keyword only | Keyword + meaning (the app) |
+|---|---|---|
+| Exam 1, 43 questions (old), mirror brought up to 0.1.12 | 69.8% | 79.2% |
+| **Exam 2, 157 questions over one invented year (new)** | 62.6% | **71.5%** |
+| Exam 2 leaks (deleted note or off-the-record chat reaching the coach) | 0 | 0 |
+
+Exam 2 by kind (app): recall 95%, people 94%, superseded 89%, promises 100%, synthesis 71%, plan 71%, follow-ups 67%, check-ins 60%, time 53%, patterns months apart 44%, letters/reviews/chapters 20%. Target for Phase 2: 95%.
+
+**Step 4, lifetime** (`LifetimeTimingTest` on the CI emulator, run #125: 7,306 conversations, 73,060 messages, 43,836 meaning vectors, 9,401 check-ins over ten years). The emulator is faster than a mid-range phone, so a number over target here is over target on the phone too.
+
+| Measure | Ten years, emulator | Target (mid phone) |
+|---|---|---|
+| Open the encrypted database, first query | 483 ms | |
+| Start-up repair sweep + search index check | 93 ms | |
+| Drawer, every conversation's row | 249 ms | |
+| Start-up database work, these three together | about 0.8 s | start-up < 1.5 s in all |
+| Plan tracker (reads every check-in ever) | 1,180 ms (1,049 ms again) | |
+| Search, first of the session (reads every vector) | 5,745 ms | < 150 ms |
+| Search, later (median of 4) | 411 ms (worst 663 ms) | < 150 ms |
+| Request, new conversation (frozen part built) | 5,866 ms | < 300 ms |
+| Request, next message | 2,181 ms | < 300 ms |
+| Settings, rebuild search index | 2,939 ms | |
+| Memory in use after search | 60 MB of 201 MB allowed | |
+| Database file | 123 MB (+ 9.5 MB log) | |
+
+What the numbers say: after ten years, a message would wait two to six seconds before it is even sent, and the first search of a session takes almost six. Two causes are known: the plan tracker reads every check-in ever made, on every request (about a second), and the first meaning search reads all 44,000 vectors from the encrypted file. The rest of the new-conversation time (building the frozen part) is not broken down yet; Phase 5 times each part. A fix that is cheap and safe can come earlier, with the owner's OK.
+
