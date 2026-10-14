@@ -319,7 +319,7 @@ Not done, said plainly:
    has gone since the change, and a ramp says whether it is ahead or behind its steps.
 5. Next Sunday's review: each target has "The week before" and, after a few weeks, "Done rate by week".
 
-### Phase 7: quality gates (14 Oct 2026, built; waiting for the owner's OK)
+### Phase 7: quality gates (14 Oct 2026, built, CI run #163 green; waiting for the owner's OK)
 
 New test-only tools, approved by the owner on 14 Oct 2026: Robolectric 4.14.1 (draws Compose screens on the
 build machine), Roborazzi 1.36.0 (screenshots) and Compose's own test library. None of them is in the APK. Pitest
@@ -331,7 +331,7 @@ was not used: its Android support is unofficial; a planted-bug script like `tool
 | Screenshots | Cards of every kind, after a tap, at 2x text, and the Bold building blocks; CI fails when a picture changes | `ScreenshotTest`, approved pictures in `app/src/test/screenshots/` |
 | Contrast | Every text colour on every background it sits on, at least 4.5 to 1 (WCAG AA). Lowest: PaperMuted on Paper, 5.26 | `ContrastTest` |
 | Emulator, large text | A second walk through Talk, Plan, What I know and Settings with the phone's font at 2x | `tools/emulator_large_text.sh` |
-| Kotlin planted bugs | 12 known bugs planted in the app's code one at a time (cards, quotes, packet escaping, note confidence, brief length, rest days, story chart, "in November", rare words, late night, Keep it, faint text); each must be caught | `tools/kotlin_mutation_check.py`, CI job `kotlin-mutants` |
+| Kotlin planted bugs | 12 known bugs planted in the app's code one at a time (cards, quotes, packet escaping, note confidence, brief length, rest days, story chart, "in November", rare words, late night, Keep it, faint text); each must be caught | `tools/kotlin_mutation_check.py`, CI job `kotlin-mutants`: 12 of 12 caught, under 5 minutes (it finishes before the main check) |
 | Memory exam floor | CI fails when either memory exam's score drops: exam 1 77.78%, exam 2 92.99% (keyword search). Raise the floor in the same commit when a change raises a score | `tools/test_memory_floor.py`, `tools/eval/exam_floor.json`; a planted smaller packet proves it bites (146 Python planted bugs, none survive) |
 
 Found and fixed by the new gates:
