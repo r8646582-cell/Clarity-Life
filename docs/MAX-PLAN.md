@@ -213,3 +213,57 @@ Not done, said plainly:
 2. Answer a check-in today as usual. Nothing looks different; after a few weeks, Talk's coach may mention when in the day you tend to answer "Not".
 3. In What I know, open a profile entry the coach updates later: it shows "Since ..." and, when a value was replaced, "Before, until ...".
 4. If you delete a note and later say the same thing in other words, it should not come back.
+
+### Phase 4: the on-phone meaning model (14 Oct 2026, built; waiting for the owner's OK)
+
+**Step 1, a newer model: switched.** `tools/eval/compare_embedders.py` ran bge-small-en-v1.5 and 10 other small
+models through exam 1, exam 2, the reflection exam and the note pairs, each with its lines set fairly (the search
+line from random pairs, without answers; the note lines at the same cost as bge's). Full table in
+`tools/eval/README.md`. **mdbr-leaf-mt** (MongoDB, August 2025, Apache-2.0) was best overall and is now bundled:
+
+| | bge-small-en-v1.5 (before) | mdbr-leaf-mt (now) |
+|---|---|---|
+| Size in the APK | 34 MB | **23 MB** |
+| Time per message (cloud computer; the ratio is what counts) | 1x | **about 2x faster** |
+| Exam 1, the exam not used to design anything | 84.7% | **94.2%** (6 questions better, none worse) |
+| Exam 2, 157 questions | 95.1% | **96.7%** (7 better, 4 worse) |
+| Exam 2, meaning search alone | 91.1% | 95.1% (15 better, 3 worse) |
+| Reflection exam, 26 pairs | 88.5% | 88.5% |
+| Rewordings of a deleted note caught (different notes blocked) | 30 of 31 (12 of 37) | 30 of 31 (12 of 37) |
+| Leaks (deleted or off the record) | 0 | 0 |
+
+How: the first 384 numbers of its vector (it is trained to allow that cut), so stored vectors and memory use stay
+the size they were; its vocabulary is bge's word for word, so the app's tokenizer did not change. Its lines:
+search 0.56 (was 0.62), deleted note 0.73 (0.75), duplicate 0.91 (0.9), gardening suggestion 0.89 (0.85), changed
+in `tools/appliers.py`, the Kotlin and the test vectors together (`mutation_check.py`: 107 planted bugs, all caught).
+After the update, the old vectors are removed once and every vector is made again in the background (the "Rebuild
+path for old embeddings"); keyword search works meanwhile. The bundled file is made from a pinned revision by
+`tools/bundle_embedding_model.py`; `contracts/embedding_vectors.json` was regenerated from it.
+
+**Step 2, a re-ranker: measured, not built.** `tools/eval/rerankers.py` tried 7 small re-rankers on the best 30
+search candidates. Replacing the order never helped. Blending the best one (ms-marco-MiniLM-L6, 23 MB) into the
+order raised exam 2 from 96.7% to 97.8% (5 questions better, none worse) and exam 1 not at all; a random order
+blended the same way already moves exam 2 between 96.4% and 97.2%. The plan's test was "a real gain, with size and
+speed acceptable": the gain is small and uncertain, against 23 MB more and about 30 model runs per message. The
+recommendation is to leave it out; it is the owner's call (APK size).
+
+Not done, said plainly:
+- "Patterns months apart" in exam 2 went from 86.7% to 84.2% (three questions lost a piece each), while every
+  other kind rose or stayed. Gardening's merge suggestions find fewer rewordings at the same number of wrong ones
+  (13 of 31, was 17 of 31). Both were weighed against the larger gains above.
+- The lines were set on the same exams and 68 note pairs as before, not on his real notes and messages.
+- Models that would need a new tokenizer in the app or are 200 MB and more (EmbeddingGemma, Qwen3-Embedding) were
+  not tried.
+- Speed was measured on the cloud computer, not a phone. The emulator test in CI checks the model gives the
+  reference vectors on Android; the phone itself is the owner's check below.
+- The Android build, lint and tests were not run in this session (the owner's choice in Phase 0: they run in
+  GitHub Actions on every push).
+
+**What the owner checks on the phone** (after installing this build over the old one):
+1. Open the app and leave it open (or come back) for a minute or two: it makes the new meaning vectors for your
+   whole history in the background. Nothing to tap; your data does not change.
+2. Settings, Health, the next day: the counts should not start rising. (If the new model failed its check on your
+   phone, the app quietly falls back to keyword search and logs it there; tell Claude if you see that.)
+3. In Talk, ask about something from an older conversation in different words than you used then: the coach
+   should still bring it up.
+4. The app should be about 11 MB smaller to download.
