@@ -100,6 +100,15 @@ for name, m in states.items():
         if s not in m["states"]:
             err("%s: unknown start state %s" % (name, s))
 
+# schema 8: a target's history and his minutes estimate
+db.execute("INSERT INTO target_version(target_id,from_day,minimum,target,schedule,status,created_at) VALUES (1,'2026-10-10',0,2,'Sat-Thu','active',?)", (NOW,))
+checks += [
+    ("a second version of a target on the same day rejected", fails("INSERT INTO target_version(target_id,from_day,minimum,target,schedule,status,created_at) VALUES (1,'2026-10-10',0,3,'daily','active',?)", (NOW,))),
+    ("a version with a bad status rejected", fails("INSERT INTO target_version(target_id,from_day,minimum,target,schedule,status,created_at) VALUES (1,'2026-10-11',0,3,'daily','stopped',?)", (NOW,))),
+    ("a version with its minimum above its target rejected", fails("INSERT INTO target_version(target_id,from_day,minimum,target,schedule,status,created_at) VALUES (1,'2026-10-12',4,3,'daily','active',?)", (NOW,))),
+    ("a version of a missing target rejected", fails("INSERT INTO target_version(target_id,from_day,minimum,target,schedule,status,created_at) VALUES (99,'2026-10-12',0,3,'daily','active',?)", (NOW,))),
+    ("zero minutes for a session rejected", fails("INSERT INTO target(name,target,schedule,start_day,minutes) VALUES ('x',1,'daily','2026-10-10',0)")),
+]
 tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'search_doc_%' AND name NOT LIKE 'sqlite_%'")]
 if "fallbackToDestructiveMigration" in schema:
     err("schema mentions destructive migration")

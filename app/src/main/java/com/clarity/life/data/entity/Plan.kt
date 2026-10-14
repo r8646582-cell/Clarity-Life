@@ -160,6 +160,40 @@ data class TargetRow(
     @ColumnInfo(name = "start_day") val startDay: String,
     @ColumnInfo(name = "end_day") val endDay: String? = null,
     @ColumnInfo(defaultValue = "active") val status: String = "active",
+    /**
+     * Schema 8 (Max plan Phase 6): his own estimate of the minutes one session at the target level takes, so the
+     * app can add up a day's load. Null: not given (a target counted in minutes or hours needs none).
+     */
+    val minutes: Double? = null,
+)
+
+/**
+ * Schema 8 (Max plan Phase 6): a target's values from a day on, so code knows what the plan asked for on any
+ * past day and when it changed. One row per day a change took effect; written with every change he taps. A
+ * target with no rows (made before schema 8, or restored from an older backup) is read as its current values
+ * from its start day, and gets that row the first time it changes.
+ */
+@Entity(
+    tableName = "target_version",
+    foreignKeys = [
+        ForeignKey(
+            entity = TargetRow::class,
+            parentColumns = ["id"],
+            childColumns = ["target_id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["target_id", "from_day"], unique = true, name = "idx_target_version_day")],
+)
+data class TargetVersionRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "target_id") val targetId: Long,
+    @ColumnInfo(name = "from_day") val fromDay: String,
+    val minimum: Double,
+    val target: Double,
+    val schedule: String,
+    val status: String,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
 )
 
 /** A planned day off for every target: neither done nor missed, and not counted in days left. */

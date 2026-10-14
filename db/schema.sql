@@ -1,4 +1,4 @@
--- Clarity: database schema, version 7 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 8 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
@@ -114,9 +114,23 @@ CREATE TABLE target (
   start_day TEXT NOT NULL,
   end_day TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','ended')),
+  minutes REAL CHECK (minutes IS NULL OR minutes > 0),  -- schema 8: his estimate of one session's minutes at the target level, for a day's load
   CHECK (minimum <= target)
 );
 CREATE INDEX idx_target_status ON target(status);
+
+CREATE TABLE target_version (          -- schema 8: a target's values from a day on (what the plan asked for, and when it changed)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_id INTEGER NOT NULL REFERENCES target(id) ON DELETE CASCADE,
+  from_day TEXT NOT NULL,               -- his day key when the change took effect (the target's start when later)
+  minimum REAL NOT NULL CHECK (minimum >= 0),
+  target REAL NOT NULL CHECK (target > 0),
+  schedule TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active','paused','ended')),
+  created_at INTEGER NOT NULL,
+  CHECK (minimum <= target)
+);
+CREATE UNIQUE INDEX idx_target_version_day ON target_version(target_id, from_day);  -- one version per target per day; the newest change that day wins
 
 CREATE TABLE rest_day (                -- a planned day off for every target: neither done nor missed, not counted in days left
   day_key TEXT PRIMARY KEY NOT NULL,

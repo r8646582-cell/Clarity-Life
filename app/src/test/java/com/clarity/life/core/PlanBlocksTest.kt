@@ -236,4 +236,56 @@ class PlanBlocksTest {
         assertEquals(100.0, f.answerRate!!, 0.0)
         assertEquals(20.0 / 9, f.projection.typicalPerDay!!, 1e-9)
     }
+
+    @Test
+    fun theCoachSeesHowFarTheRampHasGot() {
+        // Step 1 (2 a day, 14 to 20 Oct) ended; one day was marked Not. Step 2 (3 a day) runs from 21 Oct.
+        val start = LocalDate.parse("2026-10-14")
+        val today = LocalDate.parse("2026-10-23")
+        val step1Rows = (0..6).map { CheckIn(start.plusDays(it.toLong()), if (it == 2) "not" else "target", if (it == 2) 0.0 else 2.0) }
+        val step2Rows = (7..8).map { CheckIn(start.plusDays(it.toLong()), "target", 3.0) }
+        val step1 = PlanBlocks.Target(1, "CAF lectures", 1, 1, 1.0, 2.0, "daily", step1Rows, start, LocalDate.parse("2026-10-20"))
+        val step2 = PlanBlocks.Target(2, "CAF lectures", 1, 1, 1.0, 3.0, "daily", step2Rows, LocalDate.parse("2026-10-21"))
+        val t = PlanBlocks.Tracker(
+            goals = listOf(PlanBlocks.Goal(1, "Clear the CAF course", LocalDate.parse("2027-02-01"))),
+            targets = listOf(step2),
+            backlogs = listOf(
+                PlanBlocks.Backlog(
+                    1, "CAF lectures", 1, 300.0, 0.0, LocalDate.parse("2027-02-01"), start, step1Rows, start,
+                    offTargets = listOf(step1),
+                ),
+            ),
+            restDays = emptySet(),
+        )
+        val block = text(PlanBlocks.planState(t, today))
+        assertTrue(
+            block,
+            block.contains("  So far on the plan for B1 \"CAF lectures\" (14 Oct to 22 Oct): the steps asked for 20, done 18, behind by 2."),
+        )
+    }
+
+    @Test
+    fun theCoachSeesHowAChangeWent() {
+        val today = LocalDate.parse("2026-10-18")
+        val before = (0..13).map { CheckIn(LocalDate.parse("2026-09-28").plusDays(it.toLong()), "target", 1.0) }
+        val after = (0..5).map { CheckIn(LocalDate.parse("2026-10-12").plusDays(it.toLong()), if (it == 5) "not" else "target", if (it == 5) 0.0 else 2.0) }
+        val x = PlanBlocks.Target(
+            3, "Lectures", null, null, 0.0, 2.0, "daily", before + after, LocalDate.parse("2026-09-28"),
+            versions = listOf(
+                TargetVersion(LocalDate.parse("2026-09-28"), 0.0, 1.0, "daily", "active"),
+                TargetVersion(LocalDate.parse("2026-10-12"), 0.0, 2.0, "daily", "active"),
+            ),
+        )
+        val facts = text(PlanBlocks.checkinFacts(PlanBlocks.Tracker(emptyList(), listOf(x), emptyList(), emptySet()), today))
+        assertTrue(
+            facts,
+            facts.contains(
+                "T3 \"Lectures\": changed on 12 Oct (target 1 \u2192 2). In the 14 days before: done on 14 of 14 answered days, " +
+                    "1.0 per answered day. Since: done on 5 of 6, 1.7 per answered day.",
+            ),
+        )
+        // With no history recorded (made before schema 8) there is no change to report.
+        val old = text(PlanBlocks.checkinFacts(PlanBlocks.Tracker(emptyList(), listOf(x.copy(versions = emptyList())), emptyList(), emptySet()), today))
+        assertTrue(old, !old.contains("changed on"))
+    }
 }

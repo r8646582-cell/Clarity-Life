@@ -419,8 +419,17 @@ def merge_by_day(rows):
     return out
 
 
+def target_versions(t):
+    """A target's versions; one with none recorded (made before schema 8, or restored from an older backup) is
+    read as its current values, active, from its start day."""
+    if t.get("versions"):
+        return t["versions"]
+    return [{"from": t.get("start") or "0001-01-01", "minimum": t.get("minimum", 0), "target": t["target"],
+             "schedule": t["schedule"], "status": "active"}]
+
+
 def backlog_facts(total, start_done, created_day, deadline, targets, today, done_elsewhere=(), first_start=None,
-                  rest_dates=()):
+                  rest_dates=(), off_targets=()):
     """Everything PLAN_STATE says about one backlog. targets: its live linked targets, each
     {schedule, target, start, end, checkins}; done_elsewhere: check-ins of its paused or ended targets.
     - done = start_done + every amount entered from created_day on (earlier work is already in start_done).
@@ -429,7 +438,9 @@ def backlog_facts(total, start_done, created_day, deadline, targets, today, done
     - days left are counted on backlog_schedule's days, from today (tomorrow when today is answered), and
       never before the first live target starts: days before the plan begins have no work planned.
     - the plan's own steps are the live targets with a start, in start order.
-    - with no target ever linked there is no pace window and no answer rate."""
+    - with no target ever linked there is no pace window and no answer rate.
+    - progress: how far the plan has got (plan_progress) over every target ever linked to it with a start day,
+      live ones and off_targets (its paused and ended ones, {schedule, target, start, end, versions}) together."""
     today, deadline = d(today), d(deadline)
     rest = {d(x) for x in rest_dates}
     schedule = backlog_schedule([t["schedule"] for t in targets])
@@ -453,7 +464,121 @@ def backlog_facts(total, start_done, created_day, deadline, targets, today, done
         "projection": project(remaining, left, tp["pace"], best, deadline_passed=deadline < today),
         "window_answered": tp["answered"], "answer_rate": tp["answer_rate"],
         "finish": plan_finish(steps, remaining, today, deadline, today_answered, rest) if steps else None,
+        "progress": plan_progress([{"start": t["start"], "end": t.get("end"), "versions": target_versions(t)}
+                                   for t in list(targets) + list(off_targets) if t.get("start")],
+                                  merged, today, today_answered, rest) if steps else None,
     }
+
+
+# ---------- target history (schema 8): what a plan asked for, and before/after a change ----------
+#
+# A target's values over time are versions: {from, minimum, target, schedule, status}, one per day a change took
+# effect (the day he tapped it, or the target's start when that is later), oldest first. Before schema 8 nothing
+# was recorded, so the migration gives every old target one version, its values then, from its start day.
+
+def version_on(versions, day):
+    """The version in force on day, or None before the first one."""
+    day = d(day)
+    out = None
+    for v in versions:
+        if d(v["from"]) <= day:
+            out = v
+        else:
+            break
+    return out
+
+
+def planned_amount(targets, first, last, rest_dates=()):
+    """What the plan asked for from first to last: on every day that is not a planned rest day, each target adds
+    the target amount in force that day when it is within its start and end, active then, and scheduled that day
+    under the schedule in force then. None when any version in force on one of those days is an Nx/week
+    schedule (it has no fixed days, so code cannot say what a given day asked for).
+    targets: [{start, end, versions}]."""
+    first, last = d(first), d(last)
+    rest = {d(x) for x in rest_dates}
+    asked, days = 0.0, set()
+    cur = first
+    while cur <= last:
+        if cur not in rest:
+            for t in targets:
+                if d(t["start"]) > cur or (t.get("end") and d(t["end"]) < cur):
+                    continue
+                v = version_on(t["versions"], cur)
+                if v is None or v["status"] != "active":
+                    continue
+                kind, val = parse_schedule(v["schedule"])
+                if kind != "days":
+                    return None
+                if cur.weekday() in val:
+                    asked += v["target"]
+                    days.add(cur)
+        cur += timedelta(days=1)
+    return {"asked": asked, "days": len(days)}
+
+
+def plan_progress(targets, checkins, today, today_answered=False, rest_dates=()):
+    """How far the plan's own steps have got so far: from the first step's start to yesterday (to today when
+    today is answered), what the steps asked for (planned_amount) against what was done (every amount entered
+    on those days, merged per day). None before the first scheduled day has passed, or when it cannot be counted.
+    targets: every target ever linked to the backlog, ended steps included, as in planned_amount."""
+    if not targets:
+        return None
+    today = d(today)
+    first = min(d(t["start"]) for t in targets)
+    last = today if today_answered else today - timedelta(days=1)
+    if last < first:
+        return None
+    p = planned_amount(targets, first, last, rest_dates)
+    if p is None or p["days"] == 0:
+        return None
+    done = sum(c.get("amount", 0) for c in checkins if first <= d(c["day"]) <= last and c["level"] != "rest")
+    return {"from": first.isoformat(), "to": last.isoformat(), "asked": p["asked"], "done": done,
+            "days": p["days"]}
+
+
+CHANGE_LOOKBACK = 90      # a change older than this is no longer news
+
+
+def _changed_fields(a, b):
+    out = []
+    for key, label in (("target", "target"), ("minimum", "minimum")):
+        if abs(a[key] - b[key]) > EPS:
+            out.append("%s %g \u2192 %g" % (label, a[key], b[key]))
+    if a["schedule"] != b["schedule"]:
+        out.append("%s \u2192 %s" % (a["schedule"], b["schedule"]))
+    return out
+
+
+def _side(checkins, schedule, first, last, rest):
+    if first > last:
+        return {"answered": 0, "done": 0, "amount": 0}
+    w = _window(checkins, schedule, first, last, rest)
+    return {"answered": w["answered"], "done": w["done"], "amount": w["amount"]}
+
+
+def change_compare(checkins, versions, start, today, rest_dates=()):
+    """The latest change to a target's numbers or schedule in the last CHANGE_LOOKBACK days, with how it went in
+    the WINDOW days before it (under the old schedule) and since (under the new one, up to yesterday). None when
+    there is no such change, or fewer than REASON_MIN_N answered days on either side. A pause or a resume is not a
+    change of the plan (status is left out)."""
+    today = d(today)
+    rest = {d(x) for x in rest_dates}
+    for i in range(len(versions) - 1, 0, -1):
+        before, after = versions[i - 1], versions[i]
+        fields = _changed_fields(before, after)
+        if not fields:
+            continue
+        day = d(after["from"])
+        if day >= today or day < today - timedelta(days=CHANGE_LOOKBACK):
+            return None
+        b_first = max(day - timedelta(days=WINDOW), d(start))
+        b = _side(checkins, before["schedule"], b_first, day - timedelta(days=1), rest)
+        a = _side(checkins, after["schedule"], day, today - timedelta(days=1), rest)
+        if b["answered"] < REASON_MIN_N or a["answered"] < REASON_MIN_N:
+            return None
+        return {"day": day.isoformat(), "fields": fields, "before_days": (day - b_first).days,
+                "before": b, "after": a}
+    return None
 
 
 # ---------- text for the context packet (code-written, so the coach only copies) ----------
@@ -567,3 +692,27 @@ def goal_line(gid, title, deadline):
 def target_line(tid, title, gid, minimum, target, schedule, done, answered):
     return ('Target %s "%s" (%s): minimum %g, target %g, %s. Last %d days: done %d of %d answered days.'
             % (tid, title, gid, minimum, target, schedule, WINDOW, done, answered))
+
+
+def plan_progress_line(bid, name, p):
+    """'So far on the plan for B1 "CAF lectures" (14 Oct to 23 Oct): the steps asked for 23, done 20, behind by 3.'"""
+    a, b = d(p["from"]), d(p["to"])
+    gap = p["done"] - p["asked"]
+    tail = ("behind by %g" % round_half_up(-gap, 0.1) if gap < -EPS else
+            "ahead by %g" % round_half_up(gap, 0.1) if gap > EPS else "exactly on it")
+    when = ("%d %s" % (a.day, _MONTHS[a.month - 1]) if a == b else
+            "%d %s to %d %s" % (a.day, _MONTHS[a.month - 1], b.day, _MONTHS[b.month - 1]))
+    return 'So far on the plan for %s "%s" (%s): the steps asked for %g, done %g, %s.' % (
+        bid, name, when, round_half_up(p["asked"], 0.1), round_half_up(p["done"], 0.1), tail)
+
+
+def change_line(tid, name, c):
+    """'T3 "Lectures": changed on 20 Oct (target 1 → 2). In the 14 days before: done on 9 of 12 answered days,
+    1.0 per answered day. Since: done on 4 of 5, 1.4 per answered day.'"""
+    day = d(c["day"])
+    b, a = c["before"], c["after"]
+    return ('%s "%s": changed on %d %s (%s). In the %d days before: done on %d of %d answered days, %s per answered '
+            'day. Since: done on %d of %d, %s per answered day.' % (
+                tid, name, day.day, _MONTHS[day.month - 1], ", ".join(c["fields"]), c["before_days"], b["done"],
+                b["answered"], _num(b["amount"] / b["answered"]), a["done"], a["answered"],
+                _num(a["amount"] / a["answered"])))

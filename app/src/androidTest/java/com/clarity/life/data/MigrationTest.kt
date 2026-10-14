@@ -250,6 +250,44 @@ class MigrationTest {
         db.close()
     }
 
+    /**
+     * Max plan Phase 6: target.minutes and target_version. Every target and check-in stays; an old target has no
+     * minutes and no history (read as its values from its start day), and a change can be recorded at once.
+     */
+    @Test
+    fun version7To8KeepsEveryTargetAndAddsItsHistory() {
+        helper.createDatabase(TEST_DB, 7).apply {
+            execSQL("INSERT INTO target (id, name, unit, minimum, target, schedule, start_day) VALUES (1, 'Lectures', 'lectures', 1, 2, 'Sat-Thu', '2026-10-10')")
+            execSQL("INSERT INTO checkin (target_id, day_key, level, amount, entered_at) VALUES (1, '2026-10-10', 'target', 2, 1760000000000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 8, true, Migrations.V7_TO_V8)
+        db.query("SELECT name, target, schedule, minutes FROM target WHERE id = 1").use {
+            assertTrue("the target is gone", it.moveToFirst())
+            assertEquals("Lectures", it.getString(0))
+            assertEquals(2.0, it.getDouble(1), 0.0)
+            assertEquals("Sat-Thu", it.getString(2))
+            assertTrue("an old target's minutes are not known, not guessed", it.isNull(3))
+        }
+        db.query("SELECT COUNT(*) FROM checkin").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM target_version").use {
+            it.moveToFirst()
+            assertEquals("no history is made up for an old target", 0, it.getInt(0))
+        }
+        db.execSQL("INSERT INTO target_version (target_id, from_day, minimum, target, schedule, status, created_at) VALUES (1, '2026-10-20', 1, 3, 'daily', 'active', 1760000000000)")
+        // One version per target per day: a second change that day replaces the first.
+        db.execSQL("INSERT OR REPLACE INTO target_version (target_id, from_day, minimum, target, schedule, status, created_at) VALUES (1, '2026-10-20', 1, 4, 'daily', 'active', 1760000000001)")
+        db.query("SELECT target FROM target_version WHERE target_id = 1").use {
+            assertEquals(1, it.count)
+            it.moveToFirst()
+            assertEquals(4.0, it.getDouble(0), 0.0)
+        }
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -386,6 +424,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 7
+        private const val DATABASE_VERSION = 8
     }
 }

@@ -131,6 +131,11 @@ How the app assembles it (`core/PlanBlocks.kt`, tested against the sample above 
 - A backlog's facts come from `backlog_facts` in `tools/planner.py` (Max plan Phase 6; vectors in `contracts/planner_vectors.json`). Done = `start_done` + the amounts entered on its linked targets from the day the backlog was made (earlier work is already in `start_done`, so it is never counted twice). Its pace and days left use `backlog_schedule`: the days of every live linked target (one schedule as written; several with fixed days, the days of any of them; any Nx/week among them, a count of all their sessions, at most 7 a week), with the whole history of its linked targets added up per day (`merge_by_day`). Days left never start before the first live linked target does.
 - Pace windows start no earlier than the first start day of any target ever linked to the backlog (ended ramp steps included), so days before a plan existed are never unanswered days, and a plan that has not started has no answer rate. A backlog nothing was ever linked to has no window either (`Answer rate not tracked.`). The pace reads the answers of every linked target, ended steps included.
 - The plan steps line comes from `plan_finish` and `plan_line` in `tools/planner.py`: the backlog's live linked targets in start order, each adding its target on its scheduled days from its start to its end, counted from today (tomorrow when today is answered), rest days skipped. It says where the steps finish it and how many days before the deadline, or how many they reach by the deadline and how short that is. An Nx/week step cannot be dated, and the line says so.
+- Since Max plan Phase 6 (schema 8) every target keeps its values from each day a change took effect (`target_version`), and a backlog with plan steps gets one more line after the plan steps line, from `plan_progress` and `plan_progress_line` in `tools/planner.py`:
+  ```
+    So far on the plan for B1 "CAF lectures" (14 Oct to 22 Oct): the steps asked for 20, done 18, behind by 2.
+  ```
+  From the first step's start to yesterday (today once answered): what every target ever linked to it asked for on each day under the values in force that day (active, within its dates, scheduled, not a planned rest day), against every amount entered on those days. `ahead by`, `behind by` or `exactly on it`. Left out before a scheduled day has passed, and when a step is Nx/week (it has no fixed days). A target from before schema 8 is read as its current values from its start day.
 - Review options use the days on which at least one active day-based target is scheduled (every day when there are none), minus planned rest days.
 
 ## CHECKIN_FACTS line formats (counted in code, `core/PlanBlocks.kt`)
@@ -150,6 +155,12 @@ The today line lists only targets scheduled today (`not answered yet`, `done (ta
 ```
 T3 "Chemistry lectures", last 90 days: answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them.
 ```
+Since Max plan Phase 6 one more kind of line, from `change_compare` and `change_line` in `tools/planner.py`, for his latest change to a target's number, minimum or schedule in the last 90 days (a pause or resume is not a change), when both sides hold at least 3 answered days:
+```
+T3 "Lectures": changed on 12 Oct (target 1 → 2). In the 14 days before: done on 14 of 14 answered days, 1.0 per answered day. Since: done on 5 of 6, 1.7 per answered day.
+```
+The days before are read under the old schedule and never before the target started; the days since under the new one, up to yesterday.
+
 The bands are in the morning (4:00 to 12:00), in the afternoon (12:00 to 17:00), in the evening (17:00 to 22:00) and late at night (22:00 to 4:00). Only answers given on the day itself count (one given the next day says nothing about the day's time; answers from before schema 6 have no time). A band's line needs at least 3 days marked Not or Part in it, and another band must hold at least 3 answers too. Reflection may copy these lines word for word as count evidence.
 
 ## Dates on plan, backlog and target_change cards

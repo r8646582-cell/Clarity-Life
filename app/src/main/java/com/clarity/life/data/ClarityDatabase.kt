@@ -44,10 +44,11 @@ import com.clarity.life.data.entity.SettingRow
 import com.clarity.life.data.entity.StoryRow
 import com.clarity.life.data.entity.BriefRow
 import com.clarity.life.data.entity.TargetRow
+import com.clarity.life.data.entity.TargetVersionRow
 import com.clarity.life.data.entity.UsageMonthRow
 
 /**
- * The whole database, version 7, exactly the 32 tables of db/schema.sql.
+ * The whole database, version 8, exactly the 33 tables of db/schema.sql.
  *
  * Rules that never break here (CLAUDE.md rule 8): the schema is exported and committed, and every future
  * change is a written migration plus a MigrationTest. The destructive-migration escape hatch Room offers is
@@ -55,13 +56,13 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 7,
+    version = 8,
     exportSchema = true,
     entities = [
         // chat
         FocusRow::class, ConversationRow::class, MessageRow::class, CardRow::class,
         // planner
-        GoalRow::class, GoalRevisionRow::class, PlanRow::class, BacklogRow::class, TargetRow::class,
+        GoalRow::class, GoalRevisionRow::class, PlanRow::class, BacklogRow::class, TargetRow::class, TargetVersionRow::class,
         RestDayRow::class, CheckinRow::class, PromiseRow::class,
         // memory and writing
         NoteRow::class, NoteEvidenceRow::class, ProfileEntryRow::class, ProfilePastRow::class, PersonRow::class, EventRow::class,
@@ -100,6 +101,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V4_TO_V5,
             Migrations.V5_TO_V6,
             Migrations.V6_TO_V7,
+            Migrations.V7_TO_V8,
         )
     }
 }

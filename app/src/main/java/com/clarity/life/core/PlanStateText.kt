@@ -149,6 +149,25 @@ object PlanStateText {
         return if (p.status == "never") "$head$tail, and the steps end before the total." else "$head$tail."
     }
 
+    /** "So far on the plan for B1 "CAF lectures" (14 Oct to 23 Oct): the steps asked for 23, done 20, behind by 3." */
+    fun planProgressLine(bid: String, name: String, p: PlanProgress): String {
+        val gap = p.done - p.asked
+        val tail = when {
+            gap < -Planner.EPS -> "behind by ${g(Planner.roundHalfUp(-gap, 0.1))}"
+            gap > Planner.EPS -> "ahead by ${g(Planner.roundHalfUp(gap, 0.1))}"
+            else -> "exactly on it"
+        }
+        val whenText = if (p.from == p.to) day(p.from) else "${day(p.from)} to ${day(p.to)}"
+        return "So far on the plan for $bid \"$name\" ($whenText): the steps asked for ${g(Planner.roundHalfUp(p.asked, 0.1))}, " +
+            "done ${g(Planner.roundHalfUp(p.done, 0.1))}, $tail."
+    }
+
+    /** Before and after a change of a target, from [Planner.changeCompare]. */
+    fun changeLine(tid: String, name: String, c: ChangeCompare): String =
+        "$tid \"$name\": changed on ${day(c.day)} (${c.fields.joinToString(", ")}). In the ${c.beforeDays} days before: " +
+            "done on ${c.before.done} of ${c.before.answered} answered days, ${num(c.before.amount / c.before.answered)} per answered day. " +
+            "Since: done on ${c.after.done} of ${c.after.answered}, ${num(c.after.amount / c.after.answered)} per answered day."
+
     fun reviewOptionsLine(options: List<ReviewOption>): String =
         "Review options: " + options.joinToString(", ") { "${it.date} (${it.weekday}, ${it.after})" } + "."
 

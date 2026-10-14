@@ -29,7 +29,20 @@ object PlanBlocks {
         val start: LocalDate? = null,
         /** Last day it is tracked (a ramp step), or null when it runs on. */
         val end: LocalDate? = null,
+        /** Schema 8: its values from a day on, oldest first; empty means none recorded (see [versionsOf]). */
+        val versions: List<TargetVersion> = emptyList(),
+        val unit: String = "",
+        /** Schema 8: his estimate of one session's minutes at the target level, or null. */
+        val minutes: Double? = null,
     )
+
+    /**
+     * A target's versions; one with none recorded (made before schema 8, or restored from an older backup) is
+     * read as its current values, active, from its start day (tools/planner.py target_versions).
+     */
+    fun versionsOf(t: Target): List<TargetVersion> = t.versions.ifEmpty {
+        listOf(TargetVersion(t.start ?: LocalDate.of(1, 1, 1), t.minimum, t.target, t.schedule, "active"))
+    }
 
     data class Backlog(
         val id: Long,
@@ -47,6 +60,8 @@ object PlanBlocks {
          * does not restart at every step. Null: worked out from the linked targets (no start known: no clipping).
          */
         val firstStart: LocalDate? = null,
+        /** Its paused and ended targets (ended ramp steps), for what the plan asked for so far. */
+        val offTargets: List<Target> = emptyList(),
     )
 
     /** Everything active in the tracker, as the database holds it today. */
@@ -111,6 +126,8 @@ object PlanBlocks {
         /** The plan's own steps toward it (its linked targets with a start, in order) and where they finish it. */
         val steps: List<PlanStep> = emptyList(),
         val finish: PlanFinish? = null,
+        /** How far the plan's steps have got, over every target ever linked to it (null without steps). */
+        val progress: PlanProgress? = null,
     )
 
     fun backlogFacts(b: Backlog, linked: List<Target>, today: LocalDate, rest: Set<LocalDate>): BacklogFacts {
@@ -137,6 +154,14 @@ object PlanBlocks {
             answerRate = typical.answerRate,
             steps = steps,
             finish = if (steps.isEmpty()) null else Planner.planFinish(steps, remaining, today, b.deadline, todayAnswered, rest),
+            progress = if (steps.isEmpty()) {
+                null
+            } else {
+                Planner.planProgress(
+                    (linked + b.offTargets).filter { it.start != null }.map { TargetSpan(it.start!!, it.end, versionsOf(it)) },
+                    merged, today, todayAnswered, rest,
+                )
+            },
         )
     }
 
@@ -165,6 +190,8 @@ object PlanBlocks {
             )
             // Where the plan's own steps take it, counted here (a ramp is judged by its steps, not a flat pace).
             f.finish?.let { PlanStateText.planLine("B${b.id}", clean(b.name), f.steps, it) }?.let { lines += "  $it" }
+            // How far the steps have got so far (Max plan Phase 6): whether a ramp is holding, in numbers.
+            f.progress?.let { lines += "  " + PlanStateText.planProgressLine("B${b.id}", clean(b.name), it) }
         }
         fun targetLine(x: Target) {
             val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)
@@ -226,6 +253,11 @@ object PlanBlocks {
             }
             // When he answers (Max plan Phase 3 step 4): the time of day he answered on the day itself.
             timeBandLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
+            // Before and after his latest change to it (Max plan Phase 6), each side under its own schedule.
+            x.start?.let { start ->
+                Planner.changeCompare(x.checkins, versionsOf(x), start, today, t.restDays)
+                    ?.let { lines += PlanStateText.changeLine("T${x.id}", clean(x.name), it) }
+            }
             // A reason that has grown or shrunk: the last 14 days against the 14 before them.
             val before = answers(x, first.minusDays(Planner.WINDOW.toLong()), first.minusDays(1), t.restDays)
             if (before.short.size >= Planner.REASON_MIN_N) {

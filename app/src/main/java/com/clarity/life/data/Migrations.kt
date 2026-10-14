@@ -96,6 +96,28 @@ object Migrations {
         }
     }
 
+    /**
+     * Version 8 (Max plan Phase 6): target_version, a target's values from a day on (what the plan asked for on
+     * any day, and when it changed), and target.minutes, his estimate of a session's minutes for a day's load.
+     * Only adds. Old targets get no version rows: they are read as their current values from their start day
+     * (nothing is guessed about changes made before), and get that row the first time they change.
+     */
+    val V7_TO_V8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `target` ADD COLUMN `minutes` REAL")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `target_version` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`target_id` INTEGER NOT NULL, `from_day` TEXT NOT NULL, `minimum` REAL NOT NULL, " +
+                    "`target` REAL NOT NULL, `schedule` TEXT NOT NULL, `status` TEXT NOT NULL, " +
+                    "`created_at` INTEGER NOT NULL, FOREIGN KEY(`target_id`) REFERENCES `target`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `idx_target_version_day` ON `target_version` (`target_id`, `from_day`)",
+            )
+        }
+    }
+
     val V7_INDEXES = listOf(
         "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
         "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",

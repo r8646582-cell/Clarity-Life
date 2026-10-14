@@ -108,6 +108,45 @@ class PlannerTest {
         )
     }
 
+    private fun versions(o: JsonObject): List<TargetVersion> =
+        (o["versions"]?.jsonArray ?: kotlinx.serialization.json.JsonArray(emptyList())).map { it.jsonObject }.map {
+            TargetVersion(LocalDate.parse(it.str("from")), it.dbl("minimum"), it.dbl("target"), it.str("schedule"), it.str("status"))
+        }
+
+    private fun spans(args: JsonObject): List<TargetSpan> = args.getValue("targets").jsonArray.map { it.jsonObject }.map {
+        TargetSpan(LocalDate.parse(it.str("start")), it.strOrNull("end")?.let(LocalDate::parse), versions(it))
+    }
+
+    private fun versionJson(v: TargetVersion): JsonElement = json(
+        mapOf("from" to v.from.toString(), "minimum" to v.minimum, "target" to v.target, "schedule" to v.schedule, "status" to v.status),
+    )
+
+    private fun progressJson(p: PlanProgress): JsonElement = json(
+        mapOf("from" to p.from.toString(), "to" to p.to.toString(), "asked" to p.asked, "done" to p.done, "days" to p.days),
+    )
+
+    private fun progress(o: JsonObject) =
+        PlanProgress(LocalDate.parse(o.str("from")), LocalDate.parse(o.str("to")), o.dbl("asked"), o.dbl("done"), o.int("days"))
+
+    private fun sideJson(c: ChangeSide) = mapOf("answered" to c.answered, "done" to c.done, "amount" to c.amount)
+
+    private fun side(o: JsonObject) = ChangeSide(o.int("answered"), o.int("done"), o.dbl("amount"))
+
+    private fun changeJson(c: ChangeCompare): JsonElement = json(
+        mapOf(
+            "day" to c.day.toString(), "fields" to c.fields, "before_days" to c.beforeDays,
+            "before" to sideJson(c.before), "after" to sideJson(c.after),
+        ),
+    )
+
+    private fun change(o: JsonObject) = ChangeCompare(
+        LocalDate.parse(o.str("day")),
+        o.strings("fields"),
+        o.int("before_days"),
+        side(o.getValue("before").jsonObject),
+        side(o.getValue("after").jsonObject),
+    )
+
     private fun checkinJson(c: CheckIn): JsonElement = jsonNoNulls(
         listOf("day" to c.day.toString(), "level" to c.level, "amount" to c.amount, "reason" to c.reason),
     )
@@ -201,20 +240,23 @@ class PlannerTest {
 
         "backlog_facts" -> {
             val today = LocalDate.parse(args.str("today"))
-            val linked = args.getValue("targets").jsonArray.map { it.jsonObject }.mapIndexed { i, t ->
-                PlanBlocks.Target(
-                    id = i + 1L, name = "T", goalId = null, backlogId = 1L, minimum = 0.0, target = t.dbl("target"),
-                    schedule = t.str("schedule"),
-                    checkins = checkins(t["checkins"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
-                    start = t.strOrNull("start")?.let(LocalDate::parse),
-                    end = t.strOrNull("end")?.let(LocalDate::parse),
-                )
-            }
+            fun target(i: Int, t: JsonObject) = PlanBlocks.Target(
+                id = i + 1L, name = "T", goalId = null, backlogId = 1L, minimum = t.dblOrNull("minimum") ?: 0.0,
+                target = t.dbl("target"), schedule = t.str("schedule"),
+                checkins = checkins(t["checkins"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
+                start = t.strOrNull("start")?.let(LocalDate::parse),
+                end = t.strOrNull("end")?.let(LocalDate::parse),
+                versions = versions(t),
+            )
+            val linked = args.getValue("targets").jsonArray.map { it.jsonObject }.mapIndexed { i, t -> target(i, t) }
+            val off = (args["off_targets"]?.jsonArray ?: kotlinx.serialization.json.JsonArray(emptyList()))
+                .map { it.jsonObject }.mapIndexed { i, t -> target(100 + i, t) }
             val b = PlanBlocks.Backlog(
                 id = 1L, name = "B", goalId = null, total = args.dbl("total"), startDone = args.dbl("start_done"),
                 deadline = LocalDate.parse(args.str("deadline")), createdDay = LocalDate.parse(args.str("created_day")),
                 doneElsewhere = checkins(args["done_elsewhere"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
                 firstStart = args.strOrNull("first_start")?.let(LocalDate::parse),
+                offTargets = off,
             )
             val f = PlanBlocks.backlogFacts(b, linked, today, restDates(args))
             json(
@@ -222,9 +264,43 @@ class PlannerTest {
                     "done" to f.done, "schedule" to f.schedule, "days_left" to f.projection.daysLeft,
                     "projection" to projectJson(f.projection), "window_answered" to f.windowAnswered,
                     "answer_rate" to f.answerRate, "finish" to f.finish?.let(::planFinishJson),
+                    "progress" to f.progress?.let(::progressJson),
                 ),
             )
         }
+
+        "version_on" -> json(
+            Planner.versionOn(versions(args), LocalDate.parse(args.str("day")))?.let(::versionJson),
+        )
+
+        "planned_amount" -> json(
+            Planner.plannedAmount(spans(args), LocalDate.parse(args.str("first")), LocalDate.parse(args.str("last")), restDates(args))
+                ?.let { mapOf("asked" to it.asked, "days" to it.days) },
+        )
+
+        "plan_progress" -> json(
+            Planner.planProgress(
+                spans(args),
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                LocalDate.parse(args.str("today")),
+                args.boolOr("today_answered", false),
+                restDates(args),
+            )?.let(::progressJson),
+        )
+
+        "change_compare" -> json(
+            Planner.changeCompare(
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                versions(args),
+                LocalDate.parse(args.str("start")),
+                LocalDate.parse(args.str("today")),
+                restDates(args),
+            )?.let(::changeJson),
+        )
+
+        "plan_progress_line" -> json(PlanStateText.planProgressLine(args.str("bid"), args.str("name"), progress(args.getValue("p").jsonObject)))
+
+        "change_line" -> json(PlanStateText.changeLine(args.str("tid"), args.str("name"), change(args.getValue("c").jsonObject)))
 
         "replan_flag" -> json(
             Planner.replanFlag(

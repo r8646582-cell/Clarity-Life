@@ -87,6 +87,37 @@ data class Projection(
     val shortBest: Double? = null,
 )
 
+/**
+ * Schema 8: a target's values from [from] on (tools/planner.py, the target history section). [status] is active,
+ * paused or ended.
+ */
+data class TargetVersion(
+    val from: LocalDate,
+    val minimum: Double,
+    val target: Double,
+    val schedule: String,
+    val status: String,
+)
+
+/** A target as the plan history reads it: its dates and its versions, oldest first. */
+data class TargetSpan(val start: LocalDate, val end: LocalDate?, val versions: List<TargetVersion>)
+
+data class Planned(val asked: Double, val days: Int)
+
+/** How far a plan's steps have got (plan_progress): [from]..[to], what they asked for and what was done. */
+data class PlanProgress(val from: LocalDate, val to: LocalDate, val asked: Double, val done: Double, val days: Int)
+
+data class ChangeSide(val answered: Int, val done: Int, val amount: Double)
+
+/** The latest change to a target and how it went before and since (change_compare). */
+data class ChangeCompare(
+    val day: LocalDate,
+    val fields: List<String>,
+    val beforeDays: Int,
+    val before: ChangeSide,
+    val after: ChangeSide,
+)
+
 /** One weekly review's figures, as the re-plan trigger reads them. */
 data class ReviewPace(val projectedDone: Double, val remaining: Double, val answeredDays: Int)
 
@@ -473,6 +504,115 @@ object Planner {
             }
         }
         return "${minOf(7, n)}x/week"
+    }
+
+    // ---------- target history (schema 8): what a plan asked for, and before/after a change ----------
+
+    /** The version in force on [day], or null before the first one. */
+    fun versionOn(versions: List<TargetVersion>, day: LocalDate): TargetVersion? {
+        var out: TargetVersion? = null
+        for (v in versions) {
+            if (!v.from.isAfter(day)) out = v else break
+        }
+        return out
+    }
+
+    /**
+     * What the plan asked for from [first] to [last]: on every day that is not a planned rest day, each target
+     * adds the target amount in force that day when it is within its start and end, active then, and scheduled
+     * then. Null when a version in force on one of those days has an Nx/week schedule (no fixed days).
+     */
+    fun plannedAmount(
+        targets: List<TargetSpan>,
+        first: LocalDate,
+        last: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+    ): Planned? {
+        var asked = 0.0
+        val days = mutableSetOf<LocalDate>()
+        var cur = first
+        while (!cur.isAfter(last)) {
+            if (cur !in restDates) {
+                for (t in targets) {
+                    if (t.start.isAfter(cur) || (t.end != null && t.end.isBefore(cur))) continue
+                    val v = versionOn(t.versions, cur)
+                    if (v == null || v.status != "active") continue
+                    val s = parseSchedule(v.schedule) as? Schedule.Days ?: return null
+                    if (weekday(cur) in s.weekdays) {
+                        asked += v.target
+                        days += cur
+                    }
+                }
+            }
+            cur = cur.plusDays(1)
+        }
+        return Planned(asked, days.size)
+    }
+
+    /**
+     * How far the plan's steps have got: from the first step's start to yesterday (today when answered), what
+     * they asked for against every amount entered on those days. Null before a scheduled day has passed, or
+     * when it cannot be counted.
+     */
+    fun planProgress(
+        targets: List<TargetSpan>,
+        checkins: List<CheckIn>,
+        today: LocalDate,
+        todayAnswered: Boolean = false,
+        restDates: Set<LocalDate> = emptySet(),
+    ): PlanProgress? {
+        if (targets.isEmpty()) return null
+        val first = targets.minOf { it.start }
+        val last = if (todayAnswered) today else today.minusDays(1)
+        if (last.isBefore(first)) return null
+        val p = plannedAmount(targets, first, last, restDates) ?: return null
+        if (p.days == 0) return null
+        val done = checkins.filter { !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" }.sumOf { it.amount }
+        return PlanProgress(first, last, p.asked, done, p.days)
+    }
+
+    /** A change older than this many days is no longer news. */
+    const val CHANGE_LOOKBACK = 90L
+
+    private fun changedFields(a: TargetVersion, b: TargetVersion): List<String> = buildList {
+        if (abs(a.target - b.target) > EPS) add("target ${PlanStateText.g(a.target)} \u2192 ${PlanStateText.g(b.target)}")
+        if (abs(a.minimum - b.minimum) > EPS) add("minimum ${PlanStateText.g(a.minimum)} \u2192 ${PlanStateText.g(b.minimum)}")
+        if (a.schedule != b.schedule) add("${a.schedule} \u2192 ${b.schedule}")
+    }
+
+    private fun side(checkins: List<CheckIn>, schedule: String, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): ChangeSide {
+        if (first.isAfter(last)) return ChangeSide(0, 0, 0.0)
+        val w = window(checkins, schedule, first, last, rest)
+        return ChangeSide(w.answered, w.done, w.amount)
+    }
+
+    /**
+     * The latest change to a target's numbers or schedule in the last [CHANGE_LOOKBACK] days, with how it went
+     * in the [WINDOW] days before (old schedule) and since (new schedule, up to yesterday). Null when there is
+     * none, or fewer than [REASON_MIN_N] answered days on either side. A pause or resume is not a change.
+     */
+    fun changeCompare(
+        checkins: List<CheckIn>,
+        versions: List<TargetVersion>,
+        start: LocalDate,
+        today: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+    ): ChangeCompare? {
+        for (i in versions.indices.reversed()) {
+            if (i == 0) break
+            val before = versions[i - 1]
+            val after = versions[i]
+            val fields = changedFields(before, after)
+            if (fields.isEmpty()) continue
+            val day = after.from
+            if (!day.isBefore(today) || day.isBefore(today.minusDays(CHANGE_LOOKBACK))) return null
+            val bFirst = maxOf(day.minusDays(WINDOW.toLong()), start)
+            val b = side(checkins, before.schedule, bFirst, day.minusDays(1), restDates)
+            val a = side(checkins, after.schedule, day, today.minusDays(1), restDates)
+            if (b.answered < REASON_MIN_N || a.answered < REASON_MIN_N) return null
+            return ChangeCompare(day, fields, java.time.temporal.ChronoUnit.DAYS.between(bFirst, day).toInt(), b, a)
+        }
+        return null
     }
 
     /** True when the last two weekly reviews both had enough data and both projected below 85% of what remained. */
