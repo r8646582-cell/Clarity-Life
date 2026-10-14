@@ -55,7 +55,9 @@ class SearchIndexTest {
         val fromOne = search.relevantPast(one, "should I ask Hina about chemistry again?", tz)
         assertTrue("its own conversation is already in the history", fromOne.items.isEmpty())
 
-        val weak = search.relevantPast(two, "chemistry is boring", tz)
+        // One shared word out of two, and a different meaning ("chemistry" between people): neither keyword nor
+        // meaning search counts it. (Phase 4: "chemistry is boring" is close enough in meaning for gte-base.)
+        val weak = search.relevantPast(two, "the chemistry of this team is off", tz)
         assertTrue("one shared word out of two is not strong enough", weak.items.isEmpty())
     }
 

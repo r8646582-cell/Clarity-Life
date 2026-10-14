@@ -58,7 +58,7 @@ class Cached:
 
 
 def load(name):
-    return E.Candidate(name)
+    return E.Combined(name.split("+")) if "+" in name else E.Candidate(name)
 
 
 def exam2_texts():
@@ -160,7 +160,9 @@ def main(names, save=None):
         sweep[line] = e2["mean_coverage"]
         best = max(sweep.items(), key=lambda kv: (kv[1], -abs(kv[0] - line)))
         notes = ref_notes if name == REFERENCE else note_checks(emb, ref_notes["different_blocked"])
-        meta = E.CANDIDATES[E.VARIANTS.get(name, (name,))[0]]
+        base = lambda n: E.CANDIDATES[E.VARIANTS.get(n, (n,))[0]]
+        parts = [base(n) for n in name.split("+")]
+        meta = tuple(" + ".join(str(p[i]) for p in parts) for i in range(len(parts[0])))
         out["models"][name] = {
             "repo": meta[0], "licence": meta[6], "released": meta[7], "tokenizer": meta[8], "pooling": meta[3],
             "size_mb": round(inner.model_bytes / 1e6, 1),

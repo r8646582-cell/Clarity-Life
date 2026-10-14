@@ -6,7 +6,7 @@ import kotlin.math.roundToInt
 /**
  * The meaning-search vectors kept in memory, so a message does not read every vector from the database
  * (spec section 7). Each unit vector is stored as [dim] signed bytes and one scale, a quarter of its float
- * size: about 23 MB for 60,000 vectors of 384. Scores from here are close to the exact cosine (well within
+ * size: about 46 MB for 60,000 vectors of 768 (the model since Max plan Phase 4). Scores from here are close to the exact cosine (well within
  * [MARGIN]); the caller takes the best ones and scores them again exactly from the stored floats, so what
  * meaning search finds does not change. Pure, tested on the JVM.
  */
@@ -83,7 +83,7 @@ class VectorIndex(private val dim: Int) {
     companion object {
         /**
          * How far below the real threshold a candidate is still kept for exact scoring. The int8 error on a
-         * cosine of two 384-dimension unit vectors is far smaller than this.
+         * cosine of two 768-dimension unit vectors is far smaller than this.
          */
         const val MARGIN = 0.03
     }

@@ -64,10 +64,10 @@ object Retrieval {
 
     /**
      * Meaning search: the cosine a past message needs to count. The line belongs to the model: 0.62 for
-     * bge-small-en-v1.5 (10 Oct 2026), 0.56 for mdbr-leaf-mt (Max plan Phase 4), the cosine the same share of
-     * random pairs of texts reaches (about 18%; tools/eval/compare_embedders.py). Change it with the model.
+     * bge-small-en-v1.5 (10 Oct 2026), 0.42 for gte-base-en-v1.5 (Max plan Phase 4), the cosine the same share
+     * of random pairs of texts reaches (about 18%; tools/eval/compare_embedders.py). Change it with the model.
      */
-    const val SEMANTIC_MIN = 0.56
+    const val SEMANTIC_MIN = 0.42
 
     /** Meaning search is skipped for a new message shorter than this ("ok", "hi there") ... */
     const val SEMANTIC_MIN_QUERY_WORDS = 3

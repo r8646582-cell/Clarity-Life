@@ -3,8 +3,8 @@ package com.clarity.life.core
 import java.text.Normalizer
 
 /**
- * The tokenizer of the meaning model (mdbr-leaf-mt; bge-small-en-v1.5 before Max plan Phase 4, the same
- * 30,522 words): BERT uncased WordPiece, ported from the Hugging Face tokenizer
+ * The tokenizer of the meaning model (gte-base-en-v1.5; bge-small-en-v1.5 before Max plan Phase 4, the
+ * same 30,522 words): BERT uncased WordPiece, ported from the Hugging Face tokenizer
  * (BertNormalizer, BertPreTokenizer, WordPiece, then [CLS] ... [SEP], at most 512 ids). Pure Kotlin.
  *
  * TokenizerTest runs every case in contracts/embedding_vectors.json, which tools/make_embedding_vectors.py

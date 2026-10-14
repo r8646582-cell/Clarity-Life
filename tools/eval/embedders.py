@@ -60,6 +60,8 @@ CANDIDATES = {
     "gte-large": ("Xenova/gte-large", "onnx/model_quantized.onnx", None, "mean", "", None, "MIT", "2023-08", "WordPiece"),
     "gte-base-v1.5": ("Alibaba-NLP/gte-base-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None,
                       "Apache-2.0", "2024-04", "WordPiece"),
+    "gte-base-v1.5-fp32": ("Alibaba-NLP/gte-base-en-v1.5", "onnx/model.onnx", None, "cls", "", None,
+                           "Apache-2.0", "2024-04", "WordPiece"),
     "gte-large-v1.5": ("Alibaba-NLP/gte-large-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None,
                        "Apache-2.0", "2024-04", "WordPiece"),
     "e5-large-v2": ("Xenova/e5-large-v2", "onnx/model_quantized.onnx", None, "mean", "query: ", None, "MIT", "2023-06", "WordPiece"),
@@ -168,3 +170,18 @@ def speed(emb, texts, rounds=3):
             times.append((time.perf_counter() - a) * 1000)
     times.sort()
     return round(times[len(times) // 2], 2)
+
+
+class Combined:
+    """Two or more models together: their unit vectors side by side, each scaled by 1/sqrt(n), so the cosine of two
+    combined vectors is the average of the models' cosines. Named "a+b" in compare_embedders.py."""
+
+    def __init__(self, names):
+        import numpy as np
+        self.np, self.parts = np, [Candidate(n) for n in names]
+        self.model_bytes = sum(p.model_bytes for p in self.parts)
+
+    def embed(self, text):
+        np = self.np
+        return np.concatenate([p.embed(text) for p in self.parts]) / np.sqrt(len(self.parts))
+

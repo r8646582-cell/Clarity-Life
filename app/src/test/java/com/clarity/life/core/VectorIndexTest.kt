@@ -7,7 +7,7 @@ import org.junit.Test
 
 class VectorIndexTest {
 
-    private val dim = 384
+    private val dim = 768 // the app's model since Max plan Phase 4 (Embedder.DIM)
 
     private fun unit(r: Random) = VectorMath.normalize(FloatArray(dim) { (r.nextDouble() * 2 - 1).toFloat() })
 

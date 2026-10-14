@@ -34,13 +34,13 @@ ROOT = os.path.join(HERE, "..", "..")
 sys.path.insert(0, os.path.join(HERE, ".."))
 import retrieval as rv  # noqa: E402  (tools/retrieval.py: the retrieval reference)
 import recall_time as rt  # noqa: E402
-MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "mdbr-leaf-mt")
-MODEL_NAME = "mdbr-leaf-mt (384)"
+MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "gte-base-en-v1.5")
+MODEL_NAME = "gte-base-en-v1.5"
 
 # ---- core/Retrieval.kt: the pure part is tools/retrieval.py (Phase 2), used here as it is ----
 MAX_TERMS, CANDIDATES_PER_TERM, FUSE_DEPTH = rv.MAX_TERMS, rv.CANDIDATES_PER_TERM, rv.FUSE_DEPTH
 MAX_RESULTS = rv.MAX_RESULTS
-SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.56, 3, 4, 60
+SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.42, 3, 4, 60
 RECENT_SESSIONS = 5
 STOP, WORD = rv.STOP, rv.WORD
 norm, terms, stem, term_query, score, strong, word_count = (
@@ -162,8 +162,8 @@ class Index:
 
 
 class Embedder:
-    """Mirror of memory/Embedder.kt: the bundled model, the first 384 numbers of its sentence_embedding, normalised,
-    no query prefix (Max plan Phase 4; bge-small-en-v1.5 with CLS pooling before)."""
+    """Mirror of memory/Embedder.kt: the bundled model (its two parts joined), CLS pooling, normalised, no query
+    prefix (Max plan Phase 4: gte-base-en-v1.5; bge-small-en-v1.5 before)."""
 
     def __init__(self):
         import numpy as np
@@ -172,12 +172,13 @@ class Embedder:
         self.np = np
         self.tok = BertWordPieceTokenizer(os.path.join(MODEL_DIR, "vocab.txt"), lowercase=True)
         self.tok.enable_truncation(512)
-        self.s = ort.InferenceSession(os.path.join(MODEL_DIR, "model_quantized.onnx"))
+        parts = sorted(n for n in os.listdir(MODEL_DIR) if n.startswith("model_quantized.onnx.part"))
+        self.s = ort.InferenceSession(b"".join(open(os.path.join(MODEL_DIR, n), "rb").read() for n in parts))
 
     def embed(self, text):
         np = self.np
         ids = np.array([self.tok.encode(text).ids], dtype=np.int64)
-        v = self.s.run(["sentence_embedding"], {"input_ids": ids, "attention_mask": np.ones_like(ids), "token_type_ids": np.zeros_like(ids)})[0][0, :384]
+        v = self.s.run(["last_hidden_state"], {"input_ids": ids, "attention_mask": np.ones_like(ids)})[0][0, 0]
         return v / np.linalg.norm(v)
 
 

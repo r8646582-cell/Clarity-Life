@@ -1,30 +1,14 @@
 {
- "search": "keyword + mdbr-leaf-mt (384)",
+ "search": "keyword + gte-base-en-v1.5",
  "pairs": 26,
  "within_reach_before": 0.1154,
- "within_reach_phase3": 0.8846,
+ "within_reach_phase3": 0.9615,
  "missed": [
   {
    "question": "y03",
    "kind": "synthesis",
    "reflected": 29,
    "earlier": 25,
-   "before": false,
-   "phase3": false
-  },
-  {
-   "question": "y04",
-   "kind": "synthesis",
-   "reflected": 20,
-   "earlier": 12,
-   "before": false,
-   "phase3": false
-  },
-  {
-   "question": "y15",
-   "kind": "synthesis",
-   "reflected": 13,
-   "earlier": 2,
    "before": false,
    "phase3": false
   }
@@ -76,7 +60,7 @@
    "reflected": 20,
    "earlier": 12,
    "before": false,
-   "phase3": false
+   "phase3": true
   },
   {
    "question": "y05",
@@ -100,7 +84,7 @@
    "reflected": 13,
    "earlier": 2,
    "before": false,
-   "phase3": false
+   "phase3": true
   },
   {
    "question": "y16",

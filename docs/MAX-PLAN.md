@@ -216,54 +216,62 @@ Not done, said plainly:
 
 ### Phase 4: the on-phone meaning model (14 Oct 2026, built; waiting for the owner's OK)
 
-**Step 1, a newer model: switched.** `tools/eval/compare_embedders.py` ran bge-small-en-v1.5 and 10 other small
-models through exam 1, exam 2, the reflection exam and the note pairs, each with its lines set fairly (the search
-line from random pairs, without answers; the note lines at the same cost as bge's). Full table in
-`tools/eval/README.md`. **mdbr-leaf-mt** (MongoDB, August 2025, Apache-2.0) was best overall and is now bundled:
+The owner's rule (14 Oct 2026): **choose the model with the best outcomes; size does not matter.**
 
-| | bge-small-en-v1.5 (before) | mdbr-leaf-mt (now) |
+**Step 1, a newer model: switched to gte-base-en-v1.5.** `tools/eval/compare_embedders.py` ran bge-small-en-v1.5
+against 31 models (23 MB to 614 MB, including EmbeddingGemma and Qwen3-Embedding) and 8 mixes of two or three,
+through exam 1, exam 2, the reflection exam and the note pairs, each with its lines set fairly (the search line
+from random pairs, without answers; the note lines at the same cost as bge's). The top ones were measured again
+with the line moved a little either way, so one lucky setting could not decide it. Full table in
+`tools/eval/README.md`. **gte-base-en-v1.5** (Alibaba, 2024, Apache-2.0) was best or level on every exam, on its
+own; mixes of two or three models were no better, and bigger models were worse on the exams.
+
+| | bge-small-en-v1.5 (before) | gte-base-en-v1.5 (now) |
 |---|---|---|
-| Size in the APK | 34 MB | **23 MB** |
-| Time per message (cloud computer; the ratio is what counts) | 1x | **about 2x faster** |
-| Exam 1, the exam not used to design anything | 84.7% | **94.2%** (6 questions better, none worse) |
-| Exam 2, 157 questions | 95.1% | **96.7%** (7 better, 4 worse) |
-| Exam 2, meaning search alone | 91.1% | 95.1% (15 better, 3 worse) |
-| Reflection exam, 26 pairs | 88.5% | 88.5% |
-| Rewordings of a deleted note caught (different notes blocked) | 30 of 31 (12 of 37) | 30 of 31 (12 of 37) |
+| Exam 2, 157 questions | 95.1% | **97.1%** |
+| Patterns months apart (part of exam 2) | 86.7% | **90.0%** |
+| Exam 1, the exam not used to design anything | 84.7% | **91.9%** |
+| Reflection exam: earlier conversations of a pattern in view | 88.5% (23 of 26) | **96.2% (25 of 26)** |
+| Rewordings of a deleted note caught (different notes blocked) | 30 of 31 (12 of 37) | **31 of 31** (12 of 37) |
 | Leaks (deleted or off the record) | 0 | 0 |
+| Size in the app | 34 MB | 147 MB |
+| Time per text (cloud computer; the ratio is what counts) | 1x | about 3x |
+| Numbers per vector (storage and memory) | 384 | 768 |
 
-How: the first 384 numbers of its vector (it is trained to allow that cut), so stored vectors and memory use stay
-the size they were; its vocabulary is bge's word for word, so the app's tokenizer did not change. Its lines:
-search 0.56 (was 0.62), deleted note 0.73 (0.75), duplicate 0.91 (0.9), gardening suggestion 0.89 (0.85), changed
-in `tools/appliers.py`, the Kotlin and the test vectors together (`mutation_check.py`: 107 planted bugs, all caught).
-After the update, the old vectors are removed once and every vector is made again in the background (the "Rebuild
-path for old embeddings"); keyword search works meanwhile. The bundled file is made from a pinned revision by
-`tools/bundle_embedding_model.py`; `contracts/embedding_vectors.json` was regenerated from it.
+How: CLS pooling as its model card says, 768 numbers per vector, no prefix; its vocabulary is bge's word for word,
+so the app's tokenizer did not change. GitHub refuses files over 100 MB, so the model is kept in two parts and the
+app joins them on the phone the first time (`tools/bundle_embedding_model.py` makes them from a pinned revision;
+`contracts/embedding_vectors.json` regenerated). Its lines: search 0.42 (was 0.62), deleted note 0.65 (0.75),
+duplicate 0.88 (0.9), gardening suggestion 0.82 (0.85), changed in `tools/appliers.py`, the Kotlin and the test
+vectors together (`mutation_check.py`: 107 planted bugs, all caught). After the update the old vectors are removed
+once and every vector is made again in the background (the "Rebuild path for old embeddings"); keyword search
+works meanwhile. (Earlier the same day this phase used mdbr-leaf-mt, the best small model, 23 MB; it was replaced
+when the owner said size does not matter.)
 
-**Step 2, a re-ranker: measured, not built.** `tools/eval/rerankers.py` tried 7 small re-rankers on the best 30
-search candidates. Replacing the order never helped. Blending the best one (ms-marco-MiniLM-L6, 23 MB) into the
-order raised exam 2 from 96.7% to 97.8% (5 questions better, none worse) and exam 1 not at all; a random order
-blended the same way already moves exam 2 between 96.4% and 97.2%. The plan's test was "a real gain, with size and
-speed acceptable": the gain is small and uncertain, against 23 MB more and about 30 model runs per message. The
-recommendation is to leave it out; it is the owner's call (APK size).
+**Step 2, a re-ranker: measured, not built.** `tools/eval/rerankers.py` tried 11 re-rankers (4.5 MB to 643 MB) on
+the best 30 search candidates. On top of gte-base-en-v1.5 the best one changes nothing (1 question better, 1
+worse); replacing the order never helped; the bigger ones were no better than the small one. Left out on
+outcomes, not size.
 
 Not done, said plainly:
-- "Patterns months apart" in exam 2 went from 86.7% to 84.2% (three questions lost a piece each), while every
-  other kind rose or stayed. Gardening's merge suggestions find fewer rewordings at the same number of wrong ones
-  (13 of 31, was 17 of 31). Both were weighed against the larger gains above.
+- Speed on a phone is not measured, only guessed from the cloud computer: about 3 times the old model per text,
+  so perhaps a tenth to a fifth of a second for each message, and remaking the vectors after the update takes
+  minutes for a few months of history (it would be hours for ten years). Memory for vectors doubles (about 46 MB
+  at ten years). Phase 5 (speed and battery) should time it on the 10-year emulator database.
+- Fewer rewordings are dropped as duplicates (6 of 31, was 9) and gardening is shown slightly fewer merges to
+  consider (14 of 31, was 17), each at the same number of wrong ones.
 - The lines were set on the same exams and 68 note pairs as before, not on his real notes and messages.
-- Models that would need a new tokenizer in the app or are 200 MB and more (EmbeddingGemma, Qwen3-Embedding) were
-  not tried.
-- Speed was measured on the cloud computer, not a phone. The emulator test in CI checks the model gives the
-  reference vectors on Android; the phone itself is the owner's check below.
+- One emulator test sentence was changed: "chemistry is boring" now counts as close in meaning to "Hina helps me
+  revise chemistry", which is fair; the test is about one shared word, so it now uses "the chemistry of this team
+  is off".
 - The Android build, lint and tests were not run in this session (the owner's choice in Phase 0: they run in
   GitHub Actions on every push).
 
 **What the owner checks on the phone** (after installing this build over the old one):
-1. Open the app and leave it open (or come back) for a minute or two: it makes the new meaning vectors for your
-   whole history in the background. Nothing to tap; your data does not change.
-2. Settings, Health, the next day: the counts should not start rising. (If the new model failed its check on your
+1. The first open after the update may take a few seconds longer (the app unpacks the 147 MB model once).
+2. Leave the app open (or come back) for a few minutes: it makes the new meaning vectors for your whole history
+   in the background. Nothing to tap; your data does not change.
+3. Settings, Health, the next day: the counts should not start rising. (If the new model failed its check on your
    phone, the app quietly falls back to keyword search and logs it there; tell Claude if you see that.)
-3. In Talk, ask about something from an older conversation in different words than you used then: the coach
-   should still bring it up.
-4. The app should be about 11 MB smaller to download.
+4. In Talk, ask about something from an older conversation in different words than you used then: the coach
+   should still bring it up. Replies should not feel slower to start; if they do, say so.

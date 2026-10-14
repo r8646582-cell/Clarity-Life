@@ -83,12 +83,12 @@ internal object JobFields {
 
     /**
      * Cosine at or above which a text is too close in meaning to a note he deleted (Max plan Phase 3). The lines
-     * belong to the model: set in Phase 4 for mdbr-leaf-mt (tools/eval/compare_embedders.py).
+     * belong to the model: set in Phase 4 for gte-base-en-v1.5 (tools/eval/compare_embedders.py).
      */
-    const val DELETED_MEANING = 0.73
+    const val DELETED_MEANING = 0.65
 
     /** Cosine at or above which a note repeats an active note of the same kind that says "not" the same way. */
-    const val DUPLICATE_MEANING = 0.91
+    const val DUPLICATE_MEANING = 0.88
 
     private val NEGATIONS = setOf("not", "no", "never", "nor", "without", "cannot", "stop", "stopped", "none", "nothing")
 

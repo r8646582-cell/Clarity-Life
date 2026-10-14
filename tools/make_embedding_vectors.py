@@ -3,13 +3,12 @@
 NOT part of check_all.sh: it needs packages the contract checks never install. Run it only when the bundled
 model changes:
     python3 -m venv /tmp/venv && /tmp/venv/bin/pip install onnxruntime==1.20.1 tokenizers numpy
-    /tmp/venv/bin/python tools/make_embedding_vectors.py app/src/main/assets/models/mdbr-leaf-mt
+    /tmp/venv/bin/python tools/make_embedding_vectors.py app/src/main/assets/models/gte-base-en-v1.5
 
 Reference implementation: the Hugging Face tokenizer of the model (its tokenizer.json at the revision
 tools/bundle_embedding_model.py pins, BERT uncased WordPiece) and ONNX Runtime on the very model file bundled in
-the app. The vector (Max plan Phase 4): the export's "sentence_embedding" (mean pooling and the model's own
-projection to 1,024 numbers), its first 384 numbers, L2-normalised. The model is trained so that its first numbers
-stand on their own (Matryoshka); 384 keeps what is stored and held in memory the size it was with bge-small.
+the app (its two parts joined). The vector (Max plan Phase 4, gte-base-en-v1.5): the first token's ([CLS]) last
+hidden state, 768 numbers, L2-normalised, as the model card does it. The model takes no token_type_ids.
 """
 import hashlib, json, os, sys
 import numpy as np
@@ -18,15 +17,15 @@ from huggingface_hub import hf_hub_download
 from tokenizers import Tokenizer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from bundle_embedding_model import REPO, REVISION  # noqa: E402
+from bundle_embedding_model import REPO, REVISION, model_bytes  # noqa: E402
 
-DIM = 384
+DIM = 768
 src = sys.argv[1]
-model_path = os.path.join(src, "model_quantized.onnx")
+model = model_bytes(src)
 tok = Tokenizer.from_file(hf_hub_download(REPO, "tokenizer.json", revision=REVISION))
 tok.no_padding()
 tok.enable_truncation(512)
-session = ort.InferenceSession(model_path)
+session = ort.InferenceSession(model)
 
 TOKENIZER_CASES = [
     "hello",
@@ -61,16 +60,16 @@ EMBED_CASES = [
 
 def embed(text):
     ids = np.array([tok.encode(text).ids], dtype=np.int64)
-    out = session.run(["sentence_embedding"], {"input_ids": ids, "attention_mask": np.ones_like(ids), "token_type_ids": np.zeros_like(ids)})[0]
-    v = out[0, :DIM].astype(np.float64)
+    out = session.run(["last_hidden_state"], {"input_ids": ids, "attention_mask": np.ones_like(ids)})[0]
+    v = out[0, 0].astype(np.float64)
     return v / np.linalg.norm(v)
 
 
 vectors = [embed(t) for t in EMBED_CASES]
 data = {
     "_comment": "Made by tools/make_embedding_vectors.py from the bundled model. The Kotlin WordPiece tokenizer must give exactly these ids (TokenizerTest, JVM); the on-device embedder must give vectors with cosine >= 0.99 to these (EmbedderTest, emulator).",
-    "model": "mdbr-leaf-mt (MongoDB, int8 ONNX export model_quantized.onnx at revision %s, joined into one file), first %d numbers of sentence_embedding" % (REVISION[:12], DIM),
-    "model_sha256": hashlib.sha256(open(model_path, "rb").read()).hexdigest(),
+    "model": "gte-base-en-v1.5 (Alibaba-NLP, its int8 ONNX export onnx/model_quantized.onnx at revision %s, bundled in two parts), CLS pooling" % REVISION[:12],
+    "model_sha256": hashlib.sha256(model).hexdigest(),
     "dim": DIM,
     "max_tokens": 512,
     "tokenizer": [{"text": t, "ids": tok.encode(t).ids} for t in TOKENIZER_CASES],
