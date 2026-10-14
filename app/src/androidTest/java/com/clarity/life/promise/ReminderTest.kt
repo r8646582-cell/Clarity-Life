@@ -72,4 +72,29 @@ class ReminderTest {
             for (id in listOf(withReminder, without, past)) reminders.cancel(id)
         }
     }
+
+    @Test
+    fun theSelfCheckSetsALostAlarmAgain() = runBlocking {
+        val a = promise(3_600_000, 1)
+        val b = promise(7_200_000, 1)
+        try {
+            assertEquals(2, reminders.syncAll(now))
+            assertEquals(2 to 0, reminders.status(now))
+            assertEquals("nothing to heal", 0, reminders.heal(now))
+            // The phone dropped one alarm (a force stop, a cleaner app): the check finds it and sets it again.
+            reminders.cancel(b)
+            assertEquals(2 to 1, reminders.status(now))
+            assertEquals(1, reminders.heal(now))
+            assertTrue(reminders.isSet(b))
+            assertEquals(2 to 0, reminders.status(now))
+            // The count is logged, never the promise's words.
+            val details = db.query("SELECT code, detail FROM error_log WHERE area = 'reminder'", null).use { c ->
+                buildList { while (c.moveToNext()) add(c.getString(0) to c.getString(1)) }
+            }
+            assertEquals(listOf("alarm_missing" to "n=1"), details)
+        } finally {
+            reminders.cancel(a)
+            reminders.cancel(b)
+        }
+    }
 }

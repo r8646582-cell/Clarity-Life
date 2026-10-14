@@ -30,8 +30,8 @@ class ReminderReceiver : BroadcastReceiver() {
 
 /**
  * The moments when every alarm must be set again, because Android forgets them: the phone restarted
- * (including the "quick boot" some Xiaomi phones send), the app was updated, the clock was changed, or
- * Android granted the exact-alarm permission. Any of these only ever re-sets what is already saved.
+ * (including the "quick boot" some Xiaomi phones send), the app was updated, the clock or the time zone was
+ * changed, or Android granted the exact-alarm permission. Any of these only ever re-sets what is already saved.
  */
 @AndroidEntryPoint
 class RestartReceiver : BroadcastReceiver() {
@@ -48,6 +48,7 @@ class RestartReceiver : BroadcastReceiver() {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
             "android.intent.action.QUICKBOOT_POWERON",
             "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
         )
