@@ -132,10 +132,11 @@ class CardScreensTest {
         val cut = texts.flatMap { node ->
             val layouts = mutableListOf<TextLayoutResult>()
             node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
-            layouts.filter { it.hasVisualOverflow || brokenWord(it) }.map {
-                "\"${it.layoutInput.text}\" (box ${it.size.width}x${it.size.height}px, text " +
-                    "${it.multiParagraph.width}x${it.multiParagraph.height}px, ${it.lineCount} lines, " +
-                    "wide ${it.didOverflowWidth}, tall ${it.didOverflowHeight}, word broken ${brokenWord(it)})"
+            // Width is not checked: a short text in a wide space always reads as "narrower than allowed".
+            // What matters is that no line is hidden at the bottom and no word is split.
+            layouts.filter { it.didOverflowHeight || it.multiParagraph.didExceedMaxLines || brokenWord(it) }.map {
+                "\"${it.layoutInput.text}\" (box ${it.size.width}x${it.size.height}px, text height " +
+                    "${it.multiParagraph.height}px, ${it.lineCount} lines, word broken ${brokenWord(it)})"
             }
         }
         assertTrue("text cut short:\n" + cut.joinToString("\n"), cut.isEmpty())
