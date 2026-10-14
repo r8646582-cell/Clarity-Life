@@ -44,6 +44,39 @@ CANDIDATES = {
                   "MIT", "2023-07", "WordPiece"),
     "nomic-v1.5": ("nomic-ai/nomic-embed-text-v1.5", "onnx/model_quantized.onnx", None, "mean", "clustering: ",
                    "search_query: ", "Apache-2.0", "2024-02", "WordPiece"),
+    # Larger models (the owner, 14 Oct 2026: "choose the model with the best outcomes, don't care about size").
+    "leaf-mt-fp32": ("MongoDB/mdbr-leaf-mt", "onnx/model.onnx", None, "mean", "", ARCTIC_Q, "Apache-2.0", "2025-08", "WordPiece"),
+    "mxbai-large": ("mixedbread-ai/mxbai-embed-large-v1", "onnx/model_quantized.onnx", None, "cls", "", ARCTIC_Q,
+                    "Apache-2.0", "2024-03", "WordPiece"),
+    "bge-base": ("Xenova/bge-base-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None, "MIT", "2023-09", "WordPiece"),
+    "bge-large": ("Xenova/bge-large-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None, "MIT", "2023-09", "WordPiece"),
+    "arctic-l": ("Snowflake/snowflake-arctic-embed-l", "onnx/model_quantized.onnx", None, "cls", "", ARCTIC_Q,
+                 "Apache-2.0", "2024-04", "WordPiece"),
+    "arctic-m-v2.0": ("Snowflake/snowflake-arctic-embed-m-v2.0", "onnx/model_quantized.onnx", None, "cls", "", "query: ",
+                      "Apache-2.0", "2024-11", "SentencePiece (XLM-R)"),
+    "arctic-l-v2.0": ("Snowflake/snowflake-arctic-embed-l-v2.0", "onnx/model_quantized.onnx", None, "cls", "", "query: ",
+                      "Apache-2.0", "2024-11", "SentencePiece (XLM-R)"),
+    "gte-base": ("Xenova/gte-base", "onnx/model_quantized.onnx", None, "mean", "", None, "MIT", "2023-08", "WordPiece"),
+    "gte-large": ("Xenova/gte-large", "onnx/model_quantized.onnx", None, "mean", "", None, "MIT", "2023-08", "WordPiece"),
+    "gte-base-v1.5": ("Alibaba-NLP/gte-base-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None,
+                      "Apache-2.0", "2024-04", "WordPiece"),
+    "gte-large-v1.5": ("Alibaba-NLP/gte-large-en-v1.5", "onnx/model_quantized.onnx", None, "cls", "", None,
+                       "Apache-2.0", "2024-04", "WordPiece"),
+    "e5-large-v2": ("Xenova/e5-large-v2", "onnx/model_quantized.onnx", None, "mean", "query: ", None, "MIT", "2023-06", "WordPiece"),
+    "uae-large": ("WhereIsAI/UAE-Large-V1", "onnx/model_quantized.onnx", None, "cls", "", None, "MIT", "2023-12", "WordPiece"),
+    "mpnet-base": ("Xenova/all-mpnet-base-v2", "onnx/model_quantized.onnx", None, "mean", "", None, "Apache-2.0", "2021-08",
+                   "WordPiece (MPNet)"),
+    "gte-modernbert": ("Alibaba-NLP/gte-modernbert-base", "onnx/model_quantized.onnx", None, "cls", "", None,
+                       "Apache-2.0", "2025-01", "BPE (ModernBERT)"),
+    "modernbert-embed": ("nomic-ai/modernbert-embed-base", "onnx/model_quantized.onnx", None, "mean", "clustering: ",
+                         "search_query: ", "Apache-2.0", "2024-12", "BPE (ModernBERT)"),
+    "granite-r2": ("onnx-community/granite-embedding-english-r2-ONNX", "onnx/model_quantized.onnx", None, "cls", "", None,
+                   "Apache-2.0", "2025-08", "BPE (ModernBERT)"),
+    "embeddinggemma": ("onnx-community/embeddinggemma-300m-ONNX", "onnx/model_quantized.onnx", None, "mean",
+                       "task: sentence similarity | query: ", "task: search result | query: ", "Gemma terms", "2025-08",
+                       "SentencePiece (Gemma)"),
+    "qwen3-0.6b": ("onnx-community/Qwen3-Embedding-0.6B-ONNX", "onnx/model_quantized.onnx", None, "last",
+                   "Instruct: Retrieve semantically similar text\nQuery: ", None, "Apache-2.0", "2025-06", "BPE (Qwen)"),
     "granite-small-r2": ("onnx-community/granite-embedding-small-english-r2-ONNX", "onnx/model_quantized.onnx", None,
                          "cls", "", None, "Apache-2.0", "2025-07", "BPE (ModernBERT)"),
 }
@@ -103,11 +136,19 @@ class Candidate:
         feed = {"input_ids": ids, "attention_mask": np.ones_like(ids)}
         if "token_type_ids" in self.inputs:
             feed["token_type_ids"] = np.zeros_like(ids)
+        if "position_ids" in self.inputs:  # a decoder (Qwen3): positions, and an empty cache
+            feed["position_ids"] = np.arange(ids.shape[1], dtype=np.int64)[None, :]
+            for i in self.s.get_inputs():
+                if i.name.startswith("past_key_values"):
+                    shape = [1 if d == "batch_size" else 0 if isinstance(d, str) else d for d in i.shape]
+                    feed[i.name] = np.zeros(shape, dtype=np.float16 if "float16" in i.type else np.float32)
         o = self.s.run([self.out], feed)[0]
         if o.ndim == 2:  # the export already pooled (and projected)
             v = o[0]
         elif self.pooling == "cls":
             v = o[0, 0]
+        elif self.pooling == "last":
+            v = o[0, -1]
         else:
             v = o[0].mean(axis=0)
         v = v.astype(np.float64)[:self.dims]

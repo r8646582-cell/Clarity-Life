@@ -36,6 +36,11 @@ CANDIDATES = {
     "jina-tiny": ("jinaai/jina-reranker-v1-tiny-en", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-04"),
     "jina-turbo": ("jinaai/jina-reranker-v1-turbo-en", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-04"),
     "mxbai-xsmall": ("mixedbread-ai/mxbai-rerank-xsmall-v1", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-02"),
+    # Larger (the owner, 14 Oct 2026: best outcomes, size does not matter)
+    "mxbai-base": ("mixedbread-ai/mxbai-rerank-base-v1", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-02"),
+    "mxbai-large": ("mixedbread-ai/mxbai-rerank-large-v1", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-02"),
+    "bge-reranker-large": ("Xenova/bge-reranker-large", "onnx/model_quantized.onnx", None, "MIT", "2023-09"),
+    "bge-reranker-v2-m3": ("onnx-community/bge-reranker-v2-m3-ONNX", "onnx/model_quantized.onnx", None, "Apache-2.0", "2024-03"),
     "gte-modernbert": ("Alibaba-NLP/gte-reranker-modernbert-base", "onnx/model_quantized.onnx", None, "Apache-2.0", "2025-01"),
 }
 
