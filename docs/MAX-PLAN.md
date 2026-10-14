@@ -181,3 +181,35 @@ Phase 2 makes a message's search about half a second slower at ten years (it now
 not two, and brings the record index up to date after a check-in). The first build read up to 160 vectors from
 the database per search; that was fixed. What is left belongs to Phase 5 (speed), which also has the older
 costs: the plan tracker reading every check-in (about a second) and the first search reading every vector.
+
+### Phase 3: how memory is built after each chat (14 Oct 2026, built; waiting for the owner's OK)
+
+| Step | What was built | How it is proven |
+|---|---|---|
+| 1. Reflection sees the whole history | Besides the 12 most recent events, reflection gets up to 8 earlier conversation summaries and events like this one: everything he said in the new part, joined, searched by keyword, and his newest six messages one by one by keyword and meaning; one per conversation, oldest first, dated by code. | `tools/eval/reflection_exam.py`: for 26 pairs of conversations a pattern question links, the earlier one is in view of reflection **3 of 26 (11.5%) before, 23 of 26 (88.5%) now**. `retrieval_vectors.json` (5 cases), 4 planted bugs, `ReflectionInputTest` |
+| 2. Note checks by meaning | A new, rewritten or merged note close in meaning (0.75) to one he deleted is refused; a new note repeating an active one of the same kind in meaning (0.9) is dropped, never when one says "not" and the other does not (that guard now covers the word check too). Checked again inside the database transaction. Vectors kept in memory only. | `tools/eval/note_meaning.py` on 68 written pairs: rewordings of a deleted note caught **0 of 31 before, 30 of 31 now**. 12 applier vectors, 8 planted bugs, an emulator test with the real model |
+| 3. Facts with time | Database version 6. A profile value carries the day it was first said; a value reflection replaces is kept as "before, until that day" and sent with the entry. Notes and profile changes are dated by the day he said them, not the day the job ran. A retired note found by search says when it was first and last seen. | `MigrationTest` (5 to 6, and every old version with real rows to 6), a version 6 sample backup restored in CI, `MemoryBlocksTest`. Exam 2 keyword-only 92.5% to 93.0% (replaced facts 89% to 93%); with meaning search unchanged at 95.1%; 0 leaks |
+| 4. Check-in time of day | A check-in stores his local time and day of answering. CHECKIN_FACTS gains "answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them" over 90 days. | `PlanBlocksTest` |
+| 5. Gardening suggestions | Code groups notes that look like one (same kind, same "not", meaning 0.85 or half the words, at most 4) and lists them under NOTES as merges to consider; the applier checks every merge as before. | 3 applier vectors, 4 planted bugs; 17 of 31 rewordings suggested, 3 of 37 different notes (for the model to turn down) |
+
+Contracts: `tools/appliers.py` (84 vectors), `tools/retrieval.py` (85), `mutation_check.py` 107 planted bugs, all caught; `contracts/context.md`, `db/schema.sql` and the spec (sections 7 and 10) updated together. No prompt was changed.
+
+Not done, said plainly:
+- The thresholds were set on 68 note pairs written for this phase, not on his real notes. This model scores
+  opposites like rewordings, so an opposite with no "not" in it ("helps you sleep" and "keeps you awake"), of the
+  same kind, is still taken for a repeat. Near something he deleted, a different note on the same topic is
+  sometimes refused too (12 of 37 test pairs): the safe side of rule 5, but a cost.
+- With meaning search off (the model failed its check), the note checks fall back to words, as before.
+- Reflection still misses earlier conversations that share neither a word nor a meaning with the new one (3 of
+  26). It gets about 1,600 more tokens per run.
+- Only the newest replaced value of a profile entry is sent; older ones stay in the database and the export.
+  Entries and check-ins from before version 6 have no day or time (nothing is guessed).
+- Time-of-day lines need answers given on the day itself, so they appear only after some weeks of use.
+- The exams measure what is within reach, not what the model writes; the test bench on the real model is that
+  check.
+
+**What the owner checks on the phone** (after installing this build over the old one):
+1. Open the app once: it updates the database to version 6 (no data changes). Settings, Health should still say "database ok" after the next night.
+2. Answer a check-in today as usual. Nothing looks different; after a few weeks, Talk's coach may mention when in the day you tend to answer "Not".
+3. In What I know, open a profile entry the coach updates later: it shows "Since ..." and, when a value was replaced, "Before, until ...".
+4. If you delete a note and later say the same thing in other words, it should not come back.
