@@ -13,6 +13,7 @@ import com.clarity.life.data.entity.NoteEvidenceRow
 import com.clarity.life.data.entity.NoteRow
 import com.clarity.life.data.entity.PersonRow
 import com.clarity.life.data.entity.ProfileEntryRow
+import com.clarity.life.data.entity.ProfilePastRow
 import com.clarity.life.data.entity.QuoteRow
 import com.clarity.life.data.entity.ReflectionItemRow
 import javax.inject.Inject
@@ -60,6 +61,10 @@ class MemoryRepository @Inject constructor(
         fun dayOf(quote: String): String =
             said.firstOrNull { TextCheck.quoteIsHis(quote, listOf(it.text), 1) }?.day ?: today
 
+        // The day he said what is learned now (his last new message), not the day the job ran: a chat
+        // reflected next morning still dates its notes and profile changes by the day of the chat.
+        val saidDay = said.lastOrNull()?.day ?: today
+
         var applied = 0
         var skipped = 0
         var title = ""
@@ -68,7 +73,7 @@ class MemoryRepository @Inject constructor(
             val done: Boolean = when (op) {
                 is JobOp.ConversationSet -> { title = op.title; true }
                 is JobOp.ConversationSummary -> { summary = op.summary; true }
-                is JobOp.ProfileSet -> setProfile(op, now)
+                is JobOp.ProfileSet -> setProfile(op, now, saidDay, aChange = true)
                 is JobOp.PersonAdd -> putPerson(op.name, op.relation, op.notes, now, createIfMissing = true)
                 // A person he removed since the job started is not brought back.
                 is JobOp.PersonUpdate -> putPerson(op.name, op.relation, op.notes, now, createIfMissing = false)
@@ -87,8 +92,8 @@ class MemoryRepository @Inject constructor(
                     if (conversation.offTheRecord == 0) search.indexEvent(row.copy(id = id))
                     true
                 }
-                is JobOp.NoteAdd -> addNote(op, conversationId, today, now, ::dayOf)
-                is JobOp.NoteUpdate -> updateNote(op, conversationId, today, ::dayOf)
+                is JobOp.NoteAdd -> addNote(op, conversationId, saidDay, now, ::dayOf)
+                is JobOp.NoteUpdate -> updateNote(op, conversationId, saidDay, ::dayOf)
                 is JobOp.NoteRetire -> retireNote(op.id)
                 is JobOp.QuoteAdd -> {
                     if (dao.quoteCount(op.text) == 0) {
@@ -162,8 +167,9 @@ class MemoryRepository @Inject constructor(
                 is JobOp.NoteRetire -> retireNote(op.id)
                 is JobOp.PersonMerge -> mergePeople(op, now)
                 // Gardening may only rewrite an entry he has not confirmed: verified stays false.
+                // A rewording, never a change of fact: no "before" is kept and the entry keeps its day.
                 is JobOp.ProfileSet -> !op.verified && dao.profileEntry(op.key)?.let { it.confirmed == 0 } == true &&
-                    setProfile(op, now)
+                    setProfile(op, now, saidDay = null, aChange = false)
                 // Only reflection produces these; the gardening applier cannot.
                 else -> false
             }
@@ -187,6 +193,8 @@ class MemoryRepository @Inject constructor(
     fun watchEvidence() = dao.watchEvidence()
 
     fun watchProfile() = dao.watchProfile()
+
+    fun watchProfilePast() = dao.watchProfilePast()
 
     fun watchPeople() = dao.watchPeople()
 
@@ -263,6 +271,7 @@ class MemoryRepository @Inject constructor(
 
     suspend fun deleteProfile(key: String) = db.withTransaction {
         dao.deleteProfile(key)
+        dao.deleteProfilePast(key)
         sendFreshMemory()
     }
 
@@ -307,14 +316,32 @@ class MemoryRepository @Inject constructor(
      */
     private suspend fun sendFreshMemory() = db.conversations().clearAllPrefixes()
 
-    private suspend fun setProfile(op: JobOp.ProfileSet, now: Long): Boolean {
+    /**
+     * [aChange]: reflection writing what he said ([saidDay] is that day); false for gardening's rewording.
+     * Facts with time (Max plan Phase 3): a new entry starts on the day it was said. When reflection replaces a
+     * value with a different one, the old value is kept in profile_past, until that day, and the entry starts
+     * again from it. A correction in his own words ([JobOp.ProfileSet.verified]) means the old value was wrong,
+     * not old: nothing is kept and the entry keeps its day, as it does for his own edit.
+     */
+    private suspend fun setProfile(op: JobOp.ProfileSet, now: Long, saidDay: String?, aChange: Boolean): Boolean {
         val existing = dao.profileEntry(op.key)
         // He may have confirmed the entry after the job read it: then only his exact words may change it.
         if (existing != null && existing.confirmed == 1 && !op.verified) return false
         if (existing == null && dao.profile().size >= PROFILE_CAP) return false
         // Nothing a job returns makes an entry confirmed, and words he did not confirm cannot keep his badge.
         val confirmed = if (existing != null && existing.value == op.value) existing.confirmed else 0
-        dao.putProfile(ProfileEntryRow(op.key, op.value, confirmed, now))
+        val replaced = aChange && !op.verified && existing != null && existing.value != op.value && saidDay != null
+        if (replaced && existing != null && saidDay != null) {
+            dao.insertProfilePast(
+                ProfilePastRow(key = op.key, value = existing.value, sinceDay = existing.sinceDay, untilDay = saidDay, createdAt = now),
+            )
+        }
+        val since = when {
+            existing == null -> saidDay
+            replaced -> saidDay
+            else -> existing.sinceDay
+        }
+        dao.putProfile(ProfileEntryRow(op.key, op.value, confirmed, now, since))
         return true
     }
 

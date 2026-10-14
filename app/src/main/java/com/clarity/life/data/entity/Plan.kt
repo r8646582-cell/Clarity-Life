@@ -195,6 +195,10 @@ data class CheckinRow(
     val reason: String? = null,
     val note: String? = null,
     @ColumnInfo(name = "entered_at") val enteredAt: Long,
+    /** Schema 6: his local time of answering, minutes after midnight, written at write time (never moved). */
+    @ColumnInfo(name = "entered_minute") val enteredMinute: Int? = null,
+    /** Schema 6: his day key when he answered; an answer given on a later day says nothing about the day's time. */
+    @ColumnInfo(name = "entered_day") val enteredDay: String? = null,
 )
 
 @Entity(

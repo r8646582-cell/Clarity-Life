@@ -109,16 +109,18 @@ class KnowViewModel @Inject constructor(
         val evidence: List<NoteEvidenceRow>,
         val profile: List<ProfileEntryRow>,
         val people: List<PersonRow>,
+        /** Values replaced by newer ones (schema 6), shown under their entry. */
+        val past: List<com.clarity.life.data.entity.ProfilePastRow> = emptyList(),
         val focuses: List<FocusRow>,
     )
 
     private val memoryFlow = combine(
         memory.watchNotes(),
         memory.watchEvidence(),
-        memory.watchProfile(),
+        combine(memory.watchProfile(), memory.watchProfilePast()) { profile, past -> profile to past },
         memory.watchPeople(),
         memory.watchFocuses(),
-    ) { notes, evidence, profile, people, focuses -> Memory(notes, evidence, profile, people, focuses) }
+    ) { notes, evidence, profile, people, focuses -> Memory(notes, evidence, profile.first, people, focuses, profile.second) }
 
     val state: StateFlow<State> = combine(memoryFlow, memory.watchChapters(), query, quietLine) { m, chapters, q, line ->
         build(m, chapters, q, line)
@@ -219,8 +221,10 @@ class KnowViewModel @Inject constructor(
                 text = e.value,
                 grade = if (e.confirmed == 1) KnowText.grade("confirmed") else KnowText.grade("guess"),
                 confidence = if (e.confirmed == 1) "confirmed" else "guess",
-                seen = null,
-                evidence = emptyList(),
+                // Facts with time (Max plan Phase 3): since when, and what it said before, as the coach sees it.
+                seen = e.sinceDay?.let { "Since ${com.clarity.life.core.SearchText.day(it)}" },
+                evidence = m.past.filter { it.key == e.key }.sortedByDescending { it.id }
+                    .map { "Before, until ${com.clarity.life.core.SearchText.day(it.untilDay)}: ${it.value}" },
                 canEdit = true,
                 canDelete = true,
                 canConfirm = e.confirmed == 0,

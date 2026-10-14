@@ -1,4 +1,4 @@
--- Clarity: database schema, version 5 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 6 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
@@ -130,6 +130,8 @@ CREATE TABLE checkin (
   reason TEXT,
   note TEXT,
   entered_at INTEGER NOT NULL,
+  entered_minute INTEGER,               -- schema 6: his local time when he answered, minutes after midnight (0..1439), stored at write time
+  entered_day TEXT,                     -- schema 6: his day key when he answered; NULL for answers from before schema 6
   UNIQUE (target_id, day_key)           -- a missing row is "no answer"; one answer per target per day
 );
 CREATE INDEX idx_checkin_day ON checkin(day_key);
@@ -192,8 +194,21 @@ CREATE TABLE profile_entry (
   key TEXT PRIMARY KEY NOT NULL,
   value TEXT NOT NULL,
   confirmed INTEGER NOT NULL DEFAULT 0 CHECK (confirmed IN (0,1)),
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  since_day TEXT                        -- schema 6: the day this value was first said (his day key); NULL = before schema 6, not known
 );
+
+CREATE TABLE profile_past (            -- schema 6: a profile value that was replaced by a newer one, so an old fact never poses as current
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  since_day TEXT,                       -- the day it was first said, when known
+  until_day TEXT NOT NULL,              -- the day it was replaced (the day the newer value was said)
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_profile_past_key ON profile_past(key, id);
+-- Written by code only when reflection replaces a value with a different one; a correction in his own words
+-- (the old value was wrong, not old) and his own edit write none. Deleting the entry deletes its past too.
 
 CREATE TABLE person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -96,6 +96,24 @@ class MemoryBlocksTest {
         assertEquals("Study time (guess): Mornings", profile.items.single().text)
     }
 
+    /** Max plan Phase 3: since when a value holds, and what it replaced, written by code from day keys. */
+    @Test
+    fun aProfileEntryCarriesItsDayAndTheValueItReplaced() {
+        val profile = MemoryBlocks.profile(
+            listOf(
+                MemoryBlocks.Profile("Work", "Studying full time", true, since = "2026-04-01", before = "Accounts assistant", beforeUntil = "2026-04-01"),
+                MemoryBlocks.Profile("Home", "Flat on Kestrel Road", false, since = "2026-10-05"),
+            ),
+        )
+        assertEquals(
+            listOf(
+                "Work (confirmed, since 1 Apr 2026): Studying full time; before that, until 1 Apr 2026: Accounts assistant",
+                "Home (guess, since 5 Oct 2026): Flat on Kestrel Road",
+            ),
+            profile.items.map { it.text },
+        )
+    }
+
     @Test
     fun ideasAreDistinctNewestTwentyShownOldestFirst() {
         val tags = (1..25).map { "idea $it" } + "IDEA 1"

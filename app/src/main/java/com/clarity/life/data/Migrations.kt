@@ -66,4 +66,23 @@ object Migrations {
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_brief_key` ON `brief` (`key`)")
         }
     }
+
+    /**
+     * Version 6 (Max plan Phase 3): facts with time. profile_entry.since_day (the day a value was first said),
+     * profile_past (values replaced by newer ones), and checkin.entered_minute and entered_day (his local time
+     * and day when he answered). Only adds; old rows keep NULL, which means "not known", never a guess.
+     */
+    val V5_TO_V6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `profile_entry` ADD COLUMN `since_day` TEXT")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `profile_past` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`key` TEXT NOT NULL, `value` TEXT NOT NULL, `since_day` TEXT, `until_day` TEXT NOT NULL, " +
+                    "`created_at` INTEGER NOT NULL)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_profile_past_key` ON `profile_past` (`key`, `id`)")
+            db.execSQL("ALTER TABLE `checkin` ADD COLUMN `entered_minute` INTEGER")
+            db.execSQL("ALTER TABLE `checkin` ADD COLUMN `entered_day` TEXT")
+        }
+    }
 }

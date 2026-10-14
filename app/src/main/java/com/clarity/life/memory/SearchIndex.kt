@@ -433,7 +433,7 @@ class SearchIndex @Inject constructor(
             ids(NOTE).chunked(CHUNK).forEach { chunk ->
                 for (n in dao.retiredNotes(chunk)) {
                     cache[Key(NOTE, n.id)] = Found(
-                        Retrieval.Candidate(n.text, n.createdAt, "An older note, no longer active (${n.kind}, last seen ${n.lastSeen})"),
+                        Retrieval.Candidate(n.text, n.createdAt, "An older note, no longer active (${n.kind}, seen from ${SearchText.day(n.firstSeen)} to ${SearchText.day(n.lastSeen)})"),
                         null,
                     )
                 }

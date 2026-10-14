@@ -210,6 +210,10 @@ class PlannerRepository @Inject constructor(
             throw Refused("a reason only goes with Not or Part")
         }
         dao.target(targetId) ?: throw Refused("target gone")
+        // Schema 6: his local time and day of answering, stored now so a later change of time zone never moves them.
+        val tz = settings.timeZone()
+        val at = com.clarity.life.core.TimeFacts.local(Instant.ofEpochMilli(now), tz)
+        val enteredDay = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, settings.dayBoundaryHour()).toString()
         val row = CheckinRow(
             targetId = targetId,
             dayKey = day.toString(),
@@ -218,6 +222,8 @@ class PlannerRepository @Inject constructor(
             reason = reason,
             note = note?.trim()?.takeIf { it.isNotEmpty() },
             enteredAt = now,
+            enteredMinute = at.hour * 60 + at.minute,
+            enteredDay = enteredDay,
         )
         val old = dao.checkin(targetId, day.toString())
         if (old == null) dao.insertCheckin(row) else dao.updateCheckin(row.copy(id = old.id))
@@ -364,7 +370,10 @@ class PlannerRepository @Inject constructor(
         /** The profile entry that holds his usual hours per weekday (spec section 6.1). */
         const val AVAILABILITY = "availability"
 
-        fun model(c: CheckinRow) = CheckIn(LocalDate.parse(c.dayKey), c.level, c.amount, c.reason)
+        fun model(c: CheckinRow) = CheckIn(
+            LocalDate.parse(c.dayKey), c.level, c.amount, c.reason,
+            minute = c.enteredMinute?.takeIf { c.enteredDay == c.dayKey },
+        )
 
         fun model(t: TargetRow) = PlanApply.OldTarget(
             t.id, t.goalId, t.name, t.unit, t.minimum, t.target, t.schedule, t.endDay?.let(LocalDate::parse),

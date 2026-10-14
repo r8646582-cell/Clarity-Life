@@ -220,6 +220,8 @@ object PlanBlocks {
             if (long.short.size > recent.short.size) {
                 windowLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
             }
+            // When he answers (Max plan Phase 3 step 4): the time of day he answered on the day itself.
+            timeBandLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
             // A reason that has grown or shrunk: the last 14 days against the 14 before them.
             val before = answers(x, first.minusDays(Planner.WINDOW.toLong()), first.minusDays(1), t.restDays)
             if (before.short.size >= Planner.REASON_MIN_N) {
@@ -261,6 +263,37 @@ object PlanBlocks {
             .filter { it.value >= Planner.REASON_MIN_N }.toSortedMap()
             .forEach { (wd, n) -> out += "marked Not on $n ${DAY_NAMES[wd]}s" }
         return out
+    }
+
+    /** A part of the day, by the minute he answered (his local time, minutes after midnight). */
+    class Band(val name: String, val contains: (Int) -> Boolean)
+
+    val BANDS = listOf(
+        Band("in the morning (4:00 to 12:00)") { it in 240 until 720 },
+        Band("in the afternoon (12:00 to 17:00)") { it in 720 until 1020 },
+        Band("in the evening (17:00 to 22:00)") { it in 1020 until 1320 },
+        Band("late at night (22:00 to 4:00)") { it >= 1320 || it < 240 },
+    )
+
+    /**
+     * Time-band lines: "answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them". Only
+     * answers given on the day itself count (schema 6 records the time). A band is written when at least 3 of
+     * its days were marked Not or Part, and only when another band holds at least 3 answers too, so the line
+     * says something about the time and not just about him.
+     */
+    private fun timeBandLines(a: Answers): List<String> {
+        val timed = a.rows.filter { it.minute != null }
+        val byBand = BANDS.map { b -> b to timed.filter { b.contains(it.minute!!) } }
+        val busy = byBand.count { it.second.size >= Planner.REASON_MIN_N }
+        if (busy < 2) return emptyList()
+        return byBand.mapNotNull { (b, rows) ->
+            val short = rows.count { it.level in Planner.SHORT_LEVELS }
+            if (rows.size < Planner.REASON_MIN_N || short < Planner.REASON_MIN_N) {
+                null
+            } else {
+                "answered ${b.name} on ${rows.size} days, marked Not or Part on $short of them"
+            }
+        }
     }
 
     private fun scheduledIn(x: Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): Set<LocalDate>? =

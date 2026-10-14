@@ -1,7 +1,7 @@
 """Writes the sample backups in contracts/backups/ and contracts/backups/backup_vectors.json (docs/MAX-PLAN.md, Phase 1, step 3).
 
 One sample per backup format and database version the app has written: format 1 (one sealed piece, before
-streaming) at database versions 1 and 3, and format 2 (sealed in 64 KB chunks) at versions 3, 4 and 5. Each holds
+streaming) at database versions 1 and 3, and format 2 (sealed in 64 KB chunks) at versions 3, 4, 5 and 6. Each holds
 real-looking rows of that version's tables only (columns from app/schemas/.../N.json), so restoring it is what
 restoring a backup made by that older app would be. The newest one is large enough to need several chunks.
 
@@ -35,6 +35,7 @@ SAMPLES = [
     ("format2-schema3.cbk", 2, 3, 0),
     ("format2-schema4.cbk", 2, 4, 0),
     ("format2-schema5.cbk", 2, 5, 450),
+    ("format2-schema6.cbk", 2, 6, 0),
 ]
 
 
@@ -81,7 +82,8 @@ def life(extra_messages):
                     "schedule": "[0,1,2,3,4]", "start_day": day(1), "end_day": None, "status": "active"}],
         "rest_day": [{"day_key": day(7), "note": "Cousin's wedding", "created_at": t0}],
         "checkin": [
-            {"id": i, "target_id": 1, "day_key": day(i), "level": lvl, "amount": amt, "reason": reason, "note": None, "entered_at": t0 + i * 86_400_000}
+            {"id": i, "target_id": 1, "day_key": day(i), "level": lvl, "amount": amt, "reason": reason, "note": None, "entered_at": t0 + i * 86_400_000,
+             "entered_minute": 21 * 60 + 40 if i % 2 else None, "entered_day": day(i) if i % 2 else None}
             for i, (lvl, amt, reason) in enumerate(
                 [("target", 2.0, None), ("minimum", 1.0, "slept late"), ("not", 0.0, "family visit"), ("beyond", 3.0, None),
                  ("target", 2.0, None), ("rest", 0.0, None), ("target", 2.5, None)], start=1)
@@ -99,7 +101,8 @@ def life(extra_messages):
              "times_seen": 1, "first_seen": day(2), "last_seen": day(2), "edited_by_user": 0, "created_at": t0},
         ],
         "note_evidence": [{"id": 1, "note_id": 1, "kind": "quote", "text": "I only study well in the morning", "day": day(1), "conversation_id": 1}],
-        "profile_entry": [{"key": "studies", "value": "Second-year chemistry", "confirmed": 1, "updated_at": t0}],
+        "profile_entry": [{"key": "studies", "value": "Second-year chemistry", "confirmed": 1, "updated_at": t0, "since_day": day(3)}],
+        "profile_past": [{"id": 1, "key": "studies", "value": "First-year chemistry", "since_day": None, "until_day": day(3), "created_at": t0}],
         "person": [{"id": 1, "name": "Sam", "relation": "brother", "notes": "Close; they argue about chores.", "updated_at": t0}],
         "event": [{"id": 1, "conversation_id": 1, "when_text": "after lunch", "situation": "desk", "feeling_before": "heavy", "action": "scrolled",
                    "payoff": "relief", "outcome": "nothing studied", "created_at": t0}],
@@ -153,10 +156,12 @@ def database_json(schema, extra_messages):
         for r in rows.get(name, []):
             missing = set(r) - set(keep)
             # A column the old version did not have is simply not in its backup (backlog.start_day before v3).
-            assert not missing or name == "backlog", (name, missing)
+            # (backlog.start_day before v3; profile_entry.since_day and the check-in times before v6)
+            assert not missing or name in ("backlog", "profile_entry", "checkin"), (name, missing)
     unknown = set(rows) - set(cols)
-    # Tables that did not exist yet are left out (reflection_item before v2, story before v4, brief before v5).
-    assert unknown <= {"reflection_item", "story", "brief"}, unknown
+    # Tables that did not exist yet are left out (reflection_item before v2, story before v4, brief before v5,
+    # profile_past before v6).
+    assert unknown <= {"reflection_item", "story", "brief", "profile_past"}, unknown
     return json.dumps({"format": "clarity-db", "schema": schema, "tables": tables}, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -227,6 +232,11 @@ def main():
             {"table": "promise", "id": 2, "column": "status", "value": "open"},
             {"table": "note", "id": 2, "column": "status", "value": "deleted_by_user"},
             {"table": "conversation", "id": 2, "column": "off_the_record", "value": 1},
+        ],
+        # Exact values only the newest samples hold (schema 6: facts with time).
+        "probes_from_schema_6": [
+            {"table": "checkin", "id": 1, "column": "entered_minute", "value": 1300},
+            {"table": "profile_past", "id": 1, "column": "value", "value": "First-year chemistry"},
         ],
     }
     with open(VECTORS, "w", encoding="utf-8") as f:

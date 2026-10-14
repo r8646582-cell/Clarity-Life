@@ -167,7 +167,7 @@ class RestoreTest {
     fun everySampleBackupRestoresIntoTodaysDatabase() = runBlocking {
         val v = vectors()
         val samples = v.getJSONArray("samples")
-        assertTrue(samples.length() >= 5)
+        assertTrue(samples.length() >= 6)
         for (i in 0 until samples.length()) {
             val s = samples.getJSONObject(i)
             val name = s.getString("file")
@@ -186,7 +186,10 @@ class RestoreTest {
                     val want = rows.getInt(table) - if (table == "settings") 1 else 0
                     assertEquals("$name: rows in $table", want, n)
                 }
-                val probes = v.getJSONArray("probes")
+                // Schema 6 samples also carry the check-in times and a replaced profile value.
+                val probes = org.json.JSONArray()
+                v.getJSONArray("probes").let { for (j in 0 until it.length()) probes.put(it.get(j)) }
+                if (s.getInt("schema") >= 6) v.getJSONArray("probes_from_schema_6").let { for (j in 0 until it.length()) probes.put(it.get(j)) }
                 for (j in 0 until probes.length()) {
                     val p = probes.getJSONObject(j)
                     val col = p.getString("column")

@@ -189,6 +189,46 @@
     "target": 1,
     "usage_month": 1
    }
+  },
+  {
+   "file": "format2-schema6.cbk",
+   "format": 2,
+   "schema": 6,
+   "created_at": 1791600000000,
+   "iterations": 100000,
+   "json_sha256": "1ddfaf68a05f8da5a6ca270b80f4e411190c1b04030c622da84faca53730ccbf",
+   "chunks": 1,
+   "rows": {
+    "backlog": 1,
+    "brief": 1,
+    "card": 1,
+    "chapter": 1,
+    "checkin": 7,
+    "conversation": 2,
+    "error_log": 1,
+    "event": 1,
+    "focus": 1,
+    "goal": 1,
+    "goal_revision": 1,
+    "job": 1,
+    "letter": 1,
+    "message": 4,
+    "note": 2,
+    "note_evidence": 1,
+    "person": 1,
+    "plan": 1,
+    "profile_entry": 1,
+    "profile_past": 1,
+    "promise": 2,
+    "quote": 1,
+    "reflection_item": 1,
+    "rest_day": 1,
+    "review": 1,
+    "settings": 3,
+    "story": 1,
+    "target": 1,
+    "usage_month": 1
+   }
   }
  ],
  "damaged": [
@@ -325,6 +365,20 @@
    "id": 2,
    "column": "off_the_record",
    "value": 1
+  }
+ ],
+ "probes_from_schema_6": [
+  {
+   "table": "checkin",
+   "id": 1,
+   "column": "entered_minute",
+   "value": 1300
+  },
+  {
+   "table": "profile_past",
+   "id": 1,
+   "column": "value",
+   "value": "First-year chemistry"
   }
  ]
 }

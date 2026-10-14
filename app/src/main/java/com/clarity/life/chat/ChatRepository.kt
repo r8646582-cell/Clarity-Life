@@ -477,7 +477,16 @@ class ChatRepository @Inject constructor(
             MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
         }
         return listOf(
-            MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),
+            MemoryBlocks.profile(
+                m.profile().let { entries ->
+                    // The newest replaced value of each key (profile_past, schema 6).
+                    val past = m.profilePast().groupBy { it.key }.mapValues { (_, rows) -> rows.maxBy { it.id } }
+                    entries.map {
+                        val before = past[it.key]
+                        MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1, it.sinceDay, before?.value, before?.untilDay)
+                    }
+                },
+            ),
             MemoryBlocks.people(m.people().map { MemoryBlocks.Person(it.name, it.relation, it.notes, it.updatedAt) }),
             // Notes about what this conversation is about are the last to go when memory is large.
             MemoryBlocks.notes(notes, MemoryBlocks.relevantNotes(notes, text)),

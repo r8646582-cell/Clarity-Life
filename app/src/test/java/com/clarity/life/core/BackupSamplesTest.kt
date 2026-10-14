@@ -38,7 +38,7 @@ class BackupSamplesTest {
     @Test
     fun everySampleOpensAndHoldsWhatItShould() {
         val samples = v.getValue("samples").jsonArray.map { it.jsonObject }
-        assertTrue(samples.size >= 5)
+        assertTrue(samples.size >= 6)
         for (s in samples) {
             val name = s.str("file")
             val (h, json) = read(file(name), pass)

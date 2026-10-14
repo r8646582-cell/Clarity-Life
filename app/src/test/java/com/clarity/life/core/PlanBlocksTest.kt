@@ -144,6 +144,31 @@ class PlanBlocksTest {
         )
     }
 
+    /** Max plan Phase 3 step 4: the time he answered, only on the day itself, three items behind each number. */
+    @Test
+    fun theTimeOfDayHeAnsweredIsCountedWhenTwoBandsHoldAnswers() {
+        fun c(day: String, level: String, reason: String?, minute: Int?) =
+            CheckIn(LocalDate.parse(day), level, if (level == "target") 1.0 else 0.0, reason, minute)
+        val late = 23 * 60
+        val evening = 19 * 60
+        val rows = listOf(
+            c("2026-09-15", "not", "family", late), c("2026-10-03", "not", "tired", late),
+            c("2026-10-04", "not", "tired", 30), c("2026-10-06", "not", "no time", late),
+            c("2026-09-16", "minimum", "family", evening), c("2026-10-07", "target", null, evening),
+            c("2026-10-08", "target", null, evening),
+            // No time known (answered on a later day, or before schema 6): not counted in any band.
+            c("2026-09-22", "not", "family", null),
+        )
+        val facts = text(PlanBlocks.checkinFacts(syllabus(rows), today))
+        val line = "T3 \"Chemistry lectures\", last 90 days: answered late at night (22:00 to 4:00) on 4 days, marked Not or Part on 4 of them."
+        assertTrue(facts, facts.contains(line))
+        assertTrue("one Not or Part in the evening is too few for a line", !facts.contains("in the evening"))
+
+        // Every timed answer in one band says nothing about the time: no line.
+        val oneBand = rows.map { if (it.minute == evening) it.copy(minute = late) else it }
+        assertTrue(!text(PlanBlocks.checkinFacts(syllabus(oneBand), today)).contains("answered late at night"))
+    }
+
     @Test
     fun aTargetThatHasNotStartedHasNoTodayLine() {
         val sat = LocalDate.parse("2026-10-10")

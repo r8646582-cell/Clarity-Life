@@ -38,6 +38,7 @@ import context as ctx  # noqa: E402  (tools/context.py, the context packet refer
 
 TZ = timezone(timedelta(hours=5))
 PHASE2 = True  # False measures the 0.1.12 baseline (search only)
+PHASE3 = True  # False: PROFILE without the replaced values (before Max plan Phase 3)
 RARE = True
 LAST_CHAT_HOURS, LAST_CHAT_MESSAGES, LAST_CHAT_CHARS = 6, 8, 500
 SNIPPET_CHARS = 280
@@ -254,9 +255,17 @@ def part2(h, now):
     """Mirror of MemoryBlocks (formats and drop ranks) for a conversation started at now."""
     blocks = []
     prof = [p for p in h["profile"]][:30]
+    # Max plan Phase 3: each entry carries the newest value it replaced (profile_past), so a replaced fact is in
+    # the request, marked as the old one. The fixture has no days; "1 Jan 2026" stands in for the app's days.
+    old = {o["key"]: o for o in h["old_profile"]} if PHASE3 else {}
+    def prof_text(p):
+        text = "%s (%s%s): %s" % (p["key"], "confirmed" if p["confirmed"] else "guess", ", since 1 Jan 2026" if PHASE3 else "", p["value"])
+        if p["key"] in old:
+            text += "; before that, until 1 Jan 2026: " + old[p["key"]]["value"]
+        return text
     blocks.append({"name": "PROFILE", "items": [
-        item("%s (%s): %s" % (p["key"], "confirmed" if p["confirmed"] else "guess", p["value"]),
-             (2000 if p["confirmed"] else 4000) + i + 1) for i, p in enumerate(prof)], "ids": ["p:" + p["key"] for p in prof]})
+        item(prof_text(p), (2000 if p["confirmed"] else 4000) + i + 1) for i, p in enumerate(prof)],
+        "ids": [["p:" + p["key"]] + (["pold:" + p["key"]] if p["key"] in old else []) for p in prof]})
     people = sorted(h["people"], key=lambda p: -p["updated"])
     blocks.append({"name": "PEOPLE", "items": [
         item("%s (%s): %s" % (p["name"], p["relation"], p["notes"]), 5000 + i + 1) for i, p in enumerate(people)],

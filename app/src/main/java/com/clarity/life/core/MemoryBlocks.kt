@@ -13,7 +13,19 @@ package com.clarity.life.core
  */
 object MemoryBlocks {
 
-    data class Profile(val key: String, val value: String, val confirmed: Boolean)
+    /**
+     * [since]: the day key this value was first said (schema 6), null when not known. [before] and [beforeUntil]:
+     * the value it replaced and the day it was replaced (profile_past, the newest one), so the coach never takes
+     * an old fact for a current one, nor misses that something changed (Max plan Phase 3).
+     */
+    data class Profile(
+        val key: String,
+        val value: String,
+        val confirmed: Boolean,
+        val since: String? = null,
+        val before: String? = null,
+        val beforeUntil: String? = null,
+    )
 
     data class Person(val name: String, val relation: String, val notes: String, val updatedAt: Long)
 
@@ -62,7 +74,13 @@ object MemoryBlocks {
         "PROFILE",
         entries.take(PROFILE_MAX).mapIndexed { i, e ->
             val grade = if (e.confirmed) "confirmed" else "guess"
-            BlockItem("${e.key} ($grade): ${e.value}", (if (e.confirmed) PROFILE_CONFIRMED_RANK else PROFILE_GUESS_RANK) + i + 1)
+            val since = e.since?.let { ", since ${SearchText.day(it)}" }.orEmpty()
+            val before = if (e.before != null && e.beforeUntil != null) {
+                "; before that, until ${SearchText.day(e.beforeUntil)}: ${e.before}"
+            } else {
+                ""
+            }
+            BlockItem("${e.key} ($grade$since): ${e.value}$before", (if (e.confirmed) PROFILE_CONFIRMED_RANK else PROFILE_GUESS_RANK) + i + 1)
         },
     )
 

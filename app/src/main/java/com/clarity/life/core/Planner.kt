@@ -30,7 +30,17 @@ import kotlin.math.floor
 class PlannerError(message: String) : Exception(message)
 
 /** A check-in row as the planner sees it. A row only exists when he answered. */
-data class CheckIn(val day: LocalDate, val level: String, val amount: Double = 0.0, val reason: String? = null)
+/**
+ * One answer. [minute]: his local time when he answered, minutes after midnight, only when he answered on the
+ * day itself (schema 6); null when not known or given on a later day, which says nothing about the day's time.
+ */
+data class CheckIn(
+    val day: LocalDate,
+    val level: String,
+    val amount: Double = 0.0,
+    val reason: String? = null,
+    val minute: Int? = null,
+)
 
 sealed class Schedule {
     /** daily, weekdays, a day list (Mon,Wed,Fri) or a range (Sat-Thu): fixed weekdays. */

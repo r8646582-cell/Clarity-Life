@@ -183,6 +183,40 @@ class MigrationTest {
         db.close()
     }
 
+    /** Max plan Phase 3: facts with time. Old rows keep NULL ("not known"); the new table takes rows. */
+    @Test
+    fun version5To6KeepsEveryRowAndAddsTimes() {
+        helper.createDatabase(TEST_DB, 5).apply {
+            execSQL("INSERT INTO profile_entry (`key`, value, confirmed, updated_at) VALUES ('Work', 'Accounts assistant', 1, 1760000000000)")
+            execSQL("INSERT INTO target (id, name, target, schedule, start_day) VALUES (1, 'Lectures', 2, 'daily', '2026-10-01')")
+            execSQL("INSERT INTO checkin (target_id, day_key, level, amount, reason, entered_at) VALUES (1, '2026-10-02', 'not', 0, 'tired', 1760000000000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, Migrations.V5_TO_V6)
+        db.query("SELECT value, confirmed, since_day FROM profile_entry WHERE `key` = 'Work'").use {
+            assertTrue("the profile entry is gone", it.moveToFirst())
+            assertEquals("Accounts assistant", it.getString(0))
+            assertEquals(1, it.getInt(1))
+            assertTrue("an old entry's day is not known, not guessed", it.isNull(2))
+        }
+        db.query("SELECT level, reason, entered_minute, entered_day FROM checkin").use {
+            assertTrue("the check-in is gone", it.moveToFirst())
+            assertEquals("not", it.getString(0))
+            assertEquals("tired", it.getString(1))
+            assertTrue(it.isNull(2))
+            assertTrue(it.isNull(3))
+        }
+        db.execSQL(
+            "INSERT INTO profile_past (`key`, value, since_day, until_day, created_at) " +
+                "VALUES ('Work', 'Student', NULL, '2026-10-14', 1760000000000)",
+        )
+        db.query("SELECT COUNT(*) FROM profile_past").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -224,7 +258,10 @@ class MigrationTest {
     @Test
     fun everyOldVersionWithRealRowsReachesTheNewest() {
         // Version 2 only added a table, so version 1's rows are version 2's rows too.
-        val starts = listOf(1 to "format1-schema1.cbk", 2 to "format1-schema1.cbk", 3 to "format2-schema3.cbk", 4 to "format2-schema4.cbk")
+        val starts = listOf(
+            1 to "format1-schema1.cbk", 2 to "format1-schema1.cbk", 3 to "format2-schema3.cbk", 4 to "format2-schema4.cbk",
+            5 to "format2-schema5.cbk",
+        )
         for ((version, sample) in starts) {
             val name = "migrate-from-$version.db"
             val tables = sampleTables(sample)
@@ -316,6 +353,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
     }
 }

@@ -101,8 +101,12 @@ class Exporter @Inject constructor(
         }
 
         sb.append("\n## What I know\n")
-        rows("SELECT key, value, confirmed FROM profile_entry ORDER BY key") { p ->
+        rows("SELECT key, value, confirmed, since_day FROM profile_entry ORDER BY key") { p ->
             sb.append("\n- ${p.str(0)}: ${p.str(1)}${if (p.long(2) == 1L) " (confirmed)" else ""}")
+            p.strOrNull(3)?.let { sb.append(", since $it") }
+        }
+        rows("SELECT key, value, until_day FROM profile_past ORDER BY key, id") { p ->
+            sb.append("\n- ${p.str(0)}, before (until ${p.str(2)}): ${p.str(1)}")
         }
         sb.append("\n")
         rows("SELECT id, kind, text, confidence, status FROM note WHERE status != 'deleted_by_user' ORDER BY kind, id") { note ->

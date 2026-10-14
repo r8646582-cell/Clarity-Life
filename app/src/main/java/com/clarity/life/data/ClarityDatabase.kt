@@ -32,6 +32,7 @@ import com.clarity.life.data.entity.NoteRow
 import com.clarity.life.data.entity.PersonRow
 import com.clarity.life.data.entity.PlanRow
 import com.clarity.life.data.entity.ProfileEntryRow
+import com.clarity.life.data.entity.ProfilePastRow
 import com.clarity.life.data.entity.PromiseRow
 import com.clarity.life.data.entity.PromptOverrideRow
 import com.clarity.life.data.entity.QuoteRow
@@ -46,7 +47,7 @@ import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.UsageMonthRow
 
 /**
- * The whole database, version 4, exactly the 30 tables of db/schema.sql.
+ * The whole database, version 6, exactly the 32 tables of db/schema.sql.
  *
  * Rules that never break here (CLAUDE.md rule 8): the schema is exported and committed, and every future
  * change is a written migration plus a MigrationTest. The destructive-migration escape hatch Room offers is
@@ -54,7 +55,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 5,
+    version = 6,
     exportSchema = true,
     entities = [
         // chat
@@ -63,7 +64,7 @@ import com.clarity.life.data.entity.UsageMonthRow
         GoalRow::class, GoalRevisionRow::class, PlanRow::class, BacklogRow::class, TargetRow::class,
         RestDayRow::class, CheckinRow::class, PromiseRow::class,
         // memory and writing
-        NoteRow::class, NoteEvidenceRow::class, ProfileEntryRow::class, PersonRow::class, EventRow::class,
+        NoteRow::class, NoteEvidenceRow::class, ProfileEntryRow::class, ProfilePastRow::class, PersonRow::class, EventRow::class,
         ReviewRow::class, ChapterRow::class, LetterRow::class, StoryRow::class, BriefRow::class, QuoteRow::class,
         SearchDocRow::class, EmbeddingRow::class, ReflectionItemRow::class,
         // housekeeping
@@ -97,6 +98,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V2_TO_V3,
             Migrations.V3_TO_V4,
             Migrations.V4_TO_V5,
+            Migrations.V5_TO_V6,
         )
     }
 }

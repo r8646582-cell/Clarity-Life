@@ -101,7 +101,7 @@ def main():
             rows = [r for r in tables.get(p["table"], []) if r.get("id") == p["id"]]
             check(len(rows) == 1 and rows[0][p["column"]] == p["value"], "%s: probe %s.%s" % (name, p["table"], p["column"]))
     check(any(s["chunks"] and s["chunks"] >= 3 for s in v["samples"]), "one sample must span three chunks or more")
-    check({(s["format"], s["schema"]) for s in v["samples"]} >= {(1, 1), (2, 5)}, "the oldest and newest formats")
+    check({(s["format"], s["schema"]) for s in v["samples"]} >= {(1, 1), (2, 6)}, "the oldest and newest formats")
     for case in v["damaged"]:
         data = damage(files[case["file"]], case)
         pw = "paper passphrase — kept ✗" if case["change"] == "wrong_passphrase" else v["passphrase"]

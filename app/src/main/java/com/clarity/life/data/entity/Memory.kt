@@ -70,6 +70,19 @@ data class ProfileEntryRow(
     val value: String,
     @ColumnInfo(defaultValue = "0") val confirmed: Int = 0,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
+    /** Schema 6: his day key when this value was first said; null for entries from before. */
+    @ColumnInfo(name = "since_day") val sinceDay: String? = null,
+)
+
+/** Schema 6: a profile value replaced by a newer one (db/schema.sql), kept so it is never sent as current. */
+@Entity(tableName = "profile_past", indices = [Index(value = ["key", "id"], name = "idx_profile_past_key")])
+data class ProfilePastRow(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val key: String,
+    val value: String,
+    @ColumnInfo(name = "since_day") val sinceDay: String? = null,
+    @ColumnInfo(name = "until_day") val untilDay: String,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
 )
 
 @Entity(tableName = "person", indices = [Index(value = ["name"], unique = true)])

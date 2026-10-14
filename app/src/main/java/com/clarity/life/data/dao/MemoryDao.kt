@@ -97,6 +97,20 @@ interface MemoryDao {
     @Query("DELETE FROM profile_entry WHERE `key` = :key")
     suspend fun deleteProfile(key: String)
 
+    /** Values replaced by newer ones (schema 6), oldest first within a key. */
+    @Query("SELECT * FROM profile_past ORDER BY `key`, id")
+    suspend fun profilePast(): List<com.clarity.life.data.entity.ProfilePastRow>
+
+    @Query("SELECT * FROM profile_past ORDER BY `key`, id")
+    fun watchProfilePast(): Flow<List<com.clarity.life.data.entity.ProfilePastRow>>
+
+    @Insert
+    suspend fun insertProfilePast(row: com.clarity.life.data.entity.ProfilePastRow): Long
+
+    /** Deleting an entry deletes what it used to say too: his deletions are final (rule 5). */
+    @Query("DELETE FROM profile_past WHERE `key` = :key")
+    suspend fun deleteProfilePast(key: String)
+
     // ---------- people ----------
 
     @Query("SELECT * FROM person ORDER BY name")
