@@ -65,7 +65,17 @@ class MainActivity : ComponentActivity() {
         // interrupted, with a Try again button, and a job left running goes back to pending.
         // Then anything he said that was never reflected (the phone was off, the job was stopped) is picked up.
         // Once per process, not on every turn of the phone: a reply or a job running right now is not stale.
-        if (startupDone.compareAndSet(false, true)) lifecycleScope.launch {
+        // In the process's own scope, not the screen's: a turn of the phone must not cut the sweep short.
+        // Singletons only, so the old screen is not held while the sweep runs.
+        val app = applicationContext
+        val settings = settings
+        val startupRepair = startupRepair
+        val reminders = reminders
+        val reflections = reflections
+        val search = search
+        val indexer = indexer
+        val writing = writing
+        startup.launch {
             try {
                 // A saved deepseek-reasoner or deepseek-chat becomes the faster default (10 Oct 2026).
                 settings.moveRetiredModels()
@@ -78,9 +88,11 @@ class MainActivity : ComponentActivity() {
                 // Reviews and the weekly letter: catch up on anything missed, and keep next Sunday scheduled.
                 writing.onStart(System.currentTimeMillis())
                 // The weekly encrypted backup (it does nothing until a folder and a passphrase are set).
-                com.clarity.life.backup.BackupWorker.schedule(this@MainActivity)
+                com.clarity.life.backup.BackupWorker.schedule(app)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
-                CrashLog.record(this@MainActivity, e)
+                CrashLog.record(app, e)
             }
         }
         setContent {
@@ -132,7 +144,9 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         /** Process-wide, so a new screen in the same process (a turn of the phone) keeps them. */
-        val startupDone = java.util.concurrent.atomic.AtomicBoolean(false)
+        val startup = StartupOnce(
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default),
+        )
         @Volatile var lockOn = com.clarity.life.settings.DefaultSettings.APP_LOCK_ON
         @Volatile var unlockedInProcess = false
         @Volatile var leftAt = 0L
