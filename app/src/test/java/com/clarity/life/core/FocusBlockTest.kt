@@ -47,4 +47,25 @@ class FocusBlockTest {
             block.items.map { it.text },
         )
     }
+
+    @Test
+    fun theWeekCountsByDayKeys() {
+        val start = java.time.LocalDate.parse("2026-10-05")
+        assertEquals(1L, FocusBlock.week(start, start))
+        assertEquals(1L, FocusBlock.week(start, java.time.LocalDate.parse("2026-10-11"))) // day 7
+        assertEquals(2L, FocusBlock.week(start, java.time.LocalDate.parse("2026-10-12"))) // day 8
+        assertEquals(3L, FocusBlock.week(start, java.time.LocalDate.parse("2026-10-19")))
+        // A clock set back never shows week 0.
+        assertEquals(1L, FocusBlock.week(start, java.time.LocalDate.parse("2026-10-01")))
+    }
+
+    @Test
+    fun justAfterMidnightBeforeTheDayEndsItIsStillYesterdaysWeek() {
+        // Made on Mon 5 Oct at 10:00 in Karachi; day ends at 4 am. Mon 12 Oct at 1:30 am is still Sun 11 Oct.
+        val tz = "Asia/Karachi"
+        val start = Planner.dayKey("2026-10-05T05:00:00Z", tz, 4)
+        val lateNight = Planner.dayKey("2026-10-11T20:30:00Z", tz, 4)
+        assertEquals(1L, FocusBlock.week(start, lateNight))
+    }
 }
+

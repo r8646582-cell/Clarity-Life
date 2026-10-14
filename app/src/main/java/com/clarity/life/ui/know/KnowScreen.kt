@@ -581,10 +581,7 @@ private fun FocusPage(d: com.clarity.life.memory.MemoryRepository.FocusDetail, o
     val f = d.focus
     val zone = java.time.ZoneId.systemDefault()
     fun day(ms: Long) = com.clarity.life.core.TimeFacts.shortDay(java.time.Instant.ofEpochMilli(ms).atZone(zone).toLocalDate())
-    val weeks = java.time.temporal.ChronoUnit.WEEKS.between(
-        java.time.Instant.ofEpochMilli(f.createdAt).atZone(zone).toLocalDate(),
-        java.time.LocalDate.now(zone),
-    ) + 1
+    val weeks = d.week
     Column(
         Modifier
             .fillMaxSize()

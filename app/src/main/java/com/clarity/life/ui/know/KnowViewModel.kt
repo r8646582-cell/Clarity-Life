@@ -32,13 +32,23 @@ class KnowViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val memory: MemoryRepository,
     private val requests: com.clarity.life.chat.TalkRequests,
+    private val settings: com.clarity.life.settings.SettingsRepository,
 ) : ViewModel() {
 
     /** The Focus page that is open, read when he opens it. */
     private val focusDetail = MutableStateFlow<MemoryRepository.FocusDetail?>(null)
     val focus: StateFlow<MemoryRepository.FocusDetail?> get() = focusDetail
 
-    fun openFocus(id: Long) = viewModelScope.launch { focusDetail.value = memory.focusDetail(id) }
+    fun openFocus(id: Long) = viewModelScope.launch {
+        val d = memory.focusDetail(id) ?: run {
+            focusDetail.value = null
+            return@launch
+        }
+        val tz = settings.timeZone()
+        val boundary = settings.dayBoundaryHour()
+        fun key(ms: Long) = com.clarity.life.core.Planner.dayKey(java.time.Instant.ofEpochMilli(ms).toString(), tz, boundary)
+        focusDetail.value = d.copy(week = com.clarity.life.core.FocusBlock.week(key(d.focus.createdAt), key(System.currentTimeMillis())))
+    }
 
     fun closeFocus() {
         focusDetail.value = null

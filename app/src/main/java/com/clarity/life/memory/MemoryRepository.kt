@@ -197,6 +197,8 @@ class MemoryRepository @Inject constructor(
         val current: com.clarity.life.data.entity.PromiseRow?,
         val last: List<com.clarity.life.data.entity.PromiseRow>,
         val conversations: List<com.clarity.life.data.entity.ConversationRow>,
+        /** "Focus · week N", counted by his day keys ([com.clarity.life.core.FocusBlock.week]); set by What I know. */
+        val week: Long = 1,
     )
 
     suspend fun focusDetail(id: Long): FocusDetail? {
