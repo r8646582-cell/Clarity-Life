@@ -172,9 +172,10 @@ private fun GoalPage(
         }
         if (b != null) FinishCard(b, g, state, model, onFix)
         TodayStepCard(g, state, model, onToday)
+        if (b != null) ProgressLine(b, model)
+        if (b != null) PaceCard(b, model)
         if (g.steps.isNotEmpty()) StepsCard(g, state, model)
         if (b != null) WeekCard(b)
-        if (b != null) ProgressLine(b, model)
         g.plan?.let { p ->
             OutlineCard {
                 val review = LocalDate.parse(p.reviewDay)
@@ -435,21 +436,91 @@ private fun WeekCard(b: PlanViewModel.BacklogView) {
     }
 }
 
+/**
+ * How far along: "118 of 300 done" on the left, the days left on the right, the bar under them. Before there is
+ * a pace, one quiet line under the bar says when it comes.
+ */
 @Composable
 private fun ProgressLine(b: PlanViewModel.BacklogView, model: PlanViewModel) {
     val p = b.facts.projection
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row {
-            Quiet("${model.n(b.facts.done)} of ${model.n(b.row.total)} done", Modifier.weight(1f))
-            Quiet(
-                p.typicalPerDay?.let { "Your pace ${model.perDay(it)} a day" }
-                    ?: "Your pace shows after ${Planner.MIN_ANSWERED} answered days",
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "${model.n(b.facts.done)} of ${model.n(b.row.total)} done",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = clarity.text,
+                modifier = Modifier.weight(1f),
             )
+            if (p.status != "done" && p.daysLeft > 0) {
+                Text(
+                    if (p.daysLeft == 1) "1 day left" else "${p.daysLeft} days left",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.muted,
+                )
+            }
         }
         val share = if (b.row.total > 0) (b.facts.done / b.row.total).toFloat().coerceIn(0f, 1f) else 0f
-        Box(Modifier.fillMaxWidth().height(8.dp).background(clarity.surface, RoundedCornerShape(999.dp))) {
-            if (share > 0f) Box(Modifier.fillMaxWidth(share).height(8.dp).background(clarity.yellow, RoundedCornerShape(999.dp)))
+        Box(Modifier.fillMaxWidth().height(6.dp).background(clarity.raised, RoundedCornerShape(999.dp))) {
+            if (share > 0f) Box(Modifier.fillMaxWidth(share).height(6.dp).background(clarity.yellow, RoundedCornerShape(999.dp)))
         }
+        if (p.status != "done" && p.typicalPerDay == null) {
+            Text(
+                "Your usual and best pace show after ${Planner.MIN_ANSWERED} answered days.",
+                style = MaterialTheme.typography.bodySmall,
+                color = clarity.muted,
+            )
+        }
+    }
+}
+
+/**
+ * Where each pace lands (spec section 2.2): what the deadline needs, then your usual pace and your best
+ * fortnight with where each one gets you, then the status line. Every number is the planner's.
+ */
+@Composable
+private fun PaceCard(b: PlanViewModel.BacklogView, model: PlanViewModel) {
+    val p = b.facts.projection
+    val typical = p.typicalPerDay ?: return
+    val required = p.requiredPerDay ?: return
+    if (p.status == "done" || p.status == "past_deadline") return
+    val done = b.facts.done
+    fun lands(reach: Double?): String = when {
+        reach == null -> ""
+        reach >= p.remaining - 1e-9 -> "on time"
+        else -> "reaches ${model.n(done + reach)}"
+    }
+    BoldCard(gap = 0) {
+        Kicker("Where each pace lands", modifier = Modifier.padding(bottom = 6.dp))
+        PaceRow("You need", null, "${model.perDayUp(required)} a day", strong = false)
+        HorizontalDivider(color = clarity.hairline)
+        PaceRow("Your usual pace", "${model.perDay(typical)} a day, last ${Planner.WINDOW} days", lands(p.reachesTypical), strong = false)
+        p.bestPerDay?.let { best ->
+            HorizontalDivider(color = clarity.hairline)
+            PaceRow("Your best fortnight", "${model.perDay(best)} a day", lands(p.reachesBest), strong = p.status == "needs_best")
+        }
+        HorizontalDivider(color = clarity.hairline)
+        Text(
+            model.statusText(p),
+            style = MaterialTheme.typography.bodySmall,
+            color = clarity.muted,
+            modifier = Modifier.padding(top = 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun PaceRow(label: String, sub: String?, value: String, strong: Boolean) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+            sub?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.muted) }
+        }
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineSmall,
+            color = if (strong) clarity.yellow else clarity.text,
+        )
     }
 }
 
