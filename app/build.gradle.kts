@@ -105,6 +105,8 @@ android {
     }
     sourceSets.getByName("androidTest") {
         assets.srcDir("$projectDir/schemas")
+        // The sample backups of every format and database version (contracts/backups/), restored by RestoreTest.
+        assets.srcDir("${rootProject.projectDir}/contracts/backups")
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
