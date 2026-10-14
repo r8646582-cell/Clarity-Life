@@ -15,6 +15,7 @@ Open them for layout, spacing, colours and copy; rebuild in Compose, do not ship
 | Promises.dc.html, Reviews.dc.html | Plan, Promises and Reviews |
 | Know.dc.html, Story.dc.html, Focus.dc.html | What I know, Your story (made cleaner on 13 Oct 2026; spec 2.5 wins where they differ), a Focus |
 | Settings.dc.html | Settings: grouped cards, switches, real buttons |
+| Screens.html | Every screen in one page (14 Oct 2026, Clarity 0.1.11), with a Day 1 / Day 45 switch. Wins over the files above where they differ: Your story's note rows, its proof sheet and the folded "What you overcame"; What I know as one list; promise answers two by two; the goal's pace card. The spec still wins over all of them |
 
 Tokens: ground #0F0E13, surface #1A1820, hairline #2D2A36, raised #24212C, control outline #3A3645, text #F5F3F8,
 muted #A9A4B6, yellow #FFD23F, coral #FF7A66, calm green #8FD6A0, danger #FF8A7C, tab bar #0B0A0E.
