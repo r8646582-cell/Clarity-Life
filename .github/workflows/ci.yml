@@ -109,6 +109,10 @@ jobs:
           script: |
             ./gradlew --no-daemon connectedDebugAndroidTest
             bash tools/emulator_smoke.sh
+            # The ten-year timing harness (docs/MAX-PLAN.md, Phase 0): it records numbers and never fails the build.
+            adb logcat -c || true
+            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.clarity.life.lifetime.LifetimeTimingTest -Pandroid.testInstrumentationRunnerArguments.clarity_timing=1 || echo "::warning::The ten-year timing run did not finish; its lines so far are below."
+            adb logcat -d -s ClarityTiming:I AndroidRuntime:E || true
       - name: Keep test reports when something fails
         if: failure()
         uses: actions/upload-artifact@v4
