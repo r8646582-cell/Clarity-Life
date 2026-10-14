@@ -120,7 +120,7 @@ class KnowViewModel @Inject constructor(
         combine(memory.watchProfile(), memory.watchProfilePast()) { profile, past -> profile to past },
         memory.watchPeople(),
         memory.watchFocuses(),
-    ) { notes, evidence, profile, people, focuses -> Memory(notes, evidence, profile.first, people, focuses, profile.second) }
+    ) { notes, evidence, profile, people, focuses -> Memory(notes, evidence, profile.first, people, focuses = focuses, past = profile.second) }
 
     val state: StateFlow<State> = combine(memoryFlow, memory.watchChapters(), query, quietLine) { m, chapters, q, line ->
         build(m, chapters, q, line)
