@@ -54,6 +54,14 @@ def gradle(test):
 
 def main():
     only = sys.argv[1:]  # optional: run only the entries whose file contains one of these words
+    # First the tests as they are: a test that already fails would make every planted bug look caught.
+    tests = sorted({m[3] for m in MUTATIONS if not only or any(w in m[0] for w in only)})
+    base = subprocess.run(["./gradlew", "--console=plain", "testDebugUnitTest"] + sum((["--tests", t] for t in tests), []),
+                          cwd=ROOT, capture_output=True, text=True)
+    if base.returncode != 0:
+        print((base.stdout + base.stderr)[-6000:])
+        print("kotlin mutation check: the tests fail with no bug planted; fix them first")
+        return 1
     survived, broken, ran = [], [], 0
     for fname, old, new, test, what in MUTATIONS:
         if only and not any(w in fname for w in only):

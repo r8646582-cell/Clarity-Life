@@ -2,10 +2,10 @@ package com.clarity.life.ui.quality
 
 import android.app.Application
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTouchHeightIsAtLeast
-import androidx.compose.ui.test.assertTouchWidthIsAtLeast
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -102,10 +102,13 @@ class CardScreensTest {
 
     /** Android's guideline: anything tappable is at least 48 by 48 dp, the size of a fingertip. */
     private fun checkTapSizes() {
-        val nodes = compose.onAllNodes(hasClickAction())
-        val count = nodes.fetchSemanticsNodes().size
-        assertTrue("no buttons found", count > 0)
-        repeat(count) { nodes[it].assertTouchHeightIsAtLeast(48.dp).assertTouchWidthIsAtLeast(48.dp) }
+        val nodes = compose.onAllNodes(hasClickAction()).fetchSemanticsNodes()
+        assertTrue("no buttons found", nodes.isNotEmpty())
+        val min = with(compose.density) { 48.dp.roundToPx() }
+        // The whole button, including the space Material adds around a small one to make it easy to tap.
+        val small = nodes.filter { it.layoutInfo.width < min || it.layoutInfo.height < min }
+            .map { "${it.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: "?"}: ${it.layoutInfo.width}x${it.layoutInfo.height}px" }
+        assertTrue("buttons smaller than 48 dp ($min px): $small", small.isEmpty())
     }
 
     /** No text is clipped or cut short: with the largest text every line still wraps and shows whole. */
