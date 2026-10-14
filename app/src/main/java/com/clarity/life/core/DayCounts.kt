@@ -26,7 +26,10 @@ object DayCounts {
         val days = LinkedHashSet<LocalDate>()
         for (text in texts) {
             val found = DAY_MONTH.findAll(text).map { listOf(it.groupValues[1], it.groupValues[2], it.groupValues[3]) } +
-                MONTH_DAY.findAll(text).map { listOf(it.groupValues[2], it.groupValues[1], it.groupValues[3]) }
+                MONTH_DAY.findAll(text)
+                    // "I may 2 hours" is not 2 May: "may" before a number counts as the month only with a year.
+                    .filterNot { it.groupValues[1].equals("may", ignoreCase = true) && it.groupValues[3].isEmpty() }
+                    .map { listOf(it.groupValues[2], it.groupValues[1], it.groupValues[3]) }
             for (parts in found) {
                 val day = PlanDates.readDay(parts.filter { it.isNotEmpty() }.joinToString(" "), today)
                 if (day != null && day.isAfter(today)) days.add(day)

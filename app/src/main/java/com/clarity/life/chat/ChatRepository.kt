@@ -516,8 +516,25 @@ class ChatRepository @Inject constructor(
     private val lastDrops = java.util.concurrent.ConcurrentHashMap<Long, List<String>>()
 
     private suspend fun cardResultLines(conversationId: Long): List<String> {
-        val last = messages.ofConversation(conversationId).lastOrNull { it.role == "coach" && it.status == "complete" }
-            ?: return emptyList()
+        val replies = messages.ofConversation(conversationId).filter { it.role == "coach" && it.status == "complete" }
+        val last = replies.lastOrNull() ?: return emptyList()
+        return lastReplyCardLines(last) + earlierCardLines(conversationId, last, replies.getOrNull(replies.size - 2))
+    }
+
+    /**
+     * Cards under older replies that he answered after the reply before the last one began: no CARD_RESULTS
+     * has told the coach about them yet (each request reports only the last reply's cards), so it could offer
+     * one again or talk as if he never answered. Reported at most twice, then OPEN_PROMISES and PLAN_STATE
+     * carry what was saved.
+     */
+    private suspend fun earlierCardLines(conversationId: Long, last: MessageRow, before: MessageRow?): List<String> {
+        val since = before?.createdAt ?: return emptyList()
+        return cards.ofConversation(conversationId)
+            .filter { it.messageId < last.id && it.status != "offered" && (it.decidedAt ?: 0L) > since }
+            .map { Blocks.earlierCardResultLine(it.type, cardLabel(it), it.status) }
+    }
+
+    private suspend fun lastReplyCardLines(last: MessageRow): List<String> {
         val rows = cards.ofMessage(last.id)
         val drops = lastDrops[last.id].orEmpty().map { com.clarity.life.core.CardTalk.dropLine(it) }
         if (drops.isNotEmpty()) {

@@ -35,8 +35,10 @@ import kotlinx.coroutines.withContext
  *
  * Idempotent (spec section 18, point 7): the job row's key is the conversation plus the last message
  * covered, so a second run of the same work finds the row finished and makes no API call. There is no call
- * at all when he has said nothing new. A result that fails the checks is retried at most [MAX_ATTEMPTS]
- * times in all, then the job stays failed until he says something new in that conversation.
+ * at all when he has said nothing new. A job is tried [MAX_ATTEMPTS] times in a row; after that it rests
+ * for [ReflectionInput.RETRY_AFTER_HOURS] and the next app start tries a few more times, up to
+ * [ReflectionInput.MAX_ROUNDS] rounds in all. Before, three failures in a row (a busy provider for a quarter
+ * of an hour was enough) meant the chat was never summarised, and so forgotten by later chats.
  */
 @Singleton
 class ReflectionJob @Inject constructor(
@@ -97,7 +99,7 @@ class ReflectionJob @Inject constructor(
             } else {
                 row.copy(status = StateMachines.move(StateMachines.JOB, "running", "pending"))
             }
-            "failed" -> if (row.attempts >= MAX_ATTEMPTS) {
+            "failed" -> if (!ReflectionInput.mayRun(row.attempts, row.finishedAt, now)) {
                 return Outcome.Failed(row.lastError ?: "failed")
             } else {
                 row.copy(status = StateMachines.move(StateMachines.JOB, "failed", "pending"))
@@ -203,7 +205,8 @@ class ReflectionJob @Inject constructor(
             )
             log(now, code, "attempt=${job.attempts}")
         }
-        return if (retryable && job.attempts < MAX_ATTEMPTS) Outcome.Retry(code) else Outcome.Failed(code)
+        // WorkManager retries within a round; a spent round waits for a later app start (ReflectionInput.mayRun).
+        return if (retryable && job.attempts % MAX_ATTEMPTS != 0) Outcome.Retry(code) else Outcome.Failed(code)
     }
 
     private suspend fun save(job: JobRow) =
@@ -281,7 +284,8 @@ class ReflectionJob @Inject constructor(
     }
 
     companion object {
-        const val MAX_ATTEMPTS = 3
+        /** Attempts in a row, one round. */
+        const val MAX_ATTEMPTS = ReflectionInput.ATTEMPTS_PER_ROUND
         private const val STALE_RUNNING_MS = 30 * 60 * 1000L
         private const val EVIDENCE_PER_NOTE = 2
         private val DATE = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ENGLISH)
