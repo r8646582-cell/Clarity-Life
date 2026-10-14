@@ -31,11 +31,16 @@ class Exporter @Inject constructor(
     /** Writes the zip to [uri] (a file he created with the system's Save dialog). Returns a plain line. */
     suspend fun export(uri: Uri): String = withContext(Dispatchers.IO) {
         try {
-            val markdown = markdown()
             val out = context.contentResolver.openOutputStream(uri, "w") ?: return@withContext "The file could not be written."
             ZipOutputStream(out).use { zip ->
+                zip.putNextEntry(ZipEntry("README.txt"))
+                zip.write(README.toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
                 zip.putNextEntry(ZipEntry("clarity-export.md"))
-                zip.write(markdown.toByteArray(Charsets.UTF_8))
+                // Written as it is read, like the JSON below: ten years of chats never sit in memory as one text.
+                val md = java.io.BufferedWriter(java.io.OutputStreamWriter(zip, Charsets.UTF_8))
+                markdown(md)
+                md.flush()
                 zip.closeEntry()
                 zip.putNextEntry(ZipEntry("clarity-export.json"))
                 // Streamed row by row into the zip, like a backup, so a large database never sits in memory.
@@ -52,12 +57,11 @@ class Exporter @Inject constructor(
         }
     }
 
-    private suspend fun markdown(): String {
+    private suspend fun markdown(sb: Appendable) {
         val tz = settings.timeZone()
         fun at(ms: Long): String =
             java.time.format.DateTimeFormatter.ofPattern("EEE d MMM yyyy, HH:mm")
                 .format(com.clarity.life.core.TimeFacts.local(Instant.ofEpochMilli(ms), tz))
-        val sb = StringBuilder()
         sb.append("# Clarity export\n\nMade ${at(System.currentTimeMillis())}. Not encrypted.\n")
 
         sb.append("\n## Goals and plans\n")
@@ -122,6 +126,17 @@ class Exporter @Inject constructor(
             sb.append("\n### ${c.str(2)} (${c.str(0)} to ${c.str(1)})\n\n${c.str(3)}\n")
         }
 
+        sb.append("\n## Reviews\n")
+        rows("SELECT kind, period_start, period_end, narrative FROM review ORDER BY period_start, kind") { rv ->
+            sb.append("\n### ${if (rv.str(0) == "week") "Week" else "Month"} ${rv.str(1)} to ${rv.str(2)}\n")
+            if (rv.str(3).isNotBlank()) sb.append("\n${rv.str(3)}\n")
+        }
+
+        sb.append("\n## Letters\n")
+        rows("SELECT period_start, period_end, title, body FROM letter WHERE deleted_at IS NULL ORDER BY period_start") { l ->
+            sb.append("\n### ${l.str(2)} (${l.str(0)} to ${l.str(1)})\n\n${l.str(3)}\n")
+        }
+
         sb.append("\n## Your story\n")
         rows("SELECT period_start, period_end, short FROM story ORDER BY period_start") { st ->
             sb.append("\n### ${st.str(0)} to ${st.str(1)}\n\n${st.str(2)}\n")
@@ -136,7 +151,6 @@ class Exporter @Inject constructor(
                 sb.append("\n**$who**, ${at(m.long(2))}:\n\n${m.str(1)}\n")
             }
         }
-        return sb.toString()
     }
 
     private inline fun rows(sql: String, each: (Cursor) -> Unit) {
@@ -150,6 +164,19 @@ class Exporter @Inject constructor(
     private fun Cursor.long(i: Int): Long = getLong(i)
 
     private fun Cursor.double(i: Int): Double = getDouble(i)
+
+    private companion object {
+        /** What is in the zip and how to read it in twenty years, without the app. */
+        const val README = "Clarity export\n\n" +
+            "clarity-export.md   Everything in plain text: goals and plans, check-ins, promises, what the coach knows " +
+            "with its evidence, focuses, reviews, letters, chapters, your story and every conversation. Opens in any " +
+            "text editor.\n" +
+            "clarity-export.json The same data as tables: {\"format\": \"clarity-db\", \"schema\": N, \"tables\": " +
+            "{name: [row, ...]}}. Times are milliseconds since 1 Jan 1970 (UTC); days are YYYY-MM-DD in your own " +
+            "time zone. The tables and columns are described in the app's source, db/schema.sql.\n\n" +
+            "Not in this export: notes you deleted, conversations off the record, and the app's own housekeeping.\n" +
+            "This file is NOT encrypted. Keep it somewhere private.\n"
+    }
 
     /** 2.0 is written 2, 1.5 stays 1.5. */
     private fun n(x: Double): String = if (x == Math.floor(x)) x.toLong().toString() else x.toString()

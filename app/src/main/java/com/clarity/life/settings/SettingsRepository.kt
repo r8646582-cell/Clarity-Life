@@ -37,6 +37,8 @@ class SettingsRepository @Inject constructor(
         const val LAST_BACKUP_LINE = "last_backup_line"
         const val BACKUP_EVERY_DAYS = "backup_every_days"
         const val BACKUP_KEEP = "backup_keep"
+        /** The file of a backup being written, until it is verified: removed if the app dies half way. */
+        const val BACKUP_WRITING = "backup_writing"
         const val MAINTENANCE_AT = "maintenance_at"
         const val MAINTENANCE_LINE = "maintenance_line"
         const val MAINTENANCE_DB_OK = "maintenance_db_ok"
