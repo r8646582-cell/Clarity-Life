@@ -114,7 +114,7 @@ Exam 2 by kind (app): recall 95%, people 94%, superseded 89%, promises 100%, syn
 What the numbers say: after ten years, a message would wait two to six seconds before it is even sent, and the first search of a session takes almost six. Two causes are known: the plan tracker reads every check-in ever made, on every request (about a second), and the first meaning search reads all 44,000 vectors from the encrypted file. The rest of the new-conversation time (building the frozen part) is not broken down yet; Phase 5 times each part. A fix that is cheap and safe can come earlier, with the owner's OK.
 
 
-### Phase 1: lifetime reliability and data safety (14 Oct 2026, built; waiting for the owner's OK)
+### Phase 1: lifetime reliability and data safety (14 Oct 2026, built, CI run #131 green; waiting for the owner's OK)
 
 | Step | What was built | How it is proven |
 |---|---|---|
