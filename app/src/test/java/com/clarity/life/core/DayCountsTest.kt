@@ -31,6 +31,14 @@ class DayCountsTest {
     }
 
     @Test
+    fun mayFollowedByANumberIsNotADate() {
+        assertEquals(emptyList<String>(), DayCounts.lines(listOf("I may 2 hours study today", "May 3 lectures be enough?"), today))
+        val line = "2 May 2027 is a Sunday, 203 days after today (counted by the app)."
+        assertEquals(listOf(line), DayCounts.lines(listOf("the exam is on 2 may"), today))
+        assertEquals(listOf(line), DayCounts.lines(listOf("the exam is on May 2, 2027"), today))
+    }
+
+    @Test
     fun oneDayIsSingular() {
         assertEquals("12 October 2026 is a Monday, 1 day after today (counted by the app).", DayCounts.line(today.plusDays(1), today))
     }

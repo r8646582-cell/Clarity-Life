@@ -14,6 +14,7 @@
     "CHECKIN_FACTS",
     "CARD_RESULTS",
     "EARLIER",
+    "LAST_CHAT",
     "IDEAS_RECENT",
     "RELEVANT_PAST",
     "LETTER",
@@ -55,7 +56,8 @@
         "Do not use em dashes",
         "CARD_RESULTS",
         "use the weekday name",
-        "volunteered the commitment themselves"
+        "volunteered the commitment themselves",
+        "place their message in time"
       ],
       "max_words": 5600
     },
@@ -145,6 +147,7 @@
         "FOCUS_SUMMARY",
         "CHECKIN_FACTS",
         "DELETED_NOTES",
+        "PREVIOUS_SUMMARY",
         "TRANSCRIPT"
       ],
       "must_contain": [
@@ -155,7 +158,8 @@
         "in exactly this shape",
         "focus_summary",
         "Never set \"confirmed\"",
-        "\"quote\": \"their exact words, only for a correction\""
+        "\"quote\": \"their exact words, only for a correction\"",
+        "covers the WHOLE conversation"
       ],
       "max_words": 3200
     },

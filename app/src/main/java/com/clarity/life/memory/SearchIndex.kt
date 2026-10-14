@@ -118,9 +118,17 @@ class SearchIndex @Inject constructor(
 
     /**
      * RELEVANT_PAST for his new message: the strongest matches from other conversations, each labelled with
-     * its date and conversation title. An empty block (omitted from the request) when nothing is strong.
+     * its day, time, how long ago and conversation title. An empty block (omitted from the request) when
+     * nothing is strong. [boundary] is his day-boundary hour and [now] the request's moment, so "today" here
+     * means what it means in NOW and in the history.
      */
-    suspend fun relevantPast(conversationId: Long, newText: String, tz: String): Block {
+    suspend fun relevantPast(
+        conversationId: Long,
+        newText: String,
+        tz: String,
+        boundary: Int = 0,
+        now: Long = System.currentTimeMillis(),
+    ): Block {
         val terms = Retrieval.terms(newText)
         val keyword = keywordHits(conversationId, terms)
         val meaning = if (Retrieval.wordCount(newText) >= Retrieval.SEMANTIC_MIN_QUERY_WORDS) {
@@ -131,7 +139,7 @@ class SearchIndex @Inject constructor(
         val fused = VectorMath.fuse(keyword, meaning).take(Retrieval.MAX_RESULTS)
         if (fused.isEmpty()) return Retrieval.block(emptyList())
 
-        val docs = resolve(fused, conversationId, tz)
+        val docs = resolve(fused, conversationId, tz, boundary, now)
         return Retrieval.block(fused.mapNotNull { key -> docs[key]?.let { Retrieval.Hit(it, 0) } })
     }
 
@@ -139,23 +147,32 @@ class SearchIndex @Inject constructor(
      * Text, time and label of each key, leaving out anything from the open conversation (it is in the
      * history already) and anything that no longer exists.
      */
-    private suspend fun resolve(keys: List<Key>, conversationId: Long, tz: String): Map<Key, Retrieval.Candidate> {
+    private suspend fun resolve(
+        keys: List<Key>,
+        conversationId: Long,
+        tz: String,
+        boundary: Int = 0,
+        now: Long = System.currentTimeMillis(),
+    ): Map<Key, Retrieval.Candidate> {
+        fun stamp(at: Long) = TimeFacts.pastStamp(Instant.ofEpochMilli(at), Instant.ofEpochMilli(now), tz, boundary)
+        fun said(m: MessageHit) = Retrieval.Candidate(m.text, m.at, "${stamp(m.at)}${titled(m.title)}, they wrote")
+        fun summed(s: SummaryHit) = Retrieval.Candidate(s.text, s.at, "${stamp(s.at)}${titled(s.title)}, summary")
         fun ids(kind: String) = keys.filter { it.kind == kind }.map { it.id }
         val out = HashMap<Key, Retrieval.Candidate>()
         if (ids(MESSAGE).isNotEmpty()) {
             for (m in dao.messageHits(ids(MESSAGE))) {
-                if (m.conversationId != conversationId) out[Key(MESSAGE, m.messageId)] = candidate(m, tz)
+                if (m.conversationId != conversationId) out[Key(MESSAGE, m.messageId)] = said(m)
             }
         }
         if (ids(SUMMARY).isNotEmpty()) {
             for (s in dao.summaryHits(ids(SUMMARY))) {
-                if (s.conversationId != conversationId) out[Key(SUMMARY, s.conversationId)] = candidate(s, tz)
+                if (s.conversationId != conversationId) out[Key(SUMMARY, s.conversationId)] = summed(s)
             }
         }
         if (ids(QUOTE).isNotEmpty()) {
             for (q in dao.quoteHits(ids(QUOTE))) {
                 if (q.conversationId == conversationId) continue
-                out[Key(QUOTE, q.id)] = Retrieval.Candidate(q.text, q.at, "${stamp(q.at, tz)}${titled(q.title)}, words of theirs worth keeping")
+                out[Key(QUOTE, q.id)] = Retrieval.Candidate(q.text, q.at, "${stamp(q.at)}${titled(q.title)}, words of theirs worth keeping")
             }
         }
         if (ids(EVENT).isNotEmpty()) {
@@ -163,7 +180,7 @@ class SearchIndex @Inject constructor(
             for (e in dao.events(ids(EVENT))) {
                 if (e.conversationId == conversationId) continue
                 val title = e.conversationId?.let { titles[it]?.title }.orEmpty()
-                out[Key(EVENT, e.id)] = Retrieval.Candidate(eventText(e), e.createdAt, "${stamp(e.createdAt, tz)}${titled(title)}, something that happened")
+                out[Key(EVENT, e.id)] = Retrieval.Candidate(eventText(e), e.createdAt, "${stamp(e.createdAt)}${titled(title)}, something that happened")
             }
         }
         if (ids(NOTE).isNotEmpty()) {
@@ -173,7 +190,7 @@ class SearchIndex @Inject constructor(
         }
         if (ids(PROMISE).isNotEmpty()) {
             for (p in dao.promises(ids(PROMISE))) {
-                out[Key(PROMISE, p.id)] = Retrieval.Candidate(promiseText(p), p.dueAt, "${stamp(p.dueAt, tz)}, a promise they set")
+                out[Key(PROMISE, p.id)] = Retrieval.Candidate(promiseText(p), p.dueAt, "${stamp(p.dueAt)}, a promise they set")
             }
         }
         return out
@@ -182,14 +199,19 @@ class SearchIndex @Inject constructor(
     private data class Key(val kind: String, val id: Long)
 
     private suspend fun keywordHits(conversationId: Long, terms: List<String>): List<Key> {
-        val query = Retrieval.matchQuery(terms) ?: return emptyList()
-        val rows = try {
-            dao.match(query, Retrieval.CANDIDATES)
-        } catch (e: Exception) {
-            // A query FTS cannot read is a reason to send nothing, never a reason to fail the reply.
-            return emptyList()
+        if (terms.isEmpty()) return emptyList()
+        // One read per word, so the newest matches of a common word never crowd out a rare one.
+        val rows = LinkedHashMap<Pair<String, String>, SearchDocRow>()
+        for (term in terms) {
+            val found = try {
+                dao.match(Retrieval.termQuery(term), conversationId, Retrieval.CANDIDATES_PER_TERM)
+            } catch (e: Exception) {
+                // A query FTS cannot read is a reason to send nothing for that word, never to fail the reply.
+                emptyList()
+            }
+            for (r in found) rows.putIfAbsent(r.kind to r.refId, r)
         }
-        val keys = rows.mapNotNull { r -> r.refId.toLongOrNull()?.let { Key(r.kind, it) } }
+        val keys = rows.values.mapNotNull { r -> r.refId.toLongOrNull()?.let { Key(r.kind, it) } }
         val docs = resolve(keys, conversationId, "UTC")
         // The key goes with its candidate through the scoring, so two equal texts can never be confused.
         val tagged = keys.mapNotNull { k -> docs[k]?.let { c -> k to c.copy(label = k.kind + ":" + k.id) } }
@@ -220,19 +242,6 @@ class SearchIndex @Inject constructor(
             val d = docs[k] ?: return@filter false
             k.kind != MESSAGE || Retrieval.wordCount(d.text) >= Retrieval.SEMANTIC_MIN_DOC_WORDS
         }.take(Retrieval.FUSE_DEPTH)
-    }
-
-    private fun candidate(m: MessageHit, tz: String) =
-        Retrieval.Candidate(m.text, m.at, "${stamp(m.at, tz)}${titled(m.title)}, they wrote")
-
-    private fun candidate(s: SummaryHit, tz: String) =
-        Retrieval.Candidate(s.text, s.at, "${stamp(s.at, tz)}${titled(s.title)}, summary")
-
-    /** "Tue 13 Oct (today)": the day and how long ago, counted here so the coach never works it out. */
-    private fun stamp(at: Long, tz: String): String {
-        val day = TimeFacts.local(Instant.ofEpochMilli(at), tz).toLocalDate()
-        val today = TimeFacts.local(Instant.now(), tz).toLocalDate()
-        return "${TimeFacts.stamp(Instant.ofEpochMilli(at), tz).substringBefore(",")} (${TimeFacts.ago(day, today)})"
     }
 
     private fun titled(title: String) = if (title.isNotBlank()) ", in \"$title\"" else ""

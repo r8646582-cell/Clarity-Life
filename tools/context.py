@@ -7,7 +7,7 @@ Layout of every chat request (cache-friendly: the longest stable prefix first):
              + the new user message = Part 3 (volatile blocks) + "## MESSAGE" + his text
 Part 1 + Part 2 are built when the conversation starts (and again only when he switches the chat type) and
 are stored in conversation.prefix_json, so they are byte-identical for every request in the conversation and
-the provider's prefix cache works. Part 1 alone is identical across conversations of the same chat type.
+the provider's prefix cache works (contracts/context.md lists the few events that rebuild them). Part 1 alone is identical across conversations of the same chat type.
 
 Pure functions only. No Android, no clock, no database.
 """
@@ -15,13 +15,14 @@ import math
 
 PART2_ORDER = ["FLAGS", "PROFILE", "PEOPLE", "NOTES", "FOCUS", "CHAPTERS", "RECENT_SESSIONS", "IDEAS_RECENT",
                "LETTER", "REVIEW"]
-PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "RELEVANT_PAST"]
+PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
+               "RELEVANT_PAST"]
 NEVER_TRIM = {"FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
               "CARD_RESULTS"}
 MESSAGE_HEADER = "## MESSAGE"
 
 PART2_BUDGET = 9000      # tokens, estimated
-PART3_BUDGET = 3000
+PART3_BUDGET = 4000
 HISTORY_BUDGET = 24000
 HISTORY_MIN_KEEP = 6     # the newest messages are always sent, even over budget
 HISTORY_REFILL = 0.75    # when the window must move, move it until history is at most 75% of the budget,

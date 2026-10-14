@@ -92,10 +92,10 @@ Main level: **Coach** (provider preset, base URL, API key, chat model name typed
 
 **What the AI receives each time** (a fixed-size packet; never "all the data"). The exact contract is `contracts/context.md`, implemented by `tools/context.py`:
 1. Fixed prompt (cached across all conversations of a chat type): persona, examples, card rules, chat-type instructions.
-2. Frozen context (cached for the whole conversation): flags, profile, people, active notes (capped), focus summary, latest chapters, recent session summaries, recent ideas, and the letter or review it was opened from.
+2. Frozen context (cached for the whole conversation): flags, profile, people, active notes (capped), focus summary, latest chapters, recent session summaries (each with its day and clock times), recent ideas, and the letter or review it was opened from. It is built again when they change something in What I know or forget a conversation, and when another conversation's summary is written, so a deleted note is never sent again and a new conversation catches up with the one before it (added 14 Oct 2026, after the coach missed a nap plan made two hours earlier).
 3. The messages of this conversation (a window of about 24k tokens that moves forward in jumps, plus a running summary of anything that left the window).
-4. Volatile facts with their new message: the current time sentence (code-written, with the day boundary), the **planner facts** (section 6) and today's check-in state, open promises with code-written due phrases, what they did with the last reply's cards, and "possibly relevant from the past" (top matches across all conversations, labeled with date and conversation title).
-Budgets: frozen context about 9k tokens, volatile facts about 3k, history about 24k. Order of trimming: oldest summaries, then lowest-evidence notes. The planner facts, promises, time and flags are never trimmed. Nothing stored is ever truncated; only what is sent.
+4. Volatile facts with their new message: the current time sentence (code-written, with the day boundary), the **planner facts** (section 6) and today's check-in state, open promises with code-written due phrases, what they did with the last reply's cards, the last messages of the conversation they were in less than 6 hours ago (word for word, with times), and "possibly relevant from the past" (top matches across all conversations, labeled with date, time, how long ago and conversation title).
+Budgets: frozen context about 9k tokens, volatile facts about 4k, history about 24k. Order of trimming: oldest summaries, then lowest-evidence notes. The planner facts, promises, time and flags are never trimmed. Nothing stored is ever truncated; only what is sent.
 
 ---
 

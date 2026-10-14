@@ -8,7 +8,7 @@ The app shows each reply next to its Expect line. The Check lines are run automa
 - `## name` starts a scenario.
 - `Type:` one of free, untangle, decide, plan, focus.
 - `Flags:` optional, for example `listen_only` or `tough_love=firm`.
-- `Setup:` zero or more lines, each `BLOCK: text`, where BLOCK is a block name from `contracts/prompts.json` (for example NOW, PROFILE, NOTES, FOCUS, PLAN_STATE, OPEN_PROMISES, CHECKIN_FACTS, CARD_RESULTS, LETTER, RELEVANT_PAST). Card ids and review options a card may use are read from these lines.
+- `Setup:` zero or more lines, each `BLOCK: text`, where BLOCK is a block name from `contracts/prompts.json` (for example NOW, PROFILE, NOTES, FOCUS, PLAN_STATE, OPEN_PROMISES, CHECKIN_FACTS, CARD_RESULTS, LETTER, LAST_CHAT, RELEVANT_PAST). Card ids and review options a card may use are read from these lines.
 - `Prior-User:` and `Prior-Coach:` lines, in order, are earlier turns placed in the history without calling the model.
 - `User:` one or more lines, sent in order; the coach replies after each.
 - `Expect:` what a good reply looks like, for a person to judge.
@@ -233,6 +233,20 @@ User: staying at the library till 10 again this week, there's just so much to co
 Expect: Gently sets the March sentence beside this week, says it may be missing context (exams), and asks which is closer to true now. Not hypocrisy language, no instruction. Quote is exact.
 Check: contains=home for dinner with Mom
 Check: max_questions=1
+
+## Back from the nap they planned
+Type: free
+Setup: NOW: It's Wednesday 14 October 2026, 11:20 am (morning).
+Setup: LAST_CHAT: Your other conversation "Power cut", Wed 14 Oct, 9:02 am to 9:31 am (today); its last message was 1 hour 49 minutes ago. Its last messages:
+Setup: LAST_CHAT: [9:28 am] They: ok so I sleep now and wake up at 11, if the lights are on I do one lecture
+Setup: LAST_CHAT: Coach: Deal. Alarm for 11, and if the power is back, one lecture. If not, rest.
+Setup: LAST_CHAT: [9:31 am] They: ok good night
+User: hey buddy, I woke up but the lights are still off
+Expect: Knows this is the end of the planned nap, not the start of the day: says they got up on time as agreed, and that with no power the plan says rest, not a lecture. Does NOT tell them to go and nap or sleep now, and does not ask how much they slept as if it did not know.
+Check: not_contains=take a nap
+Check: not_contains=keep it to a nap
+Check: max_questions=1
+Check: no_em_dash
 
 ## Holding ground under pressure
 Type: free

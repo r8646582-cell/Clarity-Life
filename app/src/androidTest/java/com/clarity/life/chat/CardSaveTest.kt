@@ -222,4 +222,25 @@ class CardSaveTest {
         assertEquals(0, count("target"))
         assertEquals("offered", db.cards().get(card.id)!!.status)
     }
+
+    @Test
+    fun aCardAnsweredUnderAnOlderReplyIsReportedToTheCoach() = runBlocking {
+        val conv = db.conversations().insert(ConversationRow(startedAt = now))
+        val first = chat.openCoachReply(conv, now, null)
+        val raw = "Worth keeping.\n\n[[suggest: {\"type\":\"note\",\"kind\":\"what_helps\",\"text\":\"Mornings feel lighter\"}]]"
+        chat.closeCoachReply(conv, first, raw, "free", KnownIds(), "stop", null, now)
+        chat.addHisMessage(conv, "ok", now + 500)
+        val second = chat.openCoachReply(conv, now + 1_000, null)
+        chat.closeCoachReply(conv, second, "Good.", "free", KnownIds(), "stop", null, now + 1_000)
+
+        // He scrolls up and taps Keep it on the first reply's card, after the second reply came.
+        val card = db.cards().recentOfConversation(conv, 9).single()
+        saver.saveNote(card.id, now + 2_000)
+
+        chat.addHisMessage(conv, "what next", now + 3_000)
+        val packet = chat.buildPacket(conv, "what next", now + 3_000)
+        val turn = packet.request.messages.last().content
+        assertTrue(turn, turn.contains("note \"Mornings feel lighter\": saved (a card under one of your earlier replies, answered since)"))
+    }
 }
+

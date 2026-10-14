@@ -70,6 +70,10 @@ object Blocks {
         return "$type \"$text\": $what"
     }
 
+    /** A card under an older reply that he answered since the coach last heard about cards. */
+    fun earlierCardResultLine(type: String, text: String, status: String): String =
+        cardResultLine(type, text, status) + " (a card under one of your earlier replies, answered since)"
+
     /** The system message is Part 1 + Part 2 (contracts/context.md); only Part 2 can be trimmed. */
     fun systemMessage(
         persona: String,

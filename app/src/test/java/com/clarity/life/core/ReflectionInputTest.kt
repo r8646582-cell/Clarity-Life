@@ -101,4 +101,21 @@ class ReflectionInputTest {
         assertEquals("(nothing yet)", ReflectionInput.context(emptyList(), emptyList(), emptyList(), emptyList(), emptyList()))
         assertEquals("none", ReflectionInput.deleted(emptyList()))
     }
+
+    @Test
+    fun aFailedReflectionTriesAgainLaterInsteadOfNever() {
+        val hour = 3_600_000L
+        val failedAt = 1_000_000_000L
+        // Within a round, at once.
+        assertTrue(ReflectionInput.mayRun(1, failedAt, failedAt))
+        assertTrue(ReflectionInput.mayRun(2, failedAt, failedAt))
+        // A spent round rests before the next.
+        assertFalse(ReflectionInput.mayRun(3, failedAt, failedAt + 5 * hour))
+        assertTrue(ReflectionInput.mayRun(3, failedAt, failedAt + 6 * hour))
+        assertTrue(ReflectionInput.mayRun(4, failedAt, failedAt))
+        assertTrue(ReflectionInput.mayRun(6, failedAt, failedAt + 6 * hour))
+        // After three rounds it stops costing anything.
+        assertFalse(ReflectionInput.mayRun(9, failedAt, failedAt + 100 * hour))
+        assertFalse("no recorded failure time: wait", ReflectionInput.mayRun(3, null, failedAt + 100 * hour))
+    }
 }

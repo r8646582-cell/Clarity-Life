@@ -94,6 +94,11 @@ class ReflectionApplyTest {
         val result = ReflectionApplier.apply(raw, ReflectionContext(hisMessages = listOf(said), notes = notes))
         assertEquals(true, result.ok)
 
+        // Another open conversation, with its memory frozen before this summary existed; and this one's own.
+        val other = db.conversations().insert(ConversationRow(startedAt = now))
+        db.conversations().setPrefix(other, "{\"system\":\"before\"}", day)
+        db.conversations().setPrefix(conv, "{\"system\":\"mine\"}", day)
+
         val job = claim("reflection:$conv:$msg")
         val applied = memory.applyReflection(
             conv, msg, job, result.ops, listOf(MemoryRepository.Said(said, day)), day, now,
@@ -114,6 +119,8 @@ class ReflectionApplyTest {
         assertEquals(msg, c.reflectedUpToMessageId)
         assertEquals("the placeholder title is replaced", "Mornings and the exam", c.title)
         assertEquals("succeeded", db.jobs().byKey("reflection:$conv:$msg")!!.status)
+        assertNull("the other conversation builds its memory again, with the new summary", db.conversations().get(other)!!.prefixJson)
+        assertNotNull("the reflected one keeps its cache: its messages are in its own history", c.prefixJson)
 
         // The same work again changes nothing.
         assertNull(memory.applyReflection(conv, msg, job, result.ops, emptyList(), day, now))

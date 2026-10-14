@@ -32,8 +32,17 @@ object MemoryBlocks {
         val evidence: List<Evidence>,
     )
 
-    /** [day] is the day key the conversation started on. */
-    data class Session(val day: String, val title: String, val summary: String, val ago: String? = null)
+    /**
+     * [day] is the day key of the conversation's last message. [span] is when it took place, from its first to
+     * its last message ([TimeFacts.span]); without it the line names the day alone.
+     */
+    data class Session(
+        val day: String,
+        val title: String,
+        val summary: String,
+        val ago: String? = null,
+        val span: String? = null,
+    )
 
     const val EVIDENCE_LINES = 2
     const val RECENT_SESSIONS = 5
@@ -85,14 +94,14 @@ object MemoryBlocks {
         },
     )
 
-    /** [sessions] newest first; the oldest of the five is dropped first. */
+    /** [sessions] newest first (by their last message); the oldest of the five is dropped first. */
     fun recentSessions(sessions: List<Session>): Block {
         val kept = sessions.filter { it.summary.isNotBlank() }.take(RECENT_SESSIONS)
         return Block(
             "RECENT_SESSIONS",
             kept.mapIndexed { i, s ->
                 val title = if (s.title.isNotBlank()) " \"${s.title}\"" else ""
-                BlockItem("${KnowText.shortDay(s.day)}${s.ago?.let { " ($it)" }.orEmpty()}$title: ${s.summary}", SESSIONS_RANK + i + 1)
+                BlockItem("${s.span ?: KnowText.shortDay(s.day)}${s.ago?.let { " ($it)" }.orEmpty()}$title: ${s.summary}", SESSIONS_RANK + i + 1)
             }.reversed(), // shown oldest first, like a story
         )
     }

@@ -12,9 +12,16 @@ object Retrieval {
 
     const val MAX_TERMS = 8
     const val MAX_RESULTS = 5
-    /** Keyword candidates read from the index, newest first, before they are scored. */
-    const val CANDIDATES = 200
+    /**
+     * Keyword candidates read from the index for each searched word, newest first, before they are scored.
+     * One read per word, so a rare word ("CAF") is never pushed out by the newest matches of a common one
+     * ("study"). At most [MAX_TERMS] x this many rows, which stays under SQLite's 999 query variables.
+     */
+    const val CANDIDATES_PER_TERM = 100
     const val SNIPPET_CHARS = 280
+
+    /** RELEVANT_PAST's drop ranks start here, above [LastChat]'s, so search results go before the last chat. */
+    const val DROP_RANK = 100
 
     /** How many strong matches each search method brings to the fusion. */
     const val FUSE_DEPTH = 20
@@ -42,6 +49,12 @@ object Retrieval {
         "sure", "than", "that", "their", "them", "then", "there", "these", "they", "thing", "things",
         "think", "this", "those", "today", "very", "want", "wanna", "well", "were", "what", "when",
         "where", "which", "while", "will", "with", "would", "yeah", "your", "yours", "okay",
+        // Three-letter words are searched too ("CAF", "nap", "gym", "mom"), except these.
+        "the", "and", "you", "for", "but", "not", "are", "was", "has", "had", "his", "her", "she", "him", "our",
+        "out", "can", "all", "any", "get", "got", "did", "its", "one", "too", "now", "how", "why", "who", "let",
+        "yes", "lol", "way", "off", "lot", "bit", "use", "see", "say", "put", "new", "own", "try", "ive", "don",
+        "isn", "won", "ain", "hey", "huh", "omg", "idk", "btw", "may", "yet", "via", "per", "etc", "ill",
+        "whom", "youre", "cant", "wont", "didnt", "isnt", "thats",
     )
 
     private val WORD = Regex("[a-z0-9]+")
@@ -49,25 +62,48 @@ object Retrieval {
     /** The words worth searching for, longest first (longer words say more), at most [MAX_TERMS]. */
     fun terms(text: String): List<String> =
         WORD.findAll(TextCheck.norm(text)).map { it.value }
-            .filter { it.length >= 4 && it !in STOP && !it.all(Char::isDigit) }
+            .filter { it.length >= 3 && it !in STOP && !it.all(Char::isDigit) }
             .distinct()
             .sortedWith(compareByDescending<String> { it.length }.thenBy { it })
             .take(MAX_TERMS)
             .toList()
 
-    /** An FTS4 MATCH expression: each term quoted, joined with OR. Null when there is nothing to search. */
     /**
-     * Only the words he or the coach wrote are searched (body and title), never the kind and id columns, or
-     * "message" would match every message and "12" any row 12. The terms are plain [a-z0-9] words, so no
-     * quoting is needed (FTS4 does not accept a quoted term after a column name).
+     * A simple stem, so the forms of one word meet: "lecture", "lectures", "lecturing" and "lectured" all give
+     * "lectur"; "nap", "naps" and "napping" give "nap"; "study", "studies", "studied" and "studying" give
+     * "study". Irregular forms ("woke" and "wake", "slept" and "sleep") stay apart; meaning search covers some.
      */
-    fun matchQuery(terms: List<String>): String? =
-        if (terms.isEmpty()) null else terms.joinToString(" OR ") { "body:$it OR title:$it" }
+    fun stem(word: String): String {
+        var w = word.lowercase()
+        w = when {
+            w.length > 4 && (w.endsWith("ies") || w.endsWith("ied")) -> w.dropLast(3) + "y"
+            w.length > 5 && w.endsWith("ing") -> w.dropLast(3)
+            w.length > 4 && w.endsWith("ed") -> w.dropLast(2)
+            w.length > 3 && w.endsWith("s") && !w.endsWith("ss") && !w.endsWith("us") && !w.endsWith("is") -> w.dropLast(1)
+            else -> w
+        }
+        if (w.length > 3 && w[w.length - 1] == w[w.length - 2] && w.last() !in "lsz") w = w.dropLast(1)
+        if (w.length > 3 && w.endsWith("e")) w = w.dropLast(1)
+        return w
+    }
 
-    /** How many of the terms appear in the text as whole words. */
+    /**
+     * The FTS4 MATCH expression for one searched word: a prefix search on its stem, so every form of the word
+     * is a candidate ("lectur*"); [score] then keeps only real matches. Only the words he or the coach wrote
+     * are searched (body and title), never the kind and id columns, or "message" would match every message
+     * and "12" any row 12. The terms are plain [a-z0-9] words, so no quoting is needed (FTS4 does not accept
+     * a quoted term after a column name).
+     */
+    fun termQuery(term: String): String {
+        val s = stem(term)
+        val prefix = if (s.length > 3 && s.endsWith("y")) s.dropLast(1) else s
+        return "body:$prefix* OR title:$prefix*"
+    }
+
+    /** How many of the terms appear in the text, in any of their forms ([stem]). */
     fun score(text: String, terms: List<String>): Int {
-        val words = WORD.findAll(TextCheck.norm(text)).map { it.value }.toSet()
-        return terms.count { it in words }
+        val stems = WORD.findAll(TextCheck.norm(text)).map { stem(it.value) }.toSet()
+        return terms.count { stem(it) in stems }
     }
 
     /** A match is strong when it shares at least two of the searched words (or the only one there is). */
@@ -102,7 +138,8 @@ object Retrieval {
         hits.mapIndexed { i, h ->
             val text = h.candidate.text.replace(Regex("\\s+"), " ").trim()
             val clipped = if (text.length > SNIPPET_CHARS) text.take(SNIPPET_CHARS).trimEnd() + "..." else text
-            BlockItem("${h.candidate.label}: $clipped", i + 1)
+            // Ranked above LAST_CHAT's lines (contracts/context.md): a tight budget drops search results first.
+            BlockItem("${h.candidate.label}: $clipped", DROP_RANK + i + 1)
         },
     )
 }

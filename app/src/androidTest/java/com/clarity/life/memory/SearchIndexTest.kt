@@ -60,6 +60,20 @@ class SearchIndexTest {
     }
 
     @Test
+    fun shortWordsAndOtherFormsAreFoundAndTheOpenChatDoesNotCrowdThemOut() = runBlocking {
+        val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Power cut"))
+        val two = db.conversations().insert(ConversationRow(startedAt = now + 1, title = ""))
+        said(one, "I take a nap now and do one CAF lecture at 11")
+        // The open conversation says the same words a hundred and fifty times: none of that may push chat one
+        // out of the candidates.
+        repeat(150) { said(two, "caf lectures and naps again") }
+
+        val found = search.relevantPast(two, "how did the CAF lectures go after my naps?", tz)
+        assertEquals(found.items.toString(), 1, found.items.size)
+        assertTrue(found.items[0].text, found.items[0].text.contains("in \"Power cut\", they wrote: I take a nap"))
+    }
+
+    @Test
     fun quotesEventsAndRetiredNotesAreFoundToo() = runBlocking {
         val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Work"))
         val two = db.conversations().insert(ConversationRow(startedAt = now + 1))

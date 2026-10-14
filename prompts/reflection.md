@@ -9,6 +9,8 @@ You will receive:
 {{CONTEXT}}
 - THE FOCUS SUMMARY SO FAR (empty if this chat is not in a focus):
 {{FOCUS_SUMMARY}}
+- THE SUMMARY OF THIS CONVERSATION SO FAR (empty for its first reflection):
+{{PREVIOUS_SUMMARY}}
 - FACTS COUNTED BY THE APP FROM THEIR CHECK-INS (the only numbers you may cite):
 {{CHECKIN_FACTS}}
 - NOTES THE USER DELETED (never re-create these or anything close to them):
@@ -17,7 +19,7 @@ You will receive:
 {{TRANSCRIPT}}
 
 ## Continued conversations
-If the transcript contains the line "--- ALREADY REFLECTED ABOVE THIS LINE ---", everything above it was reflected before. Use it only as context. Learn ONLY from the messages below the line. Never re-add events, quotes or notes that came from the part above.
+If the transcript contains the line "--- ALREADY REFLECTED ABOVE THIS LINE ---", everything above it was reflected before. Use it only as context. Learn ONLY from the messages below the line. Never re-add events, quotes or notes that came from the part above. The summary is the one exception: it covers the whole conversation (see "summary" below).
 
 ## The one rule that matters most: only they are evidence
 Learn only from what they said or clearly did, and from the app's own counts in CHECKIN_FACTS. What the coach said is NOT evidence about them: not its guesses, not its suggestions, not its summaries of them, and not their silence after them. If the coach proposed a pattern and they did not say it or agree with it in their own words, it is not a fact about them. If they did agree, record that they agreed. A card the coach suggested is not evidence of anything until the app shows it was saved, and you cannot see that, so ignore cards.
@@ -59,6 +61,7 @@ Before anything else, fill "observations": up to 8 short items, each with an exa
 - disagreements: only when the coach and they plainly see something differently and they held their ground. "claim" is the coach's view in one plain sentence; "his_position" is what they said back, copied exactly.
 - contradictions: only two things THEY said that cannot both be fully true, each copied exactly from their own messages (one may come from an earlier conversation in CONTEXT). Skip anything they already explained.
 - ideas_used: short tags for the wisdom, frameworks or metaphors the coach used (for example "if-then plan", "mental contrasting"), so the coach does not repeat itself.
+- summary: the coach reads it in later conversations, and in this one once its oldest messages are no longer sent, so it covers the WHOLE conversation, not only the new part. Start from THE SUMMARY OF THIS CONVERSATION SO FAR, keep what still matters (above all anything agreed and when, with the time the transcript shows, for example "at 9:30 am they agreed to nap until 11, then do one lecture if the power was back"), and add what happened below the line. Under about 150 words.
 - focus_summary: ONLY if this chat belongs to a focus. Rewrite the rolling summary so it stays under about 200 words and reads as a story of the arc: where they started, what has been tried and what happened, what changed, what is hard now, the next step. Keep what still matters from the previous summary; do not just append. Use only their words and results, and address them as "you". Return null if the chat is not in a focus or nothing changed.
 
 ## Output
@@ -67,7 +70,7 @@ Return ONLY a valid JSON object in exactly this shape. No markdown, no code fenc
 {
   "observations": [{"quote": "exact words from their messages", "shows": "one line"}],
   "title": "...",
-  "summary": "3 to 5 sentences: what they brought, what happened, how they seemed at the end",
+  "summary": "3 to 6 sentences on the whole conversation: what they brought, what happened, what was agreed and when, how they seemed at the end",
   "significance": 3,
   "tone": "...",
   "profile_updates": [{"key": "...", "value": "...", "quote": "their exact words, only for a correction"}],

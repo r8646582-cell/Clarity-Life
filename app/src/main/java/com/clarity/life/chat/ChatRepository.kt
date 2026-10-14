@@ -10,6 +10,7 @@ import com.clarity.life.ai.OpenAiCompatibleClient
 import com.clarity.life.core.CardParser
 import com.clarity.life.core.ContextBuilder
 import com.clarity.life.core.KnownIds
+import com.clarity.life.core.LastChat
 import com.clarity.life.core.LiveText
 import com.clarity.life.core.MemoryBlocks
 import com.clarity.life.core.PlanBlocks
@@ -132,6 +133,9 @@ class ChatRepository @Inject constructor(
         conversations.delete(conversationId)
         if (noteIds.isNotEmpty()) db.memory().deleteNotesLeftWithoutEvidence(noteIds)
         for (id in noteIds) if (db.memory().note(id) == null) search.removeNote(id)
+        // Its summary and the notes it alone taught are frozen in other open conversations' prefixes: they
+        // build them again, so nothing from it is sent after he forgot it.
+        conversations.clearAllPrefixes()
         Unit
     }
 
@@ -337,9 +341,17 @@ class ChatRepository @Inject constructor(
             val results = cardResultLines(conversationId)
             if (results.isNotEmpty()) add(Blocks.cardResults(results))
             if (start > 0) add(Blocks.earlier(conversation.summary))
+            // The conversation he was just in, word for word, while it is fresh: its summary may not be written
+            // yet, and this conversation's frozen memory would then never see it (contracts/context.md).
+            db.memory().lastOtherConversation(conversationId)?.takeIf { LastChat.fresh(it.lastAt, now) }?.let { other ->
+                val said = messages.ofConversation(other.id).filter {
+                    it.role == "user" || it.status == "complete" || it.status == "interrupted"
+                }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
+                add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
+            }
             // Keyword matches from his other conversations. Retrieval can never be what fails a reply.
             try {
-                add(search.relevantPast(conversationId, newText, tz))
+                add(search.relevantPast(conversationId, newText, tz, boundary, now))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -439,9 +451,12 @@ class ChatRepository @Inject constructor(
                 (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
             )
         }
+        // Dated by the last message, with the clock times: "today" alone left a plan made at 9 am and a message
+        // at 11 am in no order the coach could see.
         val sessions = m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS).map { c ->
-            val day = Planner.dayKey(Instant.ofEpochMilli(c.startedAt).toString(), tz, boundary).toString()
-            MemoryBlocks.Session(day, c.title, c.summary, ago(day))
+            val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
+            val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
+            MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
         }
         return listOf(
             MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),
@@ -501,8 +516,25 @@ class ChatRepository @Inject constructor(
     private val lastDrops = java.util.concurrent.ConcurrentHashMap<Long, List<String>>()
 
     private suspend fun cardResultLines(conversationId: Long): List<String> {
-        val last = messages.ofConversation(conversationId).lastOrNull { it.role == "coach" && it.status == "complete" }
-            ?: return emptyList()
+        val replies = messages.ofConversation(conversationId).filter { it.role == "coach" && it.status == "complete" }
+        val last = replies.lastOrNull() ?: return emptyList()
+        return lastReplyCardLines(last) + earlierCardLines(conversationId, last, replies.getOrNull(replies.size - 2))
+    }
+
+    /**
+     * Cards under older replies that he answered after the reply before the last one began: no CARD_RESULTS
+     * has told the coach about them yet (each request reports only the last reply's cards), so it could offer
+     * one again or talk as if he never answered. Reported at most twice, then OPEN_PROMISES and PLAN_STATE
+     * carry what was saved.
+     */
+    private suspend fun earlierCardLines(conversationId: Long, last: MessageRow, before: MessageRow?): List<String> {
+        val since = before?.createdAt ?: return emptyList()
+        return cards.ofConversation(conversationId)
+            .filter { it.messageId < last.id && it.status != "offered" && (it.decidedAt ?: 0L) > since }
+            .map { Blocks.earlierCardResultLine(it.type, cardLabel(it), it.status) }
+    }
+
+    private suspend fun lastReplyCardLines(last: MessageRow): List<String> {
         val rows = cards.ofMessage(last.id)
         val drops = lastDrops[last.id].orEmpty().map { com.clarity.life.core.CardTalk.dropLine(it) }
         if (drops.isNotEmpty()) {

@@ -114,6 +114,37 @@ object TimeFacts {
     }
 
     /**
+     * When something in the past happened, with the day, the time and how long ago, all counted here:
+     * "Wed 14 Oct, 9:10 am (today, 2 hours 10 minutes ago)" within the last 24 hours, else
+     * "Mon 12 Oct, 9:10 pm (2 days ago)". "Today" and "yesterday" follow his day ([boundaryHour]), like NOW
+     * and the history stamps. Without the time, a plan made at 9 am and a message sent at 11 am the same day
+     * read as if either could come first. A moment still ahead says only its day ("tomorrow").
+     */
+    fun pastStamp(at: Instant, now: Instant, tz: String, boundaryHour: Int): String {
+        val t = local(at, tz)
+        val date = t.toLocalDate()
+        val ago = ago(Planner.dayKey(at.toString(), tz, boundaryHour), Planner.dayKey(now.toString(), tz, boundaryHour))
+        val gap = Duration.between(at, now)
+        val tail = if (!gap.isNegative && gap < Duration.ofHours(24)) "$ago, ${spell(gap)} ago" else ago
+        return "${shortWeekday(date)} ${date.dayOfMonth} ${SHORT_MONTHS[date.monthValue - 1]}, ${clock(t)} ($tail)"
+    }
+
+    /**
+     * When a conversation took place, from its first to its last message: "Wed 14 Oct, 9:05 am to 9:40 am",
+     * or "Tue 13 Oct, 10:30 pm to Wed 14 Oct, 12:40 am" when it ran past midnight.
+     */
+    fun span(start: Instant, end: Instant, tz: String): String {
+        val a = local(start, tz)
+        val b = local(end, tz)
+        fun day(d: LocalDate) = "${shortWeekday(d)} ${d.dayOfMonth} ${SHORT_MONTHS[d.monthValue - 1]}"
+        return if (a.toLocalDate() == b.toLocalDate()) {
+            "${day(a.toLocalDate())}, ${clock(a)} to ${clock(b)}"
+        } else {
+            "${day(a.toLocalDate())}, ${clock(a)} to ${day(b.toLocalDate())}, ${clock(b)}"
+        }
+    }
+
+    /**
      * The due phrase of an open promise, computed here so the coach never has to:
      * "due Monday 5 October, 8:00 am (in 1 day 7 hours)" or "was due Friday 5:00 pm, 2 days ago".
      */

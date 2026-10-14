@@ -27,12 +27,19 @@ interface SearchDao {
     @Query("DELETE FROM search_doc")
     suspend fun clear()
 
-    /** The newest matches first: without an order SQLite gives the oldest, and recent words would be lost. */
+    /**
+     * The newest matches first (without an order SQLite gives the oldest, and recent words would be lost),
+     * leaving out the open conversation's own messages and summary: they are in its history already, and
+     * read here they used up the places meant for his other conversations.
+     */
     @Query(
         "SELECT rowid, kind, ref_id, title, body FROM search_doc WHERE search_doc MATCH :query " +
+            "AND NOT (kind = 'message' AND ref_id IN " +
+            "(SELECT CAST(id AS TEXT) FROM message WHERE conversation_id = :exceptConversation)) " +
+            "AND NOT (kind = 'summary' AND ref_id = CAST(:exceptConversation AS TEXT)) " +
             "ORDER BY rowid DESC LIMIT :limit",
     )
-    suspend fun match(query: String, limit: Int): List<SearchDocRow>
+    suspend fun match(query: String, exceptConversation: Long, limit: Int): List<SearchDocRow>
 
     @Query("SELECT COUNT(*) FROM search_doc")
     suspend fun count(): Int

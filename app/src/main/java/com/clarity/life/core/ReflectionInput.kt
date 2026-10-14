@@ -47,6 +47,24 @@ object ReflectionInput {
         return Selection(messages.last().id, old + new, newHis.map { it.text })
     }
 
+    /** A failed reflection rests this long before another round of attempts. */
+    const val RETRY_AFTER_HOURS = 6L
+
+    /** Rounds of attempts in all (each [ATTEMPTS_PER_ROUND] long), so a result that never passes stops costing. */
+    const val MAX_ROUNDS = 3
+    const val ATTEMPTS_PER_ROUND = 3
+
+    /**
+     * Whether a failed reflection may run again: at once within a round of [ATTEMPTS_PER_ROUND]; after a spent
+     * round only [RETRY_AFTER_HOURS] after its last failure, and never after [MAX_ROUNDS] rounds.
+     * [finishedAt] null (never recorded) waits like a fresh failure would.
+     */
+    fun mayRun(attempts: Int, finishedAt: Long?, now: Long): Boolean = when {
+        attempts >= MAX_ROUNDS * ATTEMPTS_PER_ROUND -> false
+        attempts % ATTEMPTS_PER_ROUND != 0 -> true
+        else -> finishedAt != null && now - finishedAt >= RETRY_AFTER_HOURS * 3_600_000L
+    }
+
     /** reflection:<conversation>:<last message id>. A replay of the same work finds the same key. */
     fun jobKey(conversationId: Long, upTo: Long) = "reflection:$conversationId:$upTo"
 
