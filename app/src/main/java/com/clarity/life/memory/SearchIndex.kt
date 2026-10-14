@@ -185,6 +185,18 @@ class SearchIndex @Inject constructor(
         }
     }
 
+    /**
+     * Start-up, after the repair sweep (Max plan Phase 5): the records' index brought up to date, the meaning
+     * model loaded and every vector read into memory, in the background, so his first message of the session
+     * does not wait seconds for them. Nothing he wrote changes; it is what the first search did anyway.
+     */
+    suspend fun warmUp() {
+        Spans.span("warm-up: records brought up to date") { syncRecords() }
+        if (Spans.span("warm-up: meaning model loaded") { embedder.embed(WARM_UP_TEXT) } != null) {
+            Spans.span("warm-up: vectors read into memory") { vectors.warm() }
+        }
+    }
+
     // ---------- records: letters, reviews, chapters, goals, goal changes, targets, check-ins ----------
 
     data class Record(val kind: String, val id: Long, val text: String)
@@ -673,6 +685,9 @@ class SearchIndex @Inject constructor(
 
         /** Version 2 changed how a promise reads ("Promise: ..."), so their vectors are made again. */
         private val CHANGED_IN_VERSION = listOf(PROMISE)
+
+        /** A fixed sentence, only to load the meaning model; its vector is not kept. */
+        private const val WARM_UP_TEXT = "a fixed sentence to load the model"
 
         /** Ids per query, under SQLite's 999 variables. */
         private const val CHUNK = 500

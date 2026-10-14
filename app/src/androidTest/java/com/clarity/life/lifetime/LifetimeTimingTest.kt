@@ -122,7 +122,8 @@ class LifetimeTimingTest {
             timed("plan tracker again") { planner.tracker(today) }
 
             // Search: the model's first load, then the first search (all vectors read), then later ones.
-            timed("meaning model: first sentence (load)") { embedder.embed("warm up the model") }
+            // In the app this runs in the background right after start-up (Max plan Phase 5), not when he sends.
+            timed("start-up warm-up, in the background") { search.warmUp() }
             val conversation = chat.startConversation("free", null, nowMs)
             val questions = listOf(
                 "I keep avoiding the tax lectures because of power cuts",
@@ -131,7 +132,7 @@ class LifetimeTimingTest {
                 "same thing as last time with my phone in bed",
                 "which promises did I break in August",
             )
-            val first = timed("search: first (reads every vector)") { search.relevantPast(conversation, questions[0], "UTC", 0, nowMs) }
+            val first = timed("search: first (after the warm-up)") { search.relevantPast(conversation, questions[0], "UTC", 0, nowMs) }
             assertTrue("ten years of messages must give search results", first.items.isNotEmpty())
             steps.clear()
             val warm = questions.drop(1).map { q ->

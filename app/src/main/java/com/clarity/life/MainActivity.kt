@@ -94,6 +94,8 @@ class MainActivity : ComponentActivity() {
                 // The nightly maintenance: database check, repairs, reminders, and the automatic encrypted
                 // backup when one is due (it does nothing for backups until a folder and a passphrase are set).
                 maintenance.schedule()
+                // Last, as it takes longest: search made ready, so the first message does not wait for it.
+                search.warmUp()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

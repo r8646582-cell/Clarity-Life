@@ -1,6 +1,7 @@
 package com.clarity.life.memory
 
 import android.content.Context
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -40,7 +41,11 @@ class EmbeddingIndexer @Inject constructor(
             WORK_NAME,
             // A run that is going finishes, and one more follows for anything that arrived meanwhile.
             ExistingWorkPolicy.APPEND_OR_REPLACE,
-            OneTimeWorkRequestBuilder<EmbeddingWorker>().build(),
+            // Never on a low battery (Max plan Phase 5): after a model change it makes every vector again, which
+            // is minutes to hours of work. Keyword search, and the vectors already made, work meanwhile.
+            OneTimeWorkRequestBuilder<EmbeddingWorker>()
+                .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
+                .build(),
         )
     }
 

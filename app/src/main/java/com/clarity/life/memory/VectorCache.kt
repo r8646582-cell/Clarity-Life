@@ -55,6 +55,9 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         index.search(query, floor - VectorIndex.MARGIN, limit, accept)
     }
 
+    /** Reads the vectors now (start-up, in the background), so the first search of the day does not wait for it. */
+    suspend fun warm() = lock.withLock { refresh() }
+
     /** The exact cosine from the stored floats, or null when the vector has gone since. */
     suspend fun exact(query: FloatArray, entry: VectorIndex.Entry): Double? {
         val bytes = db.embeddings().vectorOf(entry.kind, entry.docId, Embedder.MODEL, Embedder.DIM) ?: return null
@@ -80,14 +83,16 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         val e = db.embeddings()
         var after = lastRowSeen
         while (true) {
-            val rows = e.rowsAfter(after, BATCH)
+            val rows = Spans.span("vectors: rows read from the database") { e.rowsAfter(after, BATCH) }
             if (rows.isEmpty()) break
-            for (r in rows) {
-                seen++
-                after = r.rowId
-                if (r.model != Embedder.MODEL || r.dim != Embedder.DIM) continue
-                val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
-                index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+            Spans.span("vectors: decoded into the index") {
+                for (r in rows) {
+                    seen++
+                    after = r.rowId
+                    if (r.model != Embedder.MODEL || r.dim != Embedder.DIM) continue
+                    val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
+                    index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+                }
             }
             if (rows.size < BATCH) break
         }
