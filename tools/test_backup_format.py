@@ -1,8 +1,8 @@
 """Runs contracts/backups/backup_vectors.json against tools/backup_format.py. Run: python3 tools/test_backup_format.py
 
 Checks, in order: the AES and GCM code against published test vectors; every sample backup opens with the
-passphrase and holds what the vectors say; every damaged copy fails with the app's own reason; and making the
-samples again gives the same bytes (so the committed files are what the generator makes).
+passphrase and holds what the vectors say; every damaged copy fails with the app's own reason; and the data
+the generator writes is the data in the committed files.
 """
 import hashlib
 import json
@@ -110,11 +110,14 @@ def main():
             fails.append("damaged %s opened" % json.dumps(case))
         except bf.BadBackup as e:
             check(e.why == case["why"], "damaged %s: got %r" % (json.dumps(case), e.why))
-    # The committed samples are exactly what the generator makes.
+    # The committed samples hold exactly what the generator writes into them. (Not the same bytes: gzip packs
+    # a little differently from one Python or zlib version to the next.)
     import make_backup_fixtures as mk
+    by_name = {s["file"]: s for s in v["samples"]}
     for name, fmt, schema, extra in mk.SAMPLES:
-        data, _ = mk.sample(name, fmt, schema, extra)
-        check(data == files.get(name), name + ": the committed file differs from what make_backup_fixtures.py makes")
+        text = mk.database_json(schema, extra)
+        check(hashlib.sha256(text.encode("utf-8")).hexdigest() == by_name[name]["json_sha256"],
+              name + ": the committed file holds other data than make_backup_fixtures.py writes")
     if fails:
         print("BACKUP FORMAT FAILED:")
         for f in fails:

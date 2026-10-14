@@ -5,8 +5,9 @@ streaming) at database versions 1 and 3, and format 2 (sealed in 64 KB chunks) a
 real-looking rows of that version's tables only (columns from app/schemas/.../N.json), so restoring it is what
 restoring a backup made by that older app would be. The newest one is large enough to need several chunks.
 
-The files are made the same way every time (fixed salt, nonce and gzip time), so running this again changes
-nothing unless the data or the format changed. Run: python3 tools/make_backup_fixtures.py
+The files are made the same way every time (fixed salt, nonce and gzip time); only another Python or zlib
+version may pack the gzip bytes a little differently. Run it again only when a new sample is added, and commit
+what it writes. Run: python3 tools/make_backup_fixtures.py
 """
 import hashlib
 import json
