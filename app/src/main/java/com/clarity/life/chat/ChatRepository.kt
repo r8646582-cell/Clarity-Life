@@ -251,6 +251,18 @@ class ChatRepository @Inject constructor(
         db.diagnostics().log(ErrorLogRow(at = now, area = "chat", code = failure.code, detail = ""))
     }
 
+    /**
+     * The last resort when a reply ends in a way nothing else handled: a row still `streaming` becomes
+     * interrupted (keeping [partial]) or failed, so Talk never shows "thinking" for ever nor holds Send.
+     * A row that already ended is left alone. Returns the status the row has now, or null when it is gone.
+     */
+    suspend fun settleIfStreaming(messageId: Long, partial: String, failure: AiFailure, now: Long): String? {
+        val row = messages.get(messageId) ?: return null
+        if (row.status != "streaming") return row.status
+        if (partial.isNotEmpty()) interruptCoachReply(messageId, partial, now) else failCoachReply(messageId, failure, now)
+        return messages.get(messageId)?.status
+    }
+
     /** TryAgain: an interrupted or failed reply may be asked for again, which is an allowed transition. */
     suspend fun reopenReply(messageId: Long) {
         val row = messages.get(messageId) ?: return
