@@ -120,7 +120,8 @@ class ReviewWriter @Inject constructor(
             },
             rest = p.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),
             previous = previous,
-            availability = db.memory().profileEntry(PlannerRepository.AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
+            availability = settings.planHours()?.let { com.clarity.life.core.PlanLoad.hoursText(it) }
+                ?: db.memory().profileEntry(PlannerRepository.AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
         )
     }
 

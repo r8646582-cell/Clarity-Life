@@ -8,6 +8,7 @@ import com.clarity.life.security.SecretStore
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Every setting the owner can change, with the defaults from [DefaultSettings]. Plain preferences live in the
@@ -50,6 +51,9 @@ class SettingsRepository @Inject constructor(
         const val SUNDAY_ALERT_ON = "sunday_alert_on"
         const val TOUGH_LOVE = "tough_love"
         const val LISTEN_ONLY = "listen_only"
+
+        /** Max plan Phase 6: his minutes for planning, Monday to Sunday ([com.clarity.life.core.PlanLoad.parseHours]). */
+        const val PLAN_HOURS = "plan_hours"
     }
 
     suspend fun get(key: String, fallback: String): String = dao.get(key) ?: fallback
@@ -72,6 +76,17 @@ class SettingsRepository @Inject constructor(
     suspend fun dayBoundaryHour(): Int = getInt(Keys.DAY_BOUNDARY_HOUR, DefaultSettings.DAY_BOUNDARY_HOUR)
 
     suspend fun timeZone(): String = get(Keys.TIME_ZONE, java.util.TimeZone.getDefault().id)
+
+    /** His minutes for planning per weekday, Monday first, as he set them in Plan; null when not set. */
+    suspend fun planHours(): List<Double>? = com.clarity.life.core.PlanLoad.parseHours(dao.get(Keys.PLAN_HOURS))
+
+    /** Set by his tap in Plan only; null clears them (not set). */
+    suspend fun setPlanHours(hours: List<Double>?) =
+        set(Keys.PLAN_HOURS, hours?.let { com.clarity.life.core.PlanLoad.storeHours(it) } ?: "")
+
+    fun watchPlanHours(): kotlinx.coroutines.flow.Flow<List<Double>?> = dao.watchAll()
+        .map { rows -> com.clarity.life.core.PlanLoad.parseHours(rows.firstOrNull { it.key == Keys.PLAN_HOURS }?.value) }
+        .distinctUntilChanged()
 
     /**
      * His time zone and day boundary, live. A screen that read them once kept the old day after he changed

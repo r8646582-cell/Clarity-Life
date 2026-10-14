@@ -147,6 +147,15 @@ class PlannerTest {
         side(o.getValue("after").jsonObject),
     )
 
+    private fun loadJson(l: PlanLoad.Load): JsonElement = json(
+        mapOf(
+            "days" to l.days.map {
+                mapOf("day" to it.day.toString(), "rest" to it.rest, "minutes" to it.minutes, "timed" to it.timed, "untimed" to it.untimed)
+            },
+            "weekly" to l.weekly.map { mapOf("id" to it.id, "per_week" to it.perWeek, "minutes" to it.minutes) },
+        ),
+    )
+
     private fun checkinJson(c: CheckIn): JsonElement = jsonNoNulls(
         listOf("day" to c.day.toString(), "level" to c.level, "amount" to c.amount, "reason" to c.reason),
     )
@@ -297,6 +306,49 @@ class PlannerTest {
                 restDates(args),
             )?.let(::changeJson),
         )
+
+        "session_minutes" -> json(PlanLoad.sessionMinutes(args.strOrNull("unit"), args.dbl("target"), args.dblOrNull("minutes")))
+
+        "parse_hours" -> json(PlanLoad.parseHours(args.strOrNull("text")))
+
+        "hours_text" -> json(PlanLoad.hoursText(args.getValue("hours").jsonArray.map { it.jsonPrimitive.content.toDouble() }))
+
+        "day_load" -> loadJson(
+            PlanLoad.dayLoad(
+                args.getValue("targets").jsonArray.map { it.jsonObject }.map { t ->
+                    PlanLoad.Item(
+                        id = t.int("id").toLong(), schedule = t.str("schedule"), target = t.dbl("target"),
+                        start = t.strOrNull("start")?.let(LocalDate::parse), end = t.strOrNull("end")?.let(LocalDate::parse),
+                        versions = versions(t), unit = t.strOrNull("unit") ?: "", minutes = t.dblOrNull("minutes"),
+                    )
+                },
+                LocalDate.parse(args.str("today")),
+                restDates(args),
+                args.intOr("days", PlanLoad.LOAD_DAYS),
+            ),
+        )
+
+        "load_lines" -> {
+            val l = args.getValue("load").jsonObject
+            val load = PlanLoad.Load(
+                l.getValue("days").jsonArray.map { it.jsonObject }.map { r ->
+                    PlanLoad.Day(
+                        LocalDate.parse(r.str("day")), r.bool("rest"), r.dbl("minutes"),
+                        r.getValue("timed").jsonArray.map { it.jsonPrimitive.content.toLong() },
+                        r.getValue("untimed").jsonArray.map { it.jsonPrimitive.content.toLong() },
+                    )
+                },
+                l.getValue("weekly").jsonArray.map { it.jsonObject }.map { w ->
+                    PlanLoad.Weekly(w.int("id").toLong(), w.int("per_week"), w.dblOrNull("minutes"))
+                },
+            )
+            val names = args.getValue("names").jsonArray.associate { n ->
+                val a = n.jsonArray
+                a[0].jsonPrimitive.content.toLong() to PlanLoad.Name(a[1].jsonPrimitive.content, a[2].jsonPrimitive.content)
+            }
+            val hours = args["hours"]?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.jsonArray?.map { it.jsonPrimitive.content.toDouble() }
+            json(PlanLoad.loadLines(load, names, hours))
+        }
 
         "plan_progress_line" -> json(PlanStateText.planProgressLine(args.str("bid"), args.str("name"), progress(args.getValue("p").jsonObject)))
 

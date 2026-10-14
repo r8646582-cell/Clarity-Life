@@ -168,6 +168,16 @@ class PlannerRepository @Inject constructor(
     }
 
     /** Pause, resume or end a target. Ending sets its last day to today; its check-ins stay forever. */
+    /**
+     * Max plan Phase 6: his own estimate of the minutes one session of a target takes, for a day's load; null
+     * clears it. Any time from 1 minute to 24 hours.
+     */
+    suspend fun setTargetMinutes(id: Long, minutes: Double?) = db.withTransaction {
+        if (minutes != null && !(minutes >= 1.0 && minutes <= 1440.0)) throw Refused("minutes are 1 to 1440")
+        val t = dao.target(id) ?: throw Refused("target gone")
+        dao.updateTarget(t.copy(minutes = minutes))
+    }
+
     suspend fun setTargetStatus(id: Long, status: String, today: LocalDate) = db.withTransaction {
         Values.requireValid("target.status", status)
         val t = dao.target(id) ?: throw Refused("target gone")
@@ -328,6 +338,7 @@ class PlannerRepository @Inject constructor(
             restDays = dao.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),
             availability = db.memory().profileEntry(AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
             replanFlag = dao.latestWeeklyReplanFlag() == 1,
+            hours = settings.planHours(),
         )
     }
 

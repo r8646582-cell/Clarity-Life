@@ -288,4 +288,37 @@ class PlanBlocksTest {
         val old = text(PlanBlocks.checkinFacts(PlanBlocks.Tracker(emptyList(), listOf(x.copy(versions = emptyList())), emptyList(), emptySet()), today))
         assertTrue(old, !old.contains("changed on"))
     }
+
+    @Test
+    fun theCoachReadsTheTimeOfEveryGoalAgainstHisHours() {
+        val today = LocalDate.parse("2026-10-14")
+        val gym = PlanBlocks.Target(5, "Gym", 1, null, 0.0, 45.0, "Mon,Wed,Fri", emptyList(), LocalDate.parse("2026-10-01"), unit = "min")
+        val lectures = PlanBlocks.Target(3, "Lectures", 2, 1, 1.0, 2.0, "Sat-Thu", emptyList(), LocalDate.parse("2026-10-01"), unit = "lectures", minutes = 90.0)
+        val reading = PlanBlocks.Target(4, "Reading", 1, null, 0.0, 20.0, "daily", emptyList(), LocalDate.parse("2026-10-01"), unit = "pages")
+        val hours = listOf(120.0, 120.0, 120.0, 120.0, 60.0, 240.0, 0.0)
+        val t = PlanBlocks.Tracker(
+            goals = listOf(PlanBlocks.Goal(1, "Get fit", null), PlanBlocks.Goal(2, "Clear the lectures", LocalDate.parse("2026-11-20"))),
+            targets = listOf(gym, lectures, reading),
+            backlogs = listOf(PlanBlocks.Backlog(1, "Lectures", 2, 40.0, 0.0, LocalDate.parse("2026-11-20"), today)),
+            restDays = setOf(LocalDate.parse("2026-10-18")),
+            hours = hours,
+        )
+        val block = text(PlanBlocks.planState(t, today))
+        assertTrue(
+            block,
+            block.contains(
+                "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): " +
+                    "Wed 14 Oct 135 of 120 min, 15 over; Thu 15 Oct 90 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 90 of 240 min; " +
+                    "Sun 18 Oct planned rest day; Mon 19 Oct 135 of 120 min, 15 over; Tue 20 Oct 90 of 120 min.",
+            ),
+        )
+        assertTrue(block, block.contains("Not in these minutes (no time estimate): T4 \"Reading\"."))
+        assertTrue(block, block.contains("Availability: Mon to Thu 120 min, Fri 60 min, Sat 240 min, Sun none."))
+        // The load comes just before the review options.
+        val lines = block.lines()
+        assertTrue(block, lines[lines.indexOfFirst { it.startsWith("Review options") } - 1].startsWith("Next 7 days in all: "))
+        // Without times and hours there is nothing to add up, so nothing is said.
+        val none = text(PlanBlocks.planState(t.copy(targets = listOf(reading), hours = null), today))
+        assertTrue(none, !none.contains("Time planned"))
+    }
 }

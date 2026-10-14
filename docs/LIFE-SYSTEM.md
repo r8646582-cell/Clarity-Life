@@ -146,7 +146,7 @@ Rules:
 - **Target:** a recurring item (daily, certain weekdays, N times a week). Has a unit if quantitative, a **minimum** (bad-day level) and a **target** (normal level), a start and end date, status.
 - **Backlog:** a finite amount to clear by a deadline.
 - **Check-in:** one row per target per scheduled day: level (Rest, Not, Minimum, Target, Beyond), actual amount, reason chip, optional note, time entered. A missing row means "no answer".
-- **Availability:** your usual hours available per weekday for planning (set once in profile, editable). The coach asks if it is missing.
+- **Availability:** your usual hours available per weekday for planning (set once in profile, editable). The coach asks if it is missing. Since Max plan Phase 6 you set them in Plan, Goals, "Your time, next 7 days" (seven fields, Monday to Sunday), and a target that is not counted in minutes or hours can carry your estimate of the minutes one session takes. Code then adds up the time every goal's targets take on each of the next 7 days and sets it against your hours (`day_load`, `load_lines`), so "several goals competing for the same hours" is a fact the coach reads, not a sum it does.
 
 ### 6.2 Computed facts (what the AI is given)
 Computed per goal, target and backlog, only when enough data exists (at least 7 answered scheduled days; otherwise the line says "not enough data yet"):

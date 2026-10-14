@@ -72,7 +72,12 @@ object PlanBlocks {
         val restDays: Set<LocalDate>,
         val availability: String = "not set",
         val replanFlag: Boolean = false,
-    )
+        /** Max plan Phase 6: his minutes for planning per weekday, Monday first, set in Plan; null when not set. */
+        val hours: List<Double>? = null,
+    ) {
+        /** What the Availability line says: his hours from Plan when set, else his profile entry as written. */
+        val availabilityText: String get() = hours?.let { PlanLoad.hoursText(it) } ?: availability
+    }
 
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
@@ -186,7 +191,7 @@ object PlanBlocks {
             val f = backlogFacts(b, linked, today, t.restDays)
             lines += PlanStateText.backlogLines(
                 "B${b.id}", clean(b.name), b.total, f.done, f.schedule, f.projection, f.windowAnswered,
-                f.answerRate, t.availability,
+                f.answerRate, t.availabilityText,
             )
             // Where the plan's own steps take it, counted here (a ramp is judged by its steps, not a flat pace).
             f.finish?.let { PlanStateText.planLine("B${b.id}", clean(b.name), f.steps, it) }?.let { lines += "  $it" }
@@ -213,10 +218,25 @@ object PlanBlocks {
         t.backlogs.filter { it.goalId == null || it.goalId !in goalIds }.forEach { backlogLines(it) }
         t.targets.filter { it.goalId == null || it.goalId !in goalIds }.forEach { targetLine(it) }
         if (lines.isEmpty()) lines += "No goals, targets or backlogs yet."
+        lines += loadLines(t, today)
         lines += PlanStateText.reviewOptionsLine(reviewOptions(t, today))
         if (t.replanFlag) lines += "Re-plan flag: yes (below pace in two reviews in a row)."
         return Block("PLAN_STATE", lines.map { BlockItem(it, 0) })
     }
+
+    /**
+     * Max plan Phase 6: the time the live targets of every goal take on each of the next 7 days, against his hours
+     * ([PlanLoad]). Empty when no target has a session time and his hours are not set.
+     */
+    fun loadLines(t: Tracker, today: LocalDate): List<String> = PlanLoad.loadLines(
+        PlanLoad.dayLoad(
+            t.targets.map { PlanLoad.Item(it.id, it.schedule, it.target, it.start, it.end, it.versions, it.unit, it.minutes) },
+            today,
+            t.restDays,
+        ),
+        t.targets.associate { it.id to PlanLoad.Name("T${it.id} \"${clean(it.name)}\"", it.schedule) },
+        t.hours,
+    )
 
     /**
      * CHECKIN_FACTS: counted here, never by the model. Today's state per target, then per target over the

@@ -581,6 +581,155 @@ def change_compare(checkins, versions, start, today, rest_dates=()):
     return None
 
 
+# ---------- a day's load across every goal, against his hours (Max plan Phase 6, step 3) ----------
+#
+# Several goals compete for the same hours. Code adds up, for each of the next LOAD_DAYS days, the minutes the
+# live targets scheduled that day take, from his own estimates, and sets them against the minutes he says he has
+# that weekday. The coach is told the sums; it never adds them up itself.
+
+LOAD_DAYS = 7
+MINUTE_UNITS = {"min", "mins", "minute", "minutes"}
+HOUR_UNITS = {"h", "hr", "hrs", "hour", "hours"}
+
+
+def session_minutes(unit, target, minutes=None):
+    """Minutes one session at the target level takes: the target itself when its unit is minutes or hours,
+    else his own estimate (minutes), else None (not known, never guessed)."""
+    u = (unit or "").strip().lower()
+    if u in MINUTE_UNITS:
+        return float(target)
+    if u in HOUR_UNITS:
+        return float(target) * 60
+    return float(minutes) if minutes else None
+
+
+def parse_hours(text):
+    """His hours, as the app stores them: seven numbers of minutes, Monday to Sunday, comma separated, each
+    0 to 1440. Anything else is None (not set); it is never read loosely."""
+    if not isinstance(text, str):
+        return None
+    parts = [x.strip() for x in text.split(",")]
+    if len(parts) != 7:
+        return None
+    out = []
+    for x in parts:
+        if not re.fullmatch(r"\d{1,4}(?:\.\d+)?", x):
+            return None
+        v = float(x)
+        if v > 1440:
+            return None
+        out.append(v)
+    return out
+
+
+def _min_text(m):
+    return "none" if m <= EPS else "%g min" % round_half_up(m)
+
+
+def hours_text(hours):
+    """'Mon to Fri 120 min, Sat 240 min, Sun none': runs of days with the same minutes, Monday first."""
+    out, i = [], 0
+    while i < 7:
+        j = i
+        while j + 1 < 7 and abs(hours[j + 1] - hours[i]) < EPS:
+            j += 1
+        days = DAYS[i] if i == j else "%s to %s" % (DAYS[i], DAYS[j])
+        out.append("%s %s" % (days, _min_text(hours[i])))
+        i = j + 1
+    return ", ".join(out)
+
+
+def day_load(targets, today, rest_dates=(), days=LOAD_DAYS):
+    """For each of the days from today: whether it is a planned rest day, the minutes of the targets scheduled
+    that day that have a session time (timed, by id), and the ids of those that have none (untimed). A target
+    counts on a day within its start and end when the version in force then (the latest for days to come) is
+    active and scheduled that day. Nx/week targets have no fixed days: they are listed apart, with their
+    sessions a week and minutes a week (None without a session time).
+    targets: [{id, schedule, target, start, end, versions, unit, minutes}]."""
+    today = d(today)
+    rest = {d(x) for x in rest_dates}
+    out, weekly = [], []
+    for t in targets:
+        v = version_on(target_versions(t), today) or target_versions(t)[0]
+        kind, val = parse_schedule(v["schedule"])
+        runs = ((not t.get("end") or d(t["end"]) >= today)
+                and (not t.get("start") or d(t["start"]) <= today + timedelta(days=days - 1)))
+        if kind == "count" and v["status"] == "active" and runs:
+            m = session_minutes(t.get("unit"), v["target"], t.get("minutes"))
+            weekly.append({"id": t["id"], "per_week": val, "minutes": None if m is None else m * val})
+    for i in range(days):
+        day = today + timedelta(days=i)
+        row = {"day": day.isoformat(), "rest": day in rest, "minutes": 0.0, "timed": [], "untimed": []}
+        if not row["rest"]:
+            for t in targets:
+                if t.get("start") and d(t["start"]) > day or (t.get("end") and d(t["end"]) < day):
+                    continue
+                v = version_on(target_versions(t), day)
+                if v is None or v["status"] != "active":
+                    continue
+                kind, val = parse_schedule(v["schedule"])
+                if kind != "days" or day.weekday() not in val:
+                    continue
+                m = session_minutes(t.get("unit"), v["target"], t.get("minutes"))
+                if m is None:
+                    row["untimed"].append(t["id"])
+                else:
+                    row["minutes"] += m
+                    row["timed"].append(t["id"])
+        out.append(row)
+    return {"days": out, "weekly": weekly}
+
+
+def load_lines(load, names, hours=None):
+    """The load as the coach reads it. names: [[id, label, schedule]], label like 'T4 "Reading"'.
+    Nothing (an empty list) when no target has a session time and his hours are not set."""
+    names = {n[0]: (n[1], n[2]) for n in names}
+    days = load["days"]
+    timed_any = any(r["timed"] for r in days) or any(w["minutes"] is not None for w in load["weekly"])
+    if not timed_any and hours is None:
+        return []
+    parts = []
+    for r in days:
+        day = d(r["day"])
+        label = "%s %d %s" % (DAYS[day.weekday()], day.day, _MONTHS[day.month - 1])
+        if r["rest"]:
+            parts.append("%s planned rest day" % label)
+            continue
+        m = round_half_up(r["minutes"])
+        if hours is None:
+            parts.append("%s %g min" % (label, m))
+            continue
+        have = round_half_up(hours[day.weekday()])
+        over = m - have
+        parts.append("%s %g of %g min%s" % (label, m, have, (", %g over" % over) if over > EPS else ""))
+    head = ("Time planned, next %d days (minutes from his targets and his own time estimates; his hours from Plan): " % len(days)
+            if hours is not None else
+            "Time planned, next %d days (minutes from his targets and his own time estimates; his hours are not set): " % len(days))
+    lines = [head + "; ".join(parts) + "."]
+    untimed = []
+    for r in days:
+        for i in r["untimed"]:
+            if i not in untimed:
+                untimed.append(i)
+    if untimed:
+        lines.append("Not in these minutes (no time estimate): %s." % ", ".join(names[i][0] for i in untimed))
+    for w in load["weekly"]:
+        lab, sched = names[w["id"]]
+        if w["minutes"] is None:
+            lines.append("%s is %s, not on fixed days, and has no time estimate." % (lab, sched))
+        else:
+            lines.append("%s is %s, not on fixed days: %g min a week, not in the days above."
+                         % (lab, sched, round_half_up(w["minutes"])))
+    if hours is not None:
+        planned = sum(r["minutes"] for r in days if not r["rest"]) + sum(
+            w["minutes"] * len(days) / 7.0 for w in load["weekly"] if w["minutes"] is not None)
+        have = sum(hours[d(r["day"]).weekday()] for r in days if not r["rest"])
+        lines.append("Next %d days in all: %g of %g min available%s." % (
+            len(days), round_half_up(planned), round_half_up(have),
+            ", Nx/week targets included" if any(w["minutes"] is not None for w in load["weekly"]) else ""))
+    return lines
+
+
 # ---------- text for the context packet (code-written, so the coach only copies) ----------
 
 def _fmt(x):

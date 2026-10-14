@@ -136,6 +136,14 @@ How the app assembles it (`core/PlanBlocks.kt`, tested against the sample above 
     So far on the plan for B1 "CAF lectures" (14 Oct to 22 Oct): the steps asked for 20, done 18, behind by 2.
   ```
   From the first step's start to yesterday (today once answered): what every target ever linked to it asked for on each day under the values in force that day (active, within its dates, scheduled, not a planned rest day), against every amount entered on those days. `ahead by`, `behind by` or `exactly on it`. Left out before a scheduled day has passed, and when a step is Nx/week (it has no fixed days). A target from before schema 8 is read as its current values from its start day.
+- Since Max plan Phase 6 step 3, just before the review options, the time the live targets of every goal take on each of the next 7 days, against his hours (`day_load` and `load_lines` in `tools/planner.py`; Kotlin `PlanLoad`):
+  ```
+  Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 165 of 120 min, 45 over; Thu 15 Oct 120 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 150 of 240 min; Sun 18 Oct planned rest day; Mon 19 Oct 195 of 120 min, 75 over; Tue 20 Oct 150 of 120 min, 30 over.
+  Not in these minutes (no time estimate): T4 "Reading".
+  T6 "Run" is 3x/week, not on fixed days: 90 min a week, not in the days above.
+  Next 7 days in all: 915 of 780 min available, Nx/week targets included.
+  ```
+  A session's minutes are the target itself when its unit is minutes or hours (min, mins, minute, minutes, h, hr, hrs, hour, hours), else his own estimate set in Plan (`target.minutes`), else not known (listed as having no time estimate, never guessed). His hours are seven numbers of minutes, Monday to Sunday, that he sets in Plan (settings key `plan_hours`); with them set, the Availability line of every backlog says them ("Mon to Thu 120 min, Fri 60 min, Sat 240 min, Sun none") instead of the profile entry. Without them the days show minutes only (`his hours are not set`). Nothing at all is written while no target has a time and his hours are not set.
 - Review options use the days on which at least one active day-based target is scheduled (every day when there are none), minus planned rest days.
 
 ## CHECKIN_FACTS line formats (counted in code, `core/PlanBlocks.kt`)

@@ -4662,6 +4662,1023 @@
      "days": 20
     }
    }
+  },
+  {
+   "name": "a session in minutes is its target",
+   "fn": "session_minutes",
+   "args": {
+    "unit": "min",
+    "target": 45
+   },
+   "expect": 45.0
+  },
+  {
+   "name": "a session in hours is its target times 60",
+   "fn": "session_minutes",
+   "args": {
+    "unit": " Hours ",
+    "target": 1.5
+   },
+   "expect": 90.0
+  },
+  {
+   "name": "any other unit uses his estimate",
+   "fn": "session_minutes",
+   "args": {
+    "unit": "lectures",
+    "target": 2,
+    "minutes": 90
+   },
+   "expect": 90.0
+  },
+  {
+   "name": "no estimate: not known, never guessed",
+   "fn": "session_minutes",
+   "args": {
+    "unit": "pages",
+    "target": 20
+   },
+   "expect": null
+  },
+  {
+   "name": "hours as stored: seven numbers of minutes",
+   "fn": "parse_hours",
+   "args": {
+    "text": "120,120,120,120,60,240,0"
+   },
+   "expect": [
+    120.0,
+    120.0,
+    120.0,
+    120.0,
+    60.0,
+    240.0,
+    0.0
+   ]
+  },
+  {
+   "name": "hours: six numbers are not read",
+   "fn": "parse_hours",
+   "args": {
+    "text": "120,120,120,120,60,240"
+   },
+   "expect": null
+  },
+  {
+   "name": "hours: a day above 24 hours is not read",
+   "fn": "parse_hours",
+   "args": {
+    "text": "120,120,120,120,60,1500,0"
+   },
+   "expect": null
+  },
+  {
+   "name": "hours: words are not read",
+   "fn": "parse_hours",
+   "args": {
+    "text": "2h,2h,2h,2h,1h,4h,0"
+   },
+   "expect": null
+  },
+  {
+   "name": "hours: nothing stored is not set",
+   "fn": "parse_hours",
+   "args": {
+    "text": null
+   },
+   "expect": null
+  },
+  {
+   "name": "hours in words: runs of equal days",
+   "fn": "hours_text",
+   "args": {
+    "hours": [
+     120,
+     120,
+     120,
+     120,
+     60,
+     240,
+     0
+    ]
+   },
+   "expect": "Mon to Thu 120 min, Fri 60 min, Sat 240 min, Sun none"
+  },
+  {
+   "name": "hours in words: every day the same",
+   "fn": "hours_text",
+   "args": {
+    "hours": [
+     90,
+     90,
+     90,
+     90,
+     90,
+     90,
+     90
+    ]
+   },
+   "expect": "Mon to Sun 90 min"
+  },
+  {
+   "name": "two goals competing for the same days: minutes per day from each target in force, a rest day, a target not started, one that has ended",
+   "fn": "day_load",
+   "args": {
+    "targets": [
+     {
+      "id": 3,
+      "schedule": "Sat-Thu",
+      "target": 2,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "lectures",
+      "minutes": 90
+     },
+     {
+      "id": 5,
+      "schedule": "Mon,Wed,Fri",
+      "target": 45,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "min"
+     },
+     {
+      "id": 4,
+      "schedule": "daily",
+      "target": 20,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "pages"
+     },
+     {
+      "id": 6,
+      "schedule": "3x/week",
+      "target": 5,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "km",
+      "minutes": 30
+     },
+     {
+      "id": 7,
+      "schedule": "daily",
+      "target": 1,
+      "start": "2026-10-17",
+      "end": null,
+      "unit": "h"
+     },
+     {
+      "id": 8,
+      "schedule": "daily",
+      "target": 30,
+      "start": "2026-10-01",
+      "end": "2026-10-15",
+      "unit": "minutes"
+     }
+    ],
+    "today": "2026-10-14",
+    "rest_dates": [
+     "2026-10-18"
+    ]
+   },
+   "expect": {
+    "days": [
+     {
+      "day": "2026-10-14",
+      "rest": false,
+      "minutes": 165.0,
+      "timed": [
+       3,
+       5,
+       8
+      ],
+      "untimed": [
+       4
+      ]
+     },
+     {
+      "day": "2026-10-15",
+      "rest": false,
+      "minutes": 120.0,
+      "timed": [
+       3,
+       8
+      ],
+      "untimed": [
+       4
+      ]
+     },
+     {
+      "day": "2026-10-16",
+      "rest": false,
+      "minutes": 45.0,
+      "timed": [
+       5
+      ],
+      "untimed": [
+       4
+      ]
+     },
+     {
+      "day": "2026-10-17",
+      "rest": false,
+      "minutes": 150.0,
+      "timed": [
+       3,
+       7
+      ],
+      "untimed": [
+       4
+      ]
+     },
+     {
+      "day": "2026-10-18",
+      "rest": true,
+      "minutes": 0.0,
+      "timed": [],
+      "untimed": []
+     },
+     {
+      "day": "2026-10-19",
+      "rest": false,
+      "minutes": 195.0,
+      "timed": [
+       3,
+       5,
+       7
+      ],
+      "untimed": [
+       4
+      ]
+     },
+     {
+      "day": "2026-10-20",
+      "rest": false,
+      "minutes": 150.0,
+      "timed": [
+       3,
+       7
+      ],
+      "untimed": [
+       4
+      ]
+     }
+    ],
+    "weekly": [
+     {
+      "id": 6,
+      "per_week": 3,
+      "minutes": 90.0
+     }
+    ]
+   }
+  },
+  {
+   "name": "a paused target asks no time",
+   "fn": "day_load",
+   "args": {
+    "targets": [
+     {
+      "id": 1,
+      "schedule": "daily",
+      "target": 30,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "min",
+      "versions": [
+       {
+        "from": "2026-10-01",
+        "minimum": 0,
+        "target": 30,
+        "schedule": "daily",
+        "status": "active"
+       },
+       {
+        "from": "2026-10-10",
+        "minimum": 0,
+        "target": 30,
+        "schedule": "daily",
+        "status": "paused"
+       }
+      ]
+     }
+    ],
+    "today": "2026-10-14",
+    "days": 2
+   },
+   "expect": {
+    "days": [
+     {
+      "day": "2026-10-14",
+      "rest": false,
+      "minutes": 0.0,
+      "timed": [],
+      "untimed": []
+     },
+     {
+      "day": "2026-10-15",
+      "rest": false,
+      "minutes": 0.0,
+      "timed": [],
+      "untimed": []
+     }
+    ],
+    "weekly": []
+   }
+  },
+  {
+   "name": "a raise that starts on Friday counts from Friday",
+   "fn": "day_load",
+   "args": {
+    "targets": [
+     {
+      "id": 1,
+      "schedule": "daily",
+      "target": 60,
+      "start": "2026-10-01",
+      "end": null,
+      "unit": "min",
+      "versions": [
+       {
+        "from": "2026-10-01",
+        "minimum": 0,
+        "target": 30,
+        "schedule": "daily",
+        "status": "active"
+       },
+       {
+        "from": "2026-10-16",
+        "minimum": 0,
+        "target": 60,
+        "schedule": "daily",
+        "status": "active"
+       }
+      ]
+     }
+    ],
+    "today": "2026-10-14",
+    "days": 3
+   },
+   "expect": {
+    "days": [
+     {
+      "day": "2026-10-14",
+      "rest": false,
+      "minutes": 30.0,
+      "timed": [
+       1
+      ],
+      "untimed": []
+     },
+     {
+      "day": "2026-10-15",
+      "rest": false,
+      "minutes": 30.0,
+      "timed": [
+       1
+      ],
+      "untimed": []
+     },
+     {
+      "day": "2026-10-16",
+      "rest": false,
+      "minutes": 60.0,
+      "timed": [
+       1
+      ],
+      "untimed": []
+     }
+    ],
+    "weekly": []
+   }
+  },
+  {
+   "name": "PLAN_STATE text: the load of two goals against his hours, days over, the targets with no time, an Nx/week one",
+   "fn": "load_lines",
+   "args": {
+    "load": {
+     "days": [
+      {
+       "day": "2026-10-14",
+       "rest": false,
+       "minutes": 165.0,
+       "timed": [
+        3,
+        5,
+        8
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-15",
+       "rest": false,
+       "minutes": 120.0,
+       "timed": [
+        3,
+        8
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-16",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-17",
+       "rest": false,
+       "minutes": 150.0,
+       "timed": [
+        3,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-18",
+       "rest": true,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-19",
+       "rest": false,
+       "minutes": 195.0,
+       "timed": [
+        3,
+        5,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-20",
+       "rest": false,
+       "minutes": 150.0,
+       "timed": [
+        3,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      }
+     ],
+     "weekly": [
+      {
+       "id": 6,
+       "per_week": 3,
+       "minutes": 90.0
+      }
+     ]
+    },
+    "names": [
+     [
+      3,
+      "T3 \"Lectures\"",
+      "Sat-Thu"
+     ],
+     [
+      5,
+      "T5 \"Gym\"",
+      "Mon,Wed,Fri"
+     ],
+     [
+      4,
+      "T4 \"Reading\"",
+      "daily"
+     ],
+     [
+      6,
+      "T6 \"Run\"",
+      "3x/week"
+     ],
+     [
+      7,
+      "T7 \"Piano\"",
+      "daily"
+     ],
+     [
+      8,
+      "T8 \"Stretch\"",
+      "daily"
+     ]
+    ],
+    "hours": [
+     120.0,
+     120.0,
+     120.0,
+     120.0,
+     60.0,
+     240.0,
+     0.0
+    ]
+   },
+   "expect": [
+    "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 165 of 120 min, 45 over; Thu 15 Oct 120 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 150 of 240 min; Sun 18 Oct planned rest day; Mon 19 Oct 195 of 120 min, 75 over; Tue 20 Oct 150 of 120 min, 30 over.",
+    "Not in these minutes (no time estimate): T4 \"Reading\".",
+    "T6 \"Run\" is 3x/week, not on fixed days: 90 min a week, not in the days above.",
+    "Next 7 days in all: 915 of 780 min available, Nx/week targets included."
+   ]
+  },
+  {
+   "name": "PLAN_STATE text: the load when his hours are not set",
+   "fn": "load_lines",
+   "args": {
+    "load": {
+     "days": [
+      {
+       "day": "2026-10-14",
+       "rest": false,
+       "minutes": 165.0,
+       "timed": [
+        3,
+        5,
+        8
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-15",
+       "rest": false,
+       "minutes": 120.0,
+       "timed": [
+        3,
+        8
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-16",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-17",
+       "rest": false,
+       "minutes": 150.0,
+       "timed": [
+        3,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-18",
+       "rest": true,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-19",
+       "rest": false,
+       "minutes": 195.0,
+       "timed": [
+        3,
+        5,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-20",
+       "rest": false,
+       "minutes": 150.0,
+       "timed": [
+        3,
+        7
+       ],
+       "untimed": [
+        4
+       ]
+      }
+     ],
+     "weekly": [
+      {
+       "id": 6,
+       "per_week": 3,
+       "minutes": 90.0
+      }
+     ]
+    },
+    "names": [
+     [
+      3,
+      "T3 \"Lectures\"",
+      "Sat-Thu"
+     ],
+     [
+      5,
+      "T5 \"Gym\"",
+      "Mon,Wed,Fri"
+     ],
+     [
+      4,
+      "T4 \"Reading\"",
+      "daily"
+     ],
+     [
+      6,
+      "T6 \"Run\"",
+      "3x/week"
+     ],
+     [
+      7,
+      "T7 \"Piano\"",
+      "daily"
+     ],
+     [
+      8,
+      "T8 \"Stretch\"",
+      "daily"
+     ]
+    ]
+   },
+   "expect": [
+    "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours are not set): Wed 14 Oct 165 min; Thu 15 Oct 120 min; Fri 16 Oct 45 min; Sat 17 Oct 150 min; Sun 18 Oct planned rest day; Mon 19 Oct 195 min; Tue 20 Oct 150 min.",
+    "Not in these minutes (no time estimate): T4 \"Reading\".",
+    "T6 \"Run\" is 3x/week, not on fixed days: 90 min a week, not in the days above."
+   ]
+  },
+  {
+   "name": "PLAN_STATE text: nothing when no target has a time and no hours are set",
+   "fn": "load_lines",
+   "args": {
+    "load": {
+     "days": [
+      {
+       "day": "2026-10-14",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-15",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-16",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-17",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-18",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-19",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-20",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      }
+     ],
+     "weekly": []
+    },
+    "names": [
+     [
+      3,
+      "T3 \"Lectures\"",
+      "Sat-Thu"
+     ],
+     [
+      5,
+      "T5 \"Gym\"",
+      "Mon,Wed,Fri"
+     ],
+     [
+      4,
+      "T4 \"Reading\"",
+      "daily"
+     ],
+     [
+      6,
+      "T6 \"Run\"",
+      "3x/week"
+     ],
+     [
+      7,
+      "T7 \"Piano\"",
+      "daily"
+     ],
+     [
+      8,
+      "T8 \"Stretch\"",
+      "daily"
+     ]
+    ]
+   },
+   "expect": []
+  },
+  {
+   "name": "PLAN_STATE text: hours set but no target has a time yet",
+   "fn": "load_lines",
+   "args": {
+    "load": {
+     "days": [
+      {
+       "day": "2026-10-14",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-15",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-16",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-17",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-18",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-19",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      },
+      {
+       "day": "2026-10-20",
+       "rest": false,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": [
+        4
+       ]
+      }
+     ],
+     "weekly": []
+    },
+    "names": [
+     [
+      3,
+      "T3 \"Lectures\"",
+      "Sat-Thu"
+     ],
+     [
+      5,
+      "T5 \"Gym\"",
+      "Mon,Wed,Fri"
+     ],
+     [
+      4,
+      "T4 \"Reading\"",
+      "daily"
+     ],
+     [
+      6,
+      "T6 \"Run\"",
+      "3x/week"
+     ],
+     [
+      7,
+      "T7 \"Piano\"",
+      "daily"
+     ],
+     [
+      8,
+      "T8 \"Stretch\"",
+      "daily"
+     ]
+    ],
+    "hours": [
+     120.0,
+     120.0,
+     120.0,
+     120.0,
+     60.0,
+     240.0,
+     0.0
+    ]
+   },
+   "expect": [
+    "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 0 of 120 min; Thu 15 Oct 0 of 120 min; Fri 16 Oct 0 of 60 min; Sat 17 Oct 0 of 240 min; Sun 18 Oct 0 of 0 min; Mon 19 Oct 0 of 120 min; Tue 20 Oct 0 of 120 min.",
+    "Not in these minutes (no time estimate): T4 \"Reading\".",
+    "Next 7 days in all: 0 of 780 min available."
+   ]
+  },
+  {
+   "name": "an Nx/week target that starts after the next 7 days is not in this week's load",
+   "fn": "day_load",
+   "args": {
+    "targets": [
+     {
+      "id": 6,
+      "schedule": "3x/week",
+      "target": 5,
+      "start": "2026-11-01",
+      "end": null,
+      "unit": "km",
+      "minutes": 30
+     }
+    ],
+    "today": "2026-10-14",
+    "days": 1
+   },
+   "expect": {
+    "days": [
+     {
+      "day": "2026-10-14",
+      "rest": false,
+      "minutes": 0.0,
+      "timed": [],
+      "untimed": []
+     }
+    ],
+    "weekly": []
+   }
+  },
+  {
+   "name": "PLAN_STATE text: a planned rest day's hours are not counted as available",
+   "fn": "load_lines",
+   "args": {
+    "load": {
+     "days": [
+      {
+       "day": "2026-10-14",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-15",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-16",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-17",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-18",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-19",
+       "rest": true,
+       "minutes": 0.0,
+       "timed": [],
+       "untimed": []
+      },
+      {
+       "day": "2026-10-20",
+       "rest": false,
+       "minutes": 45.0,
+       "timed": [
+        5
+       ],
+       "untimed": []
+      }
+     ],
+     "weekly": []
+    },
+    "names": [
+     [
+      5,
+      "T5 \"Gym\"",
+      "daily"
+     ]
+    ],
+    "hours": [
+     120.0,
+     120.0,
+     120.0,
+     120.0,
+     60.0,
+     240.0,
+     0.0
+    ]
+   },
+   "expect": [
+    "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 45 of 120 min; Thu 15 Oct 45 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 45 of 240 min; Sun 18 Oct 45 of 0 min, 45 over; Mon 19 Oct planned rest day; Tue 20 Oct 45 of 120 min.",
+    "Next 7 days in all: 270 of 660 min available."
+   ]
   }
  ]
 }
