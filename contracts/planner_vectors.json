@@ -1975,6 +1975,1113 @@
     }
    },
    "expect": null
+  },
+  {
+   "name": "two linked targets on different days: days left and pace use the days of both, not the first one's",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 60,
+    "start_done": 0,
+    "created_day": "2026-10-07",
+    "deadline": "2026-11-20",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "Sat,Sun",
+      "target": 2,
+      "start": "2026-10-07",
+      "end": null,
+      "checkins": [
+       {
+        "day": "2026-10-10",
+        "level": "target",
+        "amount": 2
+       },
+       {
+        "day": "2026-10-11",
+        "level": "target",
+        "amount": 2
+       },
+       {
+        "day": "2026-10-17",
+        "level": "target",
+        "amount": 2
+       },
+       {
+        "day": "2026-10-18",
+        "level": "target",
+        "amount": 2
+       }
+      ]
+     },
+     {
+      "schedule": "weekdays",
+      "target": 1,
+      "start": "2026-10-07",
+      "end": null,
+      "checkins": [
+       {
+        "day": "2026-10-07",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-08",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-09",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-12",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-13",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-14",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-15",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-16",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-19",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-20",
+        "level": "target",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   "expect": {
+    "done": 18,
+    "schedule": "daily",
+    "days_left": 31,
+    "projection": {
+     "remaining": 42,
+     "days_left": 31,
+     "required_per_day": 1.3548387096774193,
+     "typical_per_day": 1.2857142857142858,
+     "reaches_typical": 39.0,
+     "short_typical": 3.0,
+     "best_per_day": 1.2857142857142858,
+     "reaches_best": 39.0,
+     "short_best": 3.0,
+     "status": "short"
+    },
+    "window_answered": 14,
+    "answer_rate": 100.0,
+    "finish": {
+     "remaining": 42,
+     "reaches_by_deadline": 39.0,
+     "finish": "2026-11-22",
+     "days_spare": -2,
+     "status": "late"
+    }
+   }
+  },
+  {
+   "name": "the deadline day, answered: no scheduled days left, never 'the deadline has passed'",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 25,
+    "start_done": 0,
+    "created_day": "2026-10-01",
+    "deadline": "2026-10-21",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "daily",
+      "target": 1,
+      "start": "2026-10-01",
+      "end": null,
+      "checkins": [
+       {
+        "day": "2026-10-01",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-02",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-03",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-04",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-05",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-06",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-07",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-08",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-09",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-10",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-11",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-12",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-13",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-14",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-15",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-16",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-17",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-18",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-19",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-20",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-21",
+        "level": "target",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   "expect": {
+    "done": 21,
+    "schedule": "daily",
+    "days_left": 0,
+    "projection": {
+     "remaining": 4,
+     "days_left": 0,
+     "status": "no_days_left"
+    },
+    "window_answered": 14,
+    "answer_rate": 100.0,
+    "finish": {
+     "remaining": 4,
+     "reaches_by_deadline": 0.0,
+     "finish": "2026-10-25",
+     "days_spare": -4,
+     "status": "late"
+    }
+   }
+  },
+  {
+   "name": "after three weeks without answers: no typical pace, but his best fortnight is still given",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 50,
+    "start_done": 0,
+    "created_day": "2026-09-01",
+    "deadline": "2026-11-30",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "daily",
+      "target": 1,
+      "start": "2026-09-01",
+      "end": null,
+      "checkins": [
+       {
+        "day": "2026-09-20",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-21",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-22",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-23",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-24",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-25",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-26",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-27",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-28",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-09-29",
+        "level": "target",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   "expect": {
+    "done": 10,
+    "schedule": "daily",
+    "days_left": 41,
+    "projection": {
+     "remaining": 40,
+     "days_left": 41,
+     "required_per_day": 0.975609756097561,
+     "best_per_day": 1.0,
+     "reaches_best": 40,
+     "short_best": 0,
+     "status": "no_data"
+    },
+    "window_answered": 0,
+    "answer_rate": 0.0,
+    "finish": {
+     "remaining": 40,
+     "reaches_by_deadline": 40,
+     "finish": "2026-11-29",
+     "days_spare": 1,
+     "status": "finishes"
+    }
+   }
+  },
+  {
+   "name": "a plan that starts on Monday: days before it are not counted as days left",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 10,
+    "start_done": 0,
+    "created_day": "2026-10-21",
+    "deadline": "2026-10-30",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "daily",
+      "target": 1,
+      "start": "2026-10-26",
+      "end": null,
+      "checkins": []
+     }
+    ]
+   },
+   "expect": {
+    "done": 0,
+    "schedule": "daily",
+    "days_left": 5,
+    "projection": {
+     "remaining": 10,
+     "days_left": 5,
+     "required_per_day": 2.0,
+     "status": "no_data"
+    },
+    "window_answered": 0,
+    "answer_rate": null,
+    "finish": {
+     "remaining": 10,
+     "reaches_by_deadline": 5.0,
+     "finish": "2026-11-04",
+     "days_spare": -5,
+     "status": "late"
+    }
+   }
+  },
+  {
+   "name": "a ramp in its second step: done and pace read the ended first step, the steps finish it",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 100,
+    "start_done": 0,
+    "created_day": "2026-10-14",
+    "deadline": "2026-11-30",
+    "today": "2026-10-21",
+    "done_elsewhere": [
+     {
+      "day": "2026-10-14",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-15",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-16",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-17",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-18",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-19",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-20",
+      "level": "target",
+      "amount": 2
+     }
+    ],
+    "first_start": "2026-10-14",
+    "targets": [
+     {
+      "schedule": "daily",
+      "target": 3,
+      "start": "2026-10-21",
+      "end": "2026-10-27",
+      "checkins": []
+     },
+     {
+      "schedule": "daily",
+      "target": 4,
+      "start": "2026-10-28",
+      "end": null,
+      "checkins": []
+     }
+    ]
+   },
+   "expect": {
+    "done": 14,
+    "schedule": "daily",
+    "days_left": 41,
+    "projection": {
+     "remaining": 86,
+     "days_left": 41,
+     "required_per_day": 2.097560975609756,
+     "typical_per_day": 2.0,
+     "reaches_typical": 82.0,
+     "short_typical": 4.0,
+     "best_per_day": 2.0,
+     "reaches_best": 82.0,
+     "short_best": 4.0,
+     "status": "short"
+    },
+    "window_answered": 7,
+    "answer_rate": 100.0,
+    "finish": {
+     "remaining": 86,
+     "reaches_by_deadline": 86,
+     "finish": "2026-11-13",
+     "days_spare": 17,
+     "status": "finishes"
+    }
+   }
+  },
+  {
+   "name": "work entered before the backlog was made is in start_done, so it is not counted twice",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 30,
+    "start_done": 5,
+    "created_day": "2026-10-15",
+    "deadline": "2026-11-30",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "daily",
+      "target": 1,
+      "start": "2026-10-10",
+      "end": null,
+      "checkins": [
+       {
+        "day": "2026-10-10",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-11",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-12",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-13",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-14",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-15",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-16",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-17",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-18",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-19",
+        "level": "target",
+        "amount": 1
+       },
+       {
+        "day": "2026-10-20",
+        "level": "target",
+        "amount": 1
+       }
+      ]
+     }
+    ]
+   },
+   "expect": {
+    "done": 11,
+    "schedule": "daily",
+    "days_left": 41,
+    "projection": {
+     "remaining": 19,
+     "days_left": 41,
+     "required_per_day": 0.4634146341463415,
+     "typical_per_day": 1.0,
+     "reaches_typical": 19,
+     "short_typical": 0,
+     "best_per_day": 1.0,
+     "reaches_best": 19,
+     "short_best": 0,
+     "status": "ok"
+    },
+    "window_answered": 11,
+    "answer_rate": 100.0,
+    "finish": {
+     "remaining": 19,
+     "reaches_by_deadline": 19,
+     "finish": "2026-11-08",
+     "days_spare": 22,
+     "status": "finishes"
+    }
+   }
+  },
+  {
+   "name": "an Nx/week target with a fixed-day one: counted as sessions a week, never more than 7",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 40,
+    "start_done": 0,
+    "created_day": "2026-10-01",
+    "deadline": "2026-11-30",
+    "today": "2026-10-21",
+    "targets": [
+     {
+      "schedule": "weekdays",
+      "target": 1,
+      "start": "2026-10-01",
+      "end": null,
+      "checkins": []
+     },
+     {
+      "schedule": "3x/week",
+      "target": 1,
+      "start": "2026-10-01",
+      "end": null,
+      "checkins": []
+     }
+    ]
+   },
+   "expect": {
+    "done": 0,
+    "schedule": "7x/week",
+    "days_left": 41,
+    "projection": {
+     "remaining": 40,
+     "days_left": 41,
+     "required_per_day": 0.975609756097561,
+     "status": "no_data"
+    },
+    "window_answered": 0,
+    "answer_rate": null,
+    "finish": {
+     "remaining": 40,
+     "status": "count_schedule"
+    }
+   }
+  },
+  {
+   "name": "no linked targets: daily, nothing tracked, no steps",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 12,
+    "start_done": 2,
+    "created_day": "2026-10-01",
+    "deadline": "2026-10-31",
+    "today": "2026-10-21",
+    "targets": []
+   },
+   "expect": {
+    "done": 2,
+    "schedule": "daily",
+    "days_left": 11,
+    "projection": {
+     "remaining": 10,
+     "days_left": 11,
+     "required_per_day": 0.9090909090909091,
+     "status": "no_data"
+    },
+    "window_answered": 0,
+    "answer_rate": null,
+    "finish": null
+   }
+  },
+  {
+   "name": "backlog schedule: one schedule stays as written",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": [
+     "Sat-Thu",
+     "Sat-Thu"
+    ]
+   },
+   "expect": "Sat-Thu"
+  },
+  {
+   "name": "backlog schedule: two fixed-day schedules become the days of both",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": [
+     "Sat,Sun",
+     "Mon,Wed"
+    ]
+   },
+   "expect": "Mon,Wed,Sat,Sun"
+  },
+  {
+   "name": "backlog schedule: weekdays and a weekend make daily",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": [
+     "weekdays",
+     "Sat-Sun"
+    ]
+   },
+   "expect": "daily"
+  },
+  {
+   "name": "backlog schedule: a count with fixed days is capped at 7 a week",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": [
+     "Mon,Tue",
+     "2x/week"
+    ]
+   },
+   "expect": "4x/week"
+  },
+  {
+   "name": "backlog schedule: two counts add up",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": [
+     "2x/week",
+     "3x/week"
+    ]
+   },
+   "expect": "5x/week"
+  },
+  {
+   "name": "backlog schedule: none is daily",
+   "fn": "backlog_schedule",
+   "args": {
+    "schedules": []
+   },
+   "expect": "daily"
+  },
+  {
+   "name": "deadline day already answered: no days left, not past the deadline",
+   "fn": "project",
+   "args": {
+    "remaining": 4,
+    "left": 0,
+    "typical": 1.0,
+    "best": 1.0,
+    "deadline_passed": false
+   },
+   "expect": {
+    "remaining": 4,
+    "days_left": 0,
+    "status": "no_days_left"
+   }
+  },
+  {
+   "name": "deadline really passed",
+   "fn": "project",
+   "args": {
+    "remaining": 4,
+    "left": 0,
+    "typical": 1.0,
+    "best": 1.0,
+    "deadline_passed": true
+   },
+   "expect": {
+    "remaining": 4,
+    "days_left": 0,
+    "status": "past_deadline"
+   }
+  },
+  {
+   "name": "no typical pace after a gap, best fortnight still given (status stays no_data)",
+   "fn": "project",
+   "args": {
+    "remaining": 40,
+    "left": 41,
+    "typical": null,
+    "best": 1.0
+   },
+   "expect": {
+    "remaining": 40,
+    "days_left": 41,
+    "required_per_day": 0.975609756097561,
+    "best_per_day": 1.0,
+    "reaches_best": 40,
+    "short_best": 0,
+    "status": "no_data"
+   }
+  },
+  {
+   "name": "no typical pace and no best: nothing but the required pace",
+   "fn": "project",
+   "args": {
+    "remaining": 40,
+    "left": 41,
+    "typical": null,
+    "best": null
+   },
+   "expect": {
+    "remaining": 40,
+    "days_left": 41,
+    "required_per_day": 0.975609756097561,
+    "status": "no_data"
+   }
+  },
+  {
+   "name": "PLAN_STATE text: on the deadline day with work left, never 'the deadline has passed'",
+   "fn": "backlog_lines",
+   "args": {
+    "bid": "B2",
+    "name": "Essays",
+    "total": 25,
+    "done": 21,
+    "schedule": "daily",
+    "p": {
+     "remaining": 4,
+     "days_left": 0,
+     "status": "no_days_left"
+    },
+    "window_answered": 14,
+    "answer_rate": 100
+   },
+   "expect": [
+    "Backlog B2 \"Essays\": total 25, done 21, remaining 4, no scheduled days left before the deadline."
+   ]
+  },
+  {
+   "name": "PLAN_STATE text: after a gap, not enough data, and his best fortnight with where it reaches",
+   "fn": "backlog_lines",
+   "args": {
+    "bid": "B1",
+    "name": "Chemistry lectures",
+    "total": 50,
+    "done": 10,
+    "schedule": "daily",
+    "p": {
+     "remaining": 40,
+     "days_left": 41,
+     "required_per_day": 0.975609756097561,
+     "best_per_day": 0.6,
+     "reaches_best": 24.0,
+     "short_best": 16.0,
+     "status": "no_data"
+    },
+    "window_answered": 2,
+    "answer_rate": 14
+   },
+   "expect": [
+    "Backlog B1 \"Chemistry lectures\": total 50, done 10, remaining 40, scheduled days left 41, required 1.0 per day.",
+    "  Not enough data yet: fewer than 7 answered days in the last 14 days.",
+    "  Best fortnight so far: 0.6 per day, reaches 24 of 40, short by 16.",
+    "  Answer rate 14%. Availability: not set."
+   ]
+  },
+  {
+   "name": "plan finish on the deadline day already answered: nothing more lands by the deadline",
+   "fn": "plan_finish",
+   "args": {
+    "steps": [
+     {
+      "target": 1,
+      "schedule": "daily",
+      "start": "2026-10-01",
+      "end": null
+     }
+    ],
+    "remaining": 4,
+    "today": "2026-10-21",
+    "deadline": "2026-10-21",
+    "today_answered": true
+   },
+   "expect": {
+    "remaining": 4,
+    "reaches_by_deadline": 0.0,
+    "finish": "2026-10-25",
+    "days_spare": -4,
+    "status": "late"
+   }
+  },
+  {
+   "name": "merge by day: one target done and one not is a done day, amounts added",
+   "fn": "merge_by_day",
+   "args": {
+    "rows": [
+     {
+      "day": "2026-10-20",
+      "level": "not",
+      "amount": 0,
+      "reason": "tired"
+     },
+     {
+      "day": "2026-10-20",
+      "level": "target",
+      "amount": 2
+     },
+     {
+      "day": "2026-10-19",
+      "level": "minimum",
+      "amount": 1
+     },
+     {
+      "day": "2026-10-19",
+      "level": "beyond",
+      "amount": 3
+     }
+    ]
+   },
+   "expect": [
+    {
+     "day": "2026-10-19",
+     "level": "beyond",
+     "amount": 4
+    },
+    {
+     "day": "2026-10-20",
+     "level": "target",
+     "amount": 2,
+     "reason": "tired"
+    }
+   ]
+  },
+  {
+   "name": "merge by day: rest only when every answer is rest, and rest adds nothing",
+   "fn": "merge_by_day",
+   "args": {
+    "rows": [
+     {
+      "day": "2026-10-20",
+      "level": "rest",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-20",
+      "level": "not",
+      "amount": 0
+     },
+     {
+      "day": "2026-10-21",
+      "level": "rest",
+      "amount": 0
+     }
+    ]
+   },
+   "expect": [
+    {
+     "day": "2026-10-20",
+     "level": "not",
+     "amount": 0
+    },
+    {
+     "day": "2026-10-21",
+     "level": "rest",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "name": "a linked target with no start day keeps its pace window (the syllabus sample)",
+   "fn": "backlog_facts",
+   "args": {
+    "total": 40,
+    "start_done": 0,
+    "created_day": "2026-10-09",
+    "deadline": "2026-11-20",
+    "today": "2026-10-09",
+    "targets": [
+     {
+      "schedule": "Sat-Thu",
+      "target": 1,
+      "checkins": [
+       {
+        "day": "2026-09-12",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-13",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-14",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-15",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-16",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-17",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-19",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-20",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-21",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-22",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-26",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-27",
+        "level": "not",
+        "amount": 0,
+        "reason": "tired"
+       },
+       {
+        "day": "2026-09-29",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-09-30",
+        "level": "not",
+        "amount": 0,
+        "reason": "tired"
+       },
+       {
+        "day": "2026-10-01",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-10-04",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-10-05",
+        "level": "not",
+        "amount": 0,
+        "reason": "tired"
+       },
+       {
+        "day": "2026-10-06",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-10-07",
+        "level": "target",
+        "amount": 1,
+        "reason": null
+       },
+       {
+        "day": "2026-10-08",
+        "level": "not",
+        "amount": 0,
+        "reason": "tired"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": {
+    "done": 0,
+    "schedule": "Sat-Thu",
+    "days_left": 36,
+    "projection": {
+     "remaining": 40,
+     "days_left": 36,
+     "required_per_day": 1.1111111111111112,
+     "typical_per_day": 0.6,
+     "reaches_typical": 21.0,
+     "short_typical": 19.0,
+     "best_per_day": 1.0,
+     "reaches_best": 36.0,
+     "short_best": 4.0,
+     "status": "short"
+    },
+    "window_answered": 10,
+    "answer_rate": 83.0,
+    "finish": null
+   }
   }
  ]
 }

@@ -397,19 +397,39 @@ object Planner {
             if (steps.all { it.end != null && it.end.isBefore(cur) }) break // every step has ended short of the total
             cur = cur.plusDays(1)
         }
-        val atDeadline = byDeadline ?: total // stopped before the deadline: finished early, or every step ended
+        // Never reached the deadline day in the loop: counting began after it (its day is answered), so nothing
+        // more lands by it; or it stopped before it, finished early or with every step ended.
+        val atDeadline = byDeadline ?: if ((if (todayAnswered) today.plusDays(1) else today).isAfter(deadline)) 0.0 else total
         val reaches = if (atDeadline < remaining - EPS) minOf(remaining, roundDown(atDeadline)) else remaining
         if (finish == null) return PlanFinish(remaining, "never", reaches)
         val spare = java.time.temporal.ChronoUnit.DAYS.between(finish, deadline).toInt()
         return PlanFinish(remaining, if (!finish.isAfter(deadline)) "finishes" else "late", reaches, finish, spare)
     }
 
-    /** Where the backlog ends up at the typical and the best pace, never rounded in the plan's favour. */
-    fun project(remaining: Double, left: Int, typical: Double?, best: Double?, step: Double = 1.0): Projection {
+    /**
+     * Where the backlog ends up at the typical and the best pace, never rounded in the plan's favour.
+     * With no scheduled day left: past_deadline, or no_days_left when [deadlinePassed] is false (the deadline is
+     * today and answered, or no scheduled day falls before it), so the deadline day never reads as passed.
+     * With no typical pace (after a gap) the best fortnight is still given; the status stays no_data.
+     */
+    fun project(
+        remaining: Double,
+        left: Int,
+        typical: Double?,
+        best: Double?,
+        step: Double = 1.0,
+        deadlinePassed: Boolean? = null,
+    ): Projection {
         if (remaining <= 0) return Projection(remaining, left, "done")
-        if (left <= 0) return Projection(remaining, left, "past_deadline")
+        if (left <= 0) return Projection(remaining, left, if (deadlinePassed == false) "no_days_left" else "past_deadline")
         val required = remaining / left
-        if (typical == null) return Projection(remaining, left, "no_data", requiredPerDay = required)
+        if (typical == null) {
+            val reachB = best?.let { reach(it, left, remaining, step) }
+            return Projection(
+                remaining, left, "no_data", requiredPerDay = required,
+                bestPerDay = best, reachesBest = reachB, shortBest = reachB?.let { remaining - it },
+            )
+        }
         val reachT = reach(typical, left, remaining, step)
         var reachB: Double? = null
         if (best != null) reachB = reach(best, left, remaining, step)
@@ -430,6 +450,29 @@ object Planner {
             reachesBest = reachB,
             shortBest = reachB?.let { remaining - it },
         )
+    }
+
+    /**
+     * The days a backlog is worked on, from the schedules of its live linked targets (tools/planner.py
+     * backlog_schedule): one distinct schedule as written; several with fixed days, the days of any of them
+     * (daily when every day); any Nx/week among them, a count of all their sessions a week, at most 7; none, daily.
+     */
+    fun backlogSchedule(schedules: List<String>): String {
+        val distinct = schedules.distinct()
+        if (distinct.isEmpty()) return "daily"
+        if (distinct.size == 1) return distinct[0]
+        val parsed = distinct.map { parseSchedule(it) }
+        if (parsed.all { it is Schedule.Days }) {
+            val days = parsed.flatMap { (it as Schedule.Days).weekdays }.toSortedSet()
+            return if (days.size == 7) "daily" else days.joinToString(",") { DAYS[it] }
+        }
+        val n = parsed.sumOf {
+            when (it) {
+                is Schedule.Days -> it.weekdays.size
+                is Schedule.Count -> it.perWeek
+            }
+        }
+        return "${minOf(7, n)}x/week"
     }
 
     /** True when the last two weekly reviews both had enough data and both projected below 85% of what remained. */

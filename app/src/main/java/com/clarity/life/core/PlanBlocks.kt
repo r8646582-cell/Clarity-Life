@@ -95,9 +95,12 @@ object PlanBlocks {
     )
 
     /**
-     * A backlog's progress comes from the targets linked to it. With more than one, their answers are added up
-     * per day and the first target's schedule counts the days; with none, nothing is tracked yet.
-     * Done = start_done + the amounts entered from the backlog's creation day on; the pace uses all history.
+     * A backlog's progress comes from the targets linked to it (tools/planner.py backlog_facts; PlannerTest runs
+     * its vectors through here). Their answers are added up per day. Done = start_done + the amounts entered from
+     * the backlog's creation day on. Days left and the pace use [Planner.backlogSchedule] (the days of every live
+     * linked target, not only the first one's); days left never start before the first live target does. The
+     * pace reads every answer given toward it, ended ramp steps included, from the first start of any target ever
+     * linked to it. With nothing ever linked there is no pace window and no answer rate.
      */
     data class BacklogFacts(
         val done: Double,
@@ -111,16 +114,17 @@ object PlanBlocks {
     )
 
     fun backlogFacts(b: Backlog, linked: List<Target>, today: LocalDate, rest: Set<LocalDate>): BacklogFacts {
-        val schedule = linked.firstOrNull()?.schedule ?: "daily"
-        // The pace reads every answer given toward it, ended ramp steps included, so it does not reset each step.
+        val schedule = Planner.backlogSchedule(linked.map { it.schedule })
         val merged = mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-        val done = b.startDone + mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-            .filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
+        val done = b.startDone + merged.filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
         val remaining = b.total - done
         val todayAnswered = merged.any { it.day == today }
-        val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
+        var countFrom = if (todayAnswered) today.plusDays(1) else today
+        val firstLive = linked.mapNotNull { it.start }.minOrNull()
+        if (firstLive != null && firstLive.isAfter(countFrom)) countFrom = firstLive
+        val left = Planner.scheduledCount(schedule, countFrom, b.deadline, rest)
         // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
-        val start = b.firstStart ?: linked.mapNotNull { it.start }.minOrNull()
+        val start = b.firstStart ?: firstLive ?: if (linked.isEmpty() && b.doneElsewhere.isEmpty()) today else null
         val typical = Planner.typicalPace(merged, schedule, today, rest, start)
         val best = Planner.bestPace(merged, schedule, today, rest, start)
         val steps = linked.filter { it.start != null }.sortedBy { it.start }
@@ -128,7 +132,7 @@ object PlanBlocks {
         return BacklogFacts(
             done = done,
             schedule = schedule,
-            projection = Planner.project(remaining, left, typical.pace, best),
+            projection = Planner.project(remaining, left, typical.pace, best, deadlinePassed = b.deadline.isBefore(today)),
             windowAnswered = typical.answered,
             answerRate = typical.answerRate,
             steps = steps,

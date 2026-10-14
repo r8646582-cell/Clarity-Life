@@ -208,17 +208,25 @@ def _reach(pace, left, remaining, step):
     return min(remaining, round_down(raw, step))
 
 
-def project(remaining, left, typical, best, step=1.0):
-    """Where the backlog ends up at the typical and the best pace, in the unit, never rounded in its favour."""
+def project(remaining, left, typical, best, step=1.0, deadline_passed=None):
+    """Where the backlog ends up at the typical and the best pace, in the unit, never rounded in its favour.
+    With no scheduled day left: past_deadline, or no_days_left when deadline_passed is False (the deadline is
+    today and today is answered, or no scheduled day falls before it), so the deadline day never reads as passed.
+    With no typical pace (fewer than MIN_ANSWERED answers in the window, after a gap) the best fortnight from
+    his own history is still given; the status stays no_data, since a verdict needs the typical pace."""
     out = {"remaining": remaining, "days_left": left}
     if remaining <= 0:
         out["status"] = "done"
         return out
     if left <= 0:
-        out["status"] = "past_deadline"
+        out["status"] = "no_days_left" if deadline_passed is False else "past_deadline"
         return out
     out["required_per_day"] = remaining / left
     if typical is None:
+        if best is not None:
+            reach_b = _reach(best, left, remaining, step)
+            out["best_per_day"], out["reaches_best"] = best, reach_b
+            out["short_best"] = remaining - reach_b
         out["status"] = "no_data"
         return out
     reach_t = _reach(typical, left, remaining, step)
@@ -278,8 +286,10 @@ def plan_finish(steps, remaining, today, deadline, today_answered=False, rest_da
         if all(end is not None and end < cur for _, end, _, _ in parsed):
             break   # every step has ended and the total is not reached
         cur += timedelta(days=1)
-    if by_deadline is None:     # stopped before the deadline: finished early, or every step ended
-        by_deadline = total
+    if by_deadline is None:     # never reached the deadline day in the loop
+        # counting began after the deadline (its day is answered): nothing more lands by it; else it stopped
+        # before the deadline, finished early or with every step ended
+        by_deadline = 0.0 if (today + timedelta(days=1) if today_answered else today) > deadline else total
     out["reaches_by_deadline"] = min(remaining, round_down(by_deadline)) if by_deadline < remaining - EPS else remaining
     if finish is None:
         out["status"] = "never"
@@ -359,6 +369,93 @@ def reason_lines(reasons, short_days):
             for r, n in reasons if n >= REASON_MIN_N and n <= short_days]
 
 
+# ---------- a backlog's facts, from the targets linked to it (PlanBlocks.backlogFacts) ----------
+
+def backlog_schedule(schedules):
+    """The days a backlog is worked on, from the schedules of its live linked targets.
+    One distinct schedule: that one, as written. Several, all with fixed days: the days any of them is on,
+    as a day list (daily when that is every day), so a target on other days than the first one's is never
+    left out of the days left or the pace. Any Nx/week among them: a count, min(7, the sessions of all of them
+    per week). None: daily."""
+    distinct = []
+    for s in schedules:
+        if s not in distinct:
+            distinct.append(s)
+    if not distinct:
+        return "daily"
+    if len(distinct) == 1:
+        return distinct[0]
+    parsed = [parse_schedule(s) for s in distinct]
+    if all(k == "days" for k, _ in parsed):
+        days = sorted(set().union(*[v for _, v in parsed]))
+        return "daily" if len(days) == 7 else ",".join(DAYS[i] for i in days)
+    n = sum(v if k == "count" else len(v) for k, v in parsed)
+    return "%dx/week" % min(7, n)
+
+
+LEVEL_ORDER = ["rest", "not", "minimum", "target", "beyond"]
+
+
+def merge_by_day(rows):
+    """One row per day: amounts added (rest rows add nothing), done when any was done (the highest done level),
+    rest only when every answer was rest, else not. The reason is the first one given."""
+    by = {}
+    for r in rows:
+        by.setdefault(d(r["day"]), []).append(r)
+    out = []
+    for day in sorted(by):
+        lst = by[day]
+        if all(r["level"] == "rest" for r in lst):
+            level = "rest"
+        elif any(r["level"] in DONE_LEVELS for r in lst):
+            level = max((r["level"] for r in lst if r["level"] in DONE_LEVELS), key=LEVEL_ORDER.index)
+        else:
+            level = "not"
+        reason = next((r.get("reason") for r in lst if r.get("reason")), None)
+        row = {"day": day.isoformat(), "level": level, "amount": sum(r.get("amount", 0) for r in lst if r["level"] != "rest")}
+        if reason:
+            row["reason"] = reason
+        out.append(row)
+    return out
+
+
+def backlog_facts(total, start_done, created_day, deadline, targets, today, done_elsewhere=(), first_start=None,
+                  rest_dates=()):
+    """Everything PLAN_STATE says about one backlog. targets: its live linked targets, each
+    {schedule, target, start, end, checkins}; done_elsewhere: check-ins of its paused or ended targets.
+    - done = start_done + every amount entered from created_day on (earlier work is already in start_done).
+    - the pace reads every answer toward it, ended ramp steps included, from the first start of any target
+      ever linked to it (first_start; else the earliest live start), so it does not restart at every step.
+    - days left are counted on backlog_schedule's days, from today (tomorrow when today is answered), and
+      never before the first live target starts: days before the plan begins have no work planned.
+    - the plan's own steps are the live targets with a start, in start order.
+    - with no target ever linked there is no pace window and no answer rate."""
+    today, deadline = d(today), d(deadline)
+    rest = {d(x) for x in rest_dates}
+    schedule = backlog_schedule([t["schedule"] for t in targets])
+    merged = merge_by_day([c for t in targets for c in t.get("checkins", [])] + list(done_elsewhere))
+    done = start_done + sum(c["amount"] for c in merged if d(c["day"]) >= d(created_day))
+    remaining = total - done
+    today_answered = any(d(c["day"]) == today for c in merged)
+    count_from = today + timedelta(days=1) if today_answered else today
+    starts = [d(t["start"]) for t in targets if t.get("start")]
+    if starts and min(starts) > count_from:
+        count_from = min(starts)
+    left = scheduled_count(schedule, count_from, deadline, rest)
+    # Nothing ever linked: nothing was asked, so there is no window (no answer rate of 0%).
+    start = d(first_start) if first_start else (min(starts) if starts else (today if not targets and not done_elsewhere else None))
+    tp = typical_pace(merged, schedule, today, rest, start)
+    best = best_pace(merged, schedule, today, rest, start)
+    steps = sorted([{"target": t["target"], "schedule": t["schedule"], "start": t["start"], "end": t.get("end")}
+                    for t in targets if t.get("start")], key=lambda x: d(x["start"]))
+    return {
+        "done": done, "schedule": schedule, "days_left": left,
+        "projection": project(remaining, left, tp["pace"], best, deadline_passed=deadline < today),
+        "window_answered": tp["answered"], "answer_rate": tp["answer_rate"],
+        "finish": plan_finish(steps, remaining, today, deadline, today_answered, rest) if steps else None,
+    }
+
+
 # ---------- text for the context packet (code-written, so the coach only copies) ----------
 
 def _fmt(x):
@@ -401,13 +498,18 @@ def backlog_lines(bid, name, total, done, schedule, p, window_answered, answer_r
     remaining = total - done
     head = 'Backlog %s "%s": total %g, done %g, remaining %g' % (bid, name, total, done, remaining)
     st = p["status"]
-    if st in ("done", "past_deadline"):
-        return [head + (", complete." if st == "done" else ", the deadline has passed.")]
+    if st in ("done", "past_deadline", "no_days_left"):
+        return [head + {"done": ", complete.", "past_deadline": ", the deadline has passed.",
+                        "no_days_left": ", no scheduled days left before the deadline."}[st]]
     head += ", scheduled days left %d%s, required %s per day." % (p["days_left"], off_days_phrase(schedule),
                                                                     _num_up(p["required_per_day"]))
     lines = [head]
     if st == "no_data":
         lines.append("  Not enough data yet: fewer than %d answered days in the last %d days." % (MIN_ANSWERED, WINDOW))
+        if "best_per_day" in p:     # after a gap his own best stretch is still known
+            tail_b = (", short by %g." % p["short_best"]) if p["short_best"] > 0 else "."
+            lines.append("  Best fortnight so far: %s per day, reaches %g of %g%s"
+                         % (_num(p["best_per_day"]), p["reaches_best"], remaining, tail_b))
     else:
         tail_t = (", short by %g." % p["short_typical"]) if p["short_typical"] > 0 else "."
         lines.append("  Typical pace (last %d days, %d answered days): %s per day, reaches %g of %g%s"

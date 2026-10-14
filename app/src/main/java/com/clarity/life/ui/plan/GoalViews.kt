@@ -466,7 +466,11 @@ private fun ProgressLine(b: PlanViewModel.BacklogView, model: PlanViewModel) {
         }
         if (p.status != "done" && p.typicalPerDay == null) {
             Text(
-                "Your usual and best pace show after ${Planner.MIN_ANSWERED} answered days.",
+                if (p.bestPerDay != null) {
+                    "Your usual pace shows again after ${Planner.MIN_ANSWERED} answered days in ${Planner.WINDOW}."
+                } else {
+                    "Your usual and best pace show after ${Planner.MIN_ANSWERED} answered days."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = clarity.muted,
             )

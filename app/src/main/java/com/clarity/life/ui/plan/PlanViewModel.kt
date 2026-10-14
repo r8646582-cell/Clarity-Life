@@ -167,7 +167,9 @@ class PlanViewModel @Inject constructor(
             val linked = live.filter { it.backlogId == b.id }
             val model = PlanBlocks.Backlog(
                 b.id, b.name, b.goalId, b.total, b.startDone, LocalDate.parse(b.deadline),
-                Planner.dayKey(Instant.ofEpochMilli(b.createdAt).toString(), tz, boundary),
+                // The day stored when it was made, as PLAN_STATE reads it, so a later time zone or day
+                // boundary change never makes this screen and the coach disagree about what is done.
+                b.startDay?.let(LocalDate::parse) ?: Planner.dayKey(Instant.ofEpochMilli(b.createdAt).toString(), tz, boundary),
                 r.targets.filter { it.backlogId == b.id && it !in live }.flatMap(::history),
                 r.targets.filter { it.backlogId == b.id }.minOfOrNull { LocalDate.parse(it.startDay) },
             )
@@ -279,6 +281,7 @@ class PlanViewModel @Inject constructor(
     fun statusText(p: com.clarity.life.core.Projection): String = when (p.status) {
         "done" -> "Complete."
         "past_deadline" -> "The deadline has passed."
+        "no_days_left" -> "No scheduled days left before the deadline."
         "no_data" -> "Not enough data yet: fewer than ${Planner.MIN_ANSWERED} answered days in the last ${Planner.WINDOW} days."
         else -> {
             val key = if (p.status != "short" || p.bestPerDay != null) p.status else "short_no_best"
@@ -437,7 +440,7 @@ class PlanViewModel @Inject constructor(
         fun goalStatus(backlogs: List<BacklogView>, targets: List<TargetView>): String {
             val statuses = backlogs.map { it.facts.projection.status }
             return when {
-                statuses.any { it == "short" || it == "needs_best" || it == "past_deadline" } -> "behind"
+                statuses.any { it == "short" || it == "needs_best" || it == "past_deadline" || it == "no_days_left" } -> "behind"
                 statuses.isNotEmpty() && statuses.all { it == "ok" || it == "done" } -> "on pace"
                 statuses.isEmpty() && targets.any { it.answered >= Planner.MIN_ANSWERED } -> "tracking"
                 else -> "no data yet"

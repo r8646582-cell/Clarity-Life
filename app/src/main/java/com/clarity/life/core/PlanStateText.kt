@@ -78,8 +78,10 @@ object PlanStateText {
     ): List<String> {
         val remaining = total - done
         var head = "Backlog $bid \"$name\": total ${g(total)}, done ${g(done)}, remaining ${g(remaining)}"
-        if (p.status == "done" || p.status == "past_deadline") {
-            return listOf(head + if (p.status == "done") ", complete." else ", the deadline has passed.")
+        when (p.status) {
+            "done" -> return listOf("$head, complete.")
+            "past_deadline" -> return listOf("$head, the deadline has passed.")
+            "no_days_left" -> return listOf("$head, no scheduled days left before the deadline.")
         }
         head += ", scheduled days left ${p.daysLeft}${offDaysPhrase(schedule)}, " +
             "required ${numUp(p.requiredPerDay!!)} per day."
@@ -89,6 +91,14 @@ object PlanStateText {
                 "  Not enough data yet: fewer than ${Planner.MIN_ANSWERED} answered days " +
                     "in the last ${Planner.WINDOW} days.",
             )
+            // After a gap his own best stretch is still known.
+            if (p.bestPerDay != null) {
+                val tailB = if (p.shortBest!! > 0) ", short by ${g(p.shortBest)}." else "."
+                lines.add(
+                    "  Best fortnight so far: ${num(p.bestPerDay)} per day, " +
+                        "reaches ${g(p.reachesBest!!)} of ${g(remaining)}$tailB",
+                )
+            }
         } else {
             val tailT = if (p.shortTypical!! > 0) ", short by ${g(p.shortTypical)}." else "."
             lines.add(

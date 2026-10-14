@@ -162,6 +162,8 @@ Computed per goal, target and backlog, only when enough data exists (at least 7 
 - Backlog status: on pace / behind / not enough data. **Re-plan trigger:** projectedDone below 85% of remaining on two consecutive weekly reviews with enough data produces a "The plan may be off" card.
 All of this is unit-tested with fixed fixtures (including leap days, rest days, month ends, time zones).
 
+**Reviewed against real use (Max plan Phase 6, 14 Oct 2026).** A backlog's facts are computed by `backlog_facts` in `tools/planner.py` with vectors, not only in Kotlin. A backlog fed by several targets counts the days of all of them (it used to count only the first target's days, so a weekend target listed first made the weekday answers invisible). Days left never start before the plan's first step does. After a gap (fewer than 7 answers in 14 days) his best fortnight is still given under "Not enough data yet". On the deadline day, once answered, the line says "no scheduled days left before the deadline", never "the deadline has passed", and the plan line no longer counts work after the deadline as reaching it.
+
 ### 6.3 The planning rules the coach follows (the syllabus case)
 Written into `mode_plan.md` and the persona:
 - Start from the deadline and work backward. Use your **actual** pace, not a hoped-for pace.

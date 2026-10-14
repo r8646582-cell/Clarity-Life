@@ -14,6 +14,7 @@ import com.clarity.life.core.Vectors.strings
 import java.time.LocalDate
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -107,6 +108,10 @@ class PlannerTest {
         )
     }
 
+    private fun checkinJson(c: CheckIn): JsonElement = jsonNoNulls(
+        listOf("day" to c.day.toString(), "level" to c.level, "amount" to c.amount, "reason" to c.reason),
+    )
+
     private fun steps(args: JsonObject): List<PlanStep> = args.getValue("steps").jsonArray.map { it.jsonObject }.map {
         PlanStep(it.dbl("target"), it.str("schedule"), LocalDate.parse(it.str("start")), it.strOrNull("end")?.let(LocalDate::parse))
     }
@@ -182,8 +187,44 @@ class PlannerTest {
         )
 
         "project" -> projectJson(
-            Planner.project(args.dbl("remaining"), args.int("left"), args.dblOrNull("typical"), args.dblOrNull("best")),
+            Planner.project(
+                args.dbl("remaining"), args.int("left"), args.dblOrNull("typical"), args.dblOrNull("best"),
+                deadlinePassed = args["deadline_passed"]?.jsonPrimitive?.booleanOrNull,
+            ),
         )
+
+        "backlog_schedule" -> json(Planner.backlogSchedule(args.strings("schedules")))
+
+        "merge_by_day" -> json(
+            PlanBlocks.mergeByDay(checkins(args.getValue("rows").jsonArray.map { it.jsonObject })).map(::checkinJson),
+        )
+
+        "backlog_facts" -> {
+            val today = LocalDate.parse(args.str("today"))
+            val linked = args.getValue("targets").jsonArray.map { it.jsonObject }.mapIndexed { i, t ->
+                PlanBlocks.Target(
+                    id = i + 1L, name = "T", goalId = null, backlogId = 1L, minimum = 0.0, target = t.dbl("target"),
+                    schedule = t.str("schedule"),
+                    checkins = checkins(t["checkins"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
+                    start = t.strOrNull("start")?.let(LocalDate::parse),
+                    end = t.strOrNull("end")?.let(LocalDate::parse),
+                )
+            }
+            val b = PlanBlocks.Backlog(
+                id = 1L, name = "B", goalId = null, total = args.dbl("total"), startDone = args.dbl("start_done"),
+                deadline = LocalDate.parse(args.str("deadline")), createdDay = LocalDate.parse(args.str("created_day")),
+                doneElsewhere = checkins(args["done_elsewhere"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
+                firstStart = args.strOrNull("first_start")?.let(LocalDate::parse),
+            )
+            val f = PlanBlocks.backlogFacts(b, linked, today, restDates(args))
+            json(
+                mapOf(
+                    "done" to f.done, "schedule" to f.schedule, "days_left" to f.projection.daysLeft,
+                    "projection" to projectJson(f.projection), "window_answered" to f.windowAnswered,
+                    "answer_rate" to f.answerRate, "finish" to f.finish?.let(::planFinishJson),
+                ),
+            )
+        }
 
         "replan_flag" -> json(
             Planner.replanFlag(
