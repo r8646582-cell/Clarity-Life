@@ -22,14 +22,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Gives every message of his and every conversation summary its meaning vector, in the background, on the
- * phone. Re-running is harmless: it only looks at rows that have no vector yet.
+ * Gives every message of his, every conversation summary and every other record search reads its meaning vector,
+ * in the background, on the phone. Re-running is harmless: it only looks at rows that have no vector yet.
  */
 @Singleton
 class EmbeddingIndexer @Inject constructor(
     @ApplicationContext private val context: Context,
     private val db: ClarityDatabase,
     private val embedder: Embedder,
+    private val search: SearchIndex = SearchIndex(db, embedder),
 ) {
 
     /** Ask for the missing vectors to be made soon. Cheap to call after every message. */
@@ -60,7 +61,9 @@ class EmbeddingIndexer @Inject constructor(
                 dao.missingQuotes(Embedder.MODEL, BATCH).map { SearchIndex.QUOTE to it } +
                 dao.missingEvents(Embedder.MODEL, BATCH).map { SearchIndex.EVENT to ToEmbed(it.id, SearchIndex.eventText(it)) } +
                 dao.missingRetiredNotes(Embedder.MODEL, BATCH).map { SearchIndex.NOTE to it } +
-                dao.missingPromises(Embedder.MODEL, BATCH).map { SearchIndex.PROMISE to ToEmbed(it.id, SearchIndex.promiseText(it)) }
+                dao.missingPromises(Embedder.MODEL, BATCH).map { SearchIndex.PROMISE to ToEmbed(it.id, SearchIndex.promiseText(it)) } +
+                // Letters, reviews, chapters, goals, goal changes, targets and check-ins (Max plan Phase 2).
+                search.recordsWithoutVectors(Embedder.MODEL, BATCH).map { it.kind to ToEmbed(it.id, it.text) }
             val todo = batch.filter { (kind, row) -> "$kind:${row.id}" !in skipped }
             if (todo.isEmpty()) break
             for ((kind, row) in todo) {

@@ -56,11 +56,19 @@ interface EmbeddingDao {
     )
     suspend fun missingPromises(model: String, limit: Int): List<com.clarity.life.data.entity.PromiseRow>
 
+    /** Which records of these kinds have a vector for [model] (the records themselves are read from search_doc). */
+    @Query("SELECT doc_kind AS kind, doc_id AS docId FROM embedding_row WHERE model = :model AND doc_kind IN (:kinds)")
+    suspend fun present(model: String, kinds: List<String>): List<KindId>
+
     @Query(
         "DELETE FROM embedding_row WHERE (doc_kind = 'quote' AND doc_id IN (SELECT id FROM quote WHERE conversation_id = :conversationId)) " +
             "OR (doc_kind = 'event' AND doc_id IN (SELECT id FROM event WHERE conversation_id = :conversationId))",
     )
     suspend fun deleteQuotesAndEventsOf(conversationId: Long)
+
+    /** Every vector of one kind, when how that kind reads has changed; the indexer makes them again. */
+    @Query("DELETE FROM embedding_row WHERE doc_kind = :kind")
+    suspend fun deleteKind(kind: String)
 
     @Query("DELETE FROM embedding_row WHERE doc_kind = :kind AND doc_id = :docId")
     suspend fun delete(kind: String, docId: Long)
@@ -102,6 +110,8 @@ interface EmbeddingDao {
 }
 
 data class ToEmbed(val id: Long, val text: String)
+
+data class KindId(val kind: String, val docId: Long)
 
 class CachedRow(
     val rowId: Long,

@@ -1,9 +1,17 @@
 package com.clarity.life.core
 
 /**
- * Keyword retrieval for RELEVANT_PAST (contracts/context.md, Part 3): which words of his new message are
- * searched for, how a match is scored, and when a match is strong enough to send. Pure, tested on the JVM
- * (RetrievalTest). The database side (FTS4 over search_doc) only finds candidates; the choice is made here.
+ * Retrieval for RELEVANT_PAST (contracts/context.md, Part 3): which words of his new message are searched for,
+ * how a match is scored, how the result lists are merged and which results are sent. Pure, a 1:1 port of
+ * tools/retrieval.py: RetrievalVectorsTest runs every case of contracts/retrieval_vectors.json, and
+ * tools/eval/memory_exam2.py measures retrieval with the Python twin. The database side (FTS4 over search_doc,
+ * the vectors) only finds candidates; the choice is made here.
+ *
+ * Max plan Phase 2 (docs/MAX-PLAN.md): besides the new message, a second query made of his last few messages in
+ * this conversation is searched ([conversationQuery]); a period he names ("in August") is read in code
+ * ([RecallTime]) and what falls in it is a list of its own ([dated]); the lists are merged by weighted reciprocal
+ * rank fusion ([fuse]); near-duplicates go, one result per conversation is kept, and up to [MAX_RESULTS] are sent
+ * ([chooseFinal]). A single rare word counts as a keyword match ([rareTerms]).
  *
  * Retrieval finds and ranks only. It never writes text and never changes a note's confidence (spec
  * section 7).
@@ -11,7 +19,35 @@ package com.clarity.life.core
 object Retrieval {
 
     const val MAX_TERMS = 8
-    const val MAX_RESULTS = 5
+
+    /** Results sent at most (5 before Phase 2); the 4,000-token budget of Part 3 drops the weakest first. */
+    const val MAX_RESULTS = 12
+
+    /** Results from one conversation (its messages, summary, quotes and events): a pattern needs its months. */
+    const val MAX_PER_CONVERSATION = 1
+
+    /** Results the period list brings. */
+    const val DATED_MAX = 10
+
+    /** His earlier messages in this conversation that join the conversation query. */
+    const val CONTEXT_MESSAGES = 3
+
+    /** Meaning matches scored exactly before identical texts are counted once. */
+    const val MEANING_CANDIDATES = 80
+
+    /** A word found in at most this share of the index is rare enough to match alone. */
+    const val RARE_SHARE = 0.05
+
+    /** Share of word stems two results have in common to count as the same thing. */
+    const val NEAR_DUPLICATE = 0.8
+
+    /** The period list brings single check-ins only for a period of at most this many days. */
+    const val CHECKIN_DAYS = 7
+
+    /** How much each list counts in the fusion: the period read in code, the new message, the conversation. */
+    const val W_DATED = 2.0
+    const val W_NEW = 1.0
+    const val W_CONTEXT = 0.5
     /**
      * Keyword candidates read from the index for each searched word, newest first, before they are scored.
      * One read per word, so a rare word ("CAF") is never pushed out by the newest matches of a common one
@@ -55,6 +91,8 @@ object Retrieval {
         "yes", "lol", "way", "off", "lot", "bit", "use", "see", "say", "put", "new", "own", "try", "ive", "don",
         "isn", "won", "ain", "hey", "huh", "omg", "idk", "btw", "may", "yet", "via", "per", "etc", "ill",
         "whom", "youre", "cant", "wont", "didnt", "isnt", "thats",
+        // Question words that say nothing about what he means ("what happened in March?").
+        "happen", "happens", "happened", "happening", "tell", "told",
     )
 
     private val WORD = Regex("[a-z0-9]+")
@@ -100,10 +138,25 @@ object Retrieval {
         return "body:$prefix* OR title:$prefix*"
     }
 
+    fun stems(text: String): Set<String> = WORD.findAll(TextCheck.norm(text)).map { stem(it.value) }.toSet()
+
     /** How many of the terms appear in the text, in any of their forms ([stem]). */
     fun score(text: String, terms: List<String>): Int {
-        val stems = WORD.findAll(TextCheck.norm(text)).map { stem(it.value) }.toSet()
+        val stems = stems(text)
         return terms.count { stem(it) in stems }
+    }
+
+    /**
+     * The searched words that are rare in everything kept: [found] is how many rows each word's search read (at
+     * most [CANDIDATES_PER_TERM]), [total] the rows in the index. A word in at most [RARE_SHARE] of the rows says
+     * a lot ("power", "physio"); one in many says little ("study").
+     */
+    fun rareTerms(terms: List<String>, found: Map<String, Int>, total: Int): Set<String> {
+        if (total <= 0) return emptySet()
+        return terms.filter {
+            val n = found[it] ?: 0
+            n in 1 until CANDIDATES_PER_TERM && n <= RARE_SHARE * total
+        }.toSet()
     }
 
     /** A match is strong when it shares at least two of the searched words (or the only one there is). */
@@ -124,13 +177,104 @@ object Retrieval {
 
     data class Hit(val candidate: Candidate, val score: Int)
 
-    /** The best [MAX_RESULTS] strong matches: the most shared words first, then the most recent. */
-    fun choose(candidates: List<Candidate>, terms: List<String>, max: Int = MAX_RESULTS): List<Hit> =
-        candidates.map { Hit(it, score(it.text, terms)) }
-            .filter { strongEnough(it.score, terms.size) }
+    /**
+     * The best strong matches: the most shared words first, then the most recent; the same text once. A match of
+     * a single [rare] word also counts, after the strong ones.
+     */
+    fun choose(candidates: List<Candidate>, terms: List<String>, max: Int = FUSE_DEPTH, rare: Set<String> = emptySet()): List<Hit> {
+        val rareStems = rare.map(::stem).toSet()
+        return candidates.map { Hit(it, score(it.text, terms)) }
+            .filter { strongEnough(it.score, terms.size) || (it.score == 1 && stems(it.candidate.text).any { s -> s in rareStems }) }
             .distinctBy { TextCheck.norm(it.candidate.text) }
             .sortedWith(compareByDescending<Hit> { it.score }.thenByDescending { it.candidate.at })
             .take(max)
+    }
+
+    /** Keys in order, each text once (the first, best one, is kept): small talk repeats itself word for word. */
+    fun <K> distinctTexts(keys: List<K>, texts: Map<K, String>): List<K> {
+        val seen = HashSet<String>()
+        return keys.filter { k -> seen.add(TextCheck.norm(texts.getValue(k))) }
+    }
+
+    /**
+     * The second query: his last [CONTEXT_MESSAGES] messages in this conversation before the new one, oldest
+     * first, then the new one, after the conversation's title when it has one. Null when there is nothing before
+     * the new message: the new message alone is searched then.
+     */
+    fun conversationQuery(new: String, earlier: List<String>, title: String = ""): String? {
+        val before = earlier.filter { it.isNotBlank() }.takeLast(CONTEXT_MESSAGES)
+        if (before.isEmpty() && title.isBlank()) return null
+        return (listOfNotNull(title.trim().takeIf { it.isNotEmpty() }) + before + new).joinToString(" ")
+    }
+
+    /**
+     * Weighted reciprocal rank fusion: each list is (weight, keys best first); a key scores the sum of
+     * weight / (k + rank) over the lists it is in. Ties keep the order of first appearance.
+     */
+    fun <K> fuse(lists: List<Pair<Double, List<K>>>): List<K> {
+        val score = LinkedHashMap<K, Double>()
+        for ((weight, keys) in lists) {
+            keys.forEachIndexed { i, k -> score[k] = (score[k] ?: 0.0) + weight / (VectorMath.RRF_K + i + 1) }
+        }
+        return score.entries.sortedByDescending { it.value }.map { it.key }
+    }
+
+    /** Two texts are the same thing when most of their word stems are shared (Jaccard of the stem sets). */
+    fun nearDuplicate(a: String, b: String): Boolean {
+        val sa = stems(a)
+        val sb = stems(b)
+        if (sa.isEmpty() || sb.isEmpty()) return TextCheck.norm(a) == TextCheck.norm(b)
+        return (sa intersect sb).size.toDouble() / (sa union sb).size >= NEAR_DUPLICATE
+    }
+
+    /** A result's text and its conversation (null for a letter, a review, a promise...). */
+    data class Doc(val text: String, val conversation: Long?)
+
+    /**
+     * What RELEVANT_PAST sends, from the fused keys (best first): keys without a doc are skipped, a near-duplicate
+     * of a result already chosen is left out, and at most [MAX_PER_CONVERSATION] come from one conversation.
+     */
+    fun <K> chooseFinal(keys: List<K>, docs: Map<K, Doc>, max: Int = MAX_RESULTS): List<K> {
+        val out = ArrayList<K>()
+        val per = HashMap<Long, Int>()
+        for (k in keys) {
+            val d = docs[k] ?: continue
+            val c = d.conversation
+            if (c != null && (per[c] ?: 0) >= MAX_PER_CONVERSATION) continue
+            if (out.any { nearDuplicate(d.text, docs.getValue(it).text) }) continue
+            out += k
+            if (c != null) per[c] = (per[c] ?: 0) + 1
+            if (out.size >= max) break
+        }
+        return out
+    }
+
+    /** Something that falls in the period he named; [key] is "kind:id", [day] its day ("YYYY-MM-DD"). */
+    data class DatedItem(val key: String, val kind: String, val text: String, val day: String, val outcome: String? = null)
+
+    private val KIND_ORDER = listOf("promise", "review", "letter", "summary", "checkin", "revision", "chapter")
+
+    /**
+     * The period list: ordered by how many of his other searched words an item shares, then by kind (promises
+     * first when he asked about promises, the outcome he named first among them), then the most recent day, then
+     * the key. When he named other words, only the items sharing one come, unless none does.
+     */
+    fun dated(items: List<DatedItem>, restTerms: List<String>, promises: Boolean, outcome: String?, max: Int = DATED_MAX): List<String> {
+        fun rank(it: DatedItem): Int = if (promises && it.kind == "promise") {
+            if (outcome != null && it.outcome == outcome) -2 else -1
+        } else {
+            KIND_ORDER.indexOf(it.kind).let { i -> if (i < 0) KIND_ORDER.size else i }
+        }
+        val pool = if (promises) items.filter { it.kind == "promise" }.ifEmpty { items } else items
+        var scored = pool.map { it to if (restTerms.isNotEmpty()) score(it.text, restTerms) else 0 }
+        if (restTerms.isNotEmpty() && scored.any { it.second > 0 }) scored = scored.filter { it.second > 0 }
+        return scored.sortedWith(
+            compareByDescending<Pair<DatedItem, Int>> { it.second }
+                .thenBy { rank(it.first) }
+                .thenByDescending { it.first.day }
+                .thenBy { it.first.key },
+        ).map { it.first.key }.take(max)
+    }
 
     /** RELEVANT_PAST: best first; the weakest is the first to go when the budget is tight. */
     fun block(hits: List<Hit>): Block = Block(

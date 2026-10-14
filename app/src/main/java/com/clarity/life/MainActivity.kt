@@ -86,7 +86,8 @@ class MainActivity : ComponentActivity() {
                 // Alarms can be lost (a force stop, a phone that killed the app); set every reminder again.
                 reminders.syncAll()
                 reflections.sweep(System.currentTimeMillis())
-                search.rebuildIfEmpty()
+                // An index from an older version (Max plan Phase 2 added the records) is rebuilt once.
+                search.rebuildIfStale()
                 indexer.schedule()
                 // Reviews and the weekly letter: catch up on anything missed, and keep next Sunday scheduled.
                 writing.onStart(System.currentTimeMillis())

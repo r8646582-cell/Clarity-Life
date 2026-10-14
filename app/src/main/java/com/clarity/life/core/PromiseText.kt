@@ -93,6 +93,9 @@ object PromiseText {
         return if (sameDay) "Was due $clock, ${TimeFacts.spell(gap)} ago" else "Was due ${TimeFacts.cardTime(dueAt, tz)}"
     }
 
-    /** The text the search index keeps for a promise, so an old one can be found again (RELEVANT_PAST). */
-    fun searchText(p: Promise): String = "${p.text} (${outcome(p)})"
+    /**
+     * The text the search index keeps for a promise, so an old one can be found again (RELEVANT_PAST):
+     * "Promise: Call Mom (done)" ([SearchText.promise], tools/retrieval.py).
+     */
+    fun searchText(p: Promise): String = SearchText.promise(p.text, p.status, p.reason)
 }

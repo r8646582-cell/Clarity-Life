@@ -8,16 +8,17 @@ app would send today and measures how much of the question's evidence is in it:
   Part 3 (volatile): NOW, PLAN_STATE, OPEN_PROMISES, CHECKIN_FACTS (never trimmed), LAST_CHAT and RELEVANT_PAST,
                      trimmed to 4,000 tokens (search results go first, then the oldest LAST_CHAT lines)
 
-Search is the 0.1.12 mirror in memory_exam.py: keyword (terms, stems, one read per term) and, with --hybrid,
-bge-small-en-v1.5 meaning search, fused by reciprocal rank. Only the new message is searched (today's app);
-the lines in a question's "context" are earlier turns of the same new conversation.
+Search (Max plan Phase 2) is tools/retrieval.py and tools/recall_time.py, used as they are: the period the
+question names (read in code), keyword (terms, stems, one read per term, a rare word alone counts) and, with
+--hybrid, bge-small-en-v1.5 meaning search, for the question and for the question with the lines in its
+"context" (earlier turns of the same new conversation), merged by weighted fusion, one result per conversation.
+Letters, reviews, chapters, goals, goal changes, targets and check-ins are searchable as SearchIndex makes them.
+PHASE2 = False measures the 0.1.12 baseline again.
 
 It also counts leaks: anything a question marks forbidden (a note he deleted, an off-the-record conversation)
 that reaches the coach. Leaks must stay at 0.
 
-What the app does not send today scores 0 on purpose (old check-ins, letters, reviews, goal revisions, ended
-targets and finished goals): this file is the baseline the later phases are measured against. When the app
-changes what it sends, change the mirror here in the same commit and record the new score.
+When the app changes what it sends, change the mirror here in the same commit and record the new score.
 
 Run:   python3 tools/eval/memory_exam2.py              (keyword only, standard library)
        /tmp/venv/bin/python tools/eval/memory_exam2.py --hybrid
@@ -30,12 +31,17 @@ from datetime import datetime, timedelta, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
-import memory_exam as mx  # noqa: E402  (the 0.1.12 retrieval mirror)
+import memory_exam as mx  # noqa: E402  (the embedder and the meaning-search thresholds)
+import retrieval as rv  # noqa: E402  (tools/retrieval.py, the retrieval reference)
+import recall_time as rt  # noqa: E402  (tools/recall_time.py, periods and outcomes)
 import context as ctx  # noqa: E402  (tools/context.py, the context packet reference)
 
 TZ = timezone(timedelta(hours=5))
+PHASE2 = True  # False measures the 0.1.12 baseline (search only)
+RARE = True
 LAST_CHAT_HOURS, LAST_CHAT_MESSAGES, LAST_CHAT_CHARS = 6, 8, 500
 SNIPPET_CHARS = 280
+LABEL = "x" * 60
 RECENT_DAYS = 14
 CHAPTERS = 2
 
@@ -61,18 +67,22 @@ def event_text(e):
 
 
 class Index:
-    """search_doc as SearchIndex.rebuild fills it: his messages, summaries, quotes, events, retired notes,
-    promises; nothing from an off-the-record conversation, nothing of a deleted note."""
+    """search_doc as SearchIndex.rebuild fills it (Phase 2): his messages, summaries, quotes, events, retired
+    notes, promises, and now letters, reviews, chapters, goals, goal revisions, targets and the check-ins that
+    carry a reason or a note; nothing from an off-the-record conversation, nothing of a deleted note."""
 
     def __init__(self, h, hybrid):
         import sqlite3
+        self.h = h
         self.db = sqlite3.connect(":memory:")
         self.db.execute("CREATE VIRTUAL TABLE search_doc USING fts4(kind, ref_id, title, body, tokenize=unicode61)")
         self.docs = {}
-        off = {c["id"] for c in h["conversations"] if c["off_the_record"]}
+        self.off = {c["id"] for c in h["conversations"] if c["off_the_record"]}
+        off = self.off
         conv_at = {}
         for m in h["messages"]:
             conv_at.setdefault(m["conversation"], []).append(m["at"])
+        self.conv_span = {c: (min(v), max(v)) for c, v in conv_at.items()}
         for m in sorted(h["messages"], key=lambda m: m["id"]):
             if m["role"] == "user" and m["conversation"] not in off:
                 self._add("message", m["id"], m["text"], m["conversation"], m["at"], m)
@@ -87,7 +97,27 @@ class Index:
             if n["status"] == "retired":
                 self._add("note", n["id"], n["text"], None, 0)
         for p in h["promises"]:
-            self._add("promise", p["id"], "%s (%s)" % (p["text"], outcome(p)), p["conversation"], p["due"])
+            self._add("promise", p["id"], rv.promise_text(p["text"], p["status"], p.get("reason")), None, p["due"])
+        if PHASE2:
+            goals = {g["id"]: g for g in h["goals"]}
+            targets = {t["id"]: t for t in h["targets"]}
+            for l in h["letters"]:
+                end = (datetime.fromisoformat(l["week_of"]) + timedelta(days=6)).date().isoformat()
+                self._add("letter", l["id"], rv.letter_text(l["title"], l["body"]), None, day_ms(end))
+            for r in h["reviews"]:
+                first, last = review_period(r)
+                self._add("review", r["id"], rv.review_text(r["kind"], first, last, r["facts"], r["note"]), None, day_ms(last))
+            for c in h["chapters"]:
+                self._add("chapter", c["id"], rv.chapter_text(c["title"], c["start"], c["end"], c["body"]), None, day_ms(c["end"]))
+            for g in h["goals"]:
+                self._add("goal", g["id"], rv.goal_text(g["title"], g["status"], g["deadline"]), None, day_ms(g["created"]))
+            for r in h["revisions"]:
+                self._add("revision", r["id"], rv.revision_text(goals[r["goal"]]["title"], r["at"], r["text"], r["reason"]), None, day_ms(r["at"]))
+            for t in h["targets"]:
+                self._add("target", t["id"], target_text(t), None, day_ms(t["start"]))
+            for c in h["checkins"]:
+                if c["reason"] or c["note"]:
+                    self._add("checkin", c["id"], checkin_text(c, targets[c["target"]]), None, day_ms(c["day"]))
         self.emb = None
         if hybrid:
             self.emb = mx.Embedder()
@@ -95,13 +125,125 @@ class Index:
 
     def _add(self, kind, ident, text, conversation, at, msg=None):
         self.db.execute("INSERT INTO search_doc(kind, ref_id, title, body) VALUES (?,?,?,?)", (kind, str(ident), "", text))
-        self.docs[(kind, ident)] = {"text": text, "session": conversation, "at": at, "msg": msg}
+        self.docs[(kind, ident)] = {"text": text, "conversation": conversation, "session": conversation, "at": at, "msg": msg}
 
-    keyword = mx.Index.keyword
-    meaning = mx.Index.meaning
+    def keyword(self, ts):
+        """Mirror of SearchIndex.keywordHits: one read per word, newest first, then Retrieval.choose."""
+        if not ts:
+            return []
+        cands, found = [], {}
+        for t in ts:
+            rows = self.db.execute("SELECT kind, ref_id FROM search_doc WHERE search_doc MATCH ? ORDER BY rowid DESC LIMIT ?",
+                                   (rv.term_query(t), rv.CANDIDATES_PER_TERM)).fetchall()
+            found[t] = len(rows)
+            for k, r in rows:
+                c = (k, int(r))
+                if c not in cands:
+                    cands.append(c)
+        total = self.db.execute("SELECT count(*) FROM search_doc").fetchone()[0]
+        rare = rv.rare_terms(ts, found, total) if RARE else set()
+        return rv.choose([{"key": c, "text": self.docs[c]["text"], "at": self.docs[c]["at"]} for c in cands], ts, rare=rare)
 
-    def relevant_past(self, text):
-        return mx.fuse(self.keyword(mx.terms(text)), self.meaning(text))[:mx.MAX_RESULTS]
+    def meaning(self, text):
+        if self.emb is None or rv.word_count(text) < mx.SEMANTIC_MIN_QUERY_WORDS:
+            return []
+        q = self.emb.embed(text)
+        sims = [(k, float(q @ v)) for k, v in self.vecs.items()]
+        best = [k for k, s in sorted(sims, key=lambda p: -p[1]) if s >= mx.SEMANTIC_MIN][:rv.MEANING_CANDIDATES]
+        best = [k for k in best if k[0] != "message" or rv.word_count(self.docs[k]["text"]) >= mx.SEMANTIC_MIN_DOC_WORDS]
+        return rv.distinct_texts(best, {k: self.docs[k]["text"] for k in best})[:rv.FUSE_DEPTH]
+
+    def dated_items(self, period, promises):
+        """What falls in the period (SearchIndex.datedItems): promises due in it, conversations held in it,
+        letters, reviews and chapters about it, goal revisions made in it, and the check-ins of a period of at
+        most a week. With no period but a question about promises, every promise."""
+        h = self.h
+        out = []
+        if period["start"] is None:
+            if promises:
+                for p in h["promises"]:
+                    out.append({"key": ("promise", p["id"]), "kind": "promise", "outcome": p["status"],
+                                "text": self.docs[("promise", p["id"])]["text"], "day": local(p["due"]).date().isoformat()})
+            return out
+        s, e = period["start"], period["end"]
+        inside = lambda d: s <= d <= e
+        overlap = lambda a, b: a <= e and b >= s
+        for p in h["promises"]:
+            d = local(p["due"]).date().isoformat()
+            if inside(d):
+                out.append({"key": ("promise", p["id"]), "kind": "promise", "outcome": p["status"], "text": self.docs[("promise", p["id"])]["text"], "day": d})
+        if not PHASE2:
+            return out
+        for c in h["conversations"]:
+            if c["off_the_record"] or not c["summary"]:
+                continue
+            a, b = self.conv_span[c["id"]]
+            da, db_ = local(a).date().isoformat(), local(b).date().isoformat()
+            if overlap(da, db_):
+                out.append({"key": ("summary", c["id"]), "kind": "summary", "text": c["summary"], "day": db_})
+        for l in h["letters"]:
+            end = (datetime.fromisoformat(l["week_of"]) + timedelta(days=6)).date().isoformat()
+            if overlap(l["week_of"], end):
+                out.append({"key": ("letter", l["id"]), "kind": "letter", "text": self.docs[("letter", l["id"])]["text"], "day": end})
+        for r in h["reviews"]:
+            a, b = review_period(r)
+            if overlap(a, b):
+                out.append({"key": ("review", r["id"]), "kind": "review", "text": self.docs[("review", r["id"])]["text"], "day": b})
+        for c in h["chapters"]:
+            if overlap(c["start"], c["end"]):
+                out.append({"key": ("chapter", c["id"]), "kind": "chapter", "text": self.docs[("chapter", c["id"])]["text"], "day": c["end"]})
+        for r in h["revisions"]:
+            if inside(r["at"]):
+                out.append({"key": ("revision", r["id"]), "kind": "revision", "text": self.docs[("revision", r["id"])]["text"], "day": r["at"]})
+        if (datetime.fromisoformat(e) - datetime.fromisoformat(s)).days < rv.CHECKIN_DAYS:
+            targets = {t["id"]: t for t in h["targets"]}
+            for c in h["checkins"]:
+                if inside(c["day"]):
+                    key = ("checkin", c["id"])
+                    if key not in self.docs:
+                        self.docs[key] = {"text": checkin_text(c, targets[c["target"]]), "conversation": None, "session": None,
+                                          "at": day_ms(c["day"]), "msg": None}
+                    out.append({"key": key, "kind": "checkin", "text": self.docs[key]["text"], "day": c["day"]})
+        return out
+
+    def relevant_past(self, text, earlier=(), today=None):
+        if not PHASE2:
+            return rv.fuse([(1.0, self.keyword(mx.terms(text))), (1.0, self.meaning(text))])[:mx.MAX_RESULTS]
+        period = rt.parse(text, today)
+        rest = period["rest"] if period["start"] else text
+        lists = []
+        if period["start"] is not None or period["promises"]:
+            lists.append((rv.W_DATED, rv.dated(self.dated_items(period, period["promises"]), rv.terms(rest),
+                                                period["promises"], period["outcome"])))
+        lists.append((rv.W_NEW, self.keyword(rv.terms(rest))))
+        lists.append((rv.W_NEW, self.meaning(text)))
+        ctx_q = rv.conversation_query(text, list(earlier))
+        if ctx_q is not None:
+            lists.append((rv.W_CONTEXT, self.keyword(rv.terms(ctx_q))))
+            lists.append((rv.W_CONTEXT, self.meaning(ctx_q)))
+        return rv.choose_final(rv.fuse(lists), self.docs)
+
+
+def day_ms(day):
+    return int(datetime.fromisoformat(day + "T12:00").replace(tzinfo=TZ).timestamp() * 1000)
+
+
+def review_period(r):
+    if r["kind"] == "month":
+        y, m = (int(x) for x in r["period"].split("-"))
+        first = "%04d-%02d-01" % (y, m)
+        nxt = datetime(y + (m == 12), m % 12 + 1, 1)
+        return first, (nxt - timedelta(days=1)).date().isoformat()
+    end = (datetime.fromisoformat(r["period"]) + timedelta(days=6)).date().isoformat()
+    return r["period"], end
+
+
+def target_text(t):
+    return rv.target_text(t["name"], t["target"], t["minimum"], t["unit"], t["schedule"], t["start"], t["end"], t["status"])
+
+
+def checkin_text(c, t):
+    return rv.checkin_text(t["name"], c["day"], c["level"], c["amount"], t["unit"], c["reason"], c["note"])
 
 
 def item(text, drop):
@@ -226,13 +368,15 @@ def run(hybrid):
 
     rows, leaks, dropped3_total = [], [], 0
     for q in qs:
-        hits = index.relevant_past(q["question"])
+        hits = index.relevant_past(q["question"], q.get("context", []), h["today"])
         rp_items = []
         rp_ids = []
         for i, k in enumerate(hits):
             d = index.docs[k]
             text = " ".join(d["text"].split())
-            rp_items.append(item(text[:SNIPPET_CHARS] + ("..." if len(text) > SNIPPET_CHARS else ""), 100 + len(hits) - i))
+            # LABEL stands in for the app's label ("Wed 14 Oct, 9:05 am (today), in \"Title\", they wrote"), so the
+            # budget counts it.
+            rp_items.append(item(LABEL + text[:SNIPPET_CHARS] + ("..." if len(text) > SNIPPET_CHARS else ""), 100 + len(hits) - i))
             ids = []
             if d["session"] is not None:
                 ids.append("s:%d" % d["session"])
@@ -249,6 +393,12 @@ def run(hybrid):
                 ids.append("n:%d" % k[1])
             if k[0] == "promise":
                 ids.append("pr:%d" % k[1])
+            prefix = {"letter": "l", "review": "rv", "chapter": "ch", "goal": "g", "revision": "rev", "target": "t"}.get(k[0])
+            if prefix:
+                ids.append("%s:%d" % (prefix, k[1]))
+            if k[0] == "checkin":
+                c = next(c for c in h["checkins"] if c["id"] == k[1])
+                ids += ["ck:%d" % c["id"], "ckd:%d:%s" % (c["target"], c["day"])]
             rp_ids.append(ids)
         part3 = [
             {"name": "NOW", "items": now_item, "ids": [[]]},

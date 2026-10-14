@@ -63,7 +63,7 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 | CARD_RESULTS | what they did with each card under the coach's last reply: saved, not now, or no answer yet; or one line saying no button was shown, when that reply spoke of one and had no card; and one line for each card the parser threw away, with its reason, so the coach can correct it | never |
 | EARLIER | the running summary of the part of this conversation that is no longer in the history window | never |
 | LAST_CHAT | only when another conversation's last message was less than 6 hours ago (never an off-the-record one): one code-written line naming it, then its last 8 messages, oldest first, each cut to 500 characters, theirs stamped with the time they wrote it. See below | oldest message first |
-| RELEVANT_PAST | top matches (max 5) from keyword plus meaning search, each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
+| RELEVANT_PAST | up to 12 matches from his conversations and the records he keeps (see below), each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
 
 PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 4,000 estimated tokens.
 
@@ -76,6 +76,15 @@ Coach: Deal. Alarm for 11, and if the power is back, one lecture. If not, rest.
 [9:31 am] They: ok good night
 ```
 Shown with every request while that conversation's last message is less than 6 hours old. "Ago" is counted in code with `TimeFacts.spell`. The coach's lines are context, never evidence about them (rule 4).
+
+### RELEVANT_PAST (Max plan Phase 2)
+What is searched (`SearchIndex`, kept in step with the raw rows and rebuildable): his messages, conversation summaries, his verified quotes, events, retired notes, every promise with its outcome ("Promise: Call Mom (done)"), and every other record he keeps: weekly letters, week and month reviews, chapters, goals (finished and set aside too), goal changes with their reason, targets (ended too) and the check-ins that carry a reason or a note. Each record reads as written by `SearchText` (`tools/retrieval.py`), starting with what it is ("Letter", "Goal", "Check-in") and with dates written out. Never: the coach's replies, an off-the-record conversation, a note he deleted, a deleted letter.
+
+How one request searches (the pure part is `tools/retrieval.py` and `tools/recall_time.py`, pinned by `contracts/retrieval_vectors.json` and `contracts/recall_time_vectors.json`; `Retrieval.kt` and `RecallTime.kt` pass the same vectors):
+1. **The period he names**, read in code (`RecallTime`): "in August", "last week", "yesterday", "on 12 October", "late September", "since March" become exact days. What falls in it is a list of its own: promises due in it, conversations held in it, letters, reviews and chapters about it, goal changes made in it, and every check-in of a period of at most a week. With the words promise, promised or committed, only promises come (unless none falls in the period), and the outcome he names (break, kept, moved, let go) comes first; with no period, every promise is the pool. The coach never works out a date: this only chooses what is looked up.
+2. **The new message**, by keyword (at least two shared words, or one rare word: found in at most 5% of the index) and by meaning (bge, cosine at least 0.62, each text once).
+3. **The conversation**: when this conversation has earlier messages (or a title), the same two searches again for the title, his last 3 messages and the new one, so "yeah, same again" finds what it points at.
+The lists are merged by weighted reciprocal rank fusion (period 2, new message 1, conversation 0.5); a near-duplicate of a chosen result is left out, at most one result comes from each conversation, and at most 12 are sent. The 4,000-token budget drops the weakest first. Measured with `tools/eval/memory_exam2.py`.
 
 ### NOW
 One sentence, written by code, that names the day the moment counts as (the day boundary: midnight by default, 1 to 6 am if they choose; the example uses 4 am):

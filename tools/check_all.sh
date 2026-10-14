@@ -10,6 +10,8 @@ python3 tools/test_planner.py
 python3 tools/test_textcheck.py
 python3 tools/test_promise_times.py
 python3 tools/test_plan_dates.py
+python3 tools/test_recall_time.py
+python3 tools/test_retrieval.py
 python3 tools/test_story.py
 python3 tools/test_context.py
 python3 tools/test_appliers.py

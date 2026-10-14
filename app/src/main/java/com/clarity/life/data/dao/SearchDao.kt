@@ -128,7 +128,129 @@ interface SearchDao {
             "WHERE summary != '' AND off_the_record = 0",
     )
     suspend fun allSummaries(): List<SummaryHit>
+    // ---------- Max plan Phase 2: every record kept is searchable, and periods are looked up ----------
+
+    /** The index rows of one kind ([query] is "kind:letter"), to compare with the records they come from. */
+    @Query("SELECT kind, ref_id AS refId, body FROM search_doc WHERE search_doc MATCH :query")
+    suspend fun bodies(query: String): List<IndexedBody>
+
+    @Query("SELECT COUNT(*) FROM search_doc WHERE search_doc MATCH :query")
+    suspend fun countMatching(query: String): Int
+
+    @Query("SELECT * FROM letter WHERE deleted_at IS NULL AND body != ''")
+    suspend fun allLetters(): List<com.clarity.life.data.entity.LetterRow>
+
+    @Query("SELECT * FROM review")
+    suspend fun allReviews(): List<com.clarity.life.data.entity.ReviewRow>
+
+    @Query("SELECT * FROM chapter")
+    suspend fun allChapters(): List<com.clarity.life.data.entity.ChapterRow>
+
+    @Query("SELECT * FROM goal")
+    suspend fun allGoals(): List<com.clarity.life.data.entity.GoalRow>
+
+    @Query(
+        "SELECT r.id AS id, g.title AS goalTitle, r.text AS text, r.reason AS reason, r.created_at AS createdAt " +
+            "FROM goal_revision r JOIN goal g ON g.id = r.goal_id",
+    )
+    suspend fun allRevisions(): List<RevisionHit>
+
+    @Query("SELECT * FROM target")
+    suspend fun allTargets(): List<com.clarity.life.data.entity.TargetRow>
+
+    /** Check-ins with words in them (a reason or a note): the ones worth searching by word. */
+    @Query(
+        "SELECT c.id AS id, c.day_key AS day, c.level AS level, c.amount AS amount, c.reason AS reason, c.note AS note, " +
+            "t.name AS targetName, t.unit AS unit FROM checkin c JOIN target t ON t.id = c.target_id " +
+            "WHERE TRIM(COALESCE(c.reason, '')) != '' OR TRIM(COALESCE(c.note, '')) != ''",
+    )
+    suspend fun checkinsWithWords(): List<CheckinHit>
+
+    @Query("SELECT * FROM letter WHERE id IN (:ids) AND deleted_at IS NULL AND body != ''")
+    suspend fun letters(ids: List<Long>): List<com.clarity.life.data.entity.LetterRow>
+
+    @Query("SELECT * FROM review WHERE id IN (:ids)")
+    suspend fun reviews(ids: List<Long>): List<com.clarity.life.data.entity.ReviewRow>
+
+    @Query("SELECT * FROM chapter WHERE id IN (:ids)")
+    suspend fun chapters(ids: List<Long>): List<com.clarity.life.data.entity.ChapterRow>
+
+    @Query("SELECT * FROM goal WHERE id IN (:ids)")
+    suspend fun goals(ids: List<Long>): List<com.clarity.life.data.entity.GoalRow>
+
+    @Query(
+        "SELECT r.id AS id, g.title AS goalTitle, r.text AS text, r.reason AS reason, r.created_at AS createdAt " +
+            "FROM goal_revision r JOIN goal g ON g.id = r.goal_id WHERE r.id IN (:ids)",
+    )
+    suspend fun revisions(ids: List<Long>): List<RevisionHit>
+
+    @Query("SELECT * FROM target WHERE id IN (:ids)")
+    suspend fun targets(ids: List<Long>): List<com.clarity.life.data.entity.TargetRow>
+
+    @Query(
+        "SELECT c.id AS id, c.day_key AS day, c.level AS level, c.amount AS amount, c.reason AS reason, c.note AS note, " +
+            "t.name AS targetName, t.unit AS unit FROM checkin c JOIN target t ON t.id = c.target_id WHERE c.id IN (:ids)",
+    )
+    suspend fun checkins(ids: List<Long>): List<CheckinHit>
+
+    /** The period list: promises due in it ([from] inclusive, [to] exclusive, epoch milliseconds). */
+    @Query("SELECT * FROM promise WHERE due_at >= :from AND due_at < :to")
+    suspend fun promisesDueBetween(from: Long, to: Long): List<com.clarity.life.data.entity.PromiseRow>
+
+    /** A question about promises with no period: the newest [limit] of them. */
+    @Query("SELECT * FROM promise ORDER BY due_at DESC LIMIT :limit")
+    suspend fun latestPromises(limit: Int): List<com.clarity.life.data.entity.PromiseRow>
+
+    /**
+     * Conversations held in the period (a message in it), with a summary, never off the record; [at] is the
+     * last message's time. Read only when he names a period.
+     */
+    @Query(
+        "SELECT c.id AS conversationId, c.title AS title, MAX(m.created_at) AS at, c.summary AS text " +
+            "FROM conversation c JOIN message m ON m.conversation_id = c.id " +
+            "WHERE c.off_the_record = 0 AND c.summary != '' AND c.started_at < :to " +
+            "GROUP BY c.id HAVING MAX(m.created_at) >= :from ORDER BY at DESC LIMIT :limit",
+    )
+    suspend fun conversationsBetween(from: Long, to: Long, limit: Int): List<SummaryHit>
+
+    @Query("SELECT * FROM letter WHERE deleted_at IS NULL AND body != '' AND period_start <= :to AND period_end >= :from")
+    suspend fun lettersOverlapping(from: String, to: String): List<com.clarity.life.data.entity.LetterRow>
+
+    @Query("SELECT * FROM review WHERE period_start <= :to AND period_end >= :from")
+    suspend fun reviewsOverlapping(from: String, to: String): List<com.clarity.life.data.entity.ReviewRow>
+
+    @Query("SELECT * FROM chapter WHERE period_start <= :to AND period_end >= :from")
+    suspend fun chaptersOverlapping(from: String, to: String): List<com.clarity.life.data.entity.ChapterRow>
+
+    @Query(
+        "SELECT r.id AS id, g.title AS goalTitle, r.text AS text, r.reason AS reason, r.created_at AS createdAt " +
+            "FROM goal_revision r JOIN goal g ON g.id = r.goal_id WHERE r.created_at >= :from AND r.created_at < :to",
+    )
+    suspend fun revisionsBetween(from: Long, to: Long): List<RevisionHit>
+
+    @Query(
+        "SELECT c.id AS id, c.day_key AS day, c.level AS level, c.amount AS amount, c.reason AS reason, c.note AS note, " +
+            "t.name AS targetName, t.unit AS unit FROM checkin c JOIN target t ON t.id = c.target_id " +
+            "WHERE c.day_key >= :from AND c.day_key <= :to",
+    )
+    suspend fun checkinsBetween(from: String, to: String): List<CheckinHit>
 }
+
+data class IndexedBody(val kind: String, val refId: String, val body: String)
+
+data class RevisionHit(val id: Long, val goalTitle: String, val text: String, val reason: String, val createdAt: Long)
+
+data class CheckinHit(
+    val id: Long,
+    val day: String,
+    val level: String,
+    val amount: Double,
+    val reason: String?,
+    val note: String?,
+    val targetName: String,
+    val unit: String,
+)
+
 
 data class MessageHit(val messageId: Long, val conversationId: Long, val title: String, val at: Long, val text: String)
 

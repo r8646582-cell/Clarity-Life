@@ -361,9 +361,12 @@ class ChatRepository @Inject constructor(
                 }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
                 add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
             }
-            // Keyword matches from his other conversations. Retrieval can never be what fails a reply.
+            // Matches from his other conversations and the records he keeps, searched with the new message, the
+            // period it names and his last few messages here (Max plan Phase 2). Retrieval can never be what
+            // fails a reply.
             try {
-                add(search.relevantPast(conversationId, newText, tz, boundary, now))
+                val earlierHis = stored.filter { it.role == "user" }.map { it.content }
+                add(search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
