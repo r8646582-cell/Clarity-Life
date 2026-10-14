@@ -208,6 +208,7 @@ class MemoryRepository @Inject constructor(
         val n = dao.note(id) ?: return@withTransaction false
         if (n.status != "active") return@withTransaction false
         dao.updateNote(n.copy(confidence = "confirmed"))
+        sendFreshMemory()
         true
     }
 
@@ -219,6 +220,7 @@ class MemoryRepository @Inject constructor(
         val n = dao.note(id) ?: return@withTransaction false
         if (n.status != "active") return@withTransaction false
         dao.updateNote(n.copy(text = clean, confidence = "confirmed", editedByUser = 1))
+        sendFreshMemory()
         true
     }
 
@@ -231,12 +233,14 @@ class MemoryRepository @Inject constructor(
         if (n.status == "deleted_by_user") return@withTransaction true
         dao.updateNote(n.copy(status = StateMachines.move(StateMachines.NOTE, n.status, "deleted_by_user")))
         search.removeNote(id)
+        sendFreshMemory()
         true
     }
 
     suspend fun confirmProfile(key: String) = db.withTransaction {
         val e = dao.profileEntry(key) ?: return@withTransaction false
         dao.putProfile(e.copy(confirmed = 1))
+        sendFreshMemory()
         true
     }
 
@@ -247,18 +251,26 @@ class MemoryRepository @Inject constructor(
         require(clean.length <= MAX_EDIT_CHARS) { "an entry is at most $MAX_EDIT_CHARS characters" }
         val e = dao.profileEntry(key) ?: return@withTransaction false
         dao.putProfile(e.copy(value = clean, confirmed = 1, updatedAt = now))
+        sendFreshMemory()
         true
     }
 
-    suspend fun deleteProfile(key: String) = dao.deleteProfile(key)
+    suspend fun deleteProfile(key: String) = db.withTransaction {
+        dao.deleteProfile(key)
+        sendFreshMemory()
+    }
 
     suspend fun editPerson(id: Long, relation: String, notes: String, now: Long) = db.withTransaction {
         val p = dao.person(id) ?: return@withTransaction false
         dao.updatePerson(p.copy(relation = relation.trim().take(60), notes = notes.trim().take(MAX_EDIT_CHARS), updatedAt = now))
+        sendFreshMemory()
         true
     }
 
-    suspend fun deletePerson(id: Long) = dao.deletePerson(id)
+    suspend fun deletePerson(id: Long) = db.withTransaction {
+        dao.deletePerson(id)
+        sendFreshMemory()
+    }
 
     /**
      * EditFocusSummary: his own words replace the rolling summary. The next reflection inside the focus
@@ -267,6 +279,7 @@ class MemoryRepository @Inject constructor(
     suspend fun editFocusSummary(id: Long, summary: String, now: Long) = db.withTransaction {
         dao.focus(id) ?: return@withTransaction false
         dao.setFocusSummary(id, summary.trim().take(MAX_FOCUS_SUMMARY_CHARS), now)
+        sendFreshMemory()
         true
     }
 
@@ -279,6 +292,14 @@ class MemoryRepository @Inject constructor(
     }
 
     // ---------- the pieces of ApplyReflection ----------
+
+    /**
+     * His change to what the coach knows reaches every open conversation with its next message. The memory
+     * blocks are otherwise frozen in each conversation's prefix for the day (contracts/context.md), so a note
+     * he deleted or corrected was still sent, in its old words, to a conversation opened before (rule 5).
+     * Each open conversation pays one uncached request for it, which is the right trade.
+     */
+    private suspend fun sendFreshMemory() = db.conversations().clearAllPrefixes()
 
     private suspend fun setProfile(op: JobOp.ProfileSet, now: Long): Boolean {
         val existing = dao.profileEntry(op.key)

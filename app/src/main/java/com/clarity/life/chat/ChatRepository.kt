@@ -132,6 +132,9 @@ class ChatRepository @Inject constructor(
         conversations.delete(conversationId)
         if (noteIds.isNotEmpty()) db.memory().deleteNotesLeftWithoutEvidence(noteIds)
         for (id in noteIds) if (db.memory().note(id) == null) search.removeNote(id)
+        // Its summary and the notes it alone taught are frozen in other open conversations' prefixes: they
+        // build them again, so nothing from it is sent after he forgot it.
+        conversations.clearAllPrefixes()
         Unit
     }
 
