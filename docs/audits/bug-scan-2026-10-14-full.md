@@ -2,7 +2,7 @@
 
 Scanned: branch `ccr-d44251b7-varbwn` at `1c3c8c3`. That is `main` (Clarity 0.1.12, `ef4b35f`) plus `docs/MAX-PLAN.md`.
 This is step 2 of Phase 0 in `docs/MAX-PLAN.md`. It's a whole-app scan. The earlier report from today (`bug-scan-2026-10-14.md`) covered only the coach's memory, and all of its findings are fixed. The 13 Oct scan's nine findings are fixed too, so they aren't repeated here.
-No code was changed in this scan.
+No code was changed in the scan itself. **All four findings were fixed afterwards on 14 Oct 2026 at the owner's request**; see "Fixed" below.
 
 ## 1. Checks run
 
@@ -27,6 +27,15 @@ What I read closely: start-up (`MainActivity`, `StartupRepair`), the reply servi
 | 4 | bug | A Focus page says "Focus · week 3" when by your own day it's still week 2, or the other way round. | Only right around midnight, if "day ends" is set later than midnight, or after travel. | `ui/know/KnowScreen.kt:582-586` | It counts weeks with the phone's calendar date, not your day key (the rest of the app uses the day key). | Count from the day key (`Planner.dayKey`), like Plan does. | low |
 
 That's all I could prove. The app is in good shape: four findings, none of them data loss or privacy, against nine and twelve in the two earlier scans.
+
+### Fixed (14 Oct 2026, branch `ccr-d44251b7-varbwn`, CI run #124 green)
+
+| # | What changed | Test |
+|---|---|---|
+| 1 | The key is read inside the reply's error handling (failed, with Try again). The service's last resort settles any row still streaming: interrupted if words arrived, failed if not. A reply already complete is never turned into a failure. | `ReplySettleTest` (emulator) |
+| 2 | The start-up sweep runs in the app's own scope (`StartupOnce`), which a turned screen does not cancel. | `StartupOnceTest` |
+| 3 | The live day also follows the phone's time zone, read again each time the app comes to the front. | `SettingsDayTest` |
+| 4 | The Focus week counts from the day key it was made on to today's day key (`FocusBlock.week`). | `FocusBlockTest` |
 
 ## 3. Unsure (could not prove; how to check)
 
