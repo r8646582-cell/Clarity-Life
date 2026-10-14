@@ -182,7 +182,7 @@ not two, and brings the record index up to date after a check-in). The first bui
 the database per search; that was fixed. What is left belongs to Phase 5 (speed), which also has the older
 costs: the plan tracker reading every check-in (about a second) and the first search reading every vector.
 
-### Phase 3: how memory is built after each chat (14 Oct 2026, built; waiting for the owner's OK)
+### Phase 3: how memory is built after each chat (14 Oct 2026, built, CI run #142 green; waiting for the owner's OK)
 
 | Step | What was built | How it is proven |
 |---|---|---|
