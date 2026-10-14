@@ -157,13 +157,13 @@ MUTATIONS = [
     # Meaning in the note checks (Max plan Phase 3).
     ("appliers.py", "        if m is not None and m >= DELETED_MEANING:", "        if False:", "test_appliers.py",
      "a reworded copy of a deleted note re-created"),
-    ("appliers.py", "DELETED_MEANING = 0.75", "DELETED_MEANING = 0.7", "test_appliers.py",
+    ("appliers.py", "DELETED_MEANING = 0.73", "DELETED_MEANING = 0.7", "test_appliers.py",
      "the deleted-note line moved down, so a different note is blocked"),
     ("appliers.py", "        if k == kind:\n", "        if True:\n",
      "test_appliers.py", "a note of another kind counted as a duplicate"),
     ("appliers.py", "        if negated(text) != negated(t):\n            continue\n", "",
      "test_appliers.py", "a change of mind (\"not any more\") dropped as a duplicate"),
-    ("appliers.py", "DUPLICATE_MEANING = 0.9", "DUPLICATE_MEANING = 0.85", "test_appliers.py",
+    ("appliers.py", "DUPLICATE_MEANING = 0.91", "DUPLICATE_MEANING = 0.85", "test_appliers.py",
      "the duplicate line moved down, so a new note is dropped"),
     ("appliers.py", "                if close_to_deleted(text, ctx.get(\"deleted_notes\", []), ctx):\n"
      "                    dropped.append(\"note.update %d: new text too close to a note he deleted\" % nid)\n"

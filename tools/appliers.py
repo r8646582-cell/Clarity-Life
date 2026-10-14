@@ -14,10 +14,12 @@ the model beyond what the rules allow:
   - a note he edited or confirmed is never rewritten, merged or retired by a job;
   - a note close to one he deleted is never re-created, by shared words or by meaning (Max plan Phase 3).
 
-Meaning: ctx may carry "vectors", {text: unit vector}, made by the app's on-phone model (bge-small-en-v1.5) for
-the texts it compares. A text without a vector is compared by words only, as before Phase 3 (meaning search off).
-The thresholds were measured on that model (tools/eval/note_meaning.py): rewordings of one note score about 0.73
-to 0.95, and so do opposites ("helps you sleep" and "keeps you awake" score 0.95). So meaning guards deletions
+Meaning: ctx may carry "vectors", {text: unit vector}, made by the app's on-phone model (mdbr-leaf-mt since Max
+plan Phase 4; bge-small-en-v1.5 before) for the texts it compares. A text without a vector is compared by words
+only, as before Phase 3 (meaning search off). The thresholds are measured on that model (tools/eval/note_meaning.py,
+and tools/eval/compare_embedders.py set them at the cost the bge lines had: no more different notes blocked or
+dropped): rewordings of one note score about 0.71 to 0.95, and so do opposites ("helps you sleep" and "keeps you
+awake" score 0.92). So meaning guards deletions
 generously (being too careful near something he deleted is the safe side), while a duplicate by meaning also
 needs the same kind and the same "not" in both, and a high score.
 """
@@ -34,8 +36,8 @@ CONF = ["guess", "likely", "confirmed"]
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")   # newlines are allowed only in long text fields
 DELETED_SIMILARITY = 0.6
 DUPLICATE_SIMILARITY = 0.8
-DELETED_MEANING = 0.75    # cosine at or above which a text is too close in meaning to a note he deleted
-DUPLICATE_MEANING = 0.9   # cosine at or above which a note repeats an active note of the same kind
+DELETED_MEANING = 0.73    # cosine at or above which a text is too close in meaning to a note he deleted
+DUPLICATE_MEANING = 0.91  # cosine at or above which a note repeats an active note of the same kind
 NEGATIONS = {"not", "no", "never", "nor", "without", "cannot", "stop", "stopped", "none", "nothing"}
 LIMITS = {"notes_add": 3, "notes_update": 6, "profile": 3, "people": 3, "events": 5, "his_words": 2,
           "observations": 8, "ideas": 5, "disagreements": 2, "contradictions": 2}
@@ -461,7 +463,7 @@ def apply_gardening(raw, ctx):
     return {"ok": True, "ops": ops, "dropped": dropped}
 
 
-CLUSTER_MEANING = 0.85   # cosine at or above which two notes are suggested to gardening as one
+CLUSTER_MEANING = 0.89   # cosine at or above which two notes are suggested to gardening as one
 CLUSTER_WORDS = 0.5      # or this share of words in common
 CLUSTER_SIZE = 4         # at most this many notes in one suggestion
 CLUSTERS = 10            # at most this many suggestions

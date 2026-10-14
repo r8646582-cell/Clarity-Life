@@ -74,7 +74,7 @@ object GardeningInput {
 
     // ---------- suggestions (Max plan Phase 3 step 5), a port of gardening_clusters in tools/appliers.py ----------
 
-    const val CLUSTER_MEANING = 0.85
+    const val CLUSTER_MEANING = 0.89
     const val CLUSTER_WORDS = 0.5
     const val CLUSTER_SIZE = 4
     const val CLUSTERS = 10

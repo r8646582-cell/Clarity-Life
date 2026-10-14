@@ -188,14 +188,14 @@
      0.0
     ],
     "You keep away from your parents and sister when pressure builds": [
-     0.8,
-     0.6,
+     0.78,
+     0.62578,
      0.0,
      0.0
     ],
     "Pressure pulls you toward your friends": [
-     0.74,
-     0.672607,
+     0.72,
+     0.693974,
      0.0,
      0.0
     ],
@@ -214,14 +214,14 @@
     "Getting started on hard things is easier on a Monday": [
      0.0,
      0.0,
-     0.88,
-     0.474974
+     0.89,
+     0.455961
     ],
     "You keep your distance from your family under stress": [
-     0.79,
+     0.77,
      0.0,
      0.0,
-     0.613107
+     0.638044
     ]
    }
   },
@@ -2084,7 +2084,7 @@
    }
   },
   {
-   "name": "reflection: a reworded copy of a deleted note is not re-created (meaning 0.8, few shared words)",
+   "name": "reflection: a reworded copy of a deleted note is not re-created (meaning 0.78, few shared words)",
    "fn": "apply_reflection",
    "args": {
     "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You keep away from your parents and sister when pressure builds\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
@@ -2144,7 +2144,7 @@
    }
   },
   {
-   "name": "reflection: meaning just under the deleted-note line (0.74) is kept",
+   "name": "reflection: meaning just under the deleted-note line (0.72) is kept",
    "fn": "apply_reflection",
    "args": {
     "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Pressure pulls you toward your friends\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
@@ -2276,7 +2276,7 @@
    }
   },
   {
-   "name": "reflection: meaning under the duplicate line (0.88) is a new note",
+   "name": "reflection: meaning under the duplicate line (0.89) is a new note",
    "fn": "apply_reflection",
    "args": {
     "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Getting started on hard things is easier on a Monday\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
@@ -2535,20 +2535,20 @@
        0.0
       ],
       "Late-night phone use costs you your mornings": [
-       0.95,
-       0.31225,
+       0.96,
+       0.28,
        0.0,
        0.0
       ],
       "Your phone at night ruins the next day's start": [
-       0.9,
-       0.43589,
+       0.93,
+       0.36756,
        0.0,
        0.0
       ],
       "You do not scroll in bed any more": [
-       0.97,
-       0.243105,
+       0.98,
+       0.198997,
        0.0,
        0.0
       ],
@@ -2565,14 +2565,14 @@
        0.0
       ],
       "Night phone time steals your early hours": [
-       0.88,
-       0.474974,
+       0.92,
+       0.391918,
        0.0,
        0.0
       ],
       "Evening scrolling drains the next morning": [
-       0.86,
-       0.510294,
+       0.9,
+       0.43589,
        0.0,
        0.0
       ],
@@ -2742,20 +2742,20 @@
        0.0
       ],
       "Late-night phone use costs you your mornings": [
-       0.95,
-       0.31225,
+       0.96,
+       0.28,
        0.0,
        0.0
       ],
       "Your phone at night ruins the next day's start": [
-       0.9,
-       0.43589,
+       0.93,
+       0.36756,
        0.0,
        0.0
       ],
       "You do not scroll in bed any more": [
-       0.97,
-       0.243105,
+       0.98,
+       0.198997,
        0.0,
        0.0
       ],
@@ -2772,14 +2772,14 @@
        0.0
       ],
       "Night phone time steals your early hours": [
-       0.88,
-       0.474974,
+       0.92,
+       0.391918,
        0.0,
        0.0
       ],
       "Evening scrolling drains the next morning": [
-       0.86,
-       0.510294,
+       0.9,
+       0.43589,
        0.0,
        0.0
       ],

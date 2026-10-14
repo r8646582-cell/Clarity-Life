@@ -18,11 +18,13 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * Meaning search's model, on the phone: bge-small-en-v1.5 (int8 ONNX, bundled in the APK, MIT licence),
- * run with ONNX Runtime. The text never leaves the phone.
+ * Meaning search's model, on the phone: MongoDB's mdbr-leaf-mt (int8 ONNX, 23 MB, bundled in the APK, Apache-2.0
+ * licence), run with ONNX Runtime. The text never leaves the phone. It replaced bge-small-en-v1.5 in Max plan
+ * Phase 4 (tools/eval/compare_embedders.py: more of what the coach needs within reach, smaller and faster).
  *
- * The vector is the first token's ([CLS]) last hidden state, L2-normalised, as the model card says, with no
- * query prefix (his messages are compared with his messages, not short queries with long passages).
+ * The vector is the model's sentence_embedding (mean pooling and its projection, inside the ONNX file), its
+ * first [DIM] numbers, L2-normalised. The model is trained so its first numbers stand on their own; 384 keeps the
+ * vectors the size they were. No query prefix: his messages are compared with his messages and notes.
  *
  * Checked before use (spec section 7): on first load it embeds the reference sentence of
  * contracts/embedding_vectors.json and compares the result with the reference vector. If they differ, or
@@ -60,12 +62,12 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
         OnnxTensor.createTensor(l.env, input, shape).use { tIds ->
             OnnxTensor.createTensor(l.env, mask, shape).use { tMask ->
                 OnnxTensor.createTensor(l.env, types, shape).use { tTypes ->
-                    l.session.run(mapOf("input_ids" to tIds, "attention_mask" to tMask, "token_type_ids" to tTypes)).use { out ->
+                    val inputs = mapOf("input_ids" to tIds, "attention_mask" to tMask, "token_type_ids" to tTypes)
+                    l.session.run(inputs, setOf(OUTPUT)).use { out ->
                         @Suppress("UNCHECKED_CAST")
-                        val hidden = out.get(0).value as Array<Array<FloatArray>>
-                        val cls = hidden[0][0]
-                        require(cls.size == DIM) { "unexpected vector size" }
-                        return VectorMath.normalize(cls)
+                        val full = (out.get(0).value as Array<FloatArray>)[0]
+                        require(full.size >= DIM) { "unexpected vector size" }
+                        return VectorMath.normalize(full.copyOf(DIM))
                     }
                 }
             }
@@ -110,6 +112,7 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
      */
     private fun modelFile(): File {
         val dir = File(context.noBackupFilesDir, "models").apply { mkdirs() }
+        File(dir, OLD_MODEL_FILE).delete()
         val file = File(dir, MODEL_FILE)
         if (file.exists() && file.length() == MODEL_BYTES) return file
         val tmp = File(dir, "$MODEL_FILE.part")
@@ -123,12 +126,19 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     }
 
     companion object {
-        /** The name stored in embedding_row.model. A different model means Re-index (spec section 7). */
-        const val MODEL = "bge-small-en-v1.5-int8"
+        /**
+         * The name stored in embedding_row.model. A different model means its vectors are made again: rows of
+         * any other model are removed and the missing ones made in the background (EmbeddingIndexer).
+         */
+        const val MODEL = "mdbr-leaf-mt-int8-384"
         const val DIM = 384
         const val MIN_REFERENCE_COSINE = 0.99
-        private const val DIR = "models/bge-small-en-v1.5"
-        private const val MODEL_FILE = "bge-small-en-v1.5-int8.onnx"
-        private const val MODEL_BYTES = 34_014_426L
+        private const val OUTPUT = "sentence_embedding"
+        private const val DIR = "models/mdbr-leaf-mt"
+        private const val MODEL_FILE = "mdbr-leaf-mt-int8.onnx"
+        private const val MODEL_BYTES = 23_263_113L
+
+        /** The file the app used before Phase 4, removed from the phone's storage when found. */
+        private const val OLD_MODEL_FILE = "bge-small-en-v1.5-int8.onnx"
     }
 }

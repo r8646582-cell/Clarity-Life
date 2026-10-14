@@ -63,10 +63,11 @@ object Retrieval {
     const val FUSE_DEPTH = 20
 
     /**
-     * Meaning search: the cosine a past message needs to count (bge-small-en-v1.5 puts unrelated sentences
-     * near 0.45 and related ones from about 0.58 up; measured 10 Oct 2026, a starting value to tune).
+     * Meaning search: the cosine a past message needs to count. The line belongs to the model: 0.62 for
+     * bge-small-en-v1.5 (10 Oct 2026), 0.56 for mdbr-leaf-mt (Max plan Phase 4), the cosine the same share of
+     * random pairs of texts reaches (about 18%; tools/eval/compare_embedders.py). Change it with the model.
      */
-    const val SEMANTIC_MIN = 0.62
+    const val SEMANTIC_MIN = 0.56
 
     /** Meaning search is skipped for a new message shorter than this ("ok", "hi there") ... */
     const val SEMANTIC_MIN_QUERY_WORDS = 3

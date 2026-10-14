@@ -63,7 +63,7 @@ def run(hybrid):
                               "before": a in recent, "phase3": a in found or a in recent})
     share = lambda k: round(sum(p[k] for p in pairs) / len(pairs), 4)
     return {
-        "search": "keyword + bge-small-en-v1.5" if hybrid else "keyword only",
+        "search": "keyword + " + m2.mx.MODEL_NAME if hybrid else "keyword only",
         "pairs": len(pairs),
         "within_reach_before": share("before"),
         "within_reach_phase3": share("phase3"),

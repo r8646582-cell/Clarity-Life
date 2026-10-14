@@ -1,7 +1,7 @@
 """How the note checks of tools/appliers.py sort reworded notes from different ones (Max plan Phase 3).
 
-For each pair in note_pairs.json it scores the two texts with the app's own model (bge-small-en-v1.5, CLS, as
-memory_exam.py runs it) and with the word check, then reports, for the lines in tools/appliers.py:
+For each pair in note_pairs.json it scores the two texts with the app's own model (as memory_exam.Embedder
+runs it) and with the word check, then reports, for the lines in tools/appliers.py:
   - deleted-note check: share of rewordings caught (good) and of different notes blocked (the cost);
   - duplicate check, every pair taken as the same kind (the strictest case): rewordings dropped as duplicates,
     and different notes wrongly dropped (that hides a new or changed note: only an opposite with no "not" in it).

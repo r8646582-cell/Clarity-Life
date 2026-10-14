@@ -62,8 +62,8 @@ object DefaultSettings {
     const val MAX_OUTPUT_TOKENS = 16000
     const val BACKGROUND_TEMPERATURE = 0.3
 
-    /** Stage B. CLS pooling, 384 dimensions (spec section 7). */
-    const val EMBEDDING_MODEL = "bge-small-en-v1.5"
+    /** The bundled meaning model (spec section 7): mdbr-leaf-mt since Max plan Phase 4, 384 numbers per vector. */
+    const val EMBEDDING_MODEL = "mdbr-leaf-mt"
 
     /**
      * When his day ends: midnight, like a calendar (the owner's choice, 13 Oct 2026; it was 4 am). A night owl

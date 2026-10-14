@@ -10,7 +10,7 @@ app would send today and measures how much of the question's evidence is in it:
 
 Search (Max plan Phase 2) is tools/retrieval.py and tools/recall_time.py, used as they are: the period the
 question names (read in code), keyword (terms, stems, one read per term, a rare word alone counts) and, with
---hybrid, bge-small-en-v1.5 meaning search, for the question and for the question with the lines in its
+--hybrid, the app's meaning search (memory_exam.Embedder), for the question and for the question with the lines in its
 "context" (earlier turns of the same new conversation), merged by weighted fusion, one result per conversation.
 Letters, reviews, chapters, goals, goal changes, targets and check-ins are searchable as SearchIndex makes them.
 PHASE2 = False measures the 0.1.12 baseline again.
@@ -442,7 +442,7 @@ def run(hybrid):
 
     mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
     return {
-        "retriever": "Clarity 0.1.12 mirror, " + ("keyword + bge-small-en-v1.5 (RRF)" if hybrid else "keyword only"),
+        "retriever": "Clarity 0.1.12 mirror, " + ("keyword + " + mx.MODEL_NAME if hybrid else "keyword only"),
         "questions": len(rows),
         "traps": len([q for q in qs if q["kind"] == "trap"]),
         "mean_coverage": mean([r["coverage"] for r in rows]),

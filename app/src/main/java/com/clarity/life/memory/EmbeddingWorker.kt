@@ -11,6 +11,7 @@ import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.dao.ToEmbed
 import com.clarity.life.data.entity.EmbeddingRow
 import com.clarity.life.data.entity.ErrorLogRow
+import com.clarity.life.data.entity.SettingRow
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -49,9 +50,18 @@ class EmbeddingIndexer @Inject constructor(
         schedule()
     }
 
-    /** Makes the missing vectors. Returns how many, or -1 when meaning search is off on this phone. */
+    /**
+     * Makes the missing vectors. Returns how many, or -1 when meaning search is off on this phone. After the
+     * model changed (an app update), the old model's vectors are removed first and every vector is made again;
+     * until then meaning search finds only what has its new vector, and keyword search carries on as usual.
+     */
     suspend fun indexMissing(now: Long = System.currentTimeMillis()): Int = withContext(Dispatchers.Default) {
         val dao = db.embeddings()
+        if (db.settings().get(MODEL_KEY) != Embedder.MODEL) {
+            // Once per model, not on every run: the delete reads the whole table.
+            dao.deleteOtherModels(Embedder.MODEL)
+            db.settings().put(SettingRow(MODEL_KEY, Embedder.MODEL))
+        }
         var made = 0
         // A row the model cannot read is skipped for this run, so one bad row can never loop forever.
         val skipped = HashSet<String>()
@@ -86,6 +96,9 @@ class EmbeddingIndexer @Inject constructor(
 
     companion object {
         private const val WORK_NAME = "embedding-index"
+
+        /** The model the stored vectors were last cleaned up for (derived-data bookkeeping, like the index version). */
+        const val MODEL_KEY = "vectors_model"
         private const val BATCH = 50
     }
 }

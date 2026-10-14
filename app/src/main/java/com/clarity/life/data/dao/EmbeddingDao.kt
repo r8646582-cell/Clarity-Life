@@ -105,6 +105,10 @@ interface EmbeddingDao {
     @Query("DELETE FROM embedding_row")
     suspend fun clear()
 
+    /** Vectors of a model the app no longer runs (Max plan Phase 4): derived data, made again for the new one. */
+    @Query("DELETE FROM embedding_row WHERE model != :model")
+    suspend fun deleteOtherModels(model: String): Int
+
     @Query("SELECT COUNT(*) FROM embedding_row WHERE model = :model")
     suspend fun count(model: String): Int
 }

@@ -139,7 +139,7 @@ class ReflectionApplyTest {
     /**
      * Max plan Phase 3: a note he deleted comes back neither in other words nor in its own. The wording below
      * shares almost no words with the deleted note (the word check alone let it through); the bundled model
-     * scores it about 0.9 against it, over the 0.75 line. A note about something else is still added.
+     * scores it about 0.9 against it, over the 0.73 line. A note about something else is still added.
      */
     @Test
     fun aRewordedCopyOfADeletedNoteIsNeverAdded() = runBlocking {

@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.clarity.life.core.VectorMath
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.entity.ConversationRow
+import com.clarity.life.data.entity.EmbeddingRow
 import com.clarity.life.data.entity.MessageRow
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -65,6 +66,35 @@ class EmbedderTest {
 
             val block = search.relevantPast(two, "who helps me study at the weekend?", "Asia/Karachi")
             assertEquals(listOf(true), block.items.map { it.text.contains("my sister Hina") })
+        } finally {
+            db.close()
+        }
+    }
+
+    /**
+     * Max plan Phase 4: after the update, the vectors of the old model (bge-small) are removed once and every
+     * vector is made again with the new one; a later run removes nothing and makes nothing.
+     */
+    @Test
+    fun theOldModelsVectorsAreReplacedOnce() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(context, ClarityDatabase::class.java).build()
+        try {
+            val embedder = Embedder(context)
+            val now = 1_791_648_000_000L
+            val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Revision"))
+            val id = db.messages().insert(
+                MessageRow(conversationId = one, role = "user", content = "my sister Hina helps me revise on sundays", createdAt = now),
+            )
+            val old = FloatArray(Embedder.DIM).also { it[0] = 1f }
+            db.embeddings().put(EmbeddingRow("message", id, "bge-small-en-v1.5-int8", Embedder.DIM, VectorMath.toBytes(old)))
+
+            val indexer = EmbeddingIndexer(context, db, embedder)
+            assertEquals(1, indexer.indexMissing(now))
+            assertEquals("only the new model's vector is left", 1, db.embeddings().countAll())
+            assertEquals(1, db.embeddings().count(Embedder.MODEL))
+            assertEquals(Embedder.MODEL, db.settings().get(EmbeddingIndexer.MODEL_KEY))
+            assertEquals("a second run has nothing to do", 0, indexer.indexMissing(now))
+            assertEquals(1, db.embeddings().countAll())
         } finally {
             db.close()
         }

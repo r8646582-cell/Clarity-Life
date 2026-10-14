@@ -34,12 +34,13 @@ ROOT = os.path.join(HERE, "..", "..")
 sys.path.insert(0, os.path.join(HERE, ".."))
 import retrieval as rv  # noqa: E402  (tools/retrieval.py: the retrieval reference)
 import recall_time as rt  # noqa: E402
-MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "bge-small-en-v1.5")
+MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "mdbr-leaf-mt")
+MODEL_NAME = "mdbr-leaf-mt (384)"
 
 # ---- core/Retrieval.kt: the pure part is tools/retrieval.py (Phase 2), used here as it is ----
 MAX_TERMS, CANDIDATES_PER_TERM, FUSE_DEPTH = rv.MAX_TERMS, rv.CANDIDATES_PER_TERM, rv.FUSE_DEPTH
 MAX_RESULTS = rv.MAX_RESULTS
-SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.62, 3, 4, 60
+SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.56, 3, 4, 60
 RECENT_SESSIONS = 5
 STOP, WORD = rv.STOP, rv.WORD
 norm, terms, stem, term_query, score, strong, word_count = (
@@ -161,7 +162,8 @@ class Index:
 
 
 class Embedder:
-    """Mirror of memory/Embedder.kt: the bundled model, CLS pooling, normalised, no query prefix."""
+    """Mirror of memory/Embedder.kt: the bundled model, the first 384 numbers of its sentence_embedding, normalised,
+    no query prefix (Max plan Phase 4; bge-small-en-v1.5 with CLS pooling before)."""
 
     def __init__(self):
         import numpy as np
@@ -175,7 +177,7 @@ class Embedder:
     def embed(self, text):
         np = self.np
         ids = np.array([self.tok.encode(text).ids], dtype=np.int64)
-        v = self.s.run(None, {"input_ids": ids, "attention_mask": np.ones_like(ids), "token_type_ids": np.zeros_like(ids)})[0][0, 0]
+        v = self.s.run(["sentence_embedding"], {"input_ids": ids, "attention_mask": np.ones_like(ids), "token_type_ids": np.zeros_like(ids)})[0][0, :384]
         return v / np.linalg.norm(v)
 
 
@@ -224,7 +226,7 @@ def run(hybrid):
                      "missing": sorted(gold - got)})
     mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
     return {
-        "retriever": "new app, " + ("keyword + bge-small-en-v1.5 (RRF)" if hybrid else "keyword only"),
+        "retriever": "new app, " + ("keyword + " + MODEL_NAME if hybrid else "keyword only"),
         "questions": len(rows),
         "mean_coverage": mean([r["coverage"] for r in rows]),
         "mean_coverage_without_promises": mean([r["coverage_without_promises"] for r in rows if r["coverage_without_promises"] is not None]),
