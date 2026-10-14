@@ -16,6 +16,9 @@ object Retrieval {
     const val CANDIDATES = 200
     const val SNIPPET_CHARS = 280
 
+    /** RELEVANT_PAST's drop ranks start here, above [LastChat]'s, so search results go before the last chat. */
+    const val DROP_RANK = 100
+
     /** How many strong matches each search method brings to the fusion. */
     const val FUSE_DEPTH = 20
 
@@ -102,7 +105,8 @@ object Retrieval {
         hits.mapIndexed { i, h ->
             val text = h.candidate.text.replace(Regex("\\s+"), " ").trim()
             val clipped = if (text.length > SNIPPET_CHARS) text.take(SNIPPET_CHARS).trimEnd() + "..." else text
-            BlockItem("${h.candidate.label}: $clipped", i + 1)
+            // Ranked above LAST_CHAT's lines (contracts/context.md): a tight budget drops search results first.
+            BlockItem("${h.candidate.label}: $clipped", DROP_RANK + i + 1)
         },
     )
 }

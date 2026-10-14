@@ -10,6 +10,7 @@ import com.clarity.life.ai.OpenAiCompatibleClient
 import com.clarity.life.core.CardParser
 import com.clarity.life.core.ContextBuilder
 import com.clarity.life.core.KnownIds
+import com.clarity.life.core.LastChat
 import com.clarity.life.core.LiveText
 import com.clarity.life.core.MemoryBlocks
 import com.clarity.life.core.PlanBlocks
@@ -340,6 +341,14 @@ class ChatRepository @Inject constructor(
             val results = cardResultLines(conversationId)
             if (results.isNotEmpty()) add(Blocks.cardResults(results))
             if (start > 0) add(Blocks.earlier(conversation.summary))
+            // The conversation he was just in, word for word, while it is fresh: its summary may not be written
+            // yet, and this conversation's frozen memory would then never see it (contracts/context.md).
+            db.memory().lastOtherConversation(conversationId)?.takeIf { LastChat.fresh(it.lastAt, now) }?.let { other ->
+                val said = messages.ofConversation(other.id).filter {
+                    it.role == "user" || it.status == "complete" || it.status == "interrupted"
+                }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
+                add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
+            }
             // Keyword matches from his other conversations. Retrieval can never be what fails a reply.
             try {
                 add(search.relevantPast(conversationId, newText, tz, boundary, now))

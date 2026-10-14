@@ -20,7 +20,14 @@ In this order, joined with a blank line:
 Persona and examples come first because they are identical for every conversation, so that part of the prefix is shared across all chats. Part 1 is about 12k real tokens; `tools/check_prompts.py` fails if it grows past the budget in `contracts/prompts.json`.
 
 ## Part 2: frozen context blocks (rest of the system message)
-Built when the conversation starts, stored with Part 1 in `conversation.prefix_json`, and reused byte for byte for every request in the conversation. Part 1 and Part 2 are rebuilt in only two cases: they switch the chat type in this conversation (the mode file and the card list change), or the conversation resumes on a later day (`prefix_day` differs from today's day key), so a conversation reopened next week does not carry last week's notes. Editing a prompt or a setting never changes an open conversation's prefix.
+Built when the conversation starts, stored with Part 1 in `conversation.prefix_json`, and reused byte for byte for every request in the conversation. Part 1 and Part 2 are rebuilt in these cases only:
+- they switch the chat type in this conversation (the mode file and the card list change);
+- the conversation resumes on a later day (`prefix_day` differs from today's day key), so a conversation reopened next week does not carry last week's notes;
+- they change what the coach knows (delete, edit or confirm a note; change, confirm or delete a profile entry; change or delete a person; edit a focus summary) or forget a conversation: every open conversation builds its prefix again, so nothing they deleted or corrected is sent again in its old words (rule 5);
+- a reflection of another conversation is applied: the other open conversations build their prefix again, so a conversation started before that summary existed (for example one started seconds after the last, while its summary was still being written) sees it with its next message. The reflected conversation keeps its prefix; its messages are in its own history;
+- a prompt is edited or reset.
+
+Each rebuild costs one request without the provider's cache. Changing a setting never changes an open conversation's prefix.
 
 Each block starts with `## NAME` on its own line, in this fixed order. A block with nothing to say is omitted, never sent empty.
 
@@ -32,7 +39,7 @@ Each block starts with `## NAME` on its own line, in this fixed order. A block w
 | NOTES | active notes: id, kind, grade, times seen, first/last seen as a period, text, up to 2 evidence lines | guess before likely before confirmed; fewer times seen first |
 | FOCUS | when the chat belongs to a focus: id, name, why, rolling summary, current step, last 3 step results | never |
 | CHAPTERS | last 2 chapters | older first |
-| RECENT_SESSIONS | last 5 session summaries with dates | oldest first |
+| RECENT_SESSIONS | the last 5 conversation summaries, newest by their last message, each with its day, when it started and when its last message was, and how long ago that day was, all written by code: `Wed 14 Oct, 9:05 am to 9:40 am (today) "Title": summary` | oldest first |
 | IDEAS_RECENT | the last 20 idea tags used | oldest first |
 | LETTER | only when opened with "Talk about this letter": the letter's title and body | never |
 | REVIEW | only when opened with "Talk about it" from a review: that review's facts and note | never |
@@ -55,9 +62,20 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 | CHECKIN_FACTS | counted by the app: today's check-in state, reason counts per target, weekday and time band, answer rate, last-14-day summary; only lines with at least 3 items behind a number | never |
 | CARD_RESULTS | what they did with each card under the coach's last reply: saved, not now, or no answer yet; or one line saying no button was shown, when that reply spoke of one and had no card; and one line for each card the parser threw away, with its reason, so the coach can correct it | never |
 | EARLIER | the running summary of the part of this conversation that is no longer in the history window | never |
-| RELEVANT_PAST | top matches (max 5) from keyword plus meaning search, each with a date and conversation title; omitted when nothing is strong | lowest score first |
+| LAST_CHAT | only when another conversation's last message was less than 6 hours ago (never an off-the-record one): one code-written line naming it, then its last 8 messages, oldest first, each cut to 500 characters, theirs stamped with the time they wrote it. See below | oldest message first |
+| RELEVANT_PAST | top matches (max 5) from keyword plus meaning search, each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
 
-PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 3,000 estimated tokens.
+PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 4,000 estimated tokens.
+
+### LAST_CHAT
+The words of the conversation they were just in, so a new conversation never starts blind. Typing on Talk home always starts a new conversation (spec section 2.1), and that happens a lot: Android may close the app while they sleep or nap. Summaries are written by a background job that takes a while, so without this block a conversation started right after another could miss it entirely. Example:
+```
+Your other conversation "Power cut, nap until 11", Wed 14 Oct, 9:02 am to 9:31 am (today); its last message was 1 hour 49 minutes ago. Its last messages:
+[9:28 am] They: ok so I sleep now and wake up at 11, if the lights are on I do one lecture
+Coach: Deal. Alarm for 11, and if the power is back, one lecture. If not, rest.
+[9:31 am] They: ok good night
+```
+Shown with every request while that conversation's last message is less than 6 hours old. "Ago" is counted in code with `TimeFacts.spell`. The coach's lines are context, never evidence about them (rule 4).
 
 ### NOW
 One sentence, written by code, that names the day the moment counts as (the day boundary: midnight by default, 1 to 6 am if they choose; the example uses 4 am):

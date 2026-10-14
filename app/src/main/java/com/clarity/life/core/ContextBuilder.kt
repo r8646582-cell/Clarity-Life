@@ -36,7 +36,8 @@ object ContextBuilder {
         "LETTER", "REVIEW",
     )
     val PART3_ORDER = listOf(
-        "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "RELEVANT_PAST",
+        "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
+        "RELEVANT_PAST",
     )
     val NEVER_TRIM = setOf(
         "FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
@@ -45,7 +46,7 @@ object ContextBuilder {
     const val MESSAGE_HEADER = "## MESSAGE"
 
     const val PART2_BUDGET = 9000
-    const val PART3_BUDGET = 3000
+    const val PART3_BUDGET = 4000
     const val HISTORY_BUDGET = 24000
 
     /** The newest messages are always sent, even over budget. */
