@@ -219,10 +219,11 @@ After each conversation (when you end it, after 30 minutes idle, or on a new day
 ## 9. Reliability and lifetime safety
 
 - **Database:** Room + SQLCipher, key = 32 random bytes in the Android Keystore (`KeystoreCipher`). Schema version starts at 1, exported schemas committed, a written migration and a MigrationTest for every change. `fallbackToDestructiveMigration` never appears (a test searches for it).
-- **Backups:** AES-256-GCM over gzip(JSON), key from your passphrase with PBKDF2-HMAC-SHA256 at 600,000 iterations (iteration count in the header). Automatic weekly to a folder you choose (Storage Access Framework, so Drive works), **read back and checksum-verified** before pruning; keep the last 4; header carries schema version.
+- **Backups:** AES-256-GCM over gzip(JSON), key from your passphrase with PBKDF2-HMAC-SHA256 at 600,000 iterations (iteration count in the header). Automatic, weekly by default or nightly (your choice), made by the nightly maintenance to a folder you choose (Storage Access Framework, so Drive works), **read back and checksum-verified** before pruning; keep the last 4 by default (8, 14 or 30 if you choose); header carries schema version. A backup that was not verified is deleted, never counted. The format is written down in `docs/BACKUP-FORMAT.md`, and `tools/backup_format.py` opens a backup on any computer without the app. Sample backups of every format and database version are restored in CI (Max plan, Phase 1, 14 Oct 2026).
+- **Nightly maintenance** (Max plan, Phase 1): at 03:30, battery not low, once a day: database integrity check (no backup after a failed check, so good backups are never pushed out), stuck jobs and replies repaired, search index and meaning vectors completed from the raw rows, lost reminder alarms set again, year-old log lines removed, missed background work caught up, backup when due. It never changes a raw row and never calls the AI; the result is a line in Health.
 - **Export everything:** unencrypted readable Markdown plus JSON (conversations, goals, plans, check-ins, promises, notes with evidence, chapters). Warn that it is unencrypted.
 - **Restore test:** a Health item you mark yearly: restore on a second phone/emulator and confirm.
-- **Write your backup passphrase on paper.** Without it a backup cannot be restored.
+- **Write your backup passphrase on paper.** Without it a backup cannot be restored. The database key lives in the phone's Keystore and is lost with a reset or a new phone, so the backups and the passphrase are the way back. Settings has a Test button that says whether a typed passphrase matches.
 - **Offline:** everything readable offline; an unsent message stays in the box with a Retry button.
 - **Xiaomi/HyperOS:** battery unrestricted, autostart, exact alarms status shown in Settings with buttons.
 - **App lock** (biometric) and hide in recents, on by default.
@@ -355,7 +356,7 @@ No software is bug-free. This design tries to make bugs rare, small, loud and re
 
 **12. Data safety first.** Versioned Room schema with a MigrationTest per change, never destructive migration (a CI grep fails the build if the word appears), verified encrypted backups, readable export, paper passphrase. See section 9.
 
-**13. Loud, content-free diagnostics.** Health screen: last run and result of each job, counts of cards dropped, quotes rejected, numbers rejected, JSON rejected, interrupted replies, backup age, database size. A rising rejection count after a model or prompt change tells you something shifted. Nothing in a log contains message text or keys.
+**13. Loud, content-free diagnostics.** Health screen: last run and result of each job, counts of cards dropped, quotes rejected, numbers rejected, JSON rejected, interrupted replies, backup age, database size, the last nightly check and whether every reminder ahead has its alarm. A rising rejection count after a model or prompt change tells you something shifted. Nothing in a log contains message text or keys.
 
 **14. A CI gate on every push.** Android lint, JVM unit tests, `check_prompts.py`, `test_cards.py`, a grep for `fallbackToDestructiveMigration`, for hard-coded model names, and for logging of content, then a signed release build. A tag is only cut when all pass, and the last good APK is kept so you can go back.
 

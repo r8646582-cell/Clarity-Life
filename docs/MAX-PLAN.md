@@ -113,3 +113,25 @@ Exam 2 by kind (app): recall 95%, people 94%, superseded 89%, promises 100%, syn
 
 What the numbers say: after ten years, a message would wait two to six seconds before it is even sent, and the first search of a session takes almost six. Two causes are known: the plan tracker reads every check-in ever made, on every request (about a second), and the first meaning search reads all 44,000 vectors from the encrypted file. The rest of the new-conversation time (building the frozen part) is not broken down yet; Phase 5 times each part. A fix that is cheap and safe can come earlier, with the owner's OK.
 
+
+### Phase 1: lifetime reliability and data safety (14 Oct 2026, built; waiting for the owner's OK)
+
+| Step | What was built | How it is proven |
+|---|---|---|
+| 1. Automatic backups | Made by the nightly maintenance when due: weekly (default) or every night; keep the newest 4 (default), 8, 14 or 30; read back and verified before older ones go. A backup that was not verified is deleted at once, and one the phone killed half way is deleted before the next, so a broken file never counts as one of the newest. | `MaintenanceTest` (JVM: when a backup is due); writing to a real folder can only be checked on the phone (below) |
+| 2. Key loss protection | Backups were already sealed with the owner's passphrase. New: a plain warning that a reset or lost phone leaves the backups and the passphrase as the only way back, and a Test button that says whether a typed passphrase matches (constant-time, nothing shown or kept). | by hand on the phone (below) |
+| 3. Restore tests for every format | `contracts/backups/`: five sample backups (format 1 at database versions 1 and 3; format 2 at 3, 4 and 5, the last in three sealed pieces) and 14 damaged copies. Opened by `tools/backup_format.py`, by the app's code on the JVM (`BackupSamplesTest`) and restored into today's database on the emulator (`RestoreTest`). 7 planted bugs, all caught. | CI, every push |
+| 4. Database health | Nightly SQLite integrity check and broken-link count; no backup after a failed check; a plain line in Health with the safe repair (restore the newest backup). Stuck jobs and hours-old "streaming" replies repaired; search index holes rebuilt from the raw rows. | `MaintenanceRunnerTest`, `StartupRepairTest` |
+| 5. Migrations from every version | Real-looking rows (the sample backups' data) put into a database of versions 1, 2, 3 and 4, migrated all the way to 5, every row and word checked. A database with no migration path refuses to open and keeps every row. | `MigrationTest` |
+| 6. Fault injection | Killed mid-reply and mid-reflection (`StartupRepairTest`); killed or disk full mid-backup (a backup cut at any byte never opens; a full disk is an error; unfinished files removed); a damaged backup half restored changes nothing (`RestoreTest`); provider error objects and cut-off replies (`WireTest`, existing); clock, time-zone and day-boundary changes (existing JVM tests, plus alarms re-set on a time-zone change). | CI |
+| 7. Readable forever | `docs/BACKUP-FORMAT.md` writes the backup format down; `tools/backup_format.py open` opens a backup on any computer with Python and the passphrase, no app needed. Export now streams (no memory spike at ten years), adds reviews and letters, and carries a README. | `test_backup_format.py`, AES/GCM known-answer tests |
+| 8. Reminders that never silently fail | Re-set after a time-zone change too (restart, update and clock change were already covered). A self-check finds any reminder ahead without an alarm and sets it again: nightly, and whenever Health is opened. Health shows "N ahead, each has its alarm". | `ReminderTest` |
+| 9. Nightly maintenance | 03:30, battery not low, once a day (job key): integrity check, repairs, search and vector backfill, reminder self-check, year-old log cleanup, catch-up of reflections, reviews, letters and gardening, backup when due. Never changes a raw row, never calls the AI, counts only in the log. Health: "Nightly check: 7 hours ago: database ok, ...". | `MaintenanceRunnerTest` |
+
+Not done in this phase, said plainly: "100 percent reliable" is not claimable; the integrity check finds damage but cannot repair a damaged database (the repair is restoring a backup); the Test button checks the passphrase against the one saved on this phone, not against each file in the folder; whether Drive and HyperOS let the 03:30 run happen on time can only be seen on the phone.
+
+**What the owner checks on the phone** (after installing this build over the old one):
+1. Settings, Your data: choose Every night, tap Back up now once, then the next morning look at Settings, Health: "Nightly check" should say it ran, "database ok", and "Last verified backup" should be that night.
+2. Tap Test next to the passphrase, type it from the paper: it should say it matches.
+3. Settings, Health: "Reminders ahead" should say each has its alarm.
+4. Optional: copy one backup file to a computer and run `python3 tools/backup_format.py open <file> out.json`.
