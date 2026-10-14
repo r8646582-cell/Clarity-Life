@@ -113,6 +113,192 @@
      "confirmed": true
     }
    }
+  },
+  "reflection_meaning": {
+   "his_messages": [
+    "honestly i only study well in the morning, evenings are dead for me",
+    "stop asking me how i feel, it doesn't help",
+    "i want to clear the exam this year no matter what",
+    "my sister Hina helps me revise on sundays"
+   ],
+   "his_earlier_quotes": [
+    "i'll properly start from the 1st"
+   ],
+   "checkin_facts": "Evening items marked not done in the last 3 weeks: 9 of 12. Reason tired on 7 of those 9.",
+   "notes": {
+    "4": {
+     "kind": "pattern",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "text": "You put off hard starts until a new week",
+     "times_seen": 1
+    },
+    "5": {
+     "kind": "what_helps",
+     "confidence": "confirmed",
+     "status": "active",
+     "edited": true,
+     "text": "Mornings work better for you",
+     "times_seen": 3
+    },
+    "6": {
+     "kind": "thread",
+     "confidence": "likely",
+     "status": "active",
+     "edited": false,
+     "text": "You have not decided about the internship",
+     "times_seen": 2
+    },
+    "7": {
+     "kind": "pattern",
+     "confidence": "likely",
+     "status": "retired",
+     "edited": false,
+     "text": "Old pattern",
+     "times_seen": 2
+    }
+   },
+   "deleted_notes": [
+    "You avoid your family when you are stressed"
+   ],
+   "people": [
+    "Hina"
+   ],
+   "profile": {
+    "Goal": {
+     "confirmed": true
+    },
+    "Study time": {
+     "confirmed": false
+    }
+   },
+   "in_focus": false,
+   "vectors": {
+    "You avoid your family when you are stressed": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "You put off hard starts until a new week": [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "You keep away from your parents and sister when pressure builds": [
+     0.8,
+     0.6,
+     0.0,
+     0.0
+    ],
+    "Pressure pulls you toward your friends": [
+     0.74,
+     0.672607,
+     0.0,
+     0.0
+    ],
+    "Hard beginnings wait for Monday with you": [
+     0.0,
+     0.0,
+     0.96,
+     0.28
+    ],
+    "Hard beginnings do not wait for Monday any more": [
+     0.0,
+     0.0,
+     0.96,
+     0.28
+    ],
+    "Getting started on hard things is easier on a Monday": [
+     0.0,
+     0.0,
+     0.88,
+     0.474974
+    ],
+    "You keep your distance from your family under stress": [
+     0.79,
+     0.0,
+     0.0,
+     0.613107
+    ]
+   }
+  },
+  "gardening_meaning": {
+   "notes": {
+    "1": {
+     "kind": "pattern",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "times_seen": 1
+    },
+    "2": {
+     "kind": "pattern",
+     "confidence": "likely",
+     "status": "active",
+     "edited": false,
+     "times_seen": 3
+    },
+    "3": {
+     "kind": "what_helps",
+     "confidence": "guess",
+     "status": "active",
+     "edited": false,
+     "times_seen": 1
+    },
+    "4": {
+     "kind": "pattern",
+     "confidence": "confirmed",
+     "status": "active",
+     "edited": false,
+     "times_seen": 5
+    },
+    "5": {
+     "kind": "thread",
+     "confidence": "guess",
+     "status": "active",
+     "edited": true,
+     "times_seen": 1
+    }
+   },
+   "people": [
+    10,
+    11,
+    12
+   ],
+   "profile": {
+    "Family": {
+     "confirmed": false
+    },
+    "Values": {
+     "confirmed": true
+    }
+   },
+   "deleted_notes": [
+    "You avoid your family when you are stressed"
+   ],
+   "vectors": {
+    "You avoid your family when you are stressed": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Under pressure you withdraw from the people at home": [
+     0.9,
+     0.43589,
+     0.0,
+     0.0
+    ],
+    "You put off hard starts": [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ]
+   }
   }
  },
  "cases": [
@@ -1895,6 +2081,355 @@
    },
    "expect": {
     "ok": true
+   }
+  },
+  {
+   "name": "reflection: a reworded copy of a deleted note is not re-created (meaning 0.8, few shared words)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You keep away from your parents and sister when pressure builds\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: the same reworded copy passes when meaning search is off (words alone cannot tell)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You keep away from your parents and sister when pressure builds\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "You keep away from your parents and sister when pressure builds",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: meaning just under the deleted-note line (0.74) is kept",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Pressure pulls you toward your friends\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "Pressure pulls you toward your friends",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: a duplicate in meaning of an active note of the same kind is dropped (0.96)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Hard beginnings wait for Monday with you\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: the same meaning under another kind is not a duplicate",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"thread\", \"text\": \"Hard beginnings wait for Monday with you\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "thread",
+      "Hard beginnings wait for Monday with you",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: a note that says not is never a duplicate of one that does not (a change, kept)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Hard beginnings do not wait for Monday any more\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "Hard beginnings do not wait for Monday any more",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: meaning under the duplicate line (0.88) is a new note",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"Getting started on hard things is easier on a Monday\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "Getting started on hard things is easier on a Monday",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
+   }
+  },
+  {
+   "name": "reflection: an update may not rewrite a note close in meaning to one he deleted",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 4, \"text\": \"You keep your distance from your family under stress\", \"confidence\": \"guess\", \"seen_again\": false, \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: an update may not rewrite a note close in words to one he deleted",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"update\": [{\"id\": 4, \"text\": \"You avoid your family when you are stressed out\", \"confidence\": \"guess\", \"seen_again\": false, \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: a merged text close in meaning to a deleted note is dropped",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"merge\": [{\"ids\": [1, 2], \"text\": \"Under pressure you withdraw from the people at home\", \"kind\": \"pattern\", \"confidence\": \"likely\"}]}",
+    "ctx": "gardening_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "gardening: a rewrite close in words to a deleted note is dropped, the other merge is kept",
+   "fn": "apply_gardening",
+   "args": {
+    "raw": "{\"rewrite\": [{\"id\": 3, \"text\": \"You avoid your family when stressed\"}], \"merge\": [{\"ids\": [1, 2], \"text\": \"You put off hard starts\", \"kind\": \"pattern\", \"confidence\": \"likely\"}]}",
+    "ctx": "gardening_meaning"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "note.merge",
+      [
+       1,
+       2
+      ],
+      "You put off hard starts",
+      "likely",
+      4
+     ]
+    ],
+    "dropped_count": 1
+   }
+  },
+  {
+   "name": "reflection: the same words with \"no\" are a change, not a duplicate (words alone, meaning off)",
+   "fn": "apply_reflection",
+   "args": {
+    "raw": "{\"title\": \"Mornings and the exam\", \"summary\": \"He said evenings do not work. He seemed tired but clear.\", \"significance\": 3, \"tone\": \"tired, clear\", \"notes\": {\"add\": [{\"kind\": \"pattern\", \"text\": \"You no longer put off hard starts until a new week\", \"confidence\": \"guess\", \"evidence\": [{\"kind\": \"quote\", \"text\": \"evenings are dead for me\"}]}]}}",
+    "ctx": "reflection"
+   },
+   "expect": {
+    "ok": true,
+    "ops": [
+     [
+      "conversation.set",
+      "Mornings and the exam",
+      3,
+      "tired, clear"
+     ],
+     [
+      "note.add",
+      "pattern",
+      "You no longer put off hard starts until a new week",
+      "guess",
+      [
+       [
+        "quote",
+        "evenings are dead for me"
+       ]
+      ]
+     ],
+     [
+      "conversation.summary",
+      "He said evenings do not work. He seemed tired but clear."
+     ]
+    ],
+    "dropped_count": 0
    }
   }
  ]

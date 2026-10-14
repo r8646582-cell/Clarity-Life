@@ -1,13 +1,10 @@
 package com.clarity.life.core
 
 import com.clarity.life.core.JobFields.CONF
-import com.clarity.life.core.JobFields.DELETED_SIMILARITY
-import com.clarity.life.core.JobFields.DUPLICATE_SIMILARITY
 import com.clarity.life.core.JobFields.NOTE_KINDS
 import com.clarity.life.core.JobFields.isStr
 import com.clarity.life.core.JobFields.optText
 import com.clarity.life.core.JobFields.pyInt
-import com.clarity.life.core.JobFields.similarity
 import com.clarity.life.core.JobFields.strip
 import com.clarity.life.core.JobFields.text
 import com.clarity.life.core.JobFields.words
@@ -25,6 +22,8 @@ data class ReflectionContext(
     /** key -> confirmed by him. */
     val profile: Map<String, Boolean> = emptyMap(),
     val inFocus: Boolean = false,
+    /** Unit vectors of the texts compared, from the on-phone model; null for a text without one. */
+    val vectors: (String) -> FloatArray? = JobFields.NO_VECTORS,
 )
 
 /**
@@ -155,7 +154,7 @@ object ReflectionApplier {
         }
 
         val notes = ctx.notes
-        val activeTexts = notes.values.filter { it.status == "active" }.map { it.text }.toMutableList()
+        val active = notes.values.filter { it.status == "active" }.map { it.kind to it.text }.toMutableList()
         val touched = HashSet<Long>()
 
         for (a in JobFields.list(notesObj, "add", NOTES_ADD, dropped)) {
@@ -174,11 +173,11 @@ object ReflectionApplier {
                 dropped.add("note.add: ${e.message}")
                 continue
             }
-            if (ctx.deletedNotes.any { similarity(noteText, it) >= DELETED_SIMILARITY }) {
+            if (JobFields.closeToDeleted(noteText, ctx.deletedNotes, ctx.vectors)) {
                 dropped.add("note.add: too close to a note he deleted")
                 continue
             }
-            if (activeTexts.any { similarity(noteText, it) >= DUPLICATE_SIMILARITY }) {
+            if (JobFields.duplicateOfActive(noteText, kind, active, ctx.vectors)) {
                 dropped.add("note.add: duplicate of an active note")
                 continue
             }
@@ -188,7 +187,7 @@ object ReflectionApplier {
                 continue
             }
             ops.add(JobOp.NoteAdd(kind, noteText, "guess", ev))
-            activeTexts.add(noteText)
+            active.add(kind to noteText)
         }
 
         for (u in JobFields.list(notesObj, "update", NOTES_UPDATE, dropped)) {
@@ -213,6 +212,10 @@ object ReflectionApplier {
                     newText = text(rawText, 220)
                 } catch (e: FieldBad) {
                     dropped.add("note.update $nid: ${e.message}")
+                    continue
+                }
+                if (JobFields.closeToDeleted(newText, ctx.deletedNotes, ctx.vectors)) {
+                    dropped.add("note.update $nid: new text too close to a note he deleted")
                     continue
                 }
             } else if (rawText != null && !isStr(rawText, n.text)) {

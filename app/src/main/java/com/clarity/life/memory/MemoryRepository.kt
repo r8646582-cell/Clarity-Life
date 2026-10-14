@@ -30,6 +30,7 @@ import javax.inject.Singleton
 class MemoryRepository @Inject constructor(
     private val db: ClarityDatabase,
     private val search: SearchIndex,
+    private val noteVectors: NoteVectors,
 ) {
 
     private val dao get() = db.memory()
@@ -350,8 +351,9 @@ class MemoryRepository @Inject constructor(
         Values.requireValid("note.kind", op.kind)
         if (dao.activeCount(op.kind) >= NOTE_CAP_PER_KIND) return false
         // Checked again against the notes as they are now: he may have deleted a similar one while the job ran.
-        if (dao.deletedNoteTexts().any { com.clarity.life.core.JobFields.similarity(op.text, it) >= com.clarity.life.core.JobFields.DELETED_SIMILARITY }) return false
-        if (dao.activeNotes().any { com.clarity.life.core.JobFields.similarity(op.text, it.text) >= com.clarity.life.core.JobFields.DUPLICATE_SIMILARITY }) return false
+        if (closeToDeleted(op.text)) return false
+        val active = dao.activeNotes().map { it.kind to it.text }
+        if (com.clarity.life.core.JobFields.duplicateOfActive(op.text, op.kind, active, noteVectors::of)) return false
         // Whatever the model asked for, a new note starts as a guess (the applier already made it so).
         val id = dao.insertNote(
             NoteRow(
@@ -377,6 +379,8 @@ class MemoryRepository @Inject constructor(
         // Deleted or retired since the job read it: his deletion is final, a retired note stays retired.
         if (n.status != "active") return false
         val his = n.editedByUser == 1 || n.confidence == "confirmed"
+        // A new wording close to a note he deleted (perhaps while the job ran) is not written.
+        if (!his && op.text != null && op.text != n.text && closeToDeleted(op.text)) return false
         // Only evidence this note does not have yet counts: the same count line cited every day is one sighting.
         val fresh = op.evidence.filter { dao.evidenceCount(n.id, it.kind, it.text) == 0 }
         val confidence = when {
@@ -408,10 +412,9 @@ class MemoryRepository @Inject constructor(
     private fun jobMayTouch(n: NoteRow?): Boolean =
         n != null && n.status == "active" && n.editedByUser == 0 && n.confidence != "confirmed"
 
+    /** In words or in meaning (Max plan Phase 3), against every note he has deleted, as they are now. */
     private suspend fun closeToDeleted(text: String): Boolean =
-        dao.deletedNoteTexts().any {
-            com.clarity.life.core.JobFields.similarity(text, it) >= com.clarity.life.core.JobFields.DELETED_SIMILARITY
-        }
+        com.clarity.life.core.JobFields.closeToDeleted(text, dao.deletedNoteTexts(), noteVectors::of)
 
     /**
      * The lowest id survives with the merged text; the others are retired (kept as history, like the archive

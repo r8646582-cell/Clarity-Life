@@ -49,6 +49,7 @@ class ReflectionJob @Inject constructor(
     private val anthropicClient: AnthropicClient,
     private val memory: MemoryRepository,
     private val planner: com.clarity.life.planner.PlannerRepository,
+    private val noteVectors: NoteVectors,
 ) {
 
     private suspend fun checkinFactsNow(): String {
@@ -165,6 +166,8 @@ class ReflectionJob @Inject constructor(
                     people = inputs.people,
                     profile = inputs.profile,
                     inFocus = conversation.focusId != null,
+                    // A reworded copy of a note he deleted is caught by meaning too (Max plan Phase 3).
+                    vectors = noteVectors::of,
                 ),
             )
             if (!result.ok) return fail(job, "json_rejected", now)

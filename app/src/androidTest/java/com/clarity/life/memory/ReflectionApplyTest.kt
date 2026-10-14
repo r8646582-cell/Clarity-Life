@@ -48,7 +48,8 @@ class ReflectionApplyTest {
                 },
             )
             .build()
-        memory = MemoryRepository(db, SearchIndex(db, Embedder(context)))
+        val embedder = Embedder(context)
+        memory = MemoryRepository(db, SearchIndex(db, embedder), NoteVectors(embedder))
     }
 
     @After
@@ -133,6 +134,39 @@ class ReflectionApplyTest {
         assertEquals(listOf(his), db.memory().allNotes().map { it.id })
         assertEquals(0, db.memory().quoteCount("evenings are dead for me"))
         assertEquals(0, db.memory().recentItems("idea", 20).size)
+    }
+
+    /**
+     * Max plan Phase 3: a note he deleted comes back neither in other words nor in its own. The wording below
+     * shares almost no words with the deleted note (the word check alone let it through); the bundled model
+     * scores it about 0.9 against it, over the 0.75 line. A note about something else is still added.
+     */
+    @Test
+    fun aRewordedCopyOfADeletedNoteIsNeverAdded() = runBlocking {
+        val said = "my mum keeps going on about money and it drives me up the wall"
+        val conv = db.conversations().insert(ConversationRow(startedAt = now))
+        val msg = db.messages().insert(MessageRow(conversationId = conv, role = "user", content = said, createdAt = now))
+        val gone = db.memory().insertNote(
+            NoteRow(
+                kind = "pattern", text = "You resent your mother for worrying about money.", firstSeen = day,
+                lastSeen = day, createdAt = now,
+            ),
+        )
+        assertEquals(true, memory.deleteNote(gone))
+        val ops = listOf(
+            com.clarity.life.core.JobOp.NoteAdd(
+                "pattern", "Your mother's worry about money makes you angry at her.", "guess",
+                listOf(com.clarity.life.core.Evidence("quote", "drives me up the wall")),
+            ),
+            com.clarity.life.core.JobOp.NoteAdd(
+                "what_helps", "Early mornings in the rooftop room give you your best focus.", "guess",
+                listOf(com.clarity.life.core.Evidence("quote", "keeps going on about money")),
+            ),
+        )
+        val applied = memory.applyReflection(conv, msg, claim("reflection:$conv:$msg"), ops, listOf(MemoryRepository.Said(said, day)), day, now)
+        assertEquals("the reworded copy is refused", 1, applied!!.skipped)
+        val active = db.memory().activeNotes().map { it.text }
+        assertEquals(listOf("Early mornings in the rooftop room give you your best focus."), active)
     }
 
     @Test

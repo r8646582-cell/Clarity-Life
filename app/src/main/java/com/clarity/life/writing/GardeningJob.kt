@@ -38,6 +38,7 @@ class GardeningJob @Inject constructor(
     private val jobs: JobClaims,
     private val memory: MemoryRepository,
     private val planner: PlannerRepository,
+    private val noteVectors: com.clarity.life.memory.NoteVectors,
 ) {
     sealed interface Outcome {
         data class Done(val applied: Int, val dropped: Int) : Outcome
@@ -110,6 +111,8 @@ class GardeningJob @Inject constructor(
                 },
                 people = people.map { it.id }.toSet(),
                 profile = profile.associate { it.key to it.confirmed },
+                deletedNotes = m.deletedNoteTexts(),
+                vectors = noteVectors::of,
             )
             val result = GardeningApplier.apply(raw, ctx)
             if (!result.ok) return failed(job, "json_rejected", now)

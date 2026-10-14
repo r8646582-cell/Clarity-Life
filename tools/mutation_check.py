@@ -130,8 +130,26 @@ MUTATIONS = [
     ("appliers.py", 'ops.append(["note.add", a["kind"], text, "guess", ev])',
      'ops.append(["note.add", a["kind"], text, a.get("confidence", "guess"), ev])', "test_appliers.py",
      "model sets a new note's confidence"),
-    ("appliers.py", "if any(similarity(text, d) >= DELETED_SIMILARITY", "if any(False and similarity(text, d) >= DELETED_SIMILARITY",
+    ("appliers.py", "        if similarity(text, d) >= DELETED_SIMILARITY:", "        if False:",
      "test_appliers.py", "deleted note re-created"),
+    # Meaning in the note checks (Max plan Phase 3).
+    ("appliers.py", "        if m is not None and m >= DELETED_MEANING:", "        if False:", "test_appliers.py",
+     "a reworded copy of a deleted note re-created"),
+    ("appliers.py", "DELETED_MEANING = 0.75", "DELETED_MEANING = 0.7", "test_appliers.py",
+     "the deleted-note line moved down, so a different note is blocked"),
+    ("appliers.py", "        if k == kind:\n", "        if True:\n",
+     "test_appliers.py", "a note of another kind counted as a duplicate"),
+    ("appliers.py", "        if negated(text) != negated(t):\n            continue\n", "",
+     "test_appliers.py", "a change of mind (\"not any more\") dropped as a duplicate"),
+    ("appliers.py", "DUPLICATE_MEANING = 0.9", "DUPLICATE_MEANING = 0.85", "test_appliers.py",
+     "the duplicate line moved down, so a new note is dropped"),
+    ("appliers.py", "                if close_to_deleted(text, ctx.get(\"deleted_notes\", []), ctx):\n"
+     "                    dropped.append(\"note.update %d: new text too close to a note he deleted\" % nid)\n"
+     "                    continue\n", "", "test_appliers.py", "an update rewrites a note into one he deleted"),
+    ("appliers.py", "        if close_to_deleted(text, deleted, ctx):\n            dropped.append(\"merge: too close to a note he deleted\")\n"
+     "            continue\n", "", "test_appliers.py", "gardening merges into a note he deleted"),
+    ("appliers.py", "        if close_to_deleted(text, deleted, ctx):\n            dropped.append(\"rewrite: too close to a note he deleted\")\n"
+     "            continue\n", "", "test_appliers.py", "gardening rewrites into a note he deleted"),
     ("appliers.py", 'if entry is None or entry["confirmed"]:', "if entry is None:", "test_appliers.py",
      "gardening rewrites a confirmed profile entry"),
     ("appliers.py", "not all(isinstance(i, int) and not isinstance(i, bool) for i in ids) or \\\n"

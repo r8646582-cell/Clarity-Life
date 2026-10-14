@@ -48,7 +48,8 @@ class GardeningApplyTest {
                 },
             )
             .build()
-        memory = MemoryRepository(db, SearchIndex(db, Embedder(context)))
+        val embedder = Embedder(context)
+        memory = MemoryRepository(db, SearchIndex(db, embedder), NoteVectors(embedder))
     }
 
     @After
