@@ -205,6 +205,36 @@ def choose_final(keys, docs, max_results=None):
     return out
 
 
+# Reflection (Max plan Phase 3 step 1): the earlier conversations and events like this one, from the whole
+# history, so a pattern months apart is in front of the job that writes notes. Measured with
+# tools/eval/reflection_exam.py on exam 2.
+REFLECTION_MESSAGES = 6     # his newest new messages, each searched on its own
+REFLECTION_MIN_WORDS = 4    # a message shorter than this says too little to search by itself
+REFLECTION_RESULTS = 8      # earlier summaries and events reflection is shown
+REFLECTION_KINDS = ("summary", "event")
+
+
+def reflection_queries(his_new):
+    """What the reflection job searches the history with. "all": every new message of his, oldest first, joined;
+    searched by keyword only (a long text's meaning vector is a blur of everything in it). "each": his newest
+    REFLECTION_MESSAGES messages of at least REFLECTION_MIN_WORDS words, newest first, each searched by keyword and
+    by meaning. Blank messages are left out."""
+    texts = [t for t in his_new if t.strip()]
+    each = [t for t in reversed(texts) if word_count(t) >= REFLECTION_MIN_WORDS][:REFLECTION_MESSAGES]
+    return {"all": " ".join(texts), "each": each}
+
+
+def reflection_choose(keys, docs, conversation, shown=(), max_results=None):
+    """What reflection is shown, from the fused keys (best first). docs: {key: {kind, text, conversation}}. Only
+    conversation summaries and events, none from the conversation being reflected, none it is shown already (its
+    RECENT EVENTS); then as choose_final: one per conversation, near-duplicates out, at most REFLECTION_RESULTS."""
+    max_results = REFLECTION_RESULTS if max_results is None else max_results
+    shown = set(shown)
+    allowed = {k: d for k, d in docs.items()
+               if d.get("kind") in REFLECTION_KINDS and d.get("conversation") != conversation and k not in shown}
+    return choose_final([k for k in keys if k in allowed], allowed, max_results)
+
+
 KIND_ORDER = ["promise", "review", "letter", "summary", "checkin", "revision", "chapter"]
 
 

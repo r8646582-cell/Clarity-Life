@@ -82,6 +82,18 @@ class RetrievalVectorsTest {
             },
             a.maxOr(Retrieval.MAX_RESULTS),
         )
+        "reflection_queries" -> Retrieval.reflectionQueries(a.strings("his_new")).let { mapOf("all" to it.all, "each" to it.each) }
+        "reflection_choose" -> Retrieval.reflectionChoose(
+            a.strings("keys"),
+            a.getValue("docs").jsonObject.mapValues { (_, v) ->
+                val o = v.jsonObject
+                val conv = o["conversation"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.long
+                Retrieval.KindDoc(o.str("kind"), o.str("text"), conv)
+            },
+            a.getValue("conversation").jsonPrimitive.long,
+            a.strings("shown").toSet(),
+            a.maxOr(Retrieval.REFLECTION_RESULTS),
+        )
         "dated" -> Retrieval.dated(
             a.getValue("items").jsonArray.map {
                 val o = it.jsonObject

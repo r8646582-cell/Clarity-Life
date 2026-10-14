@@ -1462,6 +1462,176 @@
     "note": null
    },
    "expect": "Check-in \"Tax lectures\", 5 Sep 2026: rest day"
+  },
+  {
+   "name": "reflection queries: all of his new messages joined; each: the newest six of four words or more, newest first",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": [
+     "hi",
+     "Tuesdays are always bad because Khala's family visits.",
+     "  ",
+     "ok",
+     "I'm at lecture 31 of 60 and the exam is 1 December.",
+     "yes exactly",
+     "Power cut again today, router off, nothing done.",
+     "Sir Waqas said finish by end of November.",
+     "My mum asked about the fee again tonight.",
+     "I slept at 2 again",
+     "It is what it is I guess"
+    ]
+   },
+   "expect": {
+    "all": "hi Tuesdays are always bad because Khala's family visits. ok I'm at lecture 31 of 60 and the exam is 1 December. yes exactly Power cut again today, router off, nothing done. Sir Waqas said finish by end of November. My mum asked about the fee again tonight. I slept at 2 again It is what it is I guess",
+    "each": [
+     "It is what it is I guess",
+     "I slept at 2 again",
+     "My mum asked about the fee again tonight.",
+     "Sir Waqas said finish by end of November.",
+     "Power cut again today, router off, nothing done.",
+     "I'm at lecture 31 of 60 and the exam is 1 December."
+    ]
+   }
+  },
+  {
+   "name": "reflection queries: nothing long enough to search alone still searches everything by keyword",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": [
+     "hi",
+     "ok thanks",
+     "yes"
+    ]
+   },
+   "expect": {
+    "all": "hi ok thanks yes",
+    "each": []
+   }
+  },
+  {
+   "name": "reflection queries: no messages",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": []
+   },
+   "expect": {
+    "all": "",
+    "each": []
+   }
+  },
+  {
+   "name": "reflection choose: summaries and events only, not this conversation, not shown already, one per conversation",
+   "fn": "reflection_choose",
+   "args": {
+    "keys": [
+     "summary:29",
+     "message:410",
+     "event:2",
+     "summary:25",
+     "event:1",
+     "letter:3",
+     "summary:22",
+     "summary:12",
+     "event:7",
+     "summary:8"
+    ],
+    "docs": {
+     "summary:29": {
+      "kind": "summary",
+      "text": "At lecture 31 of 60.",
+      "conversation": 29
+     },
+     "message:410": {
+      "kind": "message",
+      "text": "Power cut again",
+      "conversation": 25
+     },
+     "event:2": {
+      "kind": "event",
+      "text": "evening power cut; did two lectures",
+      "conversation": 27
+     },
+     "summary:25": {
+      "kind": "summary",
+      "text": "Load shedding stops his lectures.",
+      "conversation": 25
+     },
+     "event:1": {
+      "kind": "event",
+      "text": "exam form deadline during a power cut",
+      "conversation": 22
+     },
+     "letter:3": {
+      "kind": "letter",
+      "text": "Letter: power cuts",
+      "conversation": null
+     },
+     "summary:22": {
+      "kind": "summary",
+      "text": "He missed the exam form deadline in a power cut.",
+      "conversation": 22
+     },
+     "summary:12": {
+      "kind": "summary",
+      "text": "Load shedding stops his lectures!",
+      "conversation": 12
+     },
+     "event:7": {
+      "kind": "event",
+      "text": "an old event",
+      "conversation": 3
+     },
+     "summary:8": {
+      "kind": "summary",
+      "text": "Three weeks into the gym.",
+      "conversation": 8
+     }
+    },
+    "conversation": 29,
+    "shown": [
+     "event:2"
+    ]
+   },
+   "expect": [
+    "summary:25",
+    "event:1",
+    "event:7",
+    "summary:8"
+   ]
+  },
+  {
+   "name": "reflection choose: at most the number asked for",
+   "fn": "reflection_choose",
+   "args": {
+    "keys": [
+     "summary:1",
+     "summary:2",
+     "summary:3"
+    ],
+    "docs": {
+     "summary:1": {
+      "kind": "summary",
+      "text": "one thing",
+      "conversation": 1
+     },
+     "summary:2": {
+      "kind": "summary",
+      "text": "another thing",
+      "conversation": 2
+     },
+     "summary:3": {
+      "kind": "summary",
+      "text": "a third thing",
+      "conversation": 3
+     }
+    },
+    "conversation": 9,
+    "max_results": 2
+   },
+   "expect": [
+    "summary:1",
+    "summary:2"
+   ]
   }
  ]
 }

@@ -249,6 +249,52 @@ object Retrieval {
         return out
     }
 
+    // ---------- reflection's search of the whole history (Max plan Phase 3 step 1) ----------
+
+    /** His newest new messages, each searched on its own. */
+    const val REFLECTION_MESSAGES = 6
+
+    /** A message shorter than this says too little to search by itself. */
+    const val REFLECTION_MIN_WORDS = 4
+
+    /** Earlier summaries and events reflection is shown. */
+    const val REFLECTION_RESULTS = 8
+    val REFLECTION_KINDS = setOf("summary", "event")
+
+    /** [all]: searched by keyword only; [each]: newest first, each by keyword and by meaning. */
+    data class ReflectionQueries(val all: String, val each: List<String>)
+
+    /**
+     * What the reflection job searches the history with: every new message of his joined, by keyword (a long
+     * text's meaning vector is a blur of everything in it), and his newest [REFLECTION_MESSAGES] messages of at
+     * least [REFLECTION_MIN_WORDS] words one by one. Blank messages are left out.
+     */
+    fun reflectionQueries(hisNew: List<String>): ReflectionQueries {
+        val texts = hisNew.filter { JobFields.strip(it).isNotEmpty() }
+        val each = texts.asReversed().filter { wordCount(it) >= REFLECTION_MIN_WORDS }.take(REFLECTION_MESSAGES)
+        return ReflectionQueries(texts.joinToString(" "), each)
+    }
+
+    /** A found record with its kind ("summary", "event"...), for [reflectionChoose]. */
+    data class KindDoc(val kind: String, val text: String, val conversation: Long?)
+
+    /**
+     * What reflection is shown, from the fused keys (best first): only conversation summaries and events, none
+     * from the conversation being reflected, none it is shown already (its RECENT EVENTS); then as
+     * [chooseFinal]: one per conversation, near-duplicates out, at most [max].
+     */
+    fun <K> reflectionChoose(
+        keys: List<K>,
+        docs: Map<K, KindDoc>,
+        conversation: Long,
+        shown: Set<K> = emptySet(),
+        max: Int = REFLECTION_RESULTS,
+    ): List<K> {
+        val allowed = docs.filter { (k, d) -> d.kind in REFLECTION_KINDS && d.conversation != conversation && k !in shown }
+            .mapValues { (_, d) -> Doc(d.text, d.conversation) }
+        return chooseFinal(keys.filter { it in allowed }, allowed, max)
+    }
+
     /** Something that falls in the period he named; [key] is "kind:id", [day] its day ("YYYY-MM-DD"). */
     data class DatedItem(val key: String, val kind: String, val text: String, val day: String, val outcome: String? = null)
 

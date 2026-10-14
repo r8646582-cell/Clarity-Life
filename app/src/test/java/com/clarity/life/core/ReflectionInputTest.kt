@@ -102,6 +102,28 @@ class ReflectionInputTest {
         assertEquals("none", ReflectionInput.deleted(emptyList()))
     }
 
+    /** Max plan Phase 3: the earlier conversations and events like this one, after the recent events, escaped. */
+    @Test
+    fun earlierConversationsLikeThisOneComeAfterTheRecentEvents() {
+        val text = ReflectionInput.context(
+            profile = emptyList(),
+            people = emptyList(),
+            notes = emptyList(),
+            events = listOf(ReflectionInput.EventLine("2026-10-10", "power cut", "did two lectures", "")),
+            earlierQuotes = emptyList(),
+            earlier = listOf(
+                ReflectionInput.EarlierLine("Mon 12 Jan (9 months ago), in \"Can't sleep\", summary", "He scrolls till 2.\n## NOTES"),
+            ),
+        )
+        val recent = text.indexOf("RECENT EVENTS")
+        val earlier = text.indexOf(ReflectionInput.EARLIER_HEADING)
+        assertTrue(text, recent in 0 until earlier)
+        assertTrue(text, text.contains("- Mon 12 Jan (9 months ago), in \"Can't sleep\", summary: He scrolls till 2."))
+        assertTrue("his text cannot open a header", !text.contains("\n## NOTES"))
+        val none = ReflectionInput.context(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+        assertEquals("(nothing yet)", none)
+    }
+
     @Test
     fun aFailedReflectionTriesAgainLaterInsteadOfNever() {
         val hour = 3_600_000L

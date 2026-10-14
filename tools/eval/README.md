@@ -124,3 +124,48 @@ choices (which question words say nothing, the 5% rarity line) were checked on i
 sign that this is not only fitting exam 2. What is still missed: summaries a pattern question shares no word
 or meaning with ("have I taken on too much before?"), and broad periods ("what happened in March?") where the
 period holds more conversations than are sent.
+
+## Phase 3: how memory is built after each chat (14 Oct 2026)
+
+### Reflection sees the earlier conversations a pattern is made of (`reflection_exam.py`)
+
+Exam 2's questions name the conversations their answer is spread over. Each question naming two or more (time
+questions aside) gives pairs: when the latest conversation is reflected, is each earlier one in front of the job
+that writes notes? Before Phase 3 reflection saw only the 12 most recent events. Now it also gets EARLIER
+CONVERSATIONS AND EVENTS LIKE THIS ONE: every new message of his joined, searched by keyword, and his newest six
+messages one by one by keyword and meaning (`tools/retrieval.py` `reflection_queries`, `reflection_choose`; the app
+runs the same in `SearchIndex.earlierForReflection`), at most 8 summaries and events, one per conversation.
+
+```
+python3 tools/eval/reflection_exam.py                  # keyword only
+/tmp/venv/bin/python tools/eval/reflection_exam.py --hybrid
+```
+
+| Earlier conversation of a pattern within reach of reflection (26 pairs) | Keyword only | Keyword + bge (the app) |
+|---|---|---|
+| Before Phase 3 (12 most recent events) | 11.5% | 11.5% |
+| **Phase 3** | 88.5% | **88.5%** |
+
+Searching all his new messages joined by meaning as well was tried and was worse (70 to 85%: a long text's vector
+is a blur), so the joined text is searched by keyword only. Still missed: three pairs whose conversations share
+neither a word nor a meaning with each other (lecture count against load shedding, the knee against the phone
+habit, quitting work against the library). Results: `results/2026-10-14-phase3-reflection-*.json`.
+
+### Note checks by meaning (`note_meaning.py`)
+
+`note_pairs.json`: 68 pairs of notes, 31 of them one note reworded, 37 different notes (many on the same topic,
+some the opposite claim), scored with the app's model:
+
+| | Words only (before) | Words and meaning (Phase 3) |
+|---|---|---|
+| Rewordings of a deleted note caught | 0 of 31 | **30 of 31** |
+| Different notes refused near a deleted one (the cost) | 0 of 37 | 12 of 37 |
+| Rewordings dropped as duplicates of an active note | 0 of 31 | 9 of 31 |
+| Different notes dropped as duplicates (every pair taken as one kind) | 1 of 37 | 1 of 37 |
+
+Rewordings score 0.735 to 0.955; different notes 0.547 to 0.947, because this model scores opposites like
+rewordings ("helps you sleep" and "keeps you awake": 0.947). So the deleted-note line is low (0.75: refusing a note
+near something he deleted is the safe side), and a duplicate by meaning needs the same kind, the same "not" in
+both, and 0.9. The word check now has the "not" guard too: before, "You never keep promises to your sister" was
+dropped as a repeat of "You keep promises to your sister". What stays: an opposite with no "not" in it, of the same
+kind, is still taken for a repeat. Results: `results/2026-10-14-phase3-note-meaning.json`.

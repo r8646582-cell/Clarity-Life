@@ -319,6 +319,45 @@ class SearchIndex @Inject constructor(
         return Retrieval.block(chosen.mapNotNull { k -> docs[k]?.let { Retrieval.Hit(it.candidate, 0) } })
     }
 
+    /** One earlier conversation summary or event shown to reflection: its code-written label and its text. */
+    data class Earlier(val label: String, val text: String, val at: Long)
+
+    /**
+     * Reflection's view of the whole history (Max plan Phase 3 step 1): the conversation summaries and events
+     * most like what he said in [hisNew] (his new messages, oldest first), from every conversation but
+     * [conversationId], leaving out the events in [shownEvents] (its RECENT EVENTS). Every new message joined
+     * is searched by keyword, and his newest ones one by one by keyword and by meaning
+     * ([Retrieval.reflectionQueries]); [Retrieval.reflectionChoose] picks at most [Retrieval.REFLECTION_RESULTS],
+     * returned oldest first. tools/eval/reflection_exam.py measures the same search on exam 2.
+     */
+    suspend fun earlierForReflection(
+        conversationId: Long,
+        hisNew: List<String>,
+        shownEvents: Set<Long>,
+        tz: String,
+        boundary: Int,
+        now: Long = System.currentTimeMillis(),
+    ): List<Earlier> {
+        val r = Resolver(conversationId, tz, boundary, now)
+        val q = Retrieval.reflectionQueries(hisNew)
+        val lists = ArrayList<Pair<Double, List<Key>>>()
+        lists += Retrieval.W_NEW to keywordHits(Retrieval.terms(q.all), r)
+        for (text in q.each) {
+            lists += Retrieval.W_CONTEXT to keywordHits(Retrieval.terms(text), r)
+            lists += Retrieval.W_CONTEXT to meaningHits(text, r)
+        }
+        val fused = Retrieval.fuse(lists).filter { it.kind in Retrieval.REFLECTION_KINDS }
+        if (fused.isEmpty()) return emptyList()
+        val docs = r.resolve(fused)
+        val chosen = Retrieval.reflectionChoose(
+            fused,
+            docs.mapValues { (k, d) -> Retrieval.KindDoc(k.kind, d.candidate.text, d.conversation) },
+            conversationId,
+            shownEvents.map { Key(EVENT, it) }.toSet(),
+        )
+        return chosen.mapNotNull { k -> docs[k]?.candidate?.let { Earlier(it.label, it.text, it.at) } }.sortedBy { it.at }
+    }
+
     /** A record found, with the conversation it belongs to (null for a letter, a goal, a promise...). */
     private data class Found(val candidate: Retrieval.Candidate, val conversation: Long?)
 

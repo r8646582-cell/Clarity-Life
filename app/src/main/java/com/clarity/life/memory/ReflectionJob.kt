@@ -50,6 +50,7 @@ class ReflectionJob @Inject constructor(
     private val memory: MemoryRepository,
     private val planner: com.clarity.life.planner.PlannerRepository,
     private val noteVectors: NoteVectors,
+    private val search: SearchIndex,
 ) {
 
     private suspend fun checkinFactsNow(): String {
@@ -119,7 +120,7 @@ class ReflectionJob @Inject constructor(
             val tz = settings.timeZone()
             val boundary = settings.dayBoundaryHour()
             val today = dayKey(now, tz, boundary)
-            val inputs = gather(conversation.focusId)
+            val inputs = gather(conversation.focusId, conversationId, selection.newHis, tz, boundary, now)
             val prompt = prompts.fill(
                 prompts.text(PromptStore.REFLECTION),
                 mapOf(
@@ -230,7 +231,14 @@ class ReflectionJob @Inject constructor(
         val earlierQuotes: List<String>,
     )
 
-    private suspend fun gather(focusId: Long?): Inputs {
+    private suspend fun gather(
+        focusId: Long?,
+        conversationId: Long,
+        newHis: List<String>,
+        tz: String,
+        boundary: Int,
+        now: Long,
+    ): Inputs {
         val dao = db.memory()
         val allNotes = dao.allNotes()
         val evidence = dao.allEvidence().groupBy { it.noteId }
@@ -251,9 +259,22 @@ class ReflectionJob @Inject constructor(
         val profile = dao.profile()
         val people = dao.people()
         val quotes = dao.recentQuotes(ReflectionInput.EARLIER_QUOTES).reversed().map { it.text }
-        val events = dao.recentEvents(ReflectionInput.RECENT_EVENTS).reversed().map { ev ->
+        val recentEvents = dao.recentEvents(ReflectionInput.RECENT_EVENTS).reversed()
+        val events = recentEvents.map { ev ->
             val day = TimeFacts.local(Instant.ofEpochMilli(ev.createdAt), settings.timeZone()).toLocalDate().toString()
             ReflectionInput.EventLine(day, ev.situation, ev.action, ev.outcome)
+        }
+        // Max plan Phase 3 step 1: the earlier conversations and events most like what he said now, from the
+        // whole history, so a pattern months apart is in front of the job. Search failing is no reason to skip
+        // the reflection: it then sees what it saw before.
+        val earlier = try {
+            search.earlierForReflection(conversationId, newHis, recentEvents.map { it.id }.toSet(), tz, boundary, now)
+                .map { ReflectionInput.EarlierLine(it.label, it.text) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            db.diagnostics().log(ErrorLogRow(at = now, area = "reflection", code = "earlier_search_failed", detail = e.javaClass.simpleName))
+            emptyList()
         }
         val context = ReflectionInput.context(
             profile = profile.map { ReflectionInput.ProfileLine(it.key, it.value, it.confirmed == 1) },
@@ -261,6 +282,7 @@ class ReflectionJob @Inject constructor(
             notes = noteLines,
             events = events,
             earlierQuotes = quotes,
+            earlier = earlier,
         )
         return Inputs(
             contextText = context,
