@@ -90,3 +90,37 @@ Where it is lost, in the Max plan's words: only the new message is searched (fol
 are not understood (time), old check-ins, letters, reviews, goal revisions, finished goals and ended targets
 are not sent or searchable at all, and five results is often too few for a pattern spread over a year.
 Phase 2 targets 95%.
+
+## Phase 2: what the AI receives (14 Oct 2026)
+
+`memory_exam2.py` now uses `tools/retrieval.py` and `tools/recall_time.py` as they are (the same code the app's
+`Retrieval.kt` and `RecallTime.kt` are tested against), searches the question together with its "context" lines,
+and indexes letters, reviews, chapters, goals, goal changes, targets and check-ins as `SearchIndex` does.
+`memory_exam.py` (exam 1) uses the same search. Results: `results/2026-10-14-exam2-phase2-*.json`.
+
+| Kind | Keyword, before | Keyword, Phase 2 | App (keyword + bge), before | **App, Phase 2** |
+|---|---|---|---|---|
+| **All 157 questions** | 62.6% | 92.5% | 71.5% | **95.1%** |
+| check-ins | 60.0% | 100% | 60.0% | 100% |
+| vague follow-ups | 59.2% | 95.8% | 66.7% | 94.2% |
+| patterns months apart | 32.5% | 60.0% | 44.2% | 86.7% |
+| people | 93.8% | 100% | 93.8% | 100% |
+| plan | 66.7% | 100% | 70.8% | 100% |
+| promises | 75.0% | 100% | 100% | 100% |
+| recall | 86.7% | 98.3% | 95.0% | 98.3% |
+| superseded | 69.4% | 88.9% | 88.9% | 97.2% |
+| synthesis | 61.5% | 77.1% | 70.8% | 82.3% |
+| time | 42.1% | 92.1% | 52.6% | 92.1% |
+| letters, reviews, chapters | 20.0% | 100% | 20.0% | 100% |
+| Leaks | 0 | 0 | 0 | 0 |
+
+Exam 1 (the old fixture, not looked at while designing Phase 2): keyword 69.8% to 77.8%, keyword + bge 79.2% to
+84.7%.
+
+Read these numbers with care. The exam measures whether the evidence is **within reach** of the coach, not
+whether the coach answers well, and it rewards sending more: the app now sends up to 12 results instead of 5,
+which is part of the gain. Exam 2 was written before Phase 2, but Phase 2 was built while looking at it; a few
+choices (which question words say nothing, the 5% rarity line) were checked on it. Exam 1 rising too is the
+sign that this is not only fitting exam 2. What is still missed: summaries a pattern question shares no word
+or meaning with ("have I taken on too much before?"), and broad periods ("what happened in March?") where the
+period holds more conversations than are sent.

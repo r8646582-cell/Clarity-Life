@@ -135,3 +135,34 @@ Not done in this phase, said plainly: "100 percent reliable" is not claimable; t
 2. Tap Test next to the passphrase, type it from the paper: it should say it matches.
 3. Settings, Health: "Reminders ahead" should say each has its alarm.
 4. Optional: copy one backup file to a computer and run `python3 tools/backup_format.py open <file> out.json`.
+
+### Phase 2: what the AI receives on every message (14 Oct 2026, built; waiting for the owner's OK)
+
+**Memory exam 2** (157 questions, `tools/eval/README.md`): **71.5% to 95.1%** of the evidence within the coach's
+reach (keyword only: 62.6% to 92.5%), 0 leaks. Target was 95%. Exam 1, the old fixture not used to design this:
+79.2% to 84.7%. By kind (app): letters/reviews/chapters 20% to 100%, check-ins 60% to 100%, plan 71% to 100%, time
+53% to 92%, patterns months apart 44% to 87%, vague follow-ups 67% to 94%, synthesis 71% to 82%.
+
+| Step | What was built | How it is proven |
+|---|---|---|
+| 1. Search with the conversation | Besides the new message, a second search of his last 3 messages in the conversation (and its title) with the new one; its results count half. | `contracts/retrieval_vectors.json`, emulator test "a vague follow-up" |
+| 2. Time and outcome in code | `RecallTime` reads "in August", "last week", "yesterday", "on 12 October", "late September", "since March", "the first week of September", "3 days ago"... into exact days; "promise" with break/kept/moved/let go orders promises by outcome. What falls in the period is a result list of its own: promises due, conversations held, letters, reviews, chapters, goal changes, and the check-ins of a week or less. | `tools/recall_time.py`, 74 shared cases (both "may" traps, leap years, weekdays), 11 planted bugs |
+| 3. Better ranking | Weighted fusion (period 2, message 1, conversation 0.5); one rare word counts as a match; repeated small talk counts once; near-duplicates out; one result per conversation; up to 12 results (was 5), trimmed by the budget. | `tools/retrieval.py`, 80 shared cases, 12 planted bugs |
+| 4. Everything searchable | Letters, reviews, chapters, goals (finished too), goal changes with reasons, targets (ended too), check-ins with a reason or note; promises now read "Promise: ...". Kept in step with their tables (a deleted letter leaves search at once); the index rebuilds once after the update and the new vectors are made in the background. | emulator tests (letter found then gone; promises in August) |
+| 5. Relevant notes first | Notes sharing a word with the conversation's message are the last of their grade to be trimmed; active notes left out of NOTES come back through RELEVANT_PAST when a message matches. | `MemoryBlocksTest` |
+| 6. Code-written insights | CHECKIN_FACTS: the last 90 days (reasons, weekdays) and a reason that grew against the 14 days before; OPEN_PROMISES: how promises due in the last 90 days went. At least 3 items behind every number. | `PlanBlocksTest`, `PromiseTextTest` |
+| 7. Size counting | Measured against DeepSeek's tokenizer: "3 characters a token" under-counted numbers, dates and emoji (0.56 to 0.71 of real). Digits now 1 token each, other non-English characters 2; English unchanged. | `contracts/context_vectors.json`, 1 planted bug |
+| 8. Contracts together | `contracts/context.md` (RELEVANT_PAST section, NOTES, CHECKIN_FACTS, OPEN_PROMISES, the estimate), Python references, vectors, `mutation_check.py` (91 planted bugs, all caught), Kotlin ports and tests, both exam mirrors. | `bash tools/check_all.sh`, CI |
+
+Not done, said plainly:
+- Step 7 asked for a closer estimate so more fits. Measured, no simple rule both wastes less room on English and
+  stays safe on everything else (a safe one would waste more: 1.7 times real instead of 1.4). The estimate was made
+  safe where it was wrong instead. A real tokenizer in the app would do both; it is a new dependency, so it waits
+  for the owner.
+- Step 5 favours notes by the conversation's words only, not by chat type: there is no rule yet for which notes a
+  chat type needs that would not be a guess.
+- Step 6 has no time-of-day lines (check-ins do not record the time until Phase 3) and no before/after a plan change.
+- The exam measures what is within reach, not how well the coach answers, and sending up to 12 results instead of
+  5 is part of the gain. The test bench on the real model is the check of the answers.
+- Broad periods ("what happened in March?") send at most 10 of what the period holds; patterns with no shared
+  word or meaning are still missed.
