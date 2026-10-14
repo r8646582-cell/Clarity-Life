@@ -48,7 +48,7 @@ class GardeningApplyTest {
                 },
             )
             .build()
-        val embedder = Embedder(context)
+        val embedder = TestEmbedder.shared
         memory = MemoryRepository(db, SearchIndex(db, embedder), NoteVectors(embedder))
     }
 

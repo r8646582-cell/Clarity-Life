@@ -11,7 +11,6 @@ import com.clarity.life.ai.OpenAiCompatibleClient
 import com.clarity.life.chat.ChatRepository
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.StartupRepair
-import com.clarity.life.memory.Embedder
 import com.clarity.life.memory.SearchIndex
 import com.clarity.life.planner.PlannerRepository
 import com.clarity.life.prompts.PromptStore
@@ -82,7 +81,7 @@ class LifetimeTimingTest {
                 open(secrets).also { it.openHelper.writableDatabase.query("SELECT count(*) FROM message").use { c -> c.moveToFirst() } }
             }
             val settings = SettingsRepository(db.settings(), secrets)
-            val embedder = Embedder(context)
+            val embedder = com.clarity.life.memory.TestEmbedder.shared
             val search = SearchIndex(db, embedder)
             val planner = PlannerRepository(db, settings)
             val chat = ChatRepository(

@@ -50,7 +50,7 @@ class RestoreTest {
     private fun backups(db: ClarityDatabase): BackupRepository {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val secrets = SecretStore(context)
-        val embedder = com.clarity.life.memory.Embedder(context)
+        val embedder = com.clarity.life.memory.TestEmbedder.shared
         return BackupRepository(
             context = context,
             db = db,

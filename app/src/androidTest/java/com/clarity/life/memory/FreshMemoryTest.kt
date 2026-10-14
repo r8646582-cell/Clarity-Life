@@ -42,7 +42,7 @@ class FreshMemoryTest {
                 },
             )
             .build()
-        val embedder = Embedder(context)
+        val embedder = TestEmbedder.shared
         memory = MemoryRepository(db, SearchIndex(db, embedder), NoteVectors(embedder))
         conv = db.conversations().insert(ConversationRow(startedAt = now))
         frozen()

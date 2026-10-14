@@ -33,7 +33,7 @@ class EmbedderTest {
 
     @Test
     fun theVectorsMatchTheReference() {
-        val embedder = Embedder(context)
+        val embedder = TestEmbedder.shared
         val cases = Json.parseToJsonElement(
             context.assets.open("contracts/embedding_vectors.json").bufferedReader().readText(),
         ).jsonObject.getValue("embeddings").jsonArray.map { it.jsonObject }
@@ -52,7 +52,7 @@ class EmbedderTest {
     fun meaningSearchFindsWhatKeywordsMiss() = runBlocking {
         val db = Room.inMemoryDatabaseBuilder(context, ClarityDatabase::class.java).build()
         try {
-            val embedder = Embedder(context)
+            val embedder = TestEmbedder.shared
             val search = SearchIndex(db, embedder)
             val now = 1_791_648_000_000L
             val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Revision"))
@@ -79,7 +79,7 @@ class EmbedderTest {
     fun theOldModelsVectorsAreReplacedOnce() = runBlocking {
         val db = Room.inMemoryDatabaseBuilder(context, ClarityDatabase::class.java).build()
         try {
-            val embedder = Embedder(context)
+            val embedder = TestEmbedder.shared
             val now = 1_791_648_000_000L
             val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Revision"))
             val id = db.messages().insert(

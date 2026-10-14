@@ -38,7 +38,7 @@ class ReplySettleTest {
                 prompts = PromptStore(context, db.promptOverrides()),
                 mainClient = OpenAiCompatibleClient(http),
                 anthropicClient = AnthropicClient(http),
-                search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.Embedder(context)),
+                search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared),
                 planner = com.clarity.life.planner.PlannerRepository(db, settings),
             )
             val now = System.currentTimeMillis()

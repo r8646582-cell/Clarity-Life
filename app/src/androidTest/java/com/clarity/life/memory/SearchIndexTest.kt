@@ -30,7 +30,7 @@ class SearchIndexTest {
     fun open() {
         db = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getInstrumentation().targetContext, ClarityDatabase::class.java)
             .build()
-        search = SearchIndex(db, Embedder(InstrumentationRegistry.getInstrumentation().targetContext))
+        search = SearchIndex(db, TestEmbedder.shared)
     }
 
     @After

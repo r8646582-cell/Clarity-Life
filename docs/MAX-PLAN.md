@@ -258,6 +258,10 @@ Not done, said plainly:
   so perhaps a tenth to a fifth of a second for each message, and remaking the vectors after the update takes
   minutes for a few months of history (it would be hours for ten years). Memory for vectors doubles (about 46 MB
   at ten years). Phase 5 (speed and battery) should time it on the 10-year emulator database.
+- Memory: one loaded copy of the model takes a few hundred MB on the phone. The app keeps exactly one (a single
+  shared instance). The first CI run of this build failed because each emulator test loaded its own copy and the
+  emulator ran out of memory; the tests now share one, as the app does. How much the phone itself uses is not
+  measured.
 - Fewer rewordings are dropped as duplicates (6 of 31, was 9) and gardening is shown slightly fewer merges to
   consider (14 of 31, was 17), each at the same number of wrong ones.
 - The lines were set on the same exams and 68 note pairs as before, not on his real notes and messages.

@@ -42,7 +42,7 @@ class MaintenanceRunnerTest {
         db = Room.inMemoryDatabaseBuilder(context, ClarityDatabase::class.java).build()
         val secrets = SecretStore(context)
         settings = SettingsRepository(db.settings(), secrets)
-        val embedder = com.clarity.life.memory.Embedder(context)
+        val embedder = com.clarity.life.memory.TestEmbedder.shared
         val search = com.clarity.life.memory.SearchIndex(db, embedder)
         val indexer = com.clarity.life.memory.EmbeddingIndexer(context, db, embedder)
         reminders = com.clarity.life.promise.Reminders(context, db)
@@ -79,7 +79,7 @@ class MaintenanceRunnerTest {
         db.diagnostics().log(ErrorLogRow(at = now - 400L * 24 * hour, area = "chat", code = "card_dropped"))
         db.diagnostics().log(ErrorLogRow(at = now - 24 * hour, area = "chat", code = "card_dropped"))
         // The index holds everything, then loses his message (a write that failed).
-        com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.Embedder(InstrumentationRegistry.getInstrumentation().targetContext)).rebuild()
+        com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared).rebuild()
         db.search().delete("message", said.toString())
         // A reminder ahead whose alarm the phone dropped.
         promiseId = db.promises().insert(PromiseRow(text = "Walk", dueAt = now + 5 * hour, dueText = "tonight", remind = 1, createdAt = now))
