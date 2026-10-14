@@ -1,0 +1,5 @@
+{
+ "_note": "The lowest memory exam scores CI accepts (Max plan Phase 7). tools/test_memory_floor.py fails when a change drops below them. When a change raises a score on purpose, raise the floor here in the same commit.",
+ "exam1_keyword": 0.7778,
+ "exam2_keyword": 0.9299
+}

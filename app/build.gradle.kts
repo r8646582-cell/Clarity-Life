@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.roborazzi)
 }
 
 // The prompts live at the repo root (prompts/*.md) because the Python checkers and the Kotlin app must
@@ -110,6 +111,9 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // The screen tests (Max plan Phase 7) draw real Compose screens with Robolectric, which needs the
+        // app's fonts and strings.
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             // The JVM contract tests read the very same files the Python reference tests read,
             // so the app and the spec cannot drift (CLAUDE.md, The contracts).
@@ -166,6 +170,14 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.serialization.json)
+    // Screen tests on the build machine (Max plan Phase 7): taps, tap sizes, large text, screenshots.
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    // Only adds an empty test screen to the debug build so the tests have somewhere to draw; never in a release.
+    debugImplementation(libs.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso)
     androidTestImplementation(libs.room.testing)

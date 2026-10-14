@@ -99,6 +99,8 @@ MUTATIONS = [
     ("context.py", "    return math.ceil((len(text) - digits - other) / 3 + digits + 2 * other)", "    return math.ceil(len(text) / 3)",
      "test_context.py", "numbers and dates counted as a third of their real tokens"),
     # Memory exam 2's leak guard: what he deleted or said off the record must never reach the coach.
+    ("context.py", "PART2_BUDGET = 9000", "PART2_BUDGET = 3000", "test_memory_floor.py",
+     "a smaller memory packet that leaves evidence out (the memory exam floor, Max plan Phase 7)"),
     ("eval/memory_exam2.py", 'if m["role"] == "user" and m["conversation"] not in off:', 'if m["role"] == "user":',
      "test_memory_exam2.py", "an off-the-record conversation's words indexed for search"),
     ("eval/memory_exam2.py", 'active = [n for n in h["notes"] if n["status"] == "active"]',
