@@ -25,16 +25,16 @@ class MaintenanceWorker(context: Context, params: WorkerParameters) : CoroutineW
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface Deps {
-        fun runner(): MaintenanceRunner
-        fun scheduler(): MaintenanceScheduler
+        fun maintenanceRunner(): MaintenanceRunner
+        fun maintenanceScheduler(): MaintenanceScheduler
     }
 
     override suspend fun doWork(): Result {
         val deps = EntryPointAccessors.fromApplication(applicationContext, Deps::class.java)
         try {
-            deps.runner().runOnce()
+            deps.maintenanceRunner().runOnce()
         } finally {
-            deps.scheduler().schedule()
+            deps.maintenanceScheduler().schedule()
         }
         return Result.success()
     }
