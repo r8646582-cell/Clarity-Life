@@ -30,19 +30,48 @@ object VectorMath {
         return s
     }
 
-    /** Stored as little-endian float32 in embedding_row.vector. */
+    /**
+     * Stored as 1 byte per dimension plus a float scale (4 bytes) in embedding_row.vector (S1).
+     * Quantizes to signed int8 (-127..127) with dynamic range scaling.
+     */
     fun toBytes(v: FloatArray): ByteArray {
-        val buf = ByteBuffer.allocate(v.size * 4).order(ByteOrder.LITTLE_ENDIAN)
-        for (x in v) buf.putFloat(x)
+        var max = 0f
+        for (x in v) {
+            val a = kotlin.math.abs(x)
+            if (a > max) max = a
+        }
+        val scale = if (max == 0f) 1f else max / 127f
+        val buf = ByteBuffer.allocate(4 + v.size).order(ByteOrder.LITTLE_ENDIAN)
+        buf.putFloat(scale)
+        for (x in v) {
+            val q = Math.round(x / scale)
+            val b = (if (q > 127) 127 else if (q < -127) -127 else q).toByte()
+            buf.put(b)
+        }
         return buf.array()
     }
 
+    /**
+     * Reconstructs unit vector from stored bytes:
+     * - int8 format: 4-byte float scale + [dim] bytes
+     * - legacy float32 format: [dim] * 4 bytes
+     */
     fun fromBytes(bytes: ByteArray, dim: Int): FloatArray? {
-        if (bytes.size != dim * 4) return null
-        // One bulk copy, not one call per number (Max plan Phase 5: ten years of vectors are 33 million numbers).
-        val out = FloatArray(dim)
-        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(out)
-        return out
+        if (bytes.size == 4 + dim) {
+            val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+            val scale = buf.float
+            val out = FloatArray(dim)
+            for (i in 0 until dim) {
+                out[i] = buf.get() * scale
+            }
+            return out
+        }
+        if (bytes.size == dim * 4) {
+            val out = FloatArray(dim)
+            ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(out)
+            return out
+        }
+        return null
     }
 
     /**

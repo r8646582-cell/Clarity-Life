@@ -17,12 +17,20 @@ class VectorMathTest {
 
     @Test
     fun bytesRoundTripAndRejectTheWrongSize() {
-        val v = floatArrayOf(0.25f, -1.5f, 3.0e-7f)
-        assertArrayEquals(v, VectorMath.fromBytes(VectorMath.toBytes(v), 3), 0f)
+        val v = floatArrayOf(0.25f, -1.5f, 0.05f)
+        val decoded = VectorMath.fromBytes(VectorMath.toBytes(v), 3)!!
+        assertArrayEquals(v, decoded, 0.02f)
         assertNull(VectorMath.fromBytes(VectorMath.toBytes(v), 4))
-        // Little-endian, so the stored form is the same on every phone.
-        assertEquals(0x00, VectorMath.toBytes(floatArrayOf(1f))[0].toInt())
-        assertEquals(0x3F, VectorMath.toBytes(floatArrayOf(1f))[3].toInt())
+        // Format is 4-byte float scale + dim signed int8 bytes (1 byte per dimension).
+        val single = floatArrayOf(1f)
+        val bytes = VectorMath.toBytes(single)
+        assertEquals(5, bytes.size) // 4 bytes scale + 1 byte int8
+        assertEquals(127.toByte(), bytes[4])
+        // Legacy float32 format (dim * 4 bytes) is still accepted and decoded.
+        val legacy = java.nio.ByteBuffer.allocate(3 * 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).apply {
+            for (x in v) putFloat(x)
+        }.array()
+        assertArrayEquals(v, VectorMath.fromBytes(legacy, 3), 0f)
     }
 
     @Test

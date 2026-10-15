@@ -93,8 +93,13 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
                     seen++
                     after = r.rowId
                     if (r.model != Embedder.MODEL || r.dim != Embedder.DIM) continue
-                    val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
-                    index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+                    if (r.vector.size == Embedder.DIM + 4) {
+                        val scale = java.nio.ByteBuffer.wrap(r.vector, 0, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).float
+                        index.addQuantized(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), scale, r.vector, 4)
+                    } else {
+                        val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
+                        index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+                    }
                 }
             }
             if (rows.size < BATCH) break

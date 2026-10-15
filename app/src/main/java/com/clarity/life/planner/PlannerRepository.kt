@@ -39,6 +39,25 @@ class PlannerRepository @Inject constructor(
 ) {
     private val dao get() = db.planner()
 
+    @Volatile
+    private var cachedTracker: Pair<LocalDate, PlanBlocks.Tracker>? = null
+
+    init {
+        db.invalidationTracker.addObserver(
+            object : androidx.room.InvalidationTracker.Observer(
+                arrayOf("goal", "target", "target_version", "backlog", "checkin", "rest_day", "plan"),
+            ) {
+                override fun onInvalidated(tables: Set<String>) {
+                    cachedTracker = null
+                }
+            },
+        )
+    }
+
+    fun invalidateTrackerCache() {
+        cachedTracker = null
+    }
+
     val goals get() = dao.watchGoals()
     val targets get() = dao.watchTargets()
     val backlogs get() = dao.watchBacklogs()
@@ -67,6 +86,7 @@ class PlannerRepository @Inject constructor(
         deadline: LocalDate?,
         now: Long,
     ): Long = db.withTransaction {
+        invalidateTrackerCache()
         val t = title.trim()
         if (t.isEmpty()) throw Refused("a goal needs words")
         Values.requireValid("goal.area", area)
@@ -80,6 +100,7 @@ class PlannerRepository @Inject constructor(
     /** A goal is never silently changed: each new wording or date is kept as a revision, with his reason. */
     suspend fun reviseGoal(id: Long, title: String, deadline: LocalDate?, reason: String, now: Long) =
         db.withTransaction {
+            invalidateTrackerCache()
             val g = dao.goal(id) ?: throw Refused("goal gone")
             val t = title.trim()
             if (t.isEmpty()) throw Refused("a goal needs words")
@@ -90,6 +111,7 @@ class PlannerRepository @Inject constructor(
 
     /** Done, archived, or back to active. Its targets and backlogs keep their own status and history. */
     suspend fun setGoalStatus(id: Long, status: String) = db.withTransaction {
+        invalidateTrackerCache()
         Values.requireValid("goal.status", status)
         val g = dao.goal(id) ?: throw Refused("goal gone")
         dao.updateGoal(g.copy(status = status))
@@ -142,6 +164,7 @@ class PlannerRepository @Inject constructor(
                 schedule = schedule.trim(), status = "active", createdAt = System.currentTimeMillis(),
             ),
         )
+        invalidateTrackerCache()
         return id
     }
 
@@ -175,12 +198,14 @@ class PlannerRepository @Inject constructor(
      * clears it. Any time from 1 minute to 24 hours.
      */
     suspend fun setTargetMinutes(id: Long, minutes: Double?) = db.withTransaction {
+        invalidateTrackerCache()
         if (minutes != null && !(minutes >= 1.0 && minutes <= 1440.0)) throw Refused("minutes are 1 to 1440")
         val t = dao.target(id) ?: throw Refused("target gone")
         dao.updateTarget(t.copy(minutes = minutes))
     }
 
     suspend fun setTargetStatus(id: Long, status: String, today: LocalDate) = db.withTransaction {
+        invalidateTrackerCache()
         Values.requireValid("target.status", status)
         val t = dao.target(id) ?: throw Refused("target gone")
         val end = if (status == "ended" && (t.endDay == null || LocalDate.parse(t.endDay).isAfter(today))) {
@@ -215,6 +240,7 @@ class PlannerRepository @Inject constructor(
         val n = name.trim()
         if (n.isEmpty() || unit.isBlank()) throw Refused("a backlog needs a name and a unit")
         Values.requireBacklogAmounts(total, startDone)
+        invalidateTrackerCache()
         return dao.insertBacklog(
             BacklogRow(
                 goalId = goalId, name = n, total = total, unit = unit.trim(), startDone = startDone,
@@ -224,6 +250,7 @@ class PlannerRepository @Inject constructor(
     }
 
     suspend fun setBacklogStatus(id: Long, status: String) = db.withTransaction {
+        invalidateTrackerCache()
         Values.requireValid("backlog.status", status)
         val b = dao.backlog(id) ?: throw Refused("backlog gone")
         dao.updateBacklog(b.copy(status = status))
@@ -233,6 +260,7 @@ class PlannerRepository @Inject constructor(
 
     /** A planned day off for every target: neither done nor missed, and not counted in days left. */
     suspend fun setRestDay(day: LocalDate, rest: Boolean, now: Long) = db.withTransaction {
+        invalidateTrackerCache()
         dao.deleteRestDay(day.toString())
         if (rest) dao.insertRestDay(RestDayRow(dayKey = day.toString(), createdAt = now))
     }
@@ -251,6 +279,7 @@ class PlannerRepository @Inject constructor(
         note: String?,
         now: Long,
     ) = db.withTransaction {
+        invalidateTrackerCache()
         Values.requireValid("checkin.level", level)
         Values.requireCheckinAmount(amount)
         if (day.isAfter(today)) throw Refused("a day that has not come yet")
@@ -279,6 +308,7 @@ class PlannerRepository @Inject constructor(
 
     /** Undo an answer: the day goes back to "no answer", which is never a miss. */
     suspend fun clearCheckIn(targetId: Long, day: LocalDate) = db.withTransaction {
+        invalidateTrackerCache()
         dao.deleteCheckin(targetId, day.toString())
     }
 
@@ -288,8 +318,15 @@ class PlannerRepository @Inject constructor(
     suspend fun liveTargets(today: LocalDate): List<TargetRow> =
         dao.activeTargets().filter { t -> t.endDay == null || !LocalDate.parse(t.endDay).isBefore(today) }
 
-    /** The active tracker as PLAN_STATE and CHECKIN_FACTS read it on [today]. */
+    /** The active tracker as PLAN_STATE and CHECKIN_FACTS read it on [today]. Cached until something is saved (S3). */
     suspend fun tracker(today: LocalDate): PlanBlocks.Tracker {
+        cachedTracker?.takeIf { it.first == today }?.second?.let { return it }
+        val fresh = buildTracker(today)
+        cachedTracker = today to fresh
+        return fresh
+    }
+
+    private suspend fun buildTracker(today: LocalDate): PlanBlocks.Tracker {
         val targets = Spans.span("tracker: live targets read") { liveTargets(today) }
         val checkins = Spans.span("tracker: their check-ins read") { if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id }) }
         val byTarget = checkins.groupBy { it.targetId }
@@ -361,6 +398,7 @@ class PlannerRepository @Inject constructor(
         sourceConversationId: Long?,
         now: Long,
     ): Long {
+        invalidateTrackerCache()
         val review = steps.review ?: throw Refused("no review day")
         val goalId = steps.goalId ?: run {
             val title = steps.newGoalTitle ?: throw Refused("no goal")
@@ -397,6 +435,7 @@ class PlannerRepository @Inject constructor(
         planId: Long? = null,
         backlogId: Long? = null,
     ): Long {
+        invalidateTrackerCache()
         val t = dao.target(step.old.id) ?: throw Refused("target gone")
         if (t.status == "ended") throw Refused("target ended")
         val changed = t.copy(
@@ -422,6 +461,7 @@ class PlannerRepository @Inject constructor(
         is PlanApply.BacklogStep.New -> insertBacklog(goalId, step.name, step.total, step.unit, 0.0, step.deadline, now)
         is PlanApply.BacklogStep.Keep -> step.old.id
         is PlanApply.BacklogStep.Change -> {
+            invalidateTrackerCache()
             val b = dao.backlog(step.old.id) ?: throw Refused("backlog gone")
             val changed = b.copy(
                 total = step.total ?: b.total,

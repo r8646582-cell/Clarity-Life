@@ -49,11 +49,18 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     private var totalEmbedCount: Long = 0
     private var totalEmbedDurationMs: Long = 0
 
+    private val queryCache = object : LinkedHashMap<String, FloatArray>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, FloatArray>?) = size > 64
+    }
+
     /** Why meaning search is off, as a content-free code, or null while it works (or was never tried). */
     val problem: String? get() = failed
 
     /** A unit vector of [DIM] floats, or null when meaning search is off. Blocking; call it off the main thread. */
     fun embed(text: String): FloatArray? {
+        synchronized(queryCache) {
+            queryCache[text]?.let { return it.copyOf() }
+        }
         val l = load() ?: return null
         return try {
             val t0 = android.os.SystemClock.uptimeMillis()
@@ -65,7 +72,10 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
                 totalEmbedDurationMs += dt
                 averageDurationMs = totalEmbedDurationMs / totalEmbedCount
             }
-            result
+            synchronized(queryCache) {
+                queryCache[text] = result
+            }
+            result.copyOf()
         } catch (e: Exception) {
             null
         }

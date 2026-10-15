@@ -87,4 +87,26 @@ class VectorIndexTest {
         val q = vectors[7]
         assertEquals(grown.search(q, -1.0, 300) { true }, reserved.search(q, -1.0, 300) { it.docId < 300 })
     }
+
+    @Test
+    fun addQuantizedGivesSameSearchResults() {
+        val r = Random(9)
+        val vectors = List(50) { unit(r) }
+        val indexAdd = VectorIndex(dim)
+        val indexQuantized = VectorIndex(dim)
+        vectors.forEachIndexed { i, v ->
+            indexAdd.add(VectorIndex.Entry("message", i.toLong(), 1, i + 1L), v)
+            val bytes = VectorMath.toBytes(v)
+            val scale = java.nio.ByteBuffer.wrap(bytes, 0, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).float
+            indexQuantized.addQuantized(VectorIndex.Entry("message", i.toLong(), 1, i + 1L), scale, bytes, 4)
+        }
+        val q = vectors[3]
+        val hitsA = indexAdd.search(q, -1.0, 50) { true }
+        val hitsB = indexQuantized.search(q, -1.0, 50) { true }
+        assertEquals(hitsA.size, hitsB.size)
+        for (i in hitsA.indices) {
+            assertEquals(hitsA[i].entry.docId, hitsB[i].entry.docId)
+            assertEquals(hitsA[i].approx, hitsB[i].approx, 1e-6)
+        }
+    }
 }

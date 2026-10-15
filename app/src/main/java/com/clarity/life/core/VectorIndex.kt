@@ -65,6 +65,18 @@ class VectorIndex(private val dim: Int) {
         if (entry.rowId > maxRowId) maxRowId = entry.rowId
     }
 
+    /** Adds an already quantized int8 vector and its float scale directly without re-quantization. */
+    fun addQuantized(entry: Entry, scale: Float, quantized: ByteArray, offset: Int = 0) {
+        require(quantized.size - offset >= dim) { "quantized vector of the wrong size" }
+        if (size == entries.size) grow()
+        val base = size * dim
+        System.arraycopy(quantized, offset, data, base, dim)
+        scales[size] = scale
+        entries[size] = entry
+        size++
+        if (entry.rowId > maxRowId) maxRowId = entry.rowId
+    }
+
     /**
      * Every vector [accept] lets through whose approximate score is at least [floor], best first, at most
      * [limit]. The query is quantized the same way, so one pass is integer arithmetic.
