@@ -89,6 +89,14 @@ class CardScreensTest {
     }
 
     @Test
+    fun checkinAndPromiseStatusButtonsTapCorrectly() {
+        compose.setContent { s.Gallery(listOf(s.checkin, s.promiseStatus)) }
+        click("Log it")
+        click("Done")
+        assertEquals(listOf("logCheckin 10", "updatePromiseStatus 11 done"), s.taps)
+    }
+
+    @Test
     fun everyButtonIsBigEnoughToTap() {
         compose.setContent { s.Gallery() }
         checkTapSizes()

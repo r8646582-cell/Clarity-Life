@@ -61,6 +61,10 @@ class CardActions(
     val openPlan: () -> Unit = {},
     /** F3 to the focus's name, for a mode card into a focus; null when it is not active. */
     val focusName: (String?) -> String? = { null },
+    val logCheckin: (Long) -> Unit = {},
+    val updatePromiseStatus: (Long, String) -> Unit = { _, _ -> },
+    val targetName: (String?) -> String? = { null },
+    val promiseText: (String?) -> String? = { null },
 )
 
 private val NOTE_KINDS = mapOf(
@@ -95,8 +99,8 @@ fun SuggestionCard(
             receipt ?: "Saved earlier. It has since been changed or removed.",
             onView = when {
                 receipt == null -> null
-                card.type == "promise" -> actions.openPromises
-                card.type in com.clarity.life.chat.CardSaver.PLAN_TYPES -> actions.openPlan
+                card.type == "promise" || card.type == "promise_status" -> actions.openPromises
+                card.type in com.clarity.life.chat.CardSaver.PLAN_TYPES || card.type == "checkin" -> actions.openPlan
                 else -> null
             },
         )
@@ -203,6 +207,32 @@ private fun OfferedCard(card: CardRow, line: String?, preview: com.clarity.life.
                     Spacer(Modifier.weight(1f))
                     Plain("Stay here") { actions.notNow(card.id) }
                 }
+            }
+
+            "checkin" -> {
+                val tId = f["target"]
+                val targetName = actions.targetName(tId) ?: tId.orEmpty()
+                val amount = f["amount"].orEmpty()
+                Kicker("Check-in")
+                Headline("Log: $targetName, $amount today")
+                f["reason"]?.let { Body(it) }
+                line?.let { Body(it) }
+                Buttons("Log it", { actions.logCheckin(card.id) }, { actions.notNow(card.id) })
+            }
+
+            "promise_status" -> {
+                val pId = f["promise"]
+                val promiseText = actions.promiseText(pId) ?: pId.orEmpty()
+                val st = f["status"] ?: "done"
+                Kicker("Promise")
+                Headline(promiseText)
+                f["reason"]?.let { Body(it) }
+                line?.let { Body(it) }
+                Buttons(
+                    if (st == "not_done") "Not done" else if (st == "let_go") "Let go" else "Done",
+                    { actions.updatePromiseStatus(card.id, st) },
+                    { actions.notNow(card.id) },
+                )
             }
 
             else -> {

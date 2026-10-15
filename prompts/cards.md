@@ -20,7 +20,7 @@ A card is a suggestion the app shows under your reply with buttons. Nothing is s
 
 These format rules are strict because the app reads the card exactly; everything else about when to offer one is your judgment.
 
-## The seven types
+## The card types
 
 **promise**: one specific thing they have said they will do.
 [[suggest: {"type":"promise","text":"Study one half-known topic for 20 minutes, phone in another room","when":"tomorrow 17:00","remind":true,"why":"Get a first piece of evidence against 'I won't get it'"}]]
@@ -50,8 +50,17 @@ Fields: kind (pattern, what_helps, what_doesnt, value or thread), text (required
 [[suggest: {"type":"mode","to":"decide"}]]
 Offer it in a sentence or two of plain words, and do not begin the other conversation's work yourself. Fields: to (free, untangle, decide, plan or focus). For focus add the focus id from FOCUS, for example `{"type":"mode","to":"focus","focus":"F1"}`.
 
+**checkin**: log today's progress for a target from PLAN_STATE.
+[[suggest: {"type":"checkin","target":"T1","amount":3}]]
+Fields: target (required, an id from PLAN_STATE such as T1), amount (required, a number 0 or above), reason (optional, up to 200).
+
+**promise_status**: mark an open promise from OPEN_PROMISES as done or not done.
+[[suggest: {"type":"promise_status","promise":"P1","status":"done"}]]
+Fields: promise (required, an id from OPEN_PROMISES such as P1), status (required: done, not_done, or let_go), reason (optional, up to 200).
+
 ## When to send one
 - A promise, focus, note or switch: when they have clearly committed or agreed, send the card in that same reply. Do not hold it back to ask one more thing.
+- A check-in or promise update: when they report what they did or could not do today, send the card in that same reply.
 - A new plan: only after they have said yes to it in words. First lay it out and ask if this is the plan; send the plan card in the reply after their yes, as the final version with every change they asked for. Never send a draft plan card.
 - A change they asked for themselves (a target, a backlog): their asking is the yes, so send that card in the same reply.
 

@@ -106,11 +106,17 @@ object PlanBlocks {
         Planner.reviewOptions(reviewSchedule(t.targets), today, t.restDays)
 
     /** The ids and review options sent, so the card parser can reject anything invented. */
-    fun known(t: Tracker, today: LocalDate, focuses: Set<String> = emptySet()): KnownIds = KnownIds(
+    fun known(
+        t: Tracker,
+        today: LocalDate,
+        focuses: Set<String> = emptySet(),
+        promises: Set<String> = emptySet(),
+    ): KnownIds = KnownIds(
         goals = t.goals.map { "G${it.id}" }.toSet(),
         targets = t.targets.map { "T${it.id}" }.toSet(),
         backlogs = t.backlogs.map { "B${it.id}" }.toSet(),
         focuses = focuses,
+        promises = promises,
         reviewOptions = reviewOptions(t, today).map { it.date }.toSet(),
     )
 
@@ -147,8 +153,9 @@ object PlanBlocks {
         val left = Planner.scheduledCount(schedule, countFrom, b.deadline, rest)
         // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
         val start = b.firstStart ?: firstLive ?: if (linked.isEmpty() && b.doneElsewhere.isEmpty()) today else null
-        val typical = Planner.typicalPace(merged, schedule, today, rest, start)
-        val best = Planner.bestPace(merged, schedule, today, rest, start)
+        val targetVersions = if (linked.size == 1) versionsOf(linked[0]) else emptyList()
+        val typical = Planner.typicalPace(merged, schedule, today, rest, start, targetVersions)
+        val best = Planner.bestPace(merged, schedule, today, rest, start, targetVersions)
         val steps = linked.filter { it.start != null }.sortedBy { it.start }
             .map { PlanStep(it.target, it.schedule, it.start!!, it.end) }
         return BacklogFacts(
@@ -199,7 +206,7 @@ object PlanBlocks {
             f.progress?.let { lines += "  " + PlanStateText.planProgressLine("B${b.id}", clean(b.name), it) }
         }
         fun targetLine(x: Target) {
-            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)
+            val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start, versionsOf(x))
             val owner = x.goalId?.let { "G$it" } ?: "no goal"
             lines += PlanStateText.targetLine(
                 "T${x.id}", clean(x.name), owner, x.minimum, x.target, x.schedule, w.done, w.answered,

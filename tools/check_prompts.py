@@ -92,7 +92,7 @@ for name in contract["chat_prompts_for_block_check"]:
 ex = texts.get("examples.md", "")
 sections = re.split(r"(?m)^## ", ex)[1:]
 known = {"goal": {"G1", "G2"}, "target": {"T1", "T3"}, "backlog": {"B1"}, "focus": {"F1"},
-         "review_options": {"17 Oct", "24 Oct"}}
+         "promise": {"P1", "P2"}, "review_options": {"17 Oct", "24 Oct"}}
 banned = [norm(b) for b in contract["banned_phrases_for_replies"]]
 for sec in sections:
     title = sec.split("\n", 1)[0].strip()

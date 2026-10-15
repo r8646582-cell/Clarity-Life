@@ -306,9 +306,34 @@ object Planner {
         first: LocalDate,
         last: LocalDate,
         restDates: Set<LocalDate>,
+        versions: List<TargetVersion> = emptyList(),
     ): WindowFacts {
-        val parsed = parseSchedule(schedule)
-        val sched = if (parsed is Schedule.Days) scheduledDates(schedule, first, last, restDates).toSet() else null
+        val sched: Set<LocalDate>?
+        if (versions.isNotEmpty()) {
+            val s = mutableSetOf<LocalDate>()
+            var hasCount = false
+            var cur = first
+            while (!cur.isAfter(last)) {
+                if (cur !in restDates) {
+                    val v = versionOn(versions, cur)
+                    val schedStr = v?.schedule ?: schedule
+                    val status = v?.status ?: "active"
+                    if (status == "active") {
+                        val parsed = parseSchedule(schedStr)
+                        if (parsed is Schedule.Days) {
+                            if (weekday(cur) in parsed.weekdays) s.add(cur)
+                        } else {
+                            hasCount = true
+                        }
+                    }
+                }
+                cur = cur.plusDays(1)
+            }
+            sched = if (hasCount) null else s
+        } else {
+            val parsed = parseSchedule(schedule)
+            sched = if (parsed is Schedule.Days) scheduledDates(schedule, first, last, restDates).toSet() else null
+        }
         val answered = checkins.filter {
             !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" &&
                 (sched == null || it.day in sched)
@@ -325,6 +350,7 @@ object Planner {
      * Pace over the 14 days before today. Null pace when fewer than [MIN_ANSWERED] answered scheduled days.
      * With [start] (the first day it was tracked) the window never reaches before it: days before a plan existed
      * are not unanswered days. A plan that starts today or later has no window, so no answer rate yet.
+     * With [versions] (target_version), the schedule in force on each day is used (Q3).
      */
     fun typicalPace(
         checkins: List<CheckIn>,
@@ -332,6 +358,7 @@ object Planner {
         today: LocalDate,
         restDates: Set<LocalDate> = emptySet(),
         start: LocalDate? = null,
+        versions: List<TargetVersion> = emptyList(),
     ): PaceWindow {
         var first = today.minusDays(WINDOW.toLong())
         if (start != null && start.isAfter(first)) first = start
@@ -339,7 +366,7 @@ object Planner {
         if (first.isAfter(last)) {
             return PaceWindow(answered = 0, scheduled = 0, amount = 0.0, done = 0, pace = null, answerRate = null)
         }
-        val w = window(checkins, schedule, first, last, restDates)
+        val w = window(checkins, schedule, first, last, restDates, versions)
         return PaceWindow(
             answered = w.answered,
             scheduled = w.scheduled,
@@ -360,6 +387,7 @@ object Planner {
         today: LocalDate,
         restDates: Set<LocalDate> = emptySet(),
         start: LocalDate? = null,
+        versions: List<TargetVersion> = emptyList(),
     ): Double? {
         // Check-ins from before the start are not counted, the same as in typicalPace.
         val checkins = if (start == null) all else all.filter { !it.day.isBefore(start) }
@@ -368,6 +396,17 @@ object Planner {
         val lastEnd = today.minusDays(1)
         var end = minOf(days.min().plusDays((WINDOW - 1).toLong()), lastEnd)
         var best: Double? = null
+        if (versions.isNotEmpty()) {
+            while (!end.isAfter(lastEnd)) {
+                val w = window(checkins, schedule, end.minusDays((WINDOW - 1).toLong()), end, restDates, versions)
+                if (w.answered >= MIN_ANSWERED) {
+                    val p = w.amount / w.answered
+                    if (best == null || p > best) best = p
+                }
+                end = end.plusDays(1)
+            }
+            return best
+        }
         // Each window reads only the check-ins inside it (Max plan Phase 5): ten years of daily answers made this
         // about 13 million steps. The ones inside are counted in their given order, as [window] counts them, so
         // every sum is the same to the last digit (BestPaceTest compares it with the plain way).

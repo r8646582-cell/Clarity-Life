@@ -145,6 +145,10 @@ fun TalkScreen(
             savePlan = model::savePlanCard,
             openPlan = { reviews.showSection("Goals"); onOpenPlan() },
             focusName = model::focusName,
+            logCheckin = model::logCheckin,
+            updatePromiseStatus = model::updatePromiseStatus,
+            targetName = { id -> state.targetNames[id] },
+            promiseText = { id -> state.promiseTexts[id] },
         )
     }
     val keyboard = LocalSoftwareKeyboardController.current

@@ -149,10 +149,42 @@ def days_left(schedule, today, deadline, today_answered=False, rest_dates=()):
     return scheduled_count(schedule, start, deadline, rest_dates)
 
 
-def _window(checkins, schedule, first, last, rest_dates):
-    kind, _ = parse_schedule(schedule)
+def version_on(versions, day):
+    """The version in force on day, or None before the first one."""
+    day = d(day)
+    out = None
+    for v in versions:
+        if d(v["from"]) <= day:
+            out = v
+        else:
+            break
+    return out
+
+
+def _window(checkins, schedule, first, last, rest_dates, versions=None):
     rest = {d(x) for x in rest_dates}
-    sched = set(scheduled_dates(schedule, first, last, rest)) if kind == "days" else None
+    if versions:
+        sched = set()
+        has_count = False
+        cur = first
+        while cur <= last:
+            if cur not in rest:
+                v = version_on(versions, cur)
+                s = v["schedule"] if v else schedule
+                status = v["status"] if v else "active"
+                if status == "active":
+                    kind, val = parse_schedule(s)
+                    if kind == "days":
+                        if cur.weekday() in val:
+                            sched.add(cur)
+                    else:
+                        has_count = True
+            cur += timedelta(days=1)
+        if has_count:
+            sched = None
+    else:
+        kind, _ = parse_schedule(schedule)
+        sched = set(scheduled_dates(schedule, first, last, rest)) if kind == "days" else None
     answered = [c for c in checkins
                 if first <= d(c["day"]) <= last and c["level"] != "rest"
                 and (sched is None or d(c["day"]) in sched)]
@@ -162,10 +194,11 @@ def _window(checkins, schedule, first, last, rest_dates):
     return {"answered": len(answered), "scheduled": scheduled, "amount": amount, "done": done}
 
 
-def typical_pace(checkins, schedule, today, rest_dates=(), start=None):
+def typical_pace(checkins, schedule, today, rest_dates=(), start=None, versions=None):
     """Pace over the 14 days before today. None when fewer than MIN_ANSWERED answered scheduled days.
     With start (the first day it was tracked), the window never reaches before it: days before a plan existed
-    are not unanswered days. A plan that starts today or later has no window, so no answer rate yet."""
+    are not unanswered days. A plan that starts today or later has no window, so no answer rate yet.
+    With versions (target_version), the schedule in force on each day is used (Q3)."""
     today = d(today)
     first = today - timedelta(days=WINDOW)
     if start is not None and d(start) > first:
@@ -173,13 +206,13 @@ def typical_pace(checkins, schedule, today, rest_dates=(), start=None):
     last = today - timedelta(days=1)
     if first > last:
         return {"answered": 0, "scheduled": 0, "amount": 0, "done": 0, "pace": None, "answer_rate": None}
-    w = _window(checkins, schedule, first, last, rest_dates)
+    w = _window(checkins, schedule, first, last, rest_dates, versions)
     w["pace"] = w["amount"] / w["answered"] if w["answered"] >= MIN_ANSWERED else None
     w["answer_rate"] = (round_half_up(100 * w["answered"] / w["scheduled"]) if w["scheduled"] else None)
     return w
 
 
-def best_pace(checkins, schedule, today, rest_dates=(), start=None):
+def best_pace(checkins, schedule, today, rest_dates=(), start=None, versions=None):
     """Best pace over any 14-day window that ends before today and holds at least MIN_ANSWERED answered days.
     The typical window (ending yesterday) is always one of the candidates, so best >= typical whenever both exist.
     With start, check-ins before it are not counted, the same as in typical_pace."""
@@ -193,7 +226,7 @@ def best_pace(checkins, schedule, today, rest_dates=(), start=None):
     end = min(min(days) + timedelta(days=WINDOW - 1), last_end)
     best = None
     while end <= last_end:
-        w = _window(checkins, schedule, end - timedelta(days=WINDOW - 1), end, rest_dates)
+        w = _window(checkins, schedule, end - timedelta(days=WINDOW - 1), end, rest_dates, versions)
         if w["answered"] >= MIN_ANSWERED:
             p = w["amount"] / w["answered"]
             best = p if best is None or p > best else best
@@ -455,8 +488,9 @@ def backlog_facts(total, start_done, created_day, deadline, targets, today, done
     left = scheduled_count(schedule, count_from, deadline, rest)
     # Nothing ever linked: nothing was asked, so there is no window (no answer rate of 0%).
     start = d(first_start) if first_start else (min(starts) if starts else (today if not targets and not done_elsewhere else None))
-    tp = typical_pace(merged, schedule, today, rest, start)
-    best = best_pace(merged, schedule, today, rest, start)
+    target_vers = target_versions(targets[0]) if len(targets) == 1 else None
+    tp = typical_pace(merged, schedule, today, rest, start, versions=target_vers)
+    best = best_pace(merged, schedule, today, rest, start, versions=target_vers)
     steps = sorted([{"target": t["target"], "schedule": t["schedule"], "start": t["start"], "end": t.get("end")}
                     for t in targets if t.get("start")], key=lambda x: d(x["start"]))
     return {
@@ -475,17 +509,6 @@ def backlog_facts(total, start_done, created_day, deadline, targets, today, done
 # A target's values over time are versions: {from, minimum, target, schedule, status}, one per day a change took
 # effect (the day he tapped it, or the target's start when that is later), oldest first. Before schema 8 nothing
 # was recorded, so the migration gives every old target one version, its values then, from its start day.
-
-def version_on(versions, day):
-    """The version in force on day, or None before the first one."""
-    day = d(day)
-    out = None
-    for v in versions:
-        if d(v["from"]) <= day:
-            out = v
-        else:
-            break
-    return out
 
 
 def planned_amount(targets, first, last, rest_dates=()):

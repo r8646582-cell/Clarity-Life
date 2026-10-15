@@ -213,12 +213,14 @@ class PlannerTest {
         )
 
         "typical_pace" -> {
+            val vers = if (args.containsKey("versions")) versions(args) else emptyList()
             val w = Planner.typicalPace(
                 checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
                 args.str("schedule"),
                 LocalDate.parse(args.str("today")),
                 restDates(args),
                 args.strOrNull("start")?.let(LocalDate::parse),
+                vers,
             )
             json(
                 mapOf(

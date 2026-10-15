@@ -14,6 +14,10 @@
   "focus": [
    "F1"
   ],
+  "promise": [
+   "P1",
+   "P2"
+  ],
   "review_options": [
    "17 Oct",
    "24 Oct"
@@ -546,6 +550,84 @@
    "name": "weeks above a year is refused",
    "chat_type": "plan",
    "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":53}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "valid checkin",
+   "chat_type": "free",
+   "reply": "Good job today.\n[[suggest: {\"type\":\"checkin\",\"target\":\"T1\",\"amount\":3}]]",
+   "expect_cards": [
+    "checkin"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "valid checkin with reason",
+   "chat_type": "plan",
+   "reply": "Logged.\n[[suggest: {\"type\":\"checkin\",\"target\":\"T1\",\"amount\":0.5,\"reason\":\"tired\"}]]",
+   "expect_cards": [
+    "checkin"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "checkin unknown target is dropped",
+   "chat_type": "free",
+   "reply": "Logged.\n[[suggest: {\"type\":\"checkin\",\"target\":\"T99\",\"amount\":1}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "checkin negative amount is dropped",
+   "chat_type": "free",
+   "reply": "Logged.\n[[suggest: {\"type\":\"checkin\",\"target\":\"T1\",\"amount\":-1}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "checkin not allowed in untangle",
+   "chat_type": "untangle",
+   "reply": "Logged.\n[[suggest: {\"type\":\"checkin\",\"target\":\"T1\",\"amount\":1}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "valid promise_status done",
+   "chat_type": "free",
+   "reply": "Marked.\n[[suggest: {\"type\":\"promise_status\",\"promise\":\"P1\",\"status\":\"done\"}]]",
+   "expect_cards": [
+    "promise_status"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "valid promise_status not_done with reason",
+   "chat_type": "decide",
+   "reply": "Understood.\n[[suggest: {\"type\":\"promise_status\",\"promise\":\"P1\",\"status\":\"not_done\",\"reason\":\"tired\"}]]",
+   "expect_cards": [
+    "promise_status"
+   ],
+   "expect_dropped": 0
+  },
+  {
+   "name": "promise_status unknown promise is dropped",
+   "chat_type": "free",
+   "reply": "Marked.\n[[suggest: {\"type\":\"promise_status\",\"promise\":\"P99\",\"status\":\"done\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "promise_status invalid status is dropped",
+   "chat_type": "free",
+   "reply": "Marked.\n[[suggest: {\"type\":\"promise_status\",\"promise\":\"P1\",\"status\":\"invalid\"}]]",
+   "expect_cards": [],
+   "expect_dropped": 1
+  },
+  {
+   "name": "promise_status not allowed in untangle",
+   "chat_type": "untangle",
+   "reply": "Marked.\n[[suggest: {\"type\":\"promise_status\",\"promise\":\"P1\",\"status\":\"done\"}]]",
    "expect_cards": [],
    "expect_dropped": 1
   }

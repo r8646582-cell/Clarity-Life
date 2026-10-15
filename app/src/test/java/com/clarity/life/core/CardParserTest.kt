@@ -57,6 +57,7 @@ class CardParserTest {
         targets = obj.strings("target").toSet(),
         backlogs = obj.strings("backlog").toSet(),
         focuses = obj.strings("focus").toSet(),
+        promises = obj.strings("promise").toSet(),
         reviewOptions = obj.strings("review_options").toSet(),
     )
 }

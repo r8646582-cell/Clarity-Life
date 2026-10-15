@@ -40,6 +40,7 @@ class CardSaver @Inject constructor(
     private val settings: SettingsRepository,
     private val search: com.clarity.life.memory.SearchIndex,
     private val planner: com.clarity.life.planner.PlannerRepository,
+    private val reminders: com.clarity.life.promise.Reminders,
 ) {
 
     sealed interface Result {
@@ -144,6 +145,62 @@ class CardSaver @Inject constructor(
         db.conversations().setPrefix(conversationId, null, null)
         Result.Saved("mode:$to")
     }
+
+    /**
+     * Log: on a checkin card ("Log: Tax lectures, 3 today").
+     */
+    suspend fun saveCheckin(cardId: Long, now: Long): Result = decide(cardId, "checkin", now) { _, card ->
+        val targetId = card.str("target")?.removePrefix("T")?.toLongOrNull()
+            ?: return@decide Result.NotSaved("target gone")
+        val target = db.planner().target(targetId) ?: return@decide Result.NotSaved("target gone")
+        if (target.status != "active") return@decide Result.NotSaved("target ended")
+        val amount = card.num("amount") ?: return@decide Result.NotSaved("invalid")
+        val today = dayOf(now)
+        val level = try {
+            Planner.levelFor(amount, target.minimum, target.target)
+        } catch (e: Exception) {
+            return@decide Result.NotSaved("refused")
+        }
+        val reason = card.str("reason")
+        planner.checkIn(
+            targetId = targetId,
+            day = today,
+            today = today,
+            level = level,
+            amount = amount,
+            reason = reason,
+            note = null,
+            now = now,
+        )
+        Result.Saved("checkin:$targetId")
+    }
+
+    /**
+     * Done or Not done: on a promise_status card.
+     */
+    suspend fun savePromiseStatus(cardId: Long, chosenStatus: String? = null, now: Long): Result = decide(cardId, "promise_status", now) { _, card ->
+        val promiseId = card.str("promise")?.removePrefix("P")?.toLongOrNull()
+            ?: return@decide Result.NotSaved("gone")
+        val p = db.promises().get(promiseId) ?: return@decide Result.NotSaved("gone")
+        if (p.status != "open") return@decide Result.NotSaved("already_${p.status}")
+        val st = chosenStatus ?: card.str("status") ?: return@decide Result.NotSaved("invalid")
+        val dbStatus = when (st) {
+            "done" -> "kept"
+            "not_done" -> "not_done"
+            "let_go" -> "let_go"
+            else -> return@decide Result.NotSaved("unsupported")
+        }
+        if (!StateMachines.PROMISE.allows(p.status, dbStatus)) return@decide Result.NotSaved("unsupported")
+        val reason = if (dbStatus == "not_done") card.str("reason") else null
+        db.promises().resolve(promiseId, StateMachines.move(StateMachines.PROMISE, p.status, dbStatus), reason, now)
+        db.promises().get(promiseId)?.let { search.indexPromise(it) }
+        reminders.sync(promiseId, now)
+        Result.Saved("promise_status:$promiseId")
+    }
+
+    suspend fun targetName(targetId: Long): String? = db.planner().target(targetId)?.name
+
+    suspend fun promiseText(promiseId: Long): String? = db.promises().get(promiseId)?.text
 
     // ---------- plan, target change and backlog ----------
 
@@ -278,6 +335,15 @@ class CardSaver @Inject constructor(
             "backlog" -> db.planner().backlog(id ?: return null)?.let { b ->
                 "${b.name}: ${PlanApply.n(b.total)} ${b.unit} by ${TimeFacts.shortDay(java.time.LocalDate.parse(b.deadline))}"
             }
+            "checkin" -> db.planner().target(id ?: return null)?.let { t ->
+                val u = if (t.unit.isBlank()) "" else " ${t.unit}"
+                val chk = db.planner().checkin(t.id, dayOf(row.decidedAt ?: row.createdAt).toString())
+                val amountStr = chk?.let { PlanApply.n(it.amount) } ?: ""
+                "Logged: ${t.name}, $amountStr$u today"
+            }
+            "promise_status" -> db.promises().get(id ?: return null)?.let { p ->
+                "Promise: ${p.text} · ${com.clarity.life.core.PromiseText.outcome(com.clarity.life.promise.PromiseRepository.model(p))}"
+            }
             else -> null
         }
     }
@@ -325,10 +391,12 @@ class CardSaver @Inject constructor(
      */
     private suspend fun readCard(row: CardRow, now: Long): Card? = try {
         val raw = StrictJson.parse(row.payloadJson)
-        val known = if (row.type in PLAN_TYPES) {
+        val known = if (row.type in PLAN_TYPES || row.type == "checkin") {
             val review = raw.asObj?.map?.get("review_date")?.asStr
             PlanBlocks.known(planner.tracker(dayOf(now)), dayOf(now))
                 .copy(reviewOptions = setOfNotNull(review))
+        } else if (row.type == "promise_status") {
+            KnownIds(promises = db.promises().open().map { "P${it.id}" }.toSet())
         } else if (row.type == "mode") {
             KnownIds(focuses = db.memory().openFocusIds().map { "F$it" }.toSet())
         } else {

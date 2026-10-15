@@ -407,7 +407,7 @@ class ChatRepository @Inject constructor(
             prefix = prefix,
             prefixDay = today,
             historyStartId = conversation.historyStartId,
-            known = PlanBlocks.known(tracker, dayKey, focusIds()),
+            known = PlanBlocks.known(tracker, dayKey, focusIds(), db.promises().open().map { "P${it.id}" }.toSet()),
             droppedItems = turn.dropped,
             overBudget = turn.overBudget,
             windowMoved = start > firstIndex && start < stored.size,
@@ -605,7 +605,7 @@ class ChatRepository @Inject constructor(
         } catch (e: Exception) {
             return row.type
         }
-        for (key in listOf("text", "title", "name")) {
+        for (key in listOf("text", "title", "name", "target", "promise")) {
             (obj[key] as? JsonPrimitive)?.contentOrNull?.let { return it }
         }
         return row.type

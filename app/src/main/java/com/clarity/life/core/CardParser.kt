@@ -21,6 +21,7 @@ data class KnownIds(
     val targets: Set<String> = emptySet(),
     val backlogs: Set<String> = emptySet(),
     val focuses: Set<String> = emptySet(),
+    val promises: Set<String> = emptySet(),
     val reviewOptions: Set<String> = emptySet(),
 ) {
     fun forKind(kind: String): Set<String> = when (kind) {
@@ -28,6 +29,7 @@ data class KnownIds(
         "target" -> targets
         "backlog" -> backlogs
         "focus" -> focuses
+        "promise" -> promises
         else -> emptySet()
     }
 }
@@ -70,14 +72,14 @@ object CardParser {
         Jv.Obj(linkedMapOf<String, Jv>("type" to Jv.Str(card.type)).also { it.putAll(card.fields) }),
     )
 
-    val CARD_TYPES = listOf("promise", "plan", "target_change", "backlog", "focus", "note", "mode")
+    val CARD_TYPES = listOf("promise", "plan", "target_change", "backlog", "focus", "note", "mode", "checkin", "promise_status")
 
     /** Which cards each chat type may show (spec section 5). The app drops any card a type does not allow. */
     val CHAT_TYPES = mapOf(
-        "free" to listOf("promise", "focus", "mode", "note"),
+        "free" to listOf("promise", "focus", "mode", "note", "checkin", "promise_status"),
         "untangle" to listOf("mode", "note"),
-        "decide" to listOf("promise", "mode", "note"),
-        "plan" to listOf("plan", "target_change", "backlog", "promise", "mode", "note"),
+        "decide" to listOf("promise", "mode", "note", "checkin", "promise_status"),
+        "plan" to listOf("plan", "target_change", "backlog", "promise", "mode", "note", "checkin", "promise_status"),
     )
 
     const val MAX_CARDS = 3
@@ -90,6 +92,7 @@ object CardParser {
 
     val NOTE_KINDS = listOf("pattern", "what_helps", "what_doesnt", "value", "thread")
     val MODE_TARGETS = listOf("free", "untangle", "decide", "plan", "focus")
+    val PROMISE_STATUSES = listOf("done", "not_done", "let_go")
 
     private val LINE_RE = Regex("""^\[\[suggest:\s*(\{.*\})\s*\]\]$""") // braces escaped: Android's regex engine rejects a bare }
     private val ID_RE = mapOf(
@@ -97,6 +100,7 @@ object CardParser {
         "target" to Regex("""^T\d+$"""),
         "backlog" to Regex("""^B\d+$"""),
         "focus" to Regex("""^F\d+$"""),
+        "promise" to Regex("""^P\d+$"""),
     )
 
     private fun hasControlChar(s: String) = s.any { it.code < 0x20 || it.code == 0x7f }
@@ -299,6 +303,22 @@ object CardParser {
                 if (to == null || to !in MODE_TARGETS) throw CardBad("bad mode")
                 out["to"] = Jv.Str(to)
                 if (to == "focus") out["focus"] = Jv.Str(id(c, "focus", "focus", known)!!)
+            }
+
+            "checkin" -> {
+                out["target"] = Jv.Str(id(c, "target", "target", known)!!)
+                out["amount"] = num(c, "amount", minimum = 0.0)!!
+                val reason = str(c, "reason", 200, required = false)
+                if (!reason.isNullOrEmpty()) out["reason"] = Jv.Str(reason)
+            }
+
+            "promise_status" -> {
+                out["promise"] = Jv.Str(id(c, "promise", "promise", known)!!)
+                val st = str(c, "status", 20)!!
+                if (st !in PROMISE_STATUSES) throw CardBad("bad promise status")
+                out["status"] = Jv.Str(st)
+                val reason = str(c, "reason", 200, required = false)
+                if (!reason.isNullOrEmpty()) out["reason"] = Jv.Str(reason)
             }
         }
         return Card(t, out)

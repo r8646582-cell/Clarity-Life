@@ -200,6 +200,50 @@
    "expect": "2026-10-11"
   },
   {
+   "name": "typical pace with schedule change in force (Q3)",
+   "fn": "typical_pace",
+   "args": {
+    "checkins": [
+     {"day": "2026-10-01", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-02", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-03", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-04", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-05", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-06", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-07", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-09", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-12", "level": "target", "amount": 2, "reason": null},
+     {"day": "2026-10-14", "level": "target", "amount": 2, "reason": null}
+    ],
+    "schedule": "Mon,Wed,Fri",
+    "today": "2026-10-15",
+    "versions": [
+     {
+      "from": "2026-10-01",
+      "minimum": 1,
+      "target": 2,
+      "schedule": "daily",
+      "status": "active"
+     },
+     {
+      "from": "2026-10-08",
+      "minimum": 1,
+      "target": 2,
+      "schedule": "Mon,Wed,Fri",
+      "status": "active"
+     }
+    ]
+   },
+   "expect": {
+    "answered": 10,
+    "scheduled": 10,
+    "amount": 20.0,
+    "done": 10,
+    "pace": 2.0,
+    "answer_rate": 100.0
+   }
+  },
+  {
    "name": "typical pace window Sep 25 to Oct 8",
    "fn": "typical_pace",
    "args": {

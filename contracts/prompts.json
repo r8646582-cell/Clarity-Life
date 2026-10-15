@@ -74,6 +74,8 @@
         "focus",
         "note",
         "mode",
+        "checkin",
+        "promise_status",
         "Nothing is saved until",
         "At most three cards",
         "remind (true only if they asked",

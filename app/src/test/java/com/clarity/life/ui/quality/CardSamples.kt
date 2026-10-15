@@ -45,10 +45,12 @@ class CardSamples {
     val blocked = Sample(row(7, "target_change"), mapOf("target" to "Study"), preview = CardSaver.Preview.Blocked("date"))
     val saved = Sample(row(8, "note", status = "saved"), mapOf("kind" to "value", "text" to "x"), receipt = "Kept in What I know.")
     val dismissed = Sample(row(9, "focus", status = "dismissed"), mapOf("name" to "x"))
+    val checkin = Sample(row(10, "checkin"), mapOf("target" to "T1", "amount" to "3"))
+    val promiseStatus = Sample(row(11, "promise_status"), mapOf("promise" to "P1", "status" to "done"))
 
     /** Every offered card, in the order the gallery shows them. */
     val offered = listOf(promise, unclearPromise, note, focus, mode, plan, blocked)
-    val all = offered + listOf(saved, dismissed)
+    val all = offered + listOf(saved, dismissed, checkin, promiseStatus)
 
     private val byId = all.associateBy { it.card.id }
 
@@ -69,6 +71,10 @@ class CardSamples {
         openPromises = { taps += "openPromises" },
         savePlan = { taps += "savePlan $it" },
         openPlan = { taps += "openPlan" },
+        logCheckin = { taps += "logCheckin $it" },
+        updatePromiseStatus = { id, st -> taps += "updatePromiseStatus $id $st" },
+        targetName = { "Tax lectures" },
+        promiseText = { "Study 1 hour" },
     )
 
     @Composable

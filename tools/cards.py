@@ -16,12 +16,12 @@ import re
 
 from planner import parse_schedule, PlannerError  # one schedule grammar for cards and planner
 
-CARD_TYPES = ["promise", "plan", "target_change", "backlog", "focus", "note", "mode"]
+CARD_TYPES = ["promise", "plan", "target_change", "backlog", "focus", "note", "mode", "checkin", "promise_status"]
 CHAT_TYPES = {
-    "free": ["promise", "focus", "mode", "note"],
+    "free": ["promise", "focus", "mode", "note", "checkin", "promise_status"],
     "untangle": ["mode", "note"],
-    "decide": ["promise", "mode", "note"],
-    "plan": ["plan", "target_change", "backlog", "promise", "mode", "note"],
+    "decide": ["promise", "mode", "note", "checkin", "promise_status"],
+    "plan": ["plan", "target_change", "backlog", "promise", "mode", "note", "checkin", "promise_status"],
 }
 MAX_CARDS = 3
 MAX_NUMBER = 100000        # no target, minimum or total is ever this large; bigger means a broken card
@@ -29,9 +29,11 @@ MAX_WEEKS = 52             # a ramp step lasts at most a year
 LINE_RE = re.compile(r"^\[\[suggest:\s*(\{.*\})\s*\]\]$")
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 ID_RE = {"goal": re.compile(r"^G\d+$"), "target": re.compile(r"^T\d+$"),
-         "backlog": re.compile(r"^B\d+$"), "focus": re.compile(r"^F\d+$")}
+         "backlog": re.compile(r"^B\d+$"), "focus": re.compile(r"^F\d+$"),
+         "promise": re.compile(r"^P\d+$")}
 NOTE_KINDS = ["pattern", "what_helps", "what_doesnt", "value", "thread"]
 MODE_TARGETS = ["free", "untangle", "decide", "plan", "focus"]
+PROMISE_STATUSES = ["done", "not_done", "let_go"]
 
 
 class Bad(Exception):
@@ -237,6 +239,21 @@ def validate(card, known):
         out["to"] = to
         if to == "focus":
             out["focus"] = _id(card, "focus", "focus", known)
+    elif t == "checkin":
+        out["target"] = _id(card, "target", "target", known)
+        out["amount"] = _num(card, "amount", minimum=0.0)
+        r = _str(card, "reason", 200, required=False)
+        if r:
+            out["reason"] = r
+    elif t == "promise_status":
+        out["promise"] = _id(card, "promise", "promise", known)
+        st = _str(card, "status", 20)
+        if st not in PROMISE_STATUSES:
+            raise Bad("bad promise status")
+        out["status"] = st
+        r = _str(card, "reason", 200, required=False)
+        if r:
+            out["reason"] = r
     return out
 
 

@@ -64,6 +64,8 @@ class TalkViewModel @Inject constructor(
         /** The focus this conversation belongs to, if any, and the active focuses the dropdown lists. */
         val focusId: Long? = null,
         val focuses: List<com.clarity.life.data.entity.FocusRow> = emptyList(),
+        val targetNames: Map<String, String> = emptyMap(),
+        val promiseTexts: Map<String, String> = emptyMap(),
         /**
          * False only for the empty starting value, before the database has answered. Talk home waits for it,
          * so it never flashes the first-visit welcome to someone who has conversations.
@@ -92,6 +94,8 @@ class TalkViewModel @Inject constructor(
         val receipts: Map<Long, String> = emptyMap(),
         val lines: Map<Long, String> = emptyMap(),
         val previews: Map<Long, com.clarity.life.chat.CardSaver.Preview> = emptyMap(),
+        val targetNames: Map<String, String> = emptyMap(),
+        val promiseTexts: Map<String, String> = emptyMap(),
     )
 
     private val cardsByMessage = MutableStateFlow(CardsView())
@@ -140,6 +144,8 @@ class TalkViewModel @Inject constructor(
             hasKey = extra.hasKey,
             focusId = extra.focusId,
             focuses = extra.focuses,
+            targetNames = cards.targetNames,
+            promiseTexts = cards.promiseTexts,
             loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
@@ -445,6 +451,19 @@ class TalkViewModel @Inject constructor(
         result
     }
 
+    /** Log it, on a checkin card ("Log: Tax lectures, 3 today"). */
+    fun logCheckin(cardId: Long) = tap(cardId) { saver.saveCheckin(cardId, System.currentTimeMillis()) }
+
+    /** Done or Not done, on a promise_status card. */
+    fun updatePromiseStatus(cardId: Long, status: String) = tap(cardId) {
+        val result = saver.savePromiseStatus(cardId, status, System.currentTimeMillis())
+        if (result is com.clarity.life.chat.CardSaver.Result.Saved) {
+            val pid = result.ref.substringAfter(':').toLongOrNull()
+            if (pid != null) reminders.sync(pid)
+        }
+        result
+    }
+
     /**
      * What a promise card's "when" means, resolved in code against the moment the coach offered it (so
      * "tomorrow" keeps meaning the day after that reply, however late he taps).
@@ -521,6 +540,8 @@ class TalkViewModel @Inject constructor(
         val map = HashMap<Long, List<CardRow>>()
         val receipts = HashMap<Long, String>()
         val previews = HashMap<Long, com.clarity.life.chat.CardSaver.Preview>()
+        val targetNames = HashMap<String, String>()
+        val promiseTexts = HashMap<String, String>()
         val now = System.currentTimeMillis()
         val all = rows.firstOrNull()?.let { chat.cards.ofConversation(it.conversationId) }.orEmpty().groupBy { it.messageId }
         for (row in rows) {
@@ -528,8 +549,22 @@ class TalkViewModel @Inject constructor(
             map[row.id] = cards
             for (card in cards) {
                 saver.receipt(card)?.let { receipts[card.id] = it }
-                if (card.status == "offered" && card.type in com.clarity.life.chat.CardSaver.PLAN_TYPES) {
-                    previews[card.id] = saver.planPreview(card, now)
+                if (card.status == "offered") {
+                    if (card.type in com.clarity.life.chat.CardSaver.PLAN_TYPES) {
+                        previews[card.id] = saver.planPreview(card, now)
+                    } else if (card.type == "checkin") {
+                        val tid = cardFields(card)["target"]
+                        val tidNum = tid?.removePrefix("T")?.toLongOrNull()
+                        if (tid != null && tidNum != null) {
+                            saver.targetName(tidNum)?.let { targetNames[tid] = it }
+                        }
+                    } else if (card.type == "promise_status") {
+                        val pid = cardFields(card)["promise"]
+                        val pidNum = pid?.removePrefix("P")?.toLongOrNull()
+                        if (pid != null && pidNum != null) {
+                            saver.promiseText(pidNum)?.let { promiseTexts[pid] = it }
+                        }
+                    }
                 }
             }
         }
@@ -537,13 +572,16 @@ class TalkViewModel @Inject constructor(
         if (line != null) {
             if (line.second == null) lines.remove(line.first) else lines[line.first] = line.second!!
         }
-        cardsByMessage.value = CardsView(map, receipts, lines, previews)
+        cardsByMessage.value = CardsView(map, receipts, lines, previews, targetNames, promiseTexts)
     }
 
     fun cardFields(row: CardRow): Map<String, String> = try {
         val parsed = com.clarity.life.core.StrictJson.parse(row.payloadJson)
-        parsed.asObj?.map?.mapValues { (_, v) -> v.asStr ?: v.asNum?.toString() ?: v.asBool?.toString() ?: "" }
-            ?: emptyMap()
+        parsed.asObj?.map?.mapValues { (_, v) ->
+            v.asStr ?: (v as? com.clarity.life.core.Jv.Num)?.let {
+                if (it.isInteger || kotlin.math.abs(it.value - it.value.toLong()) < 0.0001) it.value.toLong().toString() else it.value.toString()
+            } ?: v.asNum?.toString() ?: v.asBool?.toString() ?: ""
+        } ?: emptyMap()
     } catch (e: Exception) {
         emptyMap()
     }
