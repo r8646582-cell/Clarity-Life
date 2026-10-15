@@ -87,6 +87,16 @@ interface EmbeddingDao {
     )
     suspend fun rowsAfter(after: Long, limit: Int): List<CachedRow>
 
+    /** The int8 change (improvement report, S1): this model's rows after [after], by rowid, a batch at a time. */
+    @Query(
+        "SELECT rowid AS rowId, vector FROM embedding_row WHERE rowid > :after AND model = :model " +
+            "ORDER BY rowid LIMIT :limit",
+    )
+    suspend fun vectorsAfter(model: String, after: Long, limit: Int): List<StoredVector>
+
+    @Query("UPDATE embedding_row SET vector = :vector WHERE rowid = :rowId")
+    suspend fun replaceVector(rowId: Long, vector: ByteArray)
+
     /** Counted from the primary-key index, without reading the vectors. */
     @Query("SELECT COUNT(*) FROM embedding_row")
     suspend fun countAll(): Int
@@ -126,3 +136,5 @@ class CachedRow(
     val vector: ByteArray,
     val conversationId: Long,
 )
+
+class StoredVector(val rowId: Long, val vector: ByteArray)

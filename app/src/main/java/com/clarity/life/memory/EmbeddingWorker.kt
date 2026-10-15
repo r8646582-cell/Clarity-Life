@@ -7,6 +7,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.room.withTransaction
 import com.clarity.life.core.VectorMath
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.dao.ToEmbed
@@ -67,6 +68,7 @@ class EmbeddingIndexer @Inject constructor(
             dao.deleteOtherModels(Embedder.MODEL)
             db.settings().put(SettingRow(MODEL_KEY, Embedder.MODEL))
         }
+        shrinkOldVectors()
         var made = 0
         // A row the model cannot read is skipped for this run, so one bad row can never loop forever.
         val skipped = HashSet<String>()
@@ -90,11 +92,38 @@ class EmbeddingIndexer @Inject constructor(
                     skipped += "$kind:${row.id}"
                     continue
                 }
-                dao.put(EmbeddingRow(kind, row.id, Embedder.MODEL, Embedder.DIM, VectorMath.toBytes(v)))
+                dao.put(EmbeddingRow(kind, row.id, Embedder.MODEL, Embedder.DIM, VectorMath.toInt8Bytes(v)))
                 made++
             }
         }
         made
+    }
+
+    /**
+     * Improvement report S1: vectors made before it were stored as 4 bytes a number; each becomes 1 byte a number
+     * and a scale (about 134 MB to 34 MB at ten years), without running the model again. Once, a batch at a time;
+     * where it got to is kept, so a stopped run carries on. Search works throughout: both forms are read.
+     */
+    private suspend fun shrinkOldVectors() {
+        val s = db.settings()
+        if (s.get(INT8_KEY) == "done") return
+        val dao = db.embeddings()
+        var after = s.get(INT8_KEY)?.toLongOrNull() ?: 0L
+        while (true) {
+            val rows = dao.vectorsAfter(Embedder.MODEL, after, SHRINK_BATCH)
+            if (rows.isEmpty()) break
+            // One transaction a batch: one write to the phone's storage per 500 rows, not per row.
+            db.withTransaction {
+                for (r in rows) {
+                    if (VectorMath.isFloatForm(r.vector, Embedder.DIM)) {
+                        VectorMath.fromBytes(r.vector, Embedder.DIM)?.let { dao.replaceVector(r.rowId, VectorMath.toInt8Bytes(it)) }
+                    }
+                }
+                after = rows.last().rowId
+                s.put(SettingRow(INT8_KEY, after.toString()))
+            }
+        }
+        s.put(SettingRow(INT8_KEY, "done"))
     }
 
     suspend fun count(): Int = db.embeddings().count(Embedder.MODEL)
@@ -105,6 +134,10 @@ class EmbeddingIndexer @Inject constructor(
         /** The model the stored vectors were last cleaned up for (derived-data bookkeeping, like the index version). */
         const val MODEL_KEY = "vectors_model"
         private const val BATCH = 50
+
+        /** Where the change to 1-byte vectors got to (a rowid), then "done". */
+        const val INT8_KEY = "vectors_int8"
+        private const val SHRINK_BATCH = 500
     }
 }
 

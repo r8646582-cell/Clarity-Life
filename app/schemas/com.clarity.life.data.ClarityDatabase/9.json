@@ -2505,8 +2505,7 @@
             "fieldPath": "calls",
             "columnName": "calls",
             "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "0"
+            "notNull": true
           },
           {
             "fieldPath": "tokensIn",

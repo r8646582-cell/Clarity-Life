@@ -111,7 +111,7 @@ class Index:
         self.emb = None
         if hybrid:
             self.emb = Embedder()
-            self.vecs = {k: self.emb.embed(d["text"]) for k, d in self.docs.items()}
+            self.vecs = {k: self.emb.stored(self.emb.embed(d["text"])) for k, d in self.docs.items()}
 
     def _add(self, kind, ident, text, session, at):
         self.db.execute("INSERT INTO search_doc(kind, ref_id, title, body) VALUES (?,?,?,?)", (kind, str(ident), "", text))
@@ -174,6 +174,15 @@ class Embedder:
         self.tok.enable_truncation(512)
         parts = sorted(n for n in os.listdir(MODEL_DIR) if n.startswith("model_quantized.onnx.part"))
         self.s = ort.InferenceSession(b"".join(open(os.path.join(MODEL_DIR, n), "rb").read() for n in parts))
+
+    def stored(self, v):
+        """Mirror of VectorMath.toInt8Bytes then fromBytes (improvement report, S1): the vector as the database
+        keeps it, one signed byte per number and one scale. A search compares the message's float vector with it."""
+        np = self.np
+        top = float(np.max(np.abs(v)))
+        scale = np.float32(top / 127.0) if top > 0 else np.float32(1.0)
+        q = np.clip(np.floor(v / scale + 0.5), -127, 127)
+        return (q * scale).astype(np.float32)
 
     def embed(self, text):
         np = self.np

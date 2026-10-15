@@ -26,6 +26,34 @@ class VectorMathTest {
     }
 
     @Test
+    fun int8FormIsAQuarterOfTheSizeAndCloseToTheFloats() {
+        val rnd = java.util.Random(7)
+        repeat(50) {
+            val v = VectorMath.normalize(FloatArray(768) { rnd.nextGaussian().toFloat() })
+            val w = VectorMath.normalize(FloatArray(768) { rnd.nextGaussian().toFloat() + v[it] * 2 })
+            val bytes = VectorMath.toInt8Bytes(v)
+            assertEquals(772, bytes.size)
+            val back = VectorMath.fromBytes(bytes, 768)!!
+            // The cosine a search computes moves far less than the in-memory index's MARGIN.
+            assertEquals(VectorMath.dot(v, w), VectorMath.dot(back, w), 0.005)
+            for (i in v.indices) assertEquals(v[i], back[i], v.maxOf { x -> kotlin.math.abs(x) } / 127f / 2 + 1e-6f)
+        }
+    }
+
+    @Test
+    fun int8FormKnownAnswerAndBothFormsAreRead() {
+        val bytes = VectorMath.toInt8Bytes(floatArrayOf(1.27f, -0.62f, 0f))
+        // Scale 0.01 as little-endian float32, then 127, -62, 0.
+        assertEquals(0.01f, java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).getFloat(), 1e-9f)
+        assertEquals(listOf<Byte>(127, -62, 0), bytes.drop(4))
+        assertArrayEquals(floatArrayOf(1.27f, -0.62f, 0f), VectorMath.fromBytes(bytes, 3), 1e-6f)
+        assertEquals(true, VectorMath.isFloatForm(VectorMath.toBytes(floatArrayOf(1f, 2f)), 2))
+        assertEquals(false, VectorMath.isFloatForm(VectorMath.toInt8Bytes(floatArrayOf(1f, 2f)), 2))
+        assertArrayEquals(floatArrayOf(0f, 0f), VectorMath.fromBytes(VectorMath.toInt8Bytes(floatArrayOf(0f, 0f)), 2), 0f)
+        assertNull(VectorMath.fromBytes(ByteArray(5), 3))
+    }
+
+    @Test
     fun fusionRewardsBeingInBothLists() {
         val keyword = listOf("a", "b", "c")
         val meaning = listOf("c", "d")

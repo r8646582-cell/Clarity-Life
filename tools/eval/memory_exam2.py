@@ -122,7 +122,7 @@ class Index:
         self.emb = None
         if hybrid:
             self.emb = mx.Embedder()
-            self.vecs = {k: self.emb.embed(d["text"]) for k, d in self.docs.items()}
+            self.vecs = {k: self.emb.stored(self.emb.embed(d["text"])) for k, d in self.docs.items()}
 
     def _add(self, kind, ident, text, conversation, at, msg=None):
         self.db.execute("INSERT INTO search_doc(kind, ref_id, title, body) VALUES (?,?,?,?)", (kind, str(ident), "", text))

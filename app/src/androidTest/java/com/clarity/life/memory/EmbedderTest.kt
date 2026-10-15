@@ -99,4 +99,35 @@ class EmbedderTest {
             db.close()
         }
     }
+
+    /**
+     * Improvement report S1: a vector stored the old way (4 bytes a number) becomes 1 byte a number and a scale,
+     * once, without running the model again, and meaning search still finds it.
+     */
+    @Test
+    fun oldFloatVectorsAreShrunkOnceAndStillFound() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(context, ClarityDatabase::class.java).build()
+        try {
+            val embedder = TestEmbedder.shared
+            val search = SearchIndex(db, embedder)
+            val now = 1_791_648_000_000L
+            val one = db.conversations().insert(ConversationRow(startedAt = now, title = "Revision"))
+            val two = db.conversations().insert(ConversationRow(startedAt = now + 1))
+            val text = "my sister Hina helps me revise on sundays"
+            val id = db.messages().insert(MessageRow(conversationId = one, role = "user", content = text, createdAt = now))
+            search.indexHisMessage(id, text)
+            db.settings().put(com.clarity.life.data.entity.SettingRow(EmbeddingIndexer.MODEL_KEY, Embedder.MODEL))
+            db.embeddings().put(EmbeddingRow("message", id, Embedder.MODEL, Embedder.DIM, VectorMath.toBytes(embedder.embed(text)!!)))
+
+            val indexer = EmbeddingIndexer(context, db, embedder)
+            assertEquals("nothing new to make", 0, indexer.indexMissing(now))
+            val stored = db.embeddings().vectorOf("message", id, Embedder.MODEL, Embedder.DIM)!!
+            assertEquals(Embedder.DIM + 4, stored.size)
+            assertEquals("done", db.settings().get(EmbeddingIndexer.INT8_KEY))
+            val block = search.relevantPast(two, "who helps me study at the weekend?", "Asia/Karachi")
+            assertEquals(listOf(true), block.items.map { it.text.contains("my sister Hina") })
+        } finally {
+            db.close()
+        }
+    }
 }
