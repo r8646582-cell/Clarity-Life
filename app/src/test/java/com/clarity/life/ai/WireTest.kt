@@ -36,6 +36,47 @@ class WireTest {
     }
 
     @Test
+    fun keepAlivesDoNotKeepABusyProviderWaitingForever() {
+        // DeepSeek sends ": keep-alive" every few seconds while busy, for up to 10 minutes.
+        val quiet = QuietTimer(gapMs = 120_000, startMs = 0)
+        var now = 0L
+        while (!quiet.quietTooLong(now)) {
+            now += 5_000
+            assertEquals(OpenAiWire.Event.Ignore, OpenAiWire.parseLine(": keep-alive"))
+        }
+        assertEquals(125_000L, now)
+    }
+
+    @Test
+    fun aRealPieceResetsTheQuietTimer() {
+        val quiet = QuietTimer(gapMs = 120_000, startMs = 0)
+        quiet.piece(100_000)
+        assertFalse(quiet.quietTooLong(200_000))
+        assertTrue(quiet.quietTooLong(220_001))
+    }
+
+    @Test
+    fun anAnthropicPingIsNotAPieceOfTheReply() {
+        assertEquals(OpenAiWire.Event.Ignore, AnthropicWire.parseLine("event: ping"))
+        assertEquals(OpenAiWire.Event.Ignore, AnthropicWire.parseLine("data: {\"type\": \"ping\"}"))
+    }
+
+    @Test
+    fun aBusyProviderGetsItsOwnQuietLine() {
+        val line = OpenAiCompatibleClient.friendly(QuietTimer.busy())
+        assertTrue(line.contains("busy"))
+    }
+
+    @Test
+    fun aTestThatRanOutOfTimeSaysSo() {
+        val limit = com.clarity.life.settings.DefaultSettings.TEST_TIMEOUT_S * 1000
+        val cut = AiFailure("network", "could not reach the provider")
+        assertTrue(OpenAiCompatibleClient.testLine(cut, startedMs = 0, nowMs = limit).startsWith("No answer within"))
+        // A quick failure keeps its own line.
+        assertEquals(OpenAiCompatibleClient.friendly(cut), OpenAiCompatibleClient.testLine(cut, startedMs = 0, nowMs = 2_000))
+    }
+
+    @Test
     fun theEndOfTheStreamIsRecognised() {
         assertEquals(OpenAiWire.Event.Done, OpenAiWire.parseLine("data: [DONE]"))
     }

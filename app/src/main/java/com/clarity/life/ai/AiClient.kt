@@ -30,6 +30,8 @@ data class Endpoint(
      * 120 for chat, 300 for background calls, which may think for a long time with nothing to show.
      */
     val readTimeoutS: Long = com.clarity.life.settings.DefaultSettings.CHAT_GAP_TIMEOUT_S,
+    /** The longest the whole call may take, in seconds; 0 is no limit (a reply may think for minutes). Test connection only. */
+    val callTimeoutS: Long = 0,
 ) {
     /** What a coach message records as its model, for the Details sheet. */
     val label: String
