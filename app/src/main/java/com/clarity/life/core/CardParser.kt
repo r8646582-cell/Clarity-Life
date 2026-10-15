@@ -53,7 +53,13 @@ data class Card(val type: String, val fields: Map<String, Jv>) {
     }
 }
 
-data class ParsedReply(val prose: String, val cards: List<Card>, val dropped: List<String>)
+data class ParsedReply(
+    val prose: String,
+    val cards: List<Card>,
+    val dropped: List<String>,
+    /** The reply ended with the "no card" signal `[[cards: none]]` (improvement report, C2); removed from [prose]. */
+    val saidNoCard: Boolean = false,
+)
 
 object CardParser {
 
@@ -87,6 +93,9 @@ object CardParser {
     val MODE_TARGETS = listOf("free", "untangle", "decide", "plan", "focus")
 
     private val LINE_RE = Regex("""^\[\[suggest:\s*(\{.*\})\s*\]\]$""") // braces escaped: Android's regex engine rejects a bare }
+
+    /** The "no card" signal, only as the very last line (tools/cards.py NONE_RE). */
+    private val NONE_RE = Regex("""^\[\[cards:\s*none\s*\]\]$""", RegexOption.IGNORE_CASE)
     private val ID_RE = mapOf(
         "goal" to Regex("""^G\d+$"""),
         "target" to Regex("""^T\d+$"""),
@@ -310,6 +319,11 @@ object CardParser {
         val lines = text.replace("\r\n", "\n").split("\n")
         var end = lines.size
         while (end > 0 && lines[end - 1].isBlank()) end--
+        val saidNoCard = end > 0 && NONE_RE.matches(lines[end - 1].trim())
+        if (saidNoCard) {
+            end--
+            while (end > 0 && lines[end - 1].isBlank()) end--
+        }
         var start = end
         while (start > 0 && (lines[start - 1].trim().startsWith("[[suggest:") || lines[start - 1].isBlank())) start--
         val tail = lines.subList(start, end).map { it.trim() }.filter { it.isNotEmpty() }
@@ -367,6 +381,6 @@ object CardParser {
             }
             out.add(l)
         }
-        return ParsedReply(out.joinToString("\n").trimEnd(), cards, dropped)
+        return ParsedReply(out.joinToString("\n").trimEnd(), cards, dropped, saidNoCard)
     }
 }

@@ -539,6 +539,54 @@
    "reply": "Here it is.\n[[suggest: {\"type\":\"plan\",\"title\":\"Clear the CAF course\",\"goal\":\"G1\",\"rationale\":\"Their own ramp\",\"targets\":[{\"name\":\"CAF lectures\",\"unit\":\"lectures\",\"min\":1,\"schedule\":\"daily\",\"target\":2,\"weeks\":53}],\"backlog\":[{\"name\":\"CAF lectures\",\"total\":300,\"unit\":\"lectures\",\"deadline\":\"1 Feb\"}],\"review_date\":\"17 Oct\"}]]",
    "expect_cards": [],
    "expect_dropped": 1
+  },
+  {
+   "name": "no-card signal: removed from the prose, not a drop",
+   "chat_type": "free",
+   "reply": "That sounds like a heavy day. Rest tonight.\n\n[[cards: none]]",
+   "expect_cards": [],
+   "expect_dropped": 0,
+   "expect_said_none": true,
+   "prose_has": "Rest tonight.",
+   "prose_not": "[["
+  },
+  {
+   "name": "no-card signal: spaces, case and trailing blank lines tolerated",
+   "chat_type": "free",
+   "reply": "Okay.\n[[Cards:  NONE ]]\n\n",
+   "expect_cards": [],
+   "expect_dropped": 0,
+   "expect_said_none": true,
+   "prose_not": "[["
+  },
+  {
+   "name": "no-card signal not on the last line is a stray bracket line",
+   "chat_type": "free",
+   "reply": "[[cards: none]]\nOkay, rest tonight.",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "expect_said_none": false,
+   "prose_has": "rest tonight",
+   "prose_not": "[["
+  },
+  {
+   "name": "no-card signal after a card line: the card still counts",
+   "chat_type": "free",
+   "reply": "Here it is.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n[[cards: none]]",
+   "expect_cards": [
+    "promise"
+   ],
+   "expect_dropped": 0,
+   "expect_said_none": true
+  },
+  {
+   "name": "a near miss of the no-card signal is not the signal",
+   "chat_type": "free",
+   "reply": "Okay.\n[[cards: no]]",
+   "expect_cards": [],
+   "expect_dropped": 1,
+   "expect_said_none": false,
+   "prose_not": "[["
   }
  ]
 }

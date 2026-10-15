@@ -27,6 +27,9 @@ MAX_CARDS = 3
 MAX_NUMBER = 100000        # no target, minimum or total is ever this large; bigger means a broken card
 MAX_WEEKS = 52             # a ramp step lasts at most a year
 LINE_RE = re.compile(r"^\[\[suggest:\s*(\{.*\})\s*\]\]$")
+# The "no card" signal (improvement report, C2): the coach's last line when it means to offer no card, so the
+# app skips the card step. Only as the very last line; anywhere else it is a stray bracket line as before.
+NONE_RE = re.compile(r"^\[\[cards:\s*none\s*\]\]$", re.IGNORECASE)
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 ID_RE = {"goal": re.compile(r"^G\d+$"), "target": re.compile(r"^T\d+$"),
          "backlog": re.compile(r"^B\d+$"), "focus": re.compile(r"^F\d+$")}
@@ -246,6 +249,13 @@ def parse_reply(text, chat_type, known=None):
     Only trailing lines of the exact form  [[suggest: {...}]]  can become cards.
     Any other line containing "[[" is removed from the prose (never shown raw) and counted as dropped.
     """
+    prose, cards, dropped, _ = parse_reply_full(text, chat_type, known)
+    return prose, cards, dropped
+
+
+def parse_reply_full(text, chat_type, known=None):
+    """parse_reply, plus whether the reply ended with the "no card" signal [[cards: none]] (removed from the
+    prose, never counted as dropped). The signal is only read as the very last non-blank line."""
     known = known or {}
     allowed = CHAT_TYPES[chat_type]
     lines = text.replace("\r\n", "\n").split("\n")
@@ -253,6 +263,11 @@ def parse_reply(text, chat_type, known=None):
     end = len(lines)
     while end > 0 and not lines[end - 1].strip():
         end -= 1
+    said_none = end > 0 and bool(NONE_RE.match(lines[end - 1].strip()))
+    if said_none:
+        end -= 1
+        while end > 0 and not lines[end - 1].strip():
+            end -= 1
     start = end
     while start > 0 and (lines[start - 1].strip().startswith("[[suggest:") or not lines[start - 1].strip()):
         start -= 1
@@ -297,4 +312,4 @@ def parse_reply(text, chat_type, known=None):
             continue
         out.append(l)
     prose = "\n".join(out).rstrip()
-    return prose, cards, dropped
+    return prose, cards, dropped, said_none

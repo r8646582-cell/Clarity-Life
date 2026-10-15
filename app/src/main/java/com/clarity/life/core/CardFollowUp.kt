@@ -10,9 +10,14 @@ package com.clarity.life.core
  */
 object CardFollowUp {
 
-    /** Every finished reply with no valid card. A reply cut off by the length limit is shown as cut off instead. */
+    /**
+     * Every finished reply with no valid card. A reply cut off by the length limit is shown as cut off instead.
+     * Skipped when the coach ended with the "no card" signal (improvement report, C2), unless its words still
+     * point at a button or a card line was thrown away: then it did mean a card, and the step stays.
+     */
     fun needed(parsed: ParsedReply, finishReason: String?): Boolean =
-        parsed.cards.isEmpty() && finishReason != "length" && parsed.prose.isNotBlank()
+        parsed.cards.isEmpty() && finishReason != "length" && parsed.prose.isNotBlank() &&
+            !(parsed.saidNoCard && parsed.dropped.isEmpty() && !CardTalk.pointsAtAButton(parsed.prose))
 
     /** What fills {{REASON}}: rule names only, never content. */
     fun reason(dropped: List<String>): String =

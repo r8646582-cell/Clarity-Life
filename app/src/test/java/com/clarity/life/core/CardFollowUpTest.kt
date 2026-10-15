@@ -25,6 +25,18 @@ class CardFollowUpTest {
         assertFalse(CardFollowUp.needed(CardParser.parseReply(ownerReply, "free"), "length"))
     }
 
+    /** Improvement report C2: the "no card" signal skips the step, unless the words or a dropped card say otherwise. */
+    @Test
+    fun theNoCardSignalSkipsTheStepOnlyWhenNothingPointsAtACard() {
+        assertFalse(CardFollowUp.needed(CardParser.parseReply("Rest tonight.\n[[cards: none]]", "free"), "stop"))
+        // Its words point at a button: it meant a card after all.
+        assertTrue(CardFollowUp.needed(CardParser.parseReply("Tap it below.\n[[cards: none]]", "free"), "stop"))
+        // A card line was thrown away: it tried to send one.
+        assertTrue(CardFollowUp.needed(CardParser.parseReply("Okay.\n[[suggest: {\"type\":\"promise\"}]]\n[[cards: none]]", "free"), "stop"))
+        // Without the signal, as before.
+        assertTrue(CardFollowUp.needed(CardParser.parseReply("Rest tonight.", "free"), "stop"))
+    }
+
     @Test
     fun theReasonNamesRulesNotContent() {
         assertEquals("your last reply has no card line", CardFollowUp.reason(emptyList()))

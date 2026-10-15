@@ -1,5 +1,6 @@
 package com.clarity.life.core
 
+import com.clarity.life.core.Vectors.boolOr
 import com.clarity.life.core.Vectors.int
 import com.clarity.life.core.Vectors.str
 import com.clarity.life.core.Vectors.strOrNull
@@ -39,6 +40,8 @@ class CardParserTest {
             if (result.dropped.size != expectDropped) {
                 failures.add("$name: ${result.dropped.size} dropped (${result.dropped}), expected $expectDropped")
             }
+            val expectNone = v.boolOr("expect_said_none", false)
+            if (result.saidNoCard != expectNone) failures.add("$name: saidNoCard ${result.saidNoCard}, expected $expectNone")
             v.strOrNull("prose_has")?.let {
                 if (!result.prose.contains(it)) failures.add("$name: the prose is missing \"$it\"")
             }
