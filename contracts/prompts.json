@@ -221,6 +221,43 @@
       ],
       "max_words": 1500
     },
+    "letter_monthly.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD",
+        "PROFILE",
+        "NOTES",
+        "REVIEW_FACTS",
+        "PLAN_STATE",
+        "PREVIOUS_LETTER",
+        "WEEKLY_LETTERS"
+      ],
+      "must_contain": [
+        "word for word",
+        "Do not say that anything was saved",
+        "never put it in quotation marks",
+        "numbers written in words"
+      ],
+      "max_words": 1500
+    },
+    "letter_yearly.md": {
+      "placeholders": [
+        "USER_NAME",
+        "PERIOD",
+        "PROFILE",
+        "NOTES",
+        "PLAN_STATE",
+        "PREVIOUS_LETTER",
+        "MONTHLY_LETTERS"
+      ],
+      "must_contain": [
+        "word for word",
+        "Do not say that anything was saved",
+        "never put it in quotation marks",
+        "numbers written in words"
+      ],
+      "max_words": 1500
+    },
     "brief_daily.md": {
       "placeholders": [
         "USER_NAME",

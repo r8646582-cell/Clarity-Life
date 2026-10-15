@@ -42,7 +42,8 @@ import com.clarity.life.ui.theme.TextAction
 
 /**
  * Plan, Reviews (docs/mockups/redesign/Reviews.dc.html): Weeks (the letter and the numbers of each week, a yellow dot while
- * the letter is unread, one quiet "delayed" line with Try again) and Months. A week opens its letter; the
+ * the letter is unread, one quiet "delayed" line with Try again), Months (each month's letter and review) and Years
+ * (the yearly letters). A week opens its letter; the
  * letter's See the numbers opens the weekly review (Review.dc.html), which has Talk about it.
  */
 @Composable
@@ -55,27 +56,30 @@ fun ReviewsSection(
     onOpenReview: (Long?) -> Unit,
     onTalk: () -> Unit,
 ) {
-    val letter = state.weeks.firstNotNullOfOrNull { w -> w.letter?.takeIf { it.id == openLetterId } }
-    val review = (state.weeks.mapNotNull { it.review } + state.months).firstOrNull { it.id == openReviewId }
+    val letter = state.letters.firstOrNull { it.id == openLetterId }
+    val review = (state.weeks.mapNotNull { it.review } + state.months.mapNotNull { it.review }).firstOrNull { it.id == openReviewId }
     if (review != null) {
         androidx.activity.compose.BackHandler { onOpenReview(null) }
         ReviewPage(review, state, model, onBack = { onOpenReview(null) }, onTalk = onTalk)
         return
     }
     if (letter != null) {
-        val week = state.weeks.first { it.letter?.id == letter.id }
+        // The numbers behind a letter: the week's review for a weekly letter, the month's for a monthly one.
+        val numbers = (state.weeks.firstOrNull { it.letter?.id == letter.id }?.review
+            ?: state.months.firstOrNull { it.letter?.id == letter.id }?.review)
         androidx.activity.compose.BackHandler { onOpenLetter(null) }
         LaunchedEffect(letter.id) { model.openLetter(letter.id) }
         LetterPage(
             title = letter.title,
             body = letter.body,
-            range = model.weekRange(week.monday),
+            label = "Your ${model.letterAdjective(letter)} letter · ${model.letterPeriod(letter)}",
+            deleteNote = "It is gone for good, and this ${model.kind(letter)}'s letter will not be written again.",
             onBack = { onOpenLetter(null) },
             onTalk = {
                 model.talkAboutLetter(letter.id)
                 onTalk()
             },
-            onNumbers = week.review?.let { r -> { onOpenReview(r.id) } },
+            onNumbers = numbers?.let { r -> { onOpenReview(r.id) } },
             onDelete = {
                 model.deleteLetter(letter.id)
                 onOpenLetter(null)
@@ -158,23 +162,43 @@ fun ReviewsSection(
                 }
             }
         }
+        state.delayedPeriodLetters.forEach { key ->
+            val what = if (key.startsWith("letter:year:")) "This year's letter is delayed" else "This month's letter is delayed"
+            DelayedLine(what) { model.retryPeriodLetter(key) }
+        }
         if (state.months.isEmpty()) {
             OutlineCard {
                 Text("Your month in one page", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = clarity.text)
-                Quiet("A monthly review arrives once a month you tracked has ended.")
+                Quiet("A monthly review arrives once a month you tracked has ended, with a letter about the month written from its weekly letters.")
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Months", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
                 state.months.forEach { m ->
-                    OutlineCard(modifier = Modifier.clickable { onOpenReview(m.id) }) {
-                        Quiet(model.monthName(m.periodStart))
-                        Text(model.headline(m) ?: "Monthly review", style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+                    // A month opens its letter when there is one (the letter has See the numbers), else its review.
+                    OutlineCard(modifier = Modifier.clickable { if (m.letter != null) onOpenLetter(m.letter.id) else m.review?.let { onOpenReview(it.id) } }) {
+                        Quiet(com.clarity.life.core.LetterPeriods.monthName(m.first) + if (m.letter != null && m.letter.readAt == null) " · new letter" else "")
+                        Text(
+                            m.letter?.title ?: m.review?.let { model.headline(it) } ?: "Monthly review",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = clarity.text,
+                        )
                     }
                 }
             }
         }
-        Quiet("A new letter arrives on Sunday evening. Chapters, one every three months, arrive in What I know.")
+        if (state.years.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Years", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = clarity.text)
+                state.years.forEach { y ->
+                    OutlineCard(modifier = Modifier.clickable { onOpenLetter(y.id) }) {
+                        Quiet(y.periodStart.take(4) + if (y.readAt == null) " · new letter" else "")
+                        Text(y.title, style = MaterialTheme.typography.bodyLarge, color = clarity.text)
+                    }
+                }
+            }
+        }
+        Quiet("A new letter arrives on Sunday evening, one about the month early in the next month, and one about the year in January. Chapters, one every three months, arrive in What I know.")
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -194,7 +218,8 @@ private fun excerpt(body: String): String {
 private fun LetterPage(
     title: String,
     body: String,
-    range: String,
+    label: String,
+    deleteNote: String,
     onBack: () -> Unit,
     onTalk: () -> Unit,
     onNumbers: (() -> Unit)?,
@@ -203,7 +228,7 @@ private fun LetterPage(
     var asking by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         TextButton(onClick = onBack) { Text("‹ Reviews", color = clarity.yellow) }
-        Muted("Your letter · $range")
+        Muted(label)
         Text(title, style = MaterialTheme.typography.displaySmall, color = clarity.text)
         body.split(Regex("\n\\s*\n")).filter { it.isNotBlank() }.forEach {
             Text(it.trim(), style = MaterialTheme.typography.headlineSmall, fontSize = 20.sp, lineHeight = 30.sp, color = clarity.text)
@@ -224,7 +249,7 @@ private fun LetterPage(
             },
             dismissButton = { TextButton(onClick = { asking = false }) { Text("Keep it", color = clarity.yellow) } },
             title = { Text("Delete this letter?") },
-            text = { Text("It is gone for good, and this week's letter will not be written again.") },
+            text = { Text(deleteNote) },
             containerColor = clarity.surface,
             titleContentColor = clarity.text,
             textContentColor = clarity.muted,
@@ -353,7 +378,7 @@ fun LetterCard(state: ReviewsViewModel.State, model: ReviewsViewModel, onRead: (
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text("Your weekly letter, ${model.range(letter.periodStart, letter.periodEnd)}", style = MaterialTheme.typography.bodySmall, color = clarity.paperMuted)
+            Text("Your ${model.letterAdjective(letter)} letter, ${model.letterPeriod(letter)}", style = MaterialTheme.typography.bodySmall, color = clarity.paperMuted)
             Text(letter.title, style = MaterialTheme.typography.headlineSmall, color = clarity.paperInk)
         }
         Text(

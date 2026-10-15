@@ -35,7 +35,7 @@ import kotlinx.coroutines.sync.withLock
  * What is indexed: his messages ("message"), conversation summaries ("summary"), his verified quotes ("quote"),
  * the events reflection recorded ("event"), retired notes ("note"; active notes are in NOTES already, and a note
  * he deleted is never shown again), his promises with their outcome ("promise"), and since Max plan Phase 2 every
- * other record he keeps: weekly letters, reviews, chapters, goals (finished ones too), goal changes, targets
+ * other record he keeps: weekly, monthly and yearly letters, reviews, chapters, goals (finished ones too), goal changes, targets
  * (ended ones too) and the check-ins that carry a reason or a note ([RECORD_KINDS], written by [SearchText]).
  * The coach's replies are not indexed: only his own words are evidence about him (rule 4).
  *
@@ -457,7 +457,7 @@ class SearchIndex @Inject constructor(
             ids(LETTER).chunked(CHUNK).forEach { chunk ->
                 for (l in dao.letters(chunk)) {
                     cache[Key(LETTER, l.id)] = Found(
-                        Retrieval.Candidate(SearchText.letter(l.title, l.body), l.readyAt, "${dayStamp(l.periodEnd)}, their weekly letter"),
+                        Retrieval.Candidate(SearchText.letter(l.title, l.body), l.readyAt, "${dayStamp(l.periodEnd)}, their ${com.clarity.life.core.LetterPeriods.adjective(l.key)} letter"),
                         null,
                     )
                 }

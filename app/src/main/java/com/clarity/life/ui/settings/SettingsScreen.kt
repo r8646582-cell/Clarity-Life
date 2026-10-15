@@ -192,8 +192,8 @@ fun SettingsScreen(
         }
         Group("Letters and your day", "Sunday letter, when your day ends, reminders", Icons.Outlined.MailOutline, openGroup, { openGroup = it }) {
             SwitchRow(
-                "Weekly letter",
-                "Every Sunday evening",
+                "Letters",
+                "Every Sunday, plus one for each month and year",
                 state.weeklyLetter,
             ) { model.setWeeklyLetter(it) }
             SwitchRow(

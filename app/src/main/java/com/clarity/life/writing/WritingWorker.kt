@@ -24,7 +24,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Writes what is due: the review rows (facts in code), the notes under them, the weekly letter, the quarterly
+ * Writes what is due: the review rows (facts in code), the notes under them, the weekly, monthly and yearly letters, the quarterly
  * chapter, the monthly story, then the monthly memory gardening. Runs on every app start (catch-up) and each
  * Sunday at 19:00 and 19:30; Try again on a review or a letter runs it for
  * that one with fresh attempts. Every run is safe to repeat: the job keys make a second run a no-op.
@@ -48,6 +48,7 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         var again = false
         val retryReview = inputData.getLong(KEY_RETRY_REVIEW, -1L)
         val retryLetter = inputData.getString(KEY_RETRY_LETTER)
+        val retryPeriod = inputData.getString(KEY_RETRY_PERIOD_LETTER)
         try {
             for (review in deps.reviews().catchUp(now)) {
                 val outcome = deps.reviews().writeNote(review.id, now, retry = review.id == retryReview)
@@ -56,6 +57,21 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             val week = retryLetter?.let(LocalDate::parse) ?: deps.letters().dueWeek(now)
             if (week != null) {
                 val outcome = deps.letters().write(week, now, retry = retryLetter != null)
+                if (outcome is LetterWriter.Outcome.Retry) again = true
+            }
+            // The monthly letter (from the month's weekly letters), then the yearly one (from the monthly letters).
+            val retryMonth = retryPeriod?.takeIf { it.startsWith(LetterWriter.MONTH_PREFIX) }
+                ?.let { LocalDate.parse(it.removePrefix(LetterWriter.MONTH_PREFIX) + "-01") }
+            val month = retryMonth ?: deps.letters().dueMonth(now)
+            if (month != null) {
+                val outcome = deps.letters().writeMonth(month, now, retry = retryMonth != null)
+                if (outcome is LetterWriter.Outcome.Retry) again = true
+            }
+            val retryYear = retryPeriod?.takeIf { it.startsWith(LetterWriter.YEAR_PREFIX) }
+                ?.removePrefix(LetterWriter.YEAR_PREFIX)?.toIntOrNull()
+            val year = retryYear ?: deps.letters().dueYear(now)
+            if (year != null) {
+                val outcome = deps.letters().writeYear(year, now, retry = retryYear != null)
                 if (outcome is LetterWriter.Outcome.Retry) again = true
             }
             // The quarterly chapter, once the quarter is over (a no-op once it is written or skipped).
@@ -75,6 +91,7 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     companion object {
         const val KEY_RETRY_REVIEW = "retry_review"
         const val KEY_RETRY_LETTER = "retry_letter"
+        const val KEY_RETRY_PERIOD_LETTER = "retry_period_letter"
     }
 }
 
@@ -95,6 +112,10 @@ class WritingScheduler @Inject constructor(
     /** Try again, on a letter that is delayed. */
     fun retryLetter(monday: LocalDate) =
         enqueue("writing-retry", 0, ExistingWorkPolicy.REPLACE, WritingWorker.KEY_RETRY_LETTER to monday.toString())
+
+    /** Try again, on a monthly or yearly letter that is delayed ([key] is its letter key). */
+    fun retryPeriodLetter(key: String) =
+        enqueue("writing-retry", 0, ExistingWorkPolicy.REPLACE, WritingWorker.KEY_RETRY_PERIOD_LETTER to key)
 
     /** The next Sunday run: 19:00 for the review, 19:30 for the letter, whichever comes first. */
     suspend fun scheduleNextSunday(now: Long) {
