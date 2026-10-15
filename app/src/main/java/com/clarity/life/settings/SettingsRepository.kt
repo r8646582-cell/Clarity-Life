@@ -149,6 +149,7 @@ class SettingsRepository @Inject constructor(
             return get(Keys.BASE_URL, DefaultSettings.BASE_URL).trim()
         }
         return when (bgProvider) {
+            "gemini" -> DefaultSettings.GEMINI_BASE_URL
             "anthropic" -> DefaultSettings.ANTHROPIC_BASE_URL
             "deepseek" -> DefaultSettings.BASE_URL
             else -> ""

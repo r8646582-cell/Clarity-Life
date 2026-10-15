@@ -53,6 +53,13 @@ object DefaultSettings {
     const val ANTHROPIC_BACKGROUND_MODEL = ANTHROPIC_CHAT_MODEL
     const val ANTHROPIC_LETTER_MODEL = "claude-opus-5-5"
 
+    /** Google Gemini: OpenAI-compatible endpoint with generous free-tier Flash models via Google AI Studio. */
+    const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+    const val GEMINI_CHAT_MODEL = "gemini-2.0-flash"
+    const val GEMINI_BACKGROUND_MODEL = "gemini-2.0-flash"
+    const val GEMINI_LETTER_MODEL = "gemini-2.5-pro"
+    const val GEMINI_KEY_PAGE = "https://aistudio.google.com/app/apikey"
+
     /**
      * The page where each preset's key is made, opened in the phone's browser by "Get a key" (the app itself
      * sends nothing there). OpenAI-style servers differ, so they have none.
@@ -62,6 +69,7 @@ object DefaultSettings {
 
     fun keyPage(provider: String): String? = when (provider) {
         "deepseek" -> DEEPSEEK_KEY_PAGE
+        "gemini" -> GEMINI_KEY_PAGE
         "anthropic" -> ANTHROPIC_KEY_PAGE
         else -> null
     }

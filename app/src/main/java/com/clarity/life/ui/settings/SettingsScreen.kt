@@ -153,6 +153,16 @@ fun SettingsScreen(
 
             Label("Chat model")
             Field(state.chatModel, model::setChatModel)
+            if (state.provider == "gemini") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(top = 6.dp),
+                ) {
+                    listOf("gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash").forEach { m ->
+                        Chip(m, state.chatModel == m) { model.setChatModel(m) }
+                    }
+                }
+            }
             Label("Chat thinking")
             Hint("Thinking level per chat type: Low is quick; High and Max are slower and more careful.")
             Text("Free talk", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
@@ -201,9 +211,28 @@ fun SettingsScreen(
                         model.clearBackgroundKey()
                     }
                 }
+                com.clarity.life.settings.DefaultSettings.keyPage(state.backgroundProvider)?.let { page ->
+                    if (!state.backgroundKeySet) {
+                        SmallButton("Get a key", modifier = Modifier.padding(top = 8.dp)) {
+                            com.clarity.life.ui.talk.openPage(context, page)
+                        }
+                    }
+                }
+            } else {
+                Hint("Using your chat provider. Tap Google Gemini or OpenAI-style to use a separate free/cheap model.")
             }
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
+            if (state.backgroundProvider == "gemini") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(top = 6.dp),
+                ) {
+                    listOf("gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash").forEach { m ->
+                        Chip(m, state.backgroundModel == m) { model.setBackgroundModel(m) }
+                    }
+                }
+            }
             Hint("For reflection, reviews and the monthly story. Falls back to your chat provider if this fails.")
             Label("Weekly letter model")
             Field(state.letterModel, model::setLetterModel)

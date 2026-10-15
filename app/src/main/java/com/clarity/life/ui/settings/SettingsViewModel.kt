@@ -88,12 +88,14 @@ class SettingsViewModel @Inject constructor(
     /** The three presets of the mockup. "OpenAI-style" is any other compatible server. */
     val providers = listOf(
         "deepseek" to "DeepSeek",
+        "gemini" to "Google Gemini",
         "compat" to "OpenAI-style",
         "anthropic" to "Anthropic",
     )
 
     val backgroundProviders = listOf(
         "" to "Same as chat",
+        "gemini" to "Google Gemini",
         "deepseek" to "DeepSeek",
         "compat" to "OpenAI-style",
         "anthropic" to "Anthropic",
@@ -324,6 +326,7 @@ class SettingsViewModel @Inject constructor(
             // Each preset has its own address; he can still edit it.
             val url = when (id) {
                 "deepseek" -> DefaultSettings.BASE_URL
+                "gemini" -> DefaultSettings.GEMINI_BASE_URL
                 "anthropic" -> DefaultSettings.ANTHROPIC_BASE_URL
                 else -> "https://"
             }
@@ -332,6 +335,7 @@ class SettingsViewModel @Inject constructor(
             // OpenAI-style keeps whatever is typed: there is no single right name for those servers.
             val models = when (id) {
                 "deepseek" -> Triple(DefaultSettings.CHAT_MODEL, DefaultSettings.BACKGROUND_MODEL, DefaultSettings.LETTER_MODEL)
+                "gemini" -> Triple(DefaultSettings.GEMINI_CHAT_MODEL, DefaultSettings.GEMINI_BACKGROUND_MODEL, DefaultSettings.GEMINI_LETTER_MODEL)
                 "anthropic" -> Triple(
                     DefaultSettings.ANTHROPIC_CHAT_MODEL,
                     DefaultSettings.ANTHROPIC_BACKGROUND_MODEL,
@@ -377,11 +381,21 @@ class SettingsViewModel @Inject constructor(
             settings.set(SettingsRepository.Keys.BACKGROUND_PROVIDER, id)
             val bgUrl = settings.backgroundBaseUrl()
             val keySet = settings.hasBackgroundKey(id)
-            _state.value = _state.value.copy(
+            var next = _state.value.copy(
                 backgroundProvider = id,
                 backgroundBaseUrl = bgUrl,
                 backgroundKeySet = keySet,
             )
+            if (id == "gemini") {
+                val model = DefaultSettings.GEMINI_BACKGROUND_MODEL
+                settings.set(SettingsRepository.Keys.BACKGROUND_MODEL, model)
+                next = next.copy(backgroundModel = model)
+            } else if (id == "deepseek") {
+                val model = DefaultSettings.BACKGROUND_MODEL
+                settings.set(SettingsRepository.Keys.BACKGROUND_MODEL, model)
+                next = next.copy(backgroundModel = model)
+            }
+            _state.value = next
         }
     }
 

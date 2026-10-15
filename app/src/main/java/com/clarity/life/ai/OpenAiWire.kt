@@ -93,10 +93,14 @@ object OpenAiWire {
         return body.toString()
     }
 
-    /** The chat completions URL for a base URL that may or may not already end in /v1. */
+    /** The chat completions URL for a base URL that may end in /v1, /openai, /chat/completions, or a root. */
     fun chatUrl(baseUrl: String): String {
         val base = baseUrl.trimEnd('/')
-        return if (base.endsWith("/v1")) "$base/chat/completions" else "$base/v1/chat/completions"
+        return when {
+            base.endsWith("/chat/completions") -> base
+            base.endsWith("/v1") || base.endsWith("/openai") -> "$base/chat/completions"
+            else -> "$base/v1/chat/completions"
+        }
     }
 
     /**

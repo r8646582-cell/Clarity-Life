@@ -172,6 +172,10 @@ class WireTest {
         assertEquals("https://api.test.com/v1/chat/completions", OpenAiWire.chatUrl("https://api.test.com"))
         assertEquals("https://api.test.com/v1/chat/completions", OpenAiWire.chatUrl("https://api.test.com/"))
         assertEquals("https://api.test.com/v1/chat/completions", OpenAiWire.chatUrl("https://api.test.com/v1"))
+        assertEquals(
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            OpenAiWire.chatUrl("https://generativelanguage.googleapis.com/v1beta/openai"),
+        )
     }
 
     // ---------- the Anthropic preset ----------
