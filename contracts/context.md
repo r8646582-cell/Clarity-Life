@@ -24,7 +24,6 @@ Built when the conversation starts, stored with Part 1 in `conversation.prefix_j
 - they switch the chat type in this conversation (the mode file and the card list change);
 - the conversation resumes on a later day (`prefix_day` differs from today's day key), so a conversation reopened next week does not carry last week's notes;
 - they change what the coach knows (delete, edit or confirm a note; change, confirm or delete a profile entry; change or delete a person; edit a focus summary) or forget a conversation: every open conversation builds its prefix again, so nothing they deleted or corrected is sent again in its old words (rule 5);
-- a reflection of another conversation is applied: the other open conversations build their prefix again, so a conversation started before that summary existed (for example one started seconds after the last, while its summary was still being written) sees it with its next message. The reflected conversation keeps its prefix; its messages are in its own history;
 - a prompt is edited or reset.
 
 Each rebuild costs one request without the provider's cache. Changing a setting never changes an open conversation's prefix.
@@ -64,8 +63,9 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 | EARLIER | the running summary of the part of this conversation that is no longer in the history window | never |
 | LAST_CHAT | only when another conversation's last message was less than 6 hours ago (never an off-the-record one): one code-written line naming it, then its last 8 messages, oldest first, each cut to 500 characters, theirs stamped with the time they wrote it. See below | oldest message first |
 | RELEVANT_PAST | up to 12 matches from his conversations and the records he keeps (see below), each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
+| NEW_NOTES | active notes added since this conversation's prefix was frozen (by reflection of another conversation); omitted when empty | oldest first |
 
-PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 4,000 estimated tokens.
+PLAN_STATE, OPEN_PROMISES, CARD_RESULTS and NEW_NOTES are volatile on purpose: if they save a plan or a promise mid-conversation, or another chat's reflection adds new notes, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists, without needing a full prefix rebuild. Budget for Part 3: 4,000 estimated tokens.
 
 ### LAST_CHAT
 The words of the conversation they were just in, so a new conversation never starts blind. Typing on Talk home always starts a new conversation (spec section 2.1), and that happens a lot: Android may close the app while they sleep or nap. Summaries are written by a background job that takes a while, so without this block a conversation started right after another could miss it entirely. Example:

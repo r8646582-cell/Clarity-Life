@@ -133,9 +133,8 @@ class MemoryRepository @Inject constructor(
             throw IllegalStateException("the conversation changed while it was being reflected")
         }
         if (conversation.offTheRecord == 0) search.indexSummary(conversationId, summary)
-        // A conversation started before this summary existed (often seconds after this one ended, while it was
-        // still being written) would otherwise not see it, or the notes it brought, until tomorrow.
-        db.conversations().clearPrefixesExcept(conversationId)
+        // New notes brought by this reflection are seen by other open conversations through the volatile
+        // NEW_NOTES block in Part 3, without invalidating their prefix cache.
         db.jobs().setState(
             id = job.id,
             status = StateMachines.move(StateMachines.JOB, job.status, "succeeded"),

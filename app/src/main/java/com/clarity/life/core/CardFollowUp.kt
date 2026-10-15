@@ -10,9 +10,15 @@ package com.clarity.life.core
  */
 object CardFollowUp {
 
-    /** Every finished reply with no valid card. A reply cut off by the length limit is shown as cut off instead. */
-    fun needed(parsed: ParsedReply, finishReason: String?): Boolean =
-        parsed.cards.isEmpty() && finishReason != "length" && parsed.prose.isNotBlank()
+    /**
+     * Follow-up is needed when a finished reply carries no valid card, EXCEPT when the coach explicitly
+     * signaled no card ([[cards: none]]) and the prose does not point at a button (C2).
+     */
+    fun needed(parsed: ParsedReply, finishReason: String?): Boolean {
+        if (parsed.cards.isNotEmpty() || finishReason == "length" || parsed.prose.isBlank()) return false
+        if (parsed.noCardSignal && !CardTalk.pointsAtAButton(parsed.prose)) return false
+        return true
+    }
 
     /** What fills {{REASON}}: rule names only, never content. */
     fun reason(dropped: List<String>): String =

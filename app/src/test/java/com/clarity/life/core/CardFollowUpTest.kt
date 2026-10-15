@@ -23,6 +23,10 @@ class CardFollowUpTest {
         assertFalse(CardFollowUp.needed(CardParser.parseReply("Tap Switch if that fits.\n$mode", "free"), "stop"))
         // A reply cut off by the length limit is shown as cut off.
         assertFalse(CardFollowUp.needed(CardParser.parseReply(ownerReply, "free"), "length"))
+        // No card signal: skips the follow-up when prose does not point at a button (C2).
+        assertFalse(CardFollowUp.needed(CardParser.parseReply("That sounds good.\n\n[[cards: none]]", "free"), "stop"))
+        // But if the prose points at a button, follow-up is still run even with [[cards: none]] (C2).
+        assertTrue(CardFollowUp.needed(CardParser.parseReply("Tap below to start.\n\n[[cards: none]]", "free"), "stop"))
     }
 
     @Test

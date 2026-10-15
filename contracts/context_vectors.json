@@ -477,6 +477,38 @@
    }
   },
   {
+   "name": "user turn: NEW_NOTES sits after RELEVANT_PAST",
+   "fn": "build_user_turn",
+   "args": {
+    "part3_blocks": [
+     {
+      "name": "NEW_NOTES",
+      "items": [
+       {
+        "text": "note 5, pattern, confirmed, seen 2 times: Always works after 10am",
+        "drop": 1
+       }
+      ]
+     },
+     {
+      "name": "NOW",
+      "items": [
+       {
+        "text": "It's Friday 9 October 2026, 9:40 pm.",
+        "drop": 0
+       }
+      ]
+     }
+    ],
+    "text": "hi"
+   },
+   "expect": {
+    "content": "## NOW\nIt's Friday 9 October 2026, 9:40 pm.\n\n## NEW_NOTES\nnote 5, pattern, confirmed, seen 2 times: Always works after 10am\n\n## MESSAGE\nhi",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
    "name": "user turn: no volatile blocks",
    "fn": "build_user_turn",
    "args": {

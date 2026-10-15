@@ -37,7 +37,7 @@ object ContextBuilder {
     )
     val PART3_ORDER = listOf(
         "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
-        "RELEVANT_PAST",
+        "RELEVANT_PAST", "NEW_NOTES",
     )
     val NEVER_TRIM = setOf(
         "FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",

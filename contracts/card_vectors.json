@@ -46,6 +46,15 @@
    "expect_dropped": 0
   },
   {
+   "name": "no card signal",
+   "chat_type": "free",
+   "reply": "That sounds like a good plan. Take care.\n\n[[cards: none]]",
+   "expect_cards": [],
+   "expect_dropped": 0,
+   "prose_has": "That sounds like a good plan. Take care.",
+   "prose_not": "cards: none"
+  },
+  {
    "name": "trailing blank lines",
    "chat_type": "free",
    "reply": "Text\n[[suggest: {\"type\":\"promise\",\"text\":\"Study 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":true,\"why\":\"test\"}]]\n\n\n",

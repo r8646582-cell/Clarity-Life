@@ -365,19 +365,33 @@ class ChatRepository @Inject constructor(
                     add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
                 }
             }
+            val sent = MemoryBlocks.idsIn(prefix)
+            val leftOut = Spans.span("packet: notes left out") { db.memory().activeNotes().filter { it.id !in sent } }
             // Matches from his other conversations and the records he keeps, searched with the new message, the
             // period it names and his last few messages here (Max plan Phase 2). Retrieval can never be what
             // fails a reply.
             try {
                 val earlierHis = stored.filter { it.role == "user" }.map { it.content }
-                // Active notes the frozen NOTES block had no room for can still come, when they match.
-                val sent = MemoryBlocks.idsIn(prefix)
-                val leftOut = Spans.span("packet: notes left out") { db.memory().activeNotes().filter { it.id !in sent } }
                 add(Spans.span("packet: RELEVANT_PAST") { search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title, leftOut) })
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
                 db.diagnostics().log(ErrorLogRow(at = now, area = "search", code = "relevant_past_failed", detail = ""))
+            }
+            if (leftOut.isNotEmpty()) {
+                Spans.span("packet: NEW_NOTES") {
+                    val todayKey = LocalDate.parse(today)
+                    fun ago(day: String) = runCatching { TimeFacts.ago(LocalDate.parse(day), todayKey) }.getOrNull()
+                    val noteModels = leftOut.map { n ->
+                        val ev = db.memory().evidenceOf(n.id)
+                        MemoryBlocks.Note(
+                            n.id, n.kind, n.confidence, n.timesSeen, n.firstSeen, n.lastSeen, n.text,
+                            ev.map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
+                        )
+                    }
+                    val block = MemoryBlocks.newNotes(noteModels)
+                    if (block.items.isNotEmpty()) add(block)
+                }
             }
         }
         val turn = Spans.span("packet: final turn assembled") { Blocks.userTurn(part3, newText) }

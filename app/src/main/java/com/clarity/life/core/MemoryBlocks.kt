@@ -101,13 +101,22 @@ object MemoryBlocks {
      * or the message that rebuilt the prefix; Max plan Phase 2): under a tight budget they are the last of their
      * grade to go. Notes that do not fit can still reach the coach through RELEVANT_PAST ([idsIn]).
      */
+    fun formatNote(n: Note): String {
+        val head = "note ${n.id}, ${n.kind}, ${n.confidence}, ${KnowText.seen(n.timesSeen, n.firstSeen, n.lastSeen)}: ${n.text}"
+        val lines = n.evidence.takeLast(EVIDENCE_LINES).map { e ->
+            if (e.kind == "count") "  counted by the app: ${e.text}" else "  their words, ${KnowText.shortDay(e.day)}${e.ago?.let { " ($it)" }.orEmpty()}: \"${e.text}\""
+        }
+        return (listOf(head) + lines).joinToString("\n")
+    }
+
+    /**
+     * NOTES. [relevant] are the notes that share a word with what the conversation is about (its first message,
+     * or the message that rebuilt the prefix; Max plan Phase 2): under a tight budget they are the last of their
+     * grade to go. Notes that do not fit can still reach the coach through RELEVANT_PAST ([idsIn]).
+     */
     fun notes(notes: List<Note>, relevant: Set<Long> = emptySet()): Block = Block(
         "NOTES",
         notes.map { n ->
-            val head = "note ${n.id}, ${n.kind}, ${n.confidence}, ${KnowText.seen(n.timesSeen, n.firstSeen, n.lastSeen)}: ${n.text}"
-            val lines = n.evidence.takeLast(EVIDENCE_LINES).map { e ->
-                if (e.kind == "count") "  counted by the app: ${e.text}" else "  their words, ${KnowText.shortDay(e.day)}${e.ago?.let { " ($it)" }.orEmpty()}: \"${e.text}\""
-            }
             val base = when (n.confidence) {
                 "confirmed" -> CONFIRMED_NOTE_RANK
                 "likely" -> LIKELY_RANK
@@ -115,9 +124,23 @@ object MemoryBlocks {
             }
             // Within a grade: relevant notes go last, then the ones seen most often.
             val step = if (n.id in relevant) 1 else RELEVANT_STEP
-            BlockItem((listOf(head) + lines).joinToString("\n"), base + step + (SEEN_CAP - n.timesSeen.coerceIn(1, SEEN_CAP)))
+            BlockItem(formatNote(n), base + step + (SEEN_CAP - n.timesSeen.coerceIn(1, SEEN_CAP)))
         },
     )
+
+    /**
+     * NEW_NOTES (contracts/context.md, Part 3): active notes added since this conversation's prefix was
+     * frozen, omitted when empty. Trim: oldest first.
+     */
+    fun newNotes(notes: List<Note>): Block {
+        val sorted = notes.sortedBy { it.id }
+        return Block(
+            "NEW_NOTES",
+            sorted.mapIndexed { i, n ->
+                BlockItem(formatNote(n), sorted.size - i)
+            },
+        )
+    }
 
     private const val RELEVANT_STEP = 500
     private const val SEEN_CAP = 499

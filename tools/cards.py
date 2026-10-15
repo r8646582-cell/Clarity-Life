@@ -254,12 +254,14 @@ def parse_reply(text, chat_type, known=None):
     while end > 0 and not lines[end - 1].strip():
         end -= 1
     start = end
-    while start > 0 and (lines[start - 1].strip().startswith("[[suggest:") or not lines[start - 1].strip()):
+    while start > 0 and (lines[start - 1].strip().startswith("[[suggest:") or lines[start - 1].strip() == "[[cards: none]]" or not lines[start - 1].strip()):
         start -= 1
     tail = [l.strip() for l in lines[start:end] if l.strip()]
     head = lines[:start]
     cards, dropped, seen = [], [], {}
     for raw in tail:
+        if raw == "[[cards: none]]":
+            continue
         m = LINE_RE.match(raw)
         if not m:
             dropped.append("shape")

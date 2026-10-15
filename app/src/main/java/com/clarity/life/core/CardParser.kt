@@ -53,7 +53,12 @@ data class Card(val type: String, val fields: Map<String, Jv>) {
     }
 }
 
-data class ParsedReply(val prose: String, val cards: List<Card>, val dropped: List<String>)
+data class ParsedReply(
+    val prose: String,
+    val cards: List<Card>,
+    val dropped: List<String>,
+    val noCardSignal: Boolean = false,
+)
 
 object CardParser {
 
@@ -311,14 +316,19 @@ object CardParser {
         var end = lines.size
         while (end > 0 && lines[end - 1].isBlank()) end--
         var start = end
-        while (start > 0 && (lines[start - 1].trim().startsWith("[[suggest:") || lines[start - 1].isBlank())) start--
+        while (start > 0 && (lines[start - 1].trim().startsWith("[[suggest:") || lines[start - 1].trim() == "[[cards: none]]" || lines[start - 1].isBlank())) start--
         val tail = lines.subList(start, end).map { it.trim() }.filter { it.isNotEmpty() }
         val head = lines.subList(0, start)
 
         val cards = mutableListOf<Card>()
         val dropped = mutableListOf<String>()
         val seen = HashMap<String, Int>()
+        var noCardSignal = false
         for (raw in tail) {
+            if (raw == "[[cards: none]]") {
+                noCardSignal = true
+                continue
+            }
             val m = LINE_RE.find(raw)
             if (m == null) {
                 dropped.add("shape")
@@ -367,6 +377,6 @@ object CardParser {
             }
             out.add(l)
         }
-        return ParsedReply(out.joinToString("\n").trimEnd(), cards, dropped)
+        return ParsedReply(out.joinToString("\n").trimEnd(), cards, dropped, noCardSignal)
     }
 }
