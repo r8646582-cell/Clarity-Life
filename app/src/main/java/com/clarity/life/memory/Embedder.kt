@@ -42,14 +42,26 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     /** Why meaning search is off, as a content-free code, or null while it works (or was never tried). */
     val problem: String? get() = failed
 
+    /**
+     * The last few texts' vectors (improvement report, S2): his new message is embedded for the search before
+     * the reply, and again when the index stores its vector a moment later; the second time now costs nothing.
+     * The same goes for Try again. In memory only, a handful of vectors.
+     */
+    private val recent = object : LinkedHashMap<String, FloatArray>(RECENT + 1, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, FloatArray>?) = size > RECENT
+    }
+
     /** A unit vector of [DIM] floats, or null when meaning search is off. Blocking; call it off the main thread. */
     fun embed(text: String): FloatArray? {
+        synchronized(recent) { recent[text]?.let { return it.copyOf() } }
         val l = load() ?: return null
-        return try {
+        val v = try {
             com.clarity.life.core.PhoneTimings.timed(com.clarity.life.core.PhoneTimings.EMBED) { run(l, text) }
         } catch (e: Exception) {
-            null
+            return null
         }
+        synchronized(recent) { recent[text] = v.copyOf() }
+        return v
     }
 
     private fun run(l: Loaded, text: String): FloatArray {
@@ -126,6 +138,9 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     }
 
     companion object {
+        /** Vectors kept for [embed]'s repeat texts: about 50 KB. */
+        private const val RECENT = 16
+
         /**
          * The name stored in embedding_row.model. A different model means its vectors are made again: rows of
          * any other model are removed and the missing ones made in the background (EmbeddingIndexer).
