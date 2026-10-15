@@ -224,14 +224,30 @@ interface DiagnosticsDao {
     suspend fun usage(month: String): UsageMonthRow?
 
     @Transaction
-    suspend fun addUsage(month: String, calls: Long, tokensIn: Long, tokensOut: Long, tokensCached: Long) {
+    suspend fun addUsage(
+        month: String,
+        calls: Long,
+        tokensIn: Long,
+        tokensOut: Long,
+        tokensCached: Long,
+        job: String = "chat",
+    ) {
         val row = usage(month) ?: UsageMonthRow(month)
+        val updatedByJob = com.clarity.life.data.entity.UsageJson.add(
+            row.byJobJson,
+            job,
+            calls,
+            tokensIn,
+            tokensOut,
+            tokensCached,
+        )
         putUsage(
             row.copy(
                 calls = row.calls + calls,
                 tokensIn = row.tokensIn + tokensIn,
                 tokensOut = row.tokensOut + tokensOut,
                 tokensCached = row.tokensCached + tokensCached,
+                byJobJson = updatedByJob,
             ),
         )
     }

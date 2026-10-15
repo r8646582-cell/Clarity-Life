@@ -45,6 +45,7 @@ data class UsageMonthRow(
     @ColumnInfo(name = "tokens_out", defaultValue = "0") val tokensOut: Long = 0,
     /** Proves the provider's prefix cache is working (contracts/context.md). */
     @ColumnInfo(name = "tokens_cached", defaultValue = "0") val tokensCached: Long = 0,
+    @ColumnInfo(name = "by_job_json", defaultValue = "'{}'") val byJobJson: String = "{}",
 )
 
 /**

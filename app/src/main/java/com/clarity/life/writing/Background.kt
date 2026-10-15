@@ -30,7 +30,7 @@ class BackgroundCall @Inject constructor(
     class CutOff : Exception("cut_off")
 
     /** Throws [AiFailure] when the provider fails, and [CutOff] when the reply hit the length limit. */
-    suspend fun text(endpoint: Endpoint, prompt: String, month: String): String {
+    suspend fun text(endpoint: Endpoint, prompt: String, month: String, job: String = "background"): String {
         val request = ChatRequest(system = "", messages = listOf(ChatMessage(ChatMessage.USER, prompt)))
         val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
         val out = StringBuilder()
@@ -41,7 +41,7 @@ class BackgroundCall @Inject constructor(
                 is ChatChunk.Thinking -> Unit
                 is ChatChunk.Finished -> {
                     finish = chunk.reason
-                    chunk.usage?.let { u -> db.diagnostics().addUsage(month, 1, u.tokensIn, u.tokensOut, u.tokensCached) }
+                    chunk.usage?.let { u -> db.diagnostics().addUsage(month, 1, u.tokensIn, u.tokensOut, u.tokensCached, job = job) }
                 }
             }
         }

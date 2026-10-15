@@ -44,6 +44,7 @@ class HealthViewModel @Inject constructor(
     private val db: ClarityDatabase,
     private val settings: SettingsRepository,
     private val reminders: com.clarity.life.promise.Reminders,
+    private val embedder: com.clarity.life.memory.Embedder,
 ) : ViewModel() {
 
     data class State(
@@ -79,8 +80,22 @@ class HealthViewModel @Inject constructor(
         val month = com.clarity.life.core.TimeFacts.local(Instant.ofEpochMilli(now), settings.timeZone()).toLocalDate().toString().take(7)
         d.usage(month)?.let { u ->
             val cached = if (u.tokensIn > 0) " (${u.tokensCached * 100 / u.tokensIn}% from the cache)" else ""
-            // Formatted piece by piece: the cache share has a % sign in it, which format() would read as a code.
             lines.add("This month" to "${u.calls} calls, ${"%,d".format(u.tokensIn)} tokens in$cached, ${"%,d".format(u.tokensOut)} out")
+            val jobs = com.clarity.life.data.entity.UsageJson.decode(u.byJobJson)
+            val jobOrder = listOf(
+                "chat" to "  • Chat",
+                "card_followup" to "  • Card follow-up",
+                "memory" to "  • Memory",
+                "letter" to "  • Letters",
+                "review" to "  • Reviews",
+                "chapter" to "  • Chapters",
+                "story" to "  • Monthly story",
+            )
+            for ((jobKey, jobLabel) in jobOrder) {
+                val ju = jobs[jobKey] ?: continue
+                val jobCached = if (ju.tokensIn > 0) " (${ju.tokensCached * 100 / ju.tokensIn}% cached)" else ""
+                lines.add(jobLabel to "${ju.calls} calls, ${"%,d".format(ju.tokensIn)} in$jobCached, ${"%,d".format(ju.tokensOut)} out")
+            }
         }
         val checkedAt = settings.get(SettingsRepository.Keys.MAINTENANCE_AT, "").toLongOrNull()
         lines.add(
@@ -103,6 +118,21 @@ class HealthViewModel @Inject constructor(
         lines.add("Last verified backup" to (backupAt?.let { ago(now - it) } ?: "never"))
         val size = context.getDatabasePath(ClarityDatabase.NAME).length()
         lines.add("Database size" to "%.1f MB".format(size / 1_048_576.0))
+        val runtime = Runtime.getRuntime()
+        val heapUsedMb = (runtime.totalMemory() - runtime.freeMemory()) / 1_048_576L
+        val heapMaxMb = runtime.maxMemory() / 1_048_576L
+        val nativeMb = android.os.Debug.getNativeHeapAllocatedSize() / 1_048_576L
+        lines.add("Memory in use" to "$heapUsedMb MB heap ($nativeMb MB native, max $heapMaxMb MB)")
+        com.clarity.life.core.AppPerformance.startupMs?.let {
+            lines.add("Startup time" to "$it ms to first screen")
+        }
+        val embedMs = embedder.lastDurationMs
+        if (embedMs != null) {
+            val avg = embedder.averageDurationMs?.let { " (avg $it ms)" } ?: ""
+            lines.add("Meaning model" to "$embedMs ms per message$avg")
+        } else {
+            lines.add("Meaning model" to (embedder.problem ?: "has not run yet"))
+        }
         val restoreAt = settings.get(KEY_RESTORE_TEST, "").toLongOrNull()
         lines.add("Restore test" to (restoreAt?.let { "done ${ago(now - it)}" } ?: "not done yet"))
         _state.value = State(

@@ -56,7 +56,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 8,
+    version = 9,
     exportSchema = true,
     entities = [
         // chat
@@ -102,6 +102,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V5_TO_V6,
             Migrations.V6_TO_V7,
             Migrations.V7_TO_V8,
+            Migrations.V8_TO_V9,
         )
     }
 }

@@ -288,6 +288,28 @@ class MigrationTest {
         db.close()
     }
 
+    /**
+     * Version 9 (C1): usage_month.by_job_json. Old usage rows keep their totals and get the default '{}'.
+     */
+    @Test
+    fun version8To9KeepsEveryUsageAndAddsByJobBreakdown() {
+        helper.createDatabase(TEST_DB, 8).apply {
+            execSQL("INSERT INTO usage_month (month, calls, tokens_in, tokens_out, tokens_cached) VALUES ('2026-10', 5, 1000, 200, 800)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 9, true, Migrations.V8_TO_V9)
+        db.query("SELECT month, calls, tokens_in, tokens_out, tokens_cached, by_job_json FROM usage_month WHERE month = '2026-10'").use {
+            assertTrue("the usage row is gone", it.moveToFirst())
+            assertEquals("2026-10", it.getString(0))
+            assertEquals(5, it.getLong(1))
+            assertEquals(1000, it.getLong(2))
+            assertEquals(200, it.getLong(3))
+            assertEquals(800, it.getLong(4))
+            assertEquals("{}", it.getString(5))
+        }
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -424,6 +446,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 9
     }
 }

@@ -118,6 +118,16 @@ object Migrations {
         }
     }
 
+    /**
+     * Version 9 (C1): usage_month.by_job_json, tracking tokens and cache share by job (chat, card_followup,
+     * memory, letter, review ...). Only adds a column; old rows keep the default '{}'.
+     */
+    val V8_TO_V9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `usage_month` ADD COLUMN `by_job_json` TEXT NOT NULL DEFAULT '{}'")
+        }
+    }
+
     val V7_INDEXES = listOf(
         "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
         "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",

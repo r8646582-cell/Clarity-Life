@@ -112,7 +112,7 @@ class StoryWriter @Inject constructor(
             )
             // His own words: the quotes he was shown and every message he wrote in the month.
             val his = quotes.map { it.text } + w.hisMessagesBetween(from, to)
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7))
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "story")
             val checked = TextJobCheck.story(raw, quotes.associate { it.id to it.saidDay }, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             val overcame = StrictJson.write(

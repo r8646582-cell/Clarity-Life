@@ -355,7 +355,8 @@ CREATE TABLE usage_month (
   calls INTEGER NOT NULL DEFAULT 0,
   tokens_in INTEGER NOT NULL DEFAULT 0,
   tokens_out INTEGER NOT NULL DEFAULT 0,
-  tokens_cached INTEGER NOT NULL DEFAULT 0
+  tokens_cached INTEGER NOT NULL DEFAULT 0,
+  by_job_json TEXT NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE job (                     -- idempotence: one row per unit of background work

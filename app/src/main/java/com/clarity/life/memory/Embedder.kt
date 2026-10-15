@@ -39,6 +39,16 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
 
     @Volatile private var failed: String? = null
 
+    /** Spec S6: Last duration of embedding in milliseconds, for phone performance measurement in Health. */
+    @Volatile var lastDurationMs: Long? = null
+        private set
+
+    @Volatile var averageDurationMs: Long? = null
+        private set
+
+    private var totalEmbedCount: Long = 0
+    private var totalEmbedDurationMs: Long = 0
+
     /** Why meaning search is off, as a content-free code, or null while it works (or was never tried). */
     val problem: String? get() = failed
 
@@ -46,7 +56,16 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     fun embed(text: String): FloatArray? {
         val l = load() ?: return null
         return try {
-            run(l, text)
+            val t0 = android.os.SystemClock.uptimeMillis()
+            val result = run(l, text)
+            val dt = android.os.SystemClock.uptimeMillis() - t0
+            lastDurationMs = dt
+            synchronized(this) {
+                totalEmbedCount++
+                totalEmbedDurationMs += dt
+                averageDurationMs = totalEmbedDurationMs / totalEmbedCount
+            }
+            result
         } catch (e: Exception) {
             null
         }

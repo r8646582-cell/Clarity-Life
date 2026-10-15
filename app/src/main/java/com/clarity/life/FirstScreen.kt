@@ -16,6 +16,7 @@ open class FirstScreenGate {
 
     /** Talk's home is on show. Later calls do nothing. */
     fun mark() {
+        com.clarity.life.core.AppPerformance.markFirstScreen()
         shown.complete(Unit)
     }
 

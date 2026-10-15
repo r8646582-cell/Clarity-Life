@@ -233,6 +233,7 @@ class ChatRepository @Inject constructor(
                 tokensIn = it.tokensIn,
                 tokensOut = it.tokensOut,
                 tokensCached = it.tokensCached,
+                job = "chat",
             )
         }
         }
@@ -683,6 +684,7 @@ class ChatRepository @Inject constructor(
                     tokensIn = it.tokensIn,
                     tokensOut = it.tokensOut,
                     tokensCached = it.tokensCached,
+                    job = "card_followup",
                 )
             }
             val merged = com.clarity.life.core.CardFollowUp.merged(parsed.prose, answer.toString(), chatType, known)
