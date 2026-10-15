@@ -36,7 +36,7 @@ object Retrieval {
     const val MEANING_CANDIDATES = 80
 
     /** A word found in at most this share of the index is rare enough to match alone. */
-    const val RARE_SHARE = 0.05
+    const val RARE_SHARE = 0.08
 
     /** Share of word stems two results have in common to count as the same thing. */
     const val NEAR_DUPLICATE = 0.8
@@ -107,13 +107,32 @@ object Retrieval {
             .take(MAX_TERMS)
             .toList()
 
+    private val IRREGULAR_STEMS = mapOf(
+        "ran" to "run",
+        "slept" to "sleep",
+        "took" to "take",
+        "taken" to "take",
+        "woke" to "wake",
+        "woken" to "wake",
+        "bought" to "buy",
+        "broke" to "break",
+        "broken" to "break",
+        "chose" to "choose",
+        "chosen" to "choose",
+        "wrote" to "write",
+        "written" to "write",
+        "spoke" to "speak",
+        "spoken" to "speak",
+    )
+
     /**
      * A simple stem, so the forms of one word meet: "lecture", "lectures", "lecturing" and "lectured" all give
      * "lectur"; "nap", "naps" and "napping" give "nap"; "study", "studies", "studied" and "studying" give
-     * "study". Irregular forms ("woke" and "wake", "slept" and "sleep") stay apart; meaning search covers some.
+     * "study". Common irregular past tense forms ("woke", "slept", "ran", "took") are mapped to their roots.
      */
     fun stem(word: String): String {
         var w = word.lowercase()
+        w = IRREGULAR_STEMS[w] ?: w
         w = when {
             w.length > 4 && (w.endsWith("ies") || w.endsWith("ied")) -> w.dropLast(3) + "y"
             w.length > 5 && w.endsWith("ing") -> w.dropLast(3)

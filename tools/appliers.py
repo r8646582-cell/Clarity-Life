@@ -29,7 +29,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cards import loads_strict, Bad  # noqa: E402  same strict JSON as the card parser
-from textcheck import quote_is_his, verify_quotes_in_text, number_check, norm  # noqa: E402
+from textcheck import quote_is_his, find_his_quote, verify_quotes_in_text, number_check, norm  # noqa: E402
 
 NOTE_KINDS = ["pattern", "what_helps", "what_doesnt", "strength", "value", "thread"]
 CONF = ["guess", "likely", "confirmed"]
@@ -153,7 +153,8 @@ def _verify_evidence(items, his_messages, checkin_facts, dropped, where):
             dropped.append(where + ": bad evidence item")
             continue
         if e["kind"] == "quote" and quote_is_his(e["text"], his_messages):
-            ok.append(("quote", e["text"].strip()))
+            orig = find_his_quote(e["text"], his_messages) or e["text"].strip()
+            ok.append(("quote", orig))
         elif e["kind"] == "count" and len(e["text"].strip()) >= 6 and _count_in_facts(" ".join(e["text"].split()), checkin_facts):
             ok.append(("count", " ".join(e["text"].split())))
         else:
@@ -309,7 +310,8 @@ def apply_reflection(raw, ctx):
 
         for q in _list(obj, "his_words", LIMITS["his_words"], dropped):
             if isinstance(q, str) and quote_is_his(q, his):
-                ops.append(["quote.add", q.strip()])
+                orig = find_his_quote(q, his) or q.strip()
+                ops.append(["quote.add", orig])
             else:
                 dropped.append("his_words: not found word for word")
 
@@ -321,14 +323,17 @@ def apply_reflection(raw, ctx):
                 dropped.append("disagreement: %s" % e)
                 continue
             if isinstance(dsg.get("his_position"), str) and quote_is_his(dsg["his_position"], his):
-                ops.append(["disagreement.add", claim, dsg["his_position"].strip()])
+                orig = find_his_quote(dsg["his_position"], his) or dsg["his_position"].strip()
+                ops.append(["disagreement.add", claim, orig])
             else:
                 dropped.append("disagreement: his position not found word for word")
 
         for c in _list(obj, "contradictions", LIMITS["contradictions"], dropped):
             if isinstance(c, dict) and all(isinstance(c.get(k), str) and quote_is_his(c[k], everything_his)
                                            for k in ("quote_a", "quote_b")) and norm(c["quote_a"]) != norm(c["quote_b"]):
-                ops.append(["contradiction.add", c["quote_a"].strip(), c["quote_b"].strip()])
+                qa = find_his_quote(c["quote_a"], everything_his) or c["quote_a"].strip()
+                qb = find_his_quote(c["quote_b"], everything_his) or c["quote_b"].strip()
+                ops.append(["contradiction.add", qa, qb])
             else:
                 dropped.append("contradiction: quotes not found word for word")
 

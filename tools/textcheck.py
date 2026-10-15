@@ -33,20 +33,94 @@ def _found_on_word_boundaries(q, hay):
         left_ok = not q[0].isalnum() or start == 0 or not hay[start - 1].isalnum()
         right_ok = not q[-1].isalnum() or end == len(hay) or not hay[end].isalnum()
         if left_ok and right_ok:
-            return True
+            return start, end
         start = hay.find(q, start + 1)
-    return False
+    return None
+
+
+def _word_dist(w1, w2):
+    if w1 == w2:
+        return 0
+    if abs(len(w1) - len(w2)) > 1:
+        return 2
+    if w1.startswith(w2) or w2.startswith(w1) or w1.endswith(w2) or w2.endswith(w1):
+        return 2
+    if len(w1) == len(w2):
+        return sum(1 for a, b in zip(w1, w2) if a != b)
+    shorter, longer = (w1, w2) if len(w1) < len(w2) else (w2, w1)
+    for i in range(len(longer)):
+        if longer[:i] + longer[i + 1:] == shorter:
+            return 1
+    return 2
+
+
+def _find_in_message(q_norm, m):
+    # 1. Exact substring on word boundaries
+    bounds = _found_on_word_boundaries(q_norm, norm(m))
+    if bounds is not None:
+        return m[bounds[0]:bounds[1]]
+
+    # 2. Tolerant word-by-word match: allows punctuation variations and 1-letter typos
+    q_words = re.findall(r"[\w']+", q_norm)
+    if not q_words:
+        return None
+    hay_matches = list(re.finditer(r"[\w']+", m))
+    if len(hay_matches) < len(q_words):
+        return None
+
+    k = len(q_words)
+    for i in range(len(hay_matches) - k + 1):
+        window = hay_matches[i:i + k]
+        typos = 0
+        match = True
+        for qw, hw in zip(q_words, window):
+            d = _word_dist(qw, hw.group().lower())
+            if d > 1:
+                match = False
+                break
+            typos += d
+            if typos > 1:
+                match = False
+                break
+        if match:
+            start_idx = window[0].start()
+            end_idx = window[-1].end()
+            return m[start_idx:end_idx]
+    return None
+
+
+def find_his_quote(quote, user_messages, min_chars=MIN_CHARS):
+    """Finds his quote in user messages, tolerating back-to-back joined messages, minor punctuation,
+    case variations, and 1-letter typos. Returns his exact original words from user_messages, or None."""
+    q_norm = norm(quote).strip(_TRIM)
+    if len(q_norm) < min_chars:
+        return None
+
+    for m in user_messages:
+        res = _find_in_message(q_norm, m)
+        if res:
+            return res
+
+    for i in range(len(user_messages) - 1):
+        for j in range(i + 1, min(i + 3, len(user_messages))):
+            joined = " ".join(user_messages[i:j + 1])
+            res = _find_in_message(q_norm, joined)
+            if res:
+                return res
+    return None
 
 
 def quote_is_his(quote, user_messages, min_chars=MIN_CHARS):
-    q = norm(quote).strip(_TRIM)
-    if len(q) < min_chars:
-        return False
-    return any(_found_on_word_boundaries(q, norm(m)) for m in user_messages)
+    return find_his_quote(quote, user_messages, min_chars) is not None
 
 
 def verified_quotes(quotes, user_messages):
-    return [q for q in quotes if quote_is_his(q, user_messages)]
+    out = []
+    for q in quotes:
+        matched = find_his_quote(q, user_messages)
+        if matched is not None:
+            out.append(matched)
+    return out
 
 
 def _quoted_phrases(text):

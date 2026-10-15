@@ -40,27 +40,106 @@ object TextCheck {
 
     private fun Char.isAlnum() = Character.isLetterOrDigit(this)
 
-    private fun foundOnWordBoundaries(q: String, hay: String): Boolean {
-        if (q.isEmpty()) return false
+    private fun foundOnWordBoundaries(q: String, hay: String): Pair<Int, Int>? {
+        if (q.isEmpty()) return null
         var start = hay.indexOf(q)
         while (start != -1) {
             val end = start + q.length
             val leftOk = !q[0].isAlnum() || start == 0 || !hay[start - 1].isAlnum()
             val rightOk = !q[q.length - 1].isAlnum() || end == hay.length || !hay[end].isAlnum()
-            if (leftOk && rightOk) return true
+            if (leftOk && rightOk) return start to end
             start = hay.indexOf(q, start + 1)
         }
-        return false
+        return null
     }
 
-    fun quoteIsHis(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): Boolean {
-        val q = trimEnds(norm(quote))
-        if (q.length < minChars) return false
-        return userMessages.any { foundOnWordBoundaries(q, norm(it)) }
+    private fun wordDist(w1: String, w2: String): Int {
+        if (w1 == w2) return 0
+        if (Math.abs(w1.length - w2.length) > 1) return 2
+        if (w1.startsWith(w2) || w2.startsWith(w1) || w1.endsWith(w2) || w2.endsWith(w1)) return 2
+        if (w1.length == w2.length) {
+            var diffs = 0
+            for (i in w1.indices) {
+                if (w1[i] != w2[i]) {
+                    diffs++
+                    if (diffs > 1) return 2
+                }
+            }
+            return diffs
+        }
+        val (shorter, longer) = if (w1.length < w2.length) w1 to w2 else w2 to w1
+        for (i in longer.indices) {
+            val cand = longer.removeRange(i, i + 1)
+            if (cand == shorter) return 1
+        }
+        return 2
     }
+
+    private val WORD_REGEX = Regex("[\\w']+")
+
+    private fun findInMessage(qNorm: String, m: String): String? {
+        // 1. Exact substring on word boundaries
+        val bounds = foundOnWordBoundaries(qNorm, norm(m))
+        if (bounds != null) return m.substring(bounds.first, bounds.second)
+
+        // 2. Tolerant word-by-word match: allows punctuation variations and 1-letter typos
+        val qWords = WORD_REGEX.findAll(qNorm).map { it.value }.toList()
+        if (qWords.isEmpty()) return null
+        val hayMatches = WORD_REGEX.findAll(m).toList()
+        if (hayMatches.size < qWords.size) return null
+
+        val k = qWords.size
+        for (i in 0..hayMatches.size - k) {
+            val window = hayMatches.subList(i, i + k)
+            var typos = 0
+            var match = true
+            for (j in 0 until k) {
+                val d = wordDist(qWords[j], window[j].value.lowercase(Locale.ROOT))
+                if (d > 1) {
+                    match = false
+                    break
+                }
+                typos += d
+                if (typos > 1) {
+                    match = false
+                    break
+                }
+            }
+            if (match) {
+                val startIdx = window.first().range.first
+                val endIdx = window.last().range.last + 1
+                return m.substring(startIdx, endIdx)
+            }
+        }
+        return null
+    }
+
+    fun findHisQuote(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): String? {
+        val qNorm = trimEnds(norm(quote))
+        if (qNorm.length < minChars) return null
+
+        for (m in userMessages) {
+            val res = findInMessage(qNorm, m)
+            if (res != null) return res
+        }
+
+        for (i in 0 until userMessages.size - 1) {
+            for (j in i + 1 until minOf(i + 3, userMessages.size)) {
+                val joined = userMessages.subList(i, j + 1).joinToString(" ")
+                val res = findInMessage(qNorm, joined)
+                if (res != null) return res
+            }
+        }
+        return null
+    }
+
+    fun quoteIsHis(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): Boolean =
+        findHisQuote(quote, userMessages, minChars) != null
 
     fun verifiedQuotes(quotes: List<String>, userMessages: List<String>): List<String> =
-        quotes.filter { quoteIsHis(it, userMessages) }
+        quotes.mapNotNull { q ->
+            if (quoteIsHis(q, userMessages)) (findHisQuote(q, userMessages) ?: q) else null
+        }
 
     /**
      * Every phrase the text presents as a quotation, or null when the quotation marks cannot be read with

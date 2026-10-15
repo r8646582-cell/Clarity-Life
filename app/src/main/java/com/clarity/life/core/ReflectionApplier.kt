@@ -258,8 +258,12 @@ object ReflectionApplier {
 
         for (q in JobFields.list(obj, "his_words", HIS_WORDS, dropped)) {
             val s = q.asStr
-            if (s != null && TextCheck.quoteIsHis(s, his)) ops.add(JobOp.QuoteAdd(strip(s)))
-            else dropped.add("his_words: not found word for word")
+            if (s != null && TextCheck.quoteIsHis(s, his)) {
+                val orig = TextCheck.findHisQuote(s, his) ?: s
+                ops.add(JobOp.QuoteAdd(strip(orig)))
+            } else {
+                dropped.add("his_words: not found word for word")
+            }
         }
 
         val everythingHis = his + ctx.hisEarlierQuotes
@@ -276,8 +280,12 @@ object ReflectionApplier {
                 continue
             }
             val pos = dob.map["his_position"]?.asStr
-            if (pos != null && TextCheck.quoteIsHis(pos, his)) ops.add(JobOp.DisagreementAdd(claim, strip(pos)))
-            else dropped.add("disagreement: his position not found word for word")
+            if (pos != null && TextCheck.quoteIsHis(pos, his)) {
+                val orig = TextCheck.findHisQuote(pos, his) ?: pos
+                ops.add(JobOp.DisagreementAdd(claim, strip(orig)))
+            } else {
+                dropped.add("disagreement: his position not found word for word")
+            }
         }
 
         for (c in JobFields.list(obj, "contradictions", CONTRADICTIONS, dropped)) {
@@ -287,7 +295,9 @@ object ReflectionApplier {
             if (qa != null && qb != null && TextCheck.quoteIsHis(qa, everythingHis) &&
                 TextCheck.quoteIsHis(qb, everythingHis) && TextCheck.norm(qa) != TextCheck.norm(qb)
             ) {
-                ops.add(JobOp.ContradictionAdd(strip(qa), strip(qb)))
+                val origA = TextCheck.findHisQuote(qa, everythingHis) ?: qa
+                val origB = TextCheck.findHisQuote(qb, everythingHis) ?: qb
+                ops.add(JobOp.ContradictionAdd(strip(origA), strip(origB)))
             } else {
                 dropped.add("contradiction: quotes not found word for word")
             }
@@ -342,7 +352,8 @@ object ReflectionApplier {
             }
             val flat = words(t).joinToString(" ")
             if (kind == "quote" && TextCheck.quoteIsHis(t, his)) {
-                ok.add(Evidence("quote", strip(t)))
+                val orig = TextCheck.findHisQuote(t, his) ?: t
+                ok.add(Evidence("quote", strip(orig)))
             } else if (kind == "count" && JobFields.pyLen(strip(t)) >= 6 && countInFacts(flat, checkinFacts)) {
                 ok.add(Evidence("count", flat))
             } else {

@@ -32,7 +32,7 @@
    "args": {
     "quote": "I'll start properly",
     "user_messages": [
-     "I’ll start properly from monday"
+     "I\u2019ll start properly from monday"
     ]
    },
    "expect": true
@@ -266,7 +266,7 @@
    "name": "curly double quotes are recognised",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You said “i just never am by 8”.",
+    "text": "You said \u201ci just never am by 8\u201d.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -282,7 +282,7 @@
    "name": "curly double quotes, invented",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You said “nothing works”.",
+    "text": "You said \u201cnothing works\u201d.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -537,7 +537,7 @@
    "args": {
     "quote": "I felt so tired",
     "user_messages": [
-     "I felt so ｔｉｒｅｄ today"
+     "I felt so \uff54\uff49\uff52\uff45\uff44 today"
     ]
    },
    "expect": true
@@ -580,7 +580,7 @@
    "name": "unbalanced curly quotes fail closed",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You said “I give up on everything.",
+    "text": "You said \u201cI give up on everything.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -598,7 +598,7 @@
    "name": "a stray closing curly quote fails closed",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You said I give up”.",
+    "text": "You said I give up\u201d.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -616,7 +616,7 @@
    "name": "single curly quotes used as quotation marks are checked",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You called it ‘hopeless’ twice.",
+    "text": "You called it \u2018hopeless\u2019 twice.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -634,7 +634,7 @@
    "name": "single curly quotes with an apostrophe inside, his words",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You wrote ‘i’ll start properly’ again.",
+    "text": "You wrote \u2018i\u2019ll start properly\u2019 again.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -650,7 +650,7 @@
    "name": "curly apostrophes alone are not quotations",
    "fn": "verify_quotes_in_text",
    "args": {
-    "text": "You’re not lazy, and it’s fine.",
+    "text": "You\u2019re not lazy, and it\u2019s fine.",
     "user_messages": [
      "i'll start properly from monday, decided",
      "i can do it when i'm fresh, i just never am by 8",
@@ -787,6 +787,66 @@
      "3"
     ]
    }
+  },
+  {
+   "name": "back to back messages joined",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i'll start properly from monday",
+    "user_messages": [
+     "i'll start properly",
+     "from monday, decided"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "punctuation differences in middle ignored",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i can do it when i'm fresh",
+    "user_messages": [
+     "i can do it, when i'm fresh, decided"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "one letter typo tolerated",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i fell so tired today",
+    "user_messages": [
+     "I felt so tired today"
+    ]
+   },
+   "expect": true
+  },
+  {
+   "name": "two letter typos rejected",
+   "fn": "quote_is_his",
+   "args": {
+    "quote": "i fell so tored today",
+    "user_messages": [
+     "I felt so tired today"
+    ]
+   },
+   "expect": false
+  },
+  {
+   "name": "verified_quotes preserves exact original words with typo in quote",
+   "fn": "verified_quotes",
+   "args": {
+    "quotes": [
+     "i fell so tired today"
+    ],
+    "user_messages": [
+     "I felt so tired today"
+    ]
+   },
+   "expect": [
+    "I felt so tired today"
+   ]
   }
  ]
 }

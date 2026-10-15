@@ -28,7 +28,7 @@ CONTEXT_MESSAGES = 3      # his earlier messages in this conversation that join 
 CANDIDATES_PER_TERM = 100
 FUSE_DEPTH = 20
 MEANING_CANDIDATES = 80   # meaning matches scored exactly before identical texts are counted once (was 40)
-RARE_SHARE = 0.05         # a word found in at most this share of the index is rare enough to match alone
+RARE_SHARE = 0.08         # a word found in at most this share of the index is rare enough to match alone
 NEAR_DUPLICATE = 0.8      # share of word stems two results have in common to count as the same thing
 RRF_K = 60
 
@@ -66,9 +66,30 @@ def terms(text):
     return sorted(out, key=lambda w: (-len(w), w))[:MAX_TERMS]
 
 
+IRREGULAR_STEMS = {
+    "ran": "run",
+    "slept": "sleep",
+    "took": "take",
+    "taken": "take",
+    "woke": "wake",
+    "woken": "wake",
+    "bought": "buy",
+    "broke": "break",
+    "broken": "break",
+    "chose": "choose",
+    "chosen": "choose",
+    "wrote": "write",
+    "written": "write",
+    "spoke": "speak",
+    "spoken": "speak",
+}
+
+
 def stem(word):
     """A simple stem, so the forms of one word meet ("lectures", "lecturing": "lectur")."""
     w = word.lower()
+    if w in IRREGULAR_STEMS:
+        w = IRREGULAR_STEMS[w]
     if len(w) > 4 and (w.endswith("ies") or w.endswith("ied")):
         w = w[:-3] + "y"
     elif len(w) > 5 and w.endswith("ing"):
