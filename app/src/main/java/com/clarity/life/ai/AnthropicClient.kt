@@ -26,6 +26,8 @@ class AnthropicClient @Inject constructor(
         val body = AnthropicWire.requestBody(endpoint, request).toRequestBody(JSON)
         val call = http.newBuilder()
             .readTimeout(endpoint.readTimeoutS, TimeUnit.SECONDS)
+            // Only Test connection sets one, so it always answers, even while the provider is busy.
+            .callTimeout(endpoint.callTimeoutS, TimeUnit.SECONDS)
             .build()
             .newCall(
                 Request.Builder()
@@ -59,6 +61,7 @@ class AnthropicClient @Inject constructor(
             var usage: Usage? = null
             var finish: String? = null
             var ended = false
+            val quiet = QuietTimer(endpoint.readTimeoutS * 1000, System.currentTimeMillis())
             while (true) {
                 val line = try {
                     source.readUtf8Line()
@@ -67,7 +70,14 @@ class AnthropicClient @Inject constructor(
                 } catch (e: IOException) {
                     throw AiFailure("stream_broken", "the connection dropped", retryable = true, cause = e)
                 } ?: break
-                when (val event = AnthropicWire.parseLine(line)) {
+                val event = AnthropicWire.parseLine(line)
+                if (event == OpenAiWire.Event.Ignore) {
+                    // A keep-alive, a blank line or a ping: not a piece of the reply (see QuietTimer).
+                    if (quiet.quietTooLong(System.currentTimeMillis())) throw QuietTimer.busy()
+                } else {
+                    quiet.piece(System.currentTimeMillis())
+                }
+                when (event) {
                     is OpenAiWire.Event.Delta -> {
                         event.thinking?.let { emit(ChatChunk.Thinking(it)) }
                         event.text?.let { emit(ChatChunk.Text(it)) }
@@ -89,10 +99,24 @@ class AnthropicClient @Inject constructor(
         }
     }.flowOn(Dispatchers.IO) // call.execute() blocks; on the main thread Android kills the app
 
-    override suspend fun test(endpoint: Endpoint): TestResult = try {
+    override suspend fun test(endpoint: Endpoint): TestResult {
+        val started = System.currentTimeMillis()
+        return try {
+            testOnce(endpoint)
+        } catch (e: AiFailure) {
+            TestResult(false, OpenAiCompatibleClient.testLine(e, started))
+        }
+    }
+
+    private suspend fun testOnce(endpoint: Endpoint): TestResult = try {
         var text = ""
         stream(
-            endpoint.copy(maxOutputTokens = 2048, thinking = false),
+            endpoint.copy(
+                maxOutputTokens = 2048,
+                thinking = false,
+                callTimeoutS = com.clarity.life.settings.DefaultSettings.TEST_TIMEOUT_S,
+                readTimeoutS = minOf(endpoint.readTimeoutS, com.clarity.life.settings.DefaultSettings.TEST_TIMEOUT_S),
+            ),
             OpenAiWire.testRequest(endpoint),
         ).collect { chunk -> if (chunk is ChatChunk.Text) text += chunk.text }
         if (text.isBlank()) {
@@ -100,8 +124,6 @@ class AnthropicClient @Inject constructor(
         } else {
             TestResult(true, "Connected.")
         }
-    } catch (e: AiFailure) {
-        TestResult(false, OpenAiCompatibleClient.friendly(e))
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: IllegalArgumentException) {

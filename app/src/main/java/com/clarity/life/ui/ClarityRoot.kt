@@ -54,7 +54,8 @@ fun ClarityRoot() {
     val reviews: com.clarity.life.ui.plan.ReviewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
     val plan: com.clarity.life.ui.plan.PlanViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-    val planState by plan.state.collectAsStateWithLifecycle()
+    // The light view (today's answers only), so the tab bar never makes start-up read the whole tracker.
+    val planState by plan.home.collectAsStateWithLifecycle()
     val promises: com.clarity.life.ui.plan.PromisesViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val promiseState by promises.state.collectAsStateWithLifecycle()
     val planDot = com.clarity.life.ui.plan.Waiting.planTab(planState, promiseState, reviewState.unread)

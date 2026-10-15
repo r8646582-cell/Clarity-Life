@@ -95,6 +95,9 @@ class MainActivity : ComponentActivity() {
                 // backup when one is due (it does nothing for backups until a folder and a passphrase are set).
                 maintenance.schedule()
                 // Last, as it takes longest: search made ready, so the first message does not wait for it.
+                // Only once the home is on screen: loading the 147 MB meaning model and every vector at the
+                // same time as the home's own reading made the home slow to appear (15 Oct 2026).
+                FirstScreen.awaitShown()
                 search.warmUp()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e

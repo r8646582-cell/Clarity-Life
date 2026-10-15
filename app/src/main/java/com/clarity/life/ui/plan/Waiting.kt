@@ -15,7 +15,14 @@ object Waiting {
     /** A promise due on his day or earlier and not answered (what Plan, Promises shows under Needs an answer). */
     fun promises(promises: PromisesViewModel.State): Boolean = promises.due.isNotEmpty()
 
+    /** The same, from the light view the tab bar reads (PlanViewModel.Home): no check-in history needed. */
+    fun today(home: PlanViewModel.Home): Boolean = home.ready && home.todayUnanswered
+
     /** The Plan tab's dot: anything above, or an unread letter or review. */
     fun planTab(plan: PlanViewModel.State, promises: PromisesViewModel.State, unreadReviews: Boolean): Boolean =
         unreadReviews || today(plan) || promises(promises)
+
+    /** The Plan tab's dot as the tab bar reads it, from the light view. */
+    fun planTab(home: PlanViewModel.Home, promises: PromisesViewModel.State, unreadReviews: Boolean): Boolean =
+        unreadReviews || today(home) || promises(promises)
 }

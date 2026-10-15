@@ -91,4 +91,7 @@ object DefaultSettings {
     const val CONNECT_TIMEOUT_S = 30L
     const val CHAT_GAP_TIMEOUT_S = 120L
     const val BACKGROUND_READ_TIMEOUT_S = 300L
+
+    /** Test connection gives its answer within this, even when the provider is busy or down. */
+    const val TEST_TIMEOUT_S = 90L
 }

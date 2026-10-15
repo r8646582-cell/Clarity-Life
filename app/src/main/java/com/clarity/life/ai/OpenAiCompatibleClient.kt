@@ -39,6 +39,8 @@ class OpenAiCompatibleClient @Inject constructor(
         val body = OpenAiWire.requestBody(endpoint, request).toRequestBody(JSON)
         val call = http.newBuilder()
             .readTimeout(endpoint.readTimeoutS, TimeUnit.SECONDS)
+            // Only Test connection sets one, so it always answers, even while the provider is busy.
+            .callTimeout(endpoint.callTimeoutS, TimeUnit.SECONDS)
             .build()
             .newCall(
                 Request.Builder()
@@ -73,6 +75,7 @@ class OpenAiCompatibleClient @Inject constructor(
             var usage: Usage? = null
             var finish: String? = null
             var ended = false
+            val quiet = QuietTimer(endpoint.readTimeoutS * 1000, System.currentTimeMillis())
             while (true) {
                 val line = try {
                     source.readUtf8Line()
@@ -81,7 +84,14 @@ class OpenAiCompatibleClient @Inject constructor(
                 } catch (e: IOException) {
                     throw AiFailure("stream_broken", "the connection dropped", retryable = true, cause = e)
                 } ?: break
-                when (val event = OpenAiWire.parseLine(line)) {
+                val event = OpenAiWire.parseLine(line)
+                if (event == OpenAiWire.Event.Ignore) {
+                    // A keep-alive, a blank line or a ping: not a piece of the reply (see QuietTimer).
+                    if (quiet.quietTooLong(System.currentTimeMillis())) throw QuietTimer.busy()
+                } else {
+                    quiet.piece(System.currentTimeMillis())
+                }
+                when (event) {
                     is OpenAiWire.Event.Delta -> {
                         event.thinking?.let { emit(ChatChunk.Thinking(it)) }
                         event.text?.let { emit(ChatChunk.Text(it)) }
@@ -105,10 +115,26 @@ class OpenAiCompatibleClient @Inject constructor(
         }
     }.flowOn(Dispatchers.IO) // call.execute() blocks; on the main thread Android kills the app
 
-    override suspend fun test(endpoint: Endpoint): TestResult = try {
+    override suspend fun test(endpoint: Endpoint): TestResult {
+        val started = System.currentTimeMillis()
+        return try {
+            testOnce(endpoint)
+        } catch (e: AiFailure) {
+            TestResult(false, testLine(e, started))
+        }
+    }
+
+    private suspend fun testOnce(endpoint: Endpoint): TestResult = try {
         var text = ""
         var thought = false
-        stream(endpoint.copy(maxOutputTokens = minOf(endpoint.maxOutputTokens, TEST_MAX_TOKENS)), OpenAiWire.testRequest(endpoint))
+        stream(
+            endpoint.copy(
+                maxOutputTokens = minOf(endpoint.maxOutputTokens, TEST_MAX_TOKENS),
+                callTimeoutS = DefaultSettings.TEST_TIMEOUT_S,
+                readTimeoutS = minOf(endpoint.readTimeoutS, DefaultSettings.TEST_TIMEOUT_S),
+            ),
+            OpenAiWire.testRequest(endpoint),
+        )
             .collect { chunk ->
                 when (chunk) {
                     is ChatChunk.Text -> text += chunk.text
@@ -124,8 +150,6 @@ class OpenAiCompatibleClient @Inject constructor(
                 if (thought) "Connected. The model answered and streamed its thinking." else "Connected.",
             )
         }
-    } catch (e: AiFailure) {
-        TestResult(false, friendly(e))
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: IllegalArgumentException) {
@@ -140,6 +164,17 @@ class OpenAiCompatibleClient @Inject constructor(
         /** Thinking counts toward the cap; a small one leaves a thinking model no room to answer the test. */
         private const val TEST_MAX_TOKENS = 2048
 
+        /**
+         * Test connection's line for a failure. When its time ran out (the call is cut at
+         * [DefaultSettings.TEST_TIMEOUT_S]), say that plainly instead of guessing at the connection.
+         */
+        fun testLine(e: AiFailure, startedMs: Long, nowMs: Long = System.currentTimeMillis()): String =
+            if (e.code != "provider_busy" && nowMs - startedMs >= DefaultSettings.TEST_TIMEOUT_S * 1000 - 1000) {
+                "No answer within ${DefaultSettings.TEST_TIMEOUT_S} seconds. The provider may be busy or down; try again later."
+            } else {
+                friendly(e)
+            }
+
         /** One quiet, honest line. It never carries a key or a word of the conversation. */
         fun friendly(e: AiFailure): String = when {
             e.code == "http_401" || e.code == "http_403" -> "The provider refused the key. Check the API key."
@@ -150,6 +185,7 @@ class OpenAiCompatibleClient @Inject constructor(
             e.code.startsWith("http_5") -> "The provider is having trouble. Try again in a moment."
             e.code == "network" -> "No answer from the provider. Check the connection and the base URL."
             e.code == "stream_gap" -> "The provider went quiet in the middle of the reply."
+            e.code == "provider_busy" -> "The provider is busy or down and did not start the reply. Try again later."
             e.code == "stream_broken" -> "The connection dropped in the middle of the reply."
             else -> "The provider could not complete the reply (${e.code})."
         }

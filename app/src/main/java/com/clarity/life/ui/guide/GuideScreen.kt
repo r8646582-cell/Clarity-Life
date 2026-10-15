@@ -204,7 +204,7 @@ private val GUIDE = listOf(
                 "Reviews and letters",
                 "Look back, every week",
                 listOf(
-                    "Every Sunday evening the coach writes you a letter about your week. A dot on Plan means one is waiting; it is under Plan, Reviews.",
+                    "Every Sunday evening the coach writes you a letter about your week. Early each month it reads that month's weekly letters and writes one about the month, and in January it reads the monthly letters and writes one about the year. A dot on Plan means one is waiting; they are under Plan, Reviews.",
                     "In the letter, tap Talk about this letter to discuss it, or See the numbers for the week's facts. Each month there is a review too, plan against what happened.",
                     "Over time What I know builds Your story and Chapters: the longer view of your year.",
                 ),

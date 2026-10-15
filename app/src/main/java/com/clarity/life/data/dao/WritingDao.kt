@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Weekly and monthly reviews and the weekly letter. Background jobs write the text here; nothing in these
- * tables can change a goal, a plan, a target or a promise. One review per period and one letter per week,
+ * tables can change a goal, a plan, a target or a promise. One review per period and one letter per week, month or year,
  * enforced by the unique keys.
  */
 @Dao
@@ -85,8 +85,19 @@ interface WritingDao {
     @Query("SELECT * FROM letter WHERE deleted_at IS NULL ORDER BY period_start DESC")
     fun watchLetters(): Flow<List<LetterRow>>
 
-    @Query("SELECT * FROM letter WHERE deleted_at IS NULL AND period_end < :before ORDER BY period_end DESC LIMIT 1")
-    suspend fun letterBefore(before: String): LetterRow?
+    /** The newest letter of one kind ([prefix] is "letter:week:", "letter:month:" or "letter:year:") before a day. */
+    @Query(
+        "SELECT * FROM letter WHERE deleted_at IS NULL AND `key` LIKE :prefix || '%' AND period_end < :before " +
+            "ORDER BY period_end DESC LIMIT 1",
+    )
+    suspend fun letterBefore(prefix: String, before: String): LetterRow?
+
+    /** The letters of one kind whose period ends from [from] to [to], oldest first (a month's weeks, a year's months). */
+    @Query(
+        "SELECT * FROM letter WHERE deleted_at IS NULL AND body != '' AND `key` LIKE :prefix || '%' " +
+            "AND period_end >= :from AND period_end <= :to ORDER BY period_start",
+    )
+    suspend fun lettersEnding(prefix: String, from: String, to: String): List<LetterRow>
 
     @Query("UPDATE letter SET read_at = :at WHERE id = :id AND read_at IS NULL")
     suspend fun markLetterRead(id: Long, at: Long)
@@ -113,7 +124,11 @@ interface WritingDao {
     @Query("SELECT * FROM review WHERE kind = 'month' AND period_start >= :from AND period_end <= :to ORDER BY period_start")
     suspend fun monthlyReviewsWithin(from: String, to: String): List<ReviewRow>
 
-    @Query("SELECT * FROM letter WHERE deleted_at IS NULL AND period_start >= :from AND period_end <= :to ORDER BY period_start")
+    /** The weekly letters inside a quarter (the chapter reads the weeks, not the monthly letters made from them). */
+    @Query(
+        "SELECT * FROM letter WHERE deleted_at IS NULL AND `key` LIKE 'letter:week:%' AND period_start >= :from " +
+            "AND period_end <= :to ORDER BY period_start",
+    )
     suspend fun lettersWithin(from: String, to: String): List<LetterRow>
 
     /** The conversations of a period that reflection summarised (an off-the-record one has no summary). */
