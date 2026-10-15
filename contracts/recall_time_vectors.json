@@ -1,0 +1,1115 @@
+{
+ "about": "Shared cases for RecallTime (tools/recall_time.py, RecallTime.kt). today 2026-10-14 is a Wednesday.",
+ "cases": [
+  {
+   "name": "a month after 'in' is the most recent one that has begun",
+   "fn": "parse",
+   "args": {
+    "text": "Which promises did I break in August?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-08-01",
+    "end": "2026-08-31",
+    "promises": true,
+    "outcome": "not_done",
+    "rest": "which promises did i break"
+   }
+  },
+  {
+   "name": "a month later in the year than today is last year's",
+   "fn": "parse",
+   "args": {
+    "text": "Am I still sitting Law in December?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-12-01",
+    "end": "2025-12-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "am i still sitting law"
+   }
+  },
+  {
+   "name": "the current month runs to its end",
+   "fn": "parse",
+   "args": {
+    "text": "Did I check in every day in October?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-01",
+    "end": "2026-10-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "did i check in every day"
+   }
+  },
+  {
+   "name": "last March in October is this year's",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do last March?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-03-01",
+    "end": "2026-03-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "last March in March is last year's",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do last March?",
+    "today": "2026-03-20"
+   },
+   "expect": {
+    "start": "2025-03-01",
+    "end": "2025-03-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "in March in March is this one",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do in March?",
+    "today": "2026-03-20"
+   },
+   "expect": {
+    "start": "2026-03-01",
+    "end": "2026-03-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "a month with a year is taken as written",
+   "fn": "parse",
+   "args": {
+    "text": "What happened in May 2025?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-05-01",
+    "end": "2025-05-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened"
+   }
+  },
+  {
+   "name": "a month and year without a time word",
+   "fn": "parse",
+   "args": {
+    "text": "Back in June 2025 I was at Pellow",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-06-01",
+    "end": "2025-06-30",
+    "promises": false,
+    "outcome": null,
+    "rest": "back i was at pellow"
+   }
+  },
+  {
+   "name": "'march' as a verb is no month",
+   "fn": "parse",
+   "args": {
+    "text": "I will march on and finish it",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "i will march on and finish it"
+   }
+  },
+  {
+   "name": "'may' as a verb is no month",
+   "fn": "parse",
+   "args": {
+    "text": "I may 2 hours study",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "i may 2 hours study"
+   }
+  },
+  {
+   "name": "'may' before a day number without a year is no date",
+   "fn": "parse",
+   "args": {
+    "text": "may 12 be good",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "may 12 be good"
+   }
+  },
+  {
+   "name": "a day before 'may' is a date",
+   "fn": "parse",
+   "args": {
+    "text": "on 12 may I sat the exam",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-05-12",
+    "end": "2026-05-12",
+    "promises": false,
+    "outcome": null,
+    "rest": "on i sat the exam"
+   }
+  },
+  {
+   "name": "'may' with a time word is the month",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do in May?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-05-01",
+    "end": "2026-05-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "a day and month this year",
+   "fn": "parse",
+   "args": {
+    "text": "How many lectures did I do on 12 October?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-12",
+    "promises": false,
+    "outcome": null,
+    "rest": "how many lectures did i do on"
+   }
+  },
+  {
+   "name": "an ordinal day and month",
+   "fn": "parse",
+   "args": {
+    "text": "What happened on the 3rd of March?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-03-03",
+    "end": "2026-03-03",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened on the"
+   }
+  },
+  {
+   "name": "month then day with an ordinal",
+   "fn": "parse",
+   "args": {
+    "text": "Why did I skip on Aug 24th?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-08-24",
+    "end": "2026-08-24",
+    "promises": false,
+    "outcome": null,
+    "rest": "why did i skip on"
+   }
+  },
+  {
+   "name": "a day and month after today is last year's",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do on 20 November?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-11-20",
+    "end": "2025-11-20",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do on"
+   }
+  },
+  {
+   "name": "a day that does not exist is ignored",
+   "fn": "parse",
+   "args": {
+    "text": "What about 31 September?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "what about 31 september"
+   }
+  },
+  {
+   "name": "29 February in a leap year",
+   "fn": "parse",
+   "args": {
+    "text": "29 Feb 2024 was a Thursday",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2024-02-29",
+    "end": "2024-02-29",
+    "promises": false,
+    "outcome": null,
+    "rest": "was a thursday"
+   }
+  },
+  {
+   "name": "an impossible day falls back to its month and year",
+   "fn": "parse",
+   "args": {
+    "text": "29 Feb 2026 never came",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-02-01",
+    "end": "2026-02-28",
+    "promises": false,
+    "outcome": null,
+    "rest": "29 never came"
+   }
+  },
+  {
+   "name": "first week of a month",
+   "fn": "parse",
+   "args": {
+    "text": "What was going on in the first week of September?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-09-01",
+    "end": "2026-09-07",
+    "promises": false,
+    "outcome": null,
+    "rest": "what was going on in the"
+   }
+  },
+  {
+   "name": "second week of a month",
+   "fn": "parse",
+   "args": {
+    "text": "the second week of August was hard",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-08-08",
+    "end": "2026-08-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "the was hard"
+   }
+  },
+  {
+   "name": "last week of a month is its last seven days",
+   "fn": "parse",
+   "args": {
+    "text": "the last week of February",
+    "today": "2026-03-10"
+   },
+   "expect": {
+    "start": "2026-02-22",
+    "end": "2026-02-28",
+    "promises": false,
+    "outcome": null,
+    "rest": "the"
+   }
+  },
+  {
+   "name": "last week of a leap February",
+   "fn": "parse",
+   "args": {
+    "text": "the last week of February 2024",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2024-02-23",
+    "end": "2024-02-29",
+    "promises": false,
+    "outcome": null,
+    "rest": "the"
+   }
+  },
+  {
+   "name": "early in a month",
+   "fn": "parse",
+   "args": {
+    "text": "early September was rough",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-09-01",
+    "end": "2026-09-10",
+    "promises": false,
+    "outcome": null,
+    "rest": "was rough"
+   }
+  },
+  {
+   "name": "late in a month runs to its end",
+   "fn": "parse",
+   "args": {
+    "text": "What stopped my lectures in late September?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-09-21",
+    "end": "2026-09-30",
+    "promises": false,
+    "outcome": null,
+    "rest": "what stopped my lectures in"
+   }
+  },
+  {
+   "name": "the middle of a month",
+   "fn": "parse",
+   "args": {
+    "text": "the middle of July",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-07-11",
+    "end": "2026-07-20",
+    "promises": false,
+    "outcome": null,
+    "rest": "the"
+   }
+  },
+  {
+   "name": "the end of a month",
+   "fn": "parse",
+   "args": {
+    "text": "by the end of February I was tired",
+    "today": "2026-03-10"
+   },
+   "expect": {
+    "start": "2026-02-21",
+    "end": "2026-02-28",
+    "promises": false,
+    "outcome": null,
+    "rest": "by the i was tired"
+   }
+  },
+  {
+   "name": "since a month runs to today",
+   "fn": "parse",
+   "args": {
+    "text": "Have I slept well since March?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-03-01",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "have i slept well"
+   }
+  },
+  {
+   "name": "today",
+   "fn": "parse",
+   "args": {
+    "text": "What did I promise to do today?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-14",
+    "end": "2026-10-14",
+    "promises": true,
+    "outcome": null,
+    "rest": "what did i promise to do"
+   }
+  },
+  {
+   "name": "this morning is today",
+   "fn": "parse",
+   "args": {
+    "text": "What did we talk about this morning?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-14",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did we talk about"
+   }
+  },
+  {
+   "name": "tonight is today",
+   "fn": "parse",
+   "args": {
+    "text": "Can I nap tonight?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-14",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "can i nap"
+   }
+  },
+  {
+   "name": "yesterday",
+   "fn": "parse",
+   "args": {
+    "text": "What did I say yesterday?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-13",
+    "end": "2026-10-13",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i say"
+   }
+  },
+  {
+   "name": "last night is yesterday",
+   "fn": "parse",
+   "args": {
+    "text": "I slept badly last night",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-13",
+    "end": "2026-10-13",
+    "promises": false,
+    "outcome": null,
+    "rest": "i slept badly"
+   }
+  },
+  {
+   "name": "tomorrow is what is due",
+   "fn": "parse",
+   "args": {
+    "text": "What's due tomorrow?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-15",
+    "end": "2026-10-15",
+    "promises": false,
+    "outcome": null,
+    "rest": "what's due"
+   }
+  },
+  {
+   "name": "N days ago",
+   "fn": "parse",
+   "args": {
+    "text": "I said something 3 days ago",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-11",
+    "end": "2026-10-11",
+    "promises": false,
+    "outcome": null,
+    "rest": "i said something"
+   }
+  },
+  {
+   "name": "a number word days ago",
+   "fn": "parse",
+   "args": {
+    "text": "two days ago I quit",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-12",
+    "promises": false,
+    "outcome": null,
+    "rest": "i quit"
+   }
+  },
+  {
+   "name": "a week ago is the Monday to Sunday week holding that day",
+   "fn": "parse",
+   "args": {
+    "text": "a week ago I was ill",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-05",
+    "end": "2026-10-11",
+    "promises": false,
+    "outcome": null,
+    "rest": "i was ill"
+   }
+  },
+  {
+   "name": "N months ago is that calendar month",
+   "fn": "parse",
+   "args": {
+    "text": "three months ago I moved",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "i moved"
+   }
+  },
+  {
+   "name": "months ago across a year",
+   "fn": "parse",
+   "args": {
+    "text": "eleven months ago",
+    "today": "2026-02-10"
+   },
+   "expect": {
+    "start": "2025-03-01",
+    "end": "2025-03-31",
+    "promises": false,
+    "outcome": null,
+    "rest": ""
+   }
+  },
+  {
+   "name": "the past N days end today",
+   "fn": "parse",
+   "args": {
+    "text": "the past 3 days were bad",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "were bad"
+   }
+  },
+  {
+   "name": "the last few days are three",
+   "fn": "parse",
+   "args": {
+    "text": "the last few days were bad",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "were bad"
+   }
+  },
+  {
+   "name": "the past two weeks are 14 days to today",
+   "fn": "parse",
+   "args": {
+    "text": "How have the last two weeks of lectures gone?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-01",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "how have of lectures gone"
+   }
+  },
+  {
+   "name": "this week starts on Monday",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do this week?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "this week on a Monday is today alone",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do this week?",
+    "today": "2026-10-12"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-12",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "last week is the Monday to Sunday before",
+   "fn": "parse",
+   "args": {
+    "text": "What happened last week?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-05",
+    "end": "2026-10-11",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened"
+   }
+  },
+  {
+   "name": "last week on a Sunday",
+   "fn": "parse",
+   "args": {
+    "text": "What happened last week?",
+    "today": "2026-10-11"
+   },
+   "expect": {
+    "start": "2026-09-28",
+    "end": "2026-10-04",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened"
+   }
+  },
+  {
+   "name": "this month",
+   "fn": "parse",
+   "args": {
+    "text": "How am I doing this month?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-01",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "how am i doing"
+   }
+  },
+  {
+   "name": "last month",
+   "fn": "parse",
+   "args": {
+    "text": "How many lectures did I do last month?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "promises": false,
+    "outcome": null,
+    "rest": "how many lectures did i do"
+   }
+  },
+  {
+   "name": "last month in January is last December",
+   "fn": "parse",
+   "args": {
+    "text": "How was last month?",
+    "today": "2026-01-05"
+   },
+   "expect": {
+    "start": "2025-12-01",
+    "end": "2025-12-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "how was"
+   }
+  },
+  {
+   "name": "this year",
+   "fn": "parse",
+   "args": {
+    "text": "What have I done this year?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-01-01",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "what have i done"
+   }
+  },
+  {
+   "name": "last year",
+   "fn": "parse",
+   "args": {
+    "text": "What did I do last year?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i do"
+   }
+  },
+  {
+   "name": "in a year",
+   "fn": "parse",
+   "args": {
+    "text": "What happened in 2025?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened"
+   }
+  },
+  {
+   "name": "the current year runs to today",
+   "fn": "parse",
+   "args": {
+    "text": "What happened in 2026?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-01-01",
+    "end": "2026-10-14",
+    "promises": false,
+    "outcome": null,
+    "rest": "what happened"
+   }
+  },
+  {
+   "name": "last Sunday on a Wednesday",
+   "fn": "parse",
+   "args": {
+    "text": "What did last Sunday's letter say?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-11",
+    "end": "2026-10-11",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did 's letter say"
+   }
+  },
+  {
+   "name": "last Wednesday on a Wednesday is a week ago",
+   "fn": "parse",
+   "args": {
+    "text": "What did I say last Wednesday?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-07",
+    "end": "2026-10-07",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did i say"
+   }
+  },
+  {
+   "name": "on a weekday is the most recent one before today",
+   "fn": "parse",
+   "args": {
+    "text": "Why did I skip on Tuesday?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-13",
+    "end": "2026-10-13",
+    "promises": false,
+    "outcome": null,
+    "rest": "why did i skip"
+   }
+  },
+  {
+   "name": "a weekday's is the most recent one",
+   "fn": "parse",
+   "args": {
+    "text": "Was Monday's plan good?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-12",
+    "end": "2026-10-12",
+    "promises": false,
+    "outcome": null,
+    "rest": "was plan good"
+   }
+  },
+  {
+   "name": "a plural weekday is no period",
+   "fn": "parse",
+   "args": {
+    "text": "Why do I miss lectures on Tuesdays?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "why do i miss lectures on tuesdays"
+   }
+  },
+  {
+   "name": "a plain weekday is no period",
+   "fn": "parse",
+   "args": {
+    "text": "Tuesday again.",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "tuesday again"
+   }
+  },
+  {
+   "name": "the first period in the text wins",
+   "fn": "parse",
+   "args": {
+    "text": "Yesterday I thought about last March",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-13",
+    "end": "2026-10-13",
+    "promises": false,
+    "outcome": null,
+    "rest": "i thought about last march"
+   }
+  },
+  {
+   "name": "a later pattern earlier in the text wins",
+   "fn": "parse",
+   "args": {
+    "text": "In March, not yesterday",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-03-01",
+    "end": "2026-03-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "not yesterday"
+   }
+  },
+  {
+   "name": "no period at all",
+   "fn": "parse",
+   "args": {
+    "text": "How much was the UPS again?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "how much was the ups again"
+   }
+  },
+  {
+   "name": "promises with an outcome to break",
+   "fn": "parse",
+   "args": {
+    "text": "Which promises did I break in August?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-08-01",
+    "end": "2026-08-31",
+    "promises": true,
+    "outcome": "not_done",
+    "rest": "which promises did i break"
+   }
+  },
+  {
+   "name": "promises kept",
+   "fn": "parse",
+   "args": {
+    "text": "Which promises did I keep in September?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "promises": true,
+    "outcome": "kept",
+    "rest": "which promises did i keep"
+   }
+  },
+  {
+   "name": "promises moved",
+   "fn": "parse",
+   "args": {
+    "text": "which promises got moved or postponed",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": true,
+    "outcome": "moved",
+    "rest": "which promises got moved or postponed"
+   }
+  },
+  {
+   "name": "promises let go",
+   "fn": "parse",
+   "args": {
+    "text": "Which promises have I let go?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": true,
+    "outcome": "let_go",
+    "rest": "which promises have i let go"
+   }
+  },
+  {
+   "name": "promise and keep without a period",
+   "fn": "parse",
+   "args": {
+    "text": "Did I keep my promise to buy the UPS on time?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": true,
+    "outcome": "kept",
+    "rest": "did i keep my promise to buy the ups on time"
+   }
+  },
+  {
+   "name": "an outcome word without a promise word is no outcome",
+   "fn": "parse",
+   "args": {
+    "text": "I missed the bus yesterday",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-13",
+    "end": "2026-10-13",
+    "promises": false,
+    "outcome": null,
+    "rest": "i missed the bus"
+   }
+  },
+  {
+   "name": "committed counts as a promise word",
+   "fn": "parse",
+   "args": {
+    "text": "What did I commit to last week?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-05",
+    "end": "2026-10-11",
+    "promises": true,
+    "outcome": null,
+    "rest": "what did i commit to"
+   }
+  },
+  {
+   "name": "curly apostrophes are read",
+   "fn": "parse",
+   "args": {
+    "text": "What did last Sunday’s letter say?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-10-11",
+    "end": "2026-10-11",
+    "promises": false,
+    "outcome": null,
+    "rest": "what did 's letter say"
+   }
+  },
+  {
+   "name": "punctuation does not hide a period",
+   "fn": "parse",
+   "args": {
+    "text": "So... in August, right?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": "2026-08-01",
+    "end": "2026-08-31",
+    "promises": false,
+    "outcome": null,
+    "rest": "so right"
+   }
+  },
+  {
+   "name": "a period starting after tomorrow is none",
+   "fn": "parse",
+   "args": {
+    "text": "What about 20 November 2026?",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "what about 20 november 2026"
+   }
+  },
+  {
+   "name": "a big number of days ago is not read",
+   "fn": "parse",
+   "args": {
+    "text": "999 days ago",
+    "today": "2026-10-14"
+   },
+   "expect": {
+    "start": null,
+    "end": null,
+    "promises": false,
+    "outcome": null,
+    "rest": "999 days ago"
+   }
+  }
+ ]
+}

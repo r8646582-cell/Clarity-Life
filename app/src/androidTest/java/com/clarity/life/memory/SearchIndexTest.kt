@@ -30,7 +30,7 @@ class SearchIndexTest {
     fun open() {
         db = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getInstrumentation().targetContext, ClarityDatabase::class.java)
             .build()
-        search = SearchIndex(db, Embedder(InstrumentationRegistry.getInstrumentation().targetContext))
+        search = SearchIndex(db, TestEmbedder.shared)
     }
 
     @After
@@ -55,7 +55,9 @@ class SearchIndexTest {
         val fromOne = search.relevantPast(one, "should I ask Hina about chemistry again?", tz)
         assertTrue("its own conversation is already in the history", fromOne.items.isEmpty())
 
-        val weak = search.relevantPast(two, "chemistry is boring", tz)
+        // One shared word out of two, and a different meaning ("chemistry" between people): neither keyword nor
+        // meaning search counts it. (Phase 4: "chemistry is boring" is close enough in meaning for gte-base.)
+        val weak = search.relevantPast(two, "the chemistry of this team is off", tz)
         assertTrue("one shared word out of two is not strong enough", weak.items.isEmpty())
     }
 
@@ -114,5 +116,57 @@ class SearchIndexTest {
         assertEquals("only conversation two is left to index", 1, search.rebuild())
         search.rebuildIfEmpty()
         assertEquals(1, db.search().count())
+    }
+
+    private fun at(day: String, hour: Int = 12): Long =
+        java.time.LocalDate.parse(day).atTime(hour, 0).atZone(java.time.ZoneId.of(tz)).toInstant().toEpochMilli()
+
+    @Test
+    fun lettersAndCheckinsAreSearchableAndADeletedLetterLeavesAtOnce() = runBlocking {
+        val two = db.conversations().insert(ConversationRow(startedAt = now))
+        val letter = db.writing().insertLetter(
+            com.clarity.life.data.entity.LetterRow(
+                periodStart = "2026-09-28", periodEnd = "2026-10-04", title = "A box that keeps the router on",
+                body = "The UPS changed the evenings: two lectures during a cut.", readyAt = now, key = "letter:week:2026-09-28",
+            ),
+        )
+        search.syncRecords(force = true)
+        val found = search.relevantPast(two, "which letter talked about the UPS?", tz, 0, now)
+        assertTrue(found.items.toString(), found.items.any { it.text.contains("their weekly letter") && it.text.contains("router") })
+
+        db.writing().deleteLetter(letter, now)
+        search.syncRecords(force = true)
+        val after = search.relevantPast(two, "which letter talked about the UPS?", tz, 0, now)
+        assertTrue("a deleted letter is never sent again: ${after.items}", after.items.none { it.text.contains("router") })
+    }
+
+    @Test
+    fun promisesInAMonthComeBackWithTheBrokenOnesFirst() = runBlocking {
+        val two = db.conversations().insert(ConversationRow(startedAt = now))
+        fun promise(text: String, day: String, status: String, reason: String? = null) =
+            com.clarity.life.data.entity.PromiseRow(text = text, dueAt = at(day), dueText = day, status = status, reason = reason, createdAt = at(day))
+        db.promises().insert(promise("Submit the exam form", "2026-08-21", "not_done", "power cut"))
+        db.promises().insert(promise("Walk after Asr", "2026-08-10", "kept"))
+        db.promises().insert(promise("Buy the router UPS", "2026-09-25", "kept"))
+        search.rebuild()
+
+        // No word of the question is in these promises: the month and the outcome are read in code.
+        val got = search.relevantPast(two, "Which promises did I break in August?", tz, 0, now)
+        val texts = got.items.map { it.text }
+        // (The broken one first among them is pinned by contracts/retrieval_vectors.json.)
+        assertTrue(texts.toString(), texts.any { it.contains("Submit the exam form") && it.contains("not done") })
+        assertTrue(texts.toString(), texts.any { it.contains("Walk after Asr") })
+    }
+
+    @Test
+    fun aVagueFollowUpIsSearchedWithTheConversation() = runBlocking {
+        val one = db.conversations().insert(ConversationRow(startedAt = now - 86_400_000L * 20, title = "The UPS"))
+        val two = db.conversations().insert(ConversationRow(startedAt = now))
+        said(one, "Got the router UPS for 9,500, it keeps the internet on for three hours")
+
+        val withContext = search.relevantPast(
+            two, "How much was it again?", tz, 0, now, earlier = listOf("I bought the router UPS last month."),
+        )
+        assertTrue(withContext.items.toString(), withContext.items.any { it.text.contains("9,500") })
     }
 }

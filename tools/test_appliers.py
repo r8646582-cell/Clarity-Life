@@ -14,6 +14,8 @@ def main():
         if "ctx" in args and isinstance(args["ctx"], str):
             args["ctx"] = fixtures[args["ctx"]]
         got = json.loads(json.dumps(getattr(A, c["fn"])(**args)))
+        if c["fn"] == "gardening_clusters":
+            got = {"groups": got}  # a list; "expect" names it "groups"
         exp = c["expect"]
         # "expect" may list only some keys; "dropped_count" checks the number of drop reasons only
         problems = []

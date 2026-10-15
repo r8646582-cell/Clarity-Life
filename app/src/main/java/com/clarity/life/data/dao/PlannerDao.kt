@@ -2,6 +2,7 @@ package com.clarity.life.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.clarity.life.data.entity.BacklogRow
@@ -11,6 +12,7 @@ import com.clarity.life.data.entity.GoalRow
 import com.clarity.life.data.entity.PlanRow
 import com.clarity.life.data.entity.RestDayRow
 import com.clarity.life.data.entity.TargetRow
+import com.clarity.life.data.entity.TargetVersionRow
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -91,6 +93,22 @@ interface PlannerDao {
 
     @Query("SELECT * FROM target ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END, id")
     fun watchTargets(): Flow<List<TargetRow>>
+
+    // ---------- target history (schema 8) ----------
+
+    /** A change he tapped, from a day on; a second change the same day replaces the first (unique day). */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun putTargetVersion(row: TargetVersionRow): Long
+
+    @Query("SELECT COUNT(*) FROM target_version WHERE target_id = :targetId")
+    suspend fun targetVersionCount(targetId: Long): Int
+
+    /** The versions of these targets, oldest first per target. */
+    @Query("SELECT * FROM target_version WHERE target_id IN (:targetIds) ORDER BY target_id, from_day")
+    suspend fun targetVersions(targetIds: List<Long>): List<TargetVersionRow>
+
+    @Query("SELECT * FROM target_version ORDER BY target_id, from_day")
+    fun watchTargetVersions(): Flow<List<TargetVersionRow>>
 
     // ---------- backlogs ----------
 

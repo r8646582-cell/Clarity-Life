@@ -29,7 +29,9 @@ object TextCheck {
     private val WHITESPACE = Regex("\\s+")
 
     fun norm(s: String): String {
-        var out = Normalizer.normalize(s, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+        // Plain ASCII is already in NFKC form; the normalizer is a native call on Android, and search runs this
+        // hundreds of times a message (Max plan Phase 5).
+        var out = (if (s.all { it.code < 128 }) s else Normalizer.normalize(s, Normalizer.Form.NFKC)).lowercase(Locale.ROOT)
         out = out.replace('’', '\'').replace('‘', '\'').replace('“', '"').replace('”', '"')
         return WHITESPACE.replace(out, " ").trim()
     }

@@ -7,6 +7,8 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.room.withTransaction
 import com.clarity.life.core.BackupFormat
+import com.clarity.life.core.Maintenance
+import com.clarity.life.settings.DefaultSettings
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.entity.ErrorLogRow
 import com.clarity.life.security.SecretStore
@@ -22,7 +24,8 @@ import kotlinx.coroutines.withContext
 /**
  * Encrypted backups (spec section 9). The whole database is written as JSON, sealed with [BackupFormat], saved
  * to the folder he chose (Storage Access Framework, so Google Drive works), then **read back from the folder
- * and opened again** before anything is pruned; only then are older files removed, keeping the last four.
+ * and opened again** before anything is pruned; only then are older files removed, keeping the last four (or
+ * as many as he chose in Settings).
  *
  * Left out, because they are rebuilt from the raw rows after a restore: the search index and the meaning
  * vectors. The API keys and the passphrase are in the Keystore, not the database, so they never go in a file.
@@ -142,12 +145,17 @@ class BackupRepository @Inject constructor(
 
     // ---------- back up ----------
 
-    /** Back up now (and the weekly run): write, read back, verify, then prune to the last four. */
+    /** Back up now (and the nightly run when one is due): write, read back, verify, then prune to the last few. */
     suspend fun backUp(now: Long = System.currentTimeMillis()): Outcome = withContext(Dispatchers.IO) {
         val folder = settings.get(SettingsRepository.Keys.BACKUP_FOLDER, "").takeIf { it.isNotBlank() }?.let(Uri::parse)
             ?: return@withContext record(Outcome.Failed("Choose a backup folder first."), now)
         val pass = secrets.backupPassphrase()
             ?: return@withContext record(Outcome.Failed("Set a backup passphrase first."), now)
+        // A backup the phone killed half way (no finally ran) still has a backup's name, and would count as one
+        // of the newest few when pruning: it goes first.
+        discardUnfinished()
+        var made: Uri? = null
+        var saved = false
         try {
             val local = com.clarity.life.core.TimeFacts.local(Instant.ofEpochMilli(now), settings.timeZone())
             val name = BackupFormat.fileName(local)
@@ -155,6 +163,8 @@ class BackupRepository @Inject constructor(
             val parent = DocumentsContract.buildDocumentUriUsingTree(folder, DocumentsContract.getTreeDocumentId(folder))
             val file = DocumentsContract.createDocument(resolver, parent, MIME, name)
                 ?: return@withContext record(Outcome.Failed("The folder did not accept a new file. Choose it again."), now)
+            made = file
+            settings.set(SettingsRepository.Keys.BACKUP_WRITING, file.toString())
             // Written as it is read from the database: rows to JSON to gzip to sealed chunks to the file.
             val written = resolver.openOutputStream(file, "w")?.use { out ->
                 sealTo(out, pass, now)
@@ -170,14 +180,11 @@ class BackupRepository @Inject constructor(
                 false
             }
             if (!ok) {
-                try {
-                    DocumentsContract.deleteDocument(resolver, file)
-                } catch (e: Exception) {
-                    // A broken file left behind is pruned later; the old good ones are untouched.
-                }
                 return@withContext record(Outcome.Failed("The backup did not read back correctly. The older ones are kept."), now)
             }
-            prune(folder)
+            saved = true
+            settings.set(SettingsRepository.Keys.BACKUP_WRITING, "")
+            prune(folder, Maintenance.keep(settings.get(SettingsRepository.Keys.BACKUP_KEEP, "").toIntOrNull(), DefaultSettings.BACKUP_KEEP))
             settings.set(SettingsRepository.Keys.LAST_BACKUP_AT, now.toString())
             record(Outcome.Saved(name, now), now)
         } catch (e: SecurityException) {
@@ -188,7 +195,24 @@ class BackupRepository @Inject constructor(
             record(Outcome.Failed("The backup could not be made (${e.javaClass.simpleName})."), now)
         } finally {
             pass.fill(' ')
+            // Anything but a verified backup (a failed check, a full disk, the work stopped) is removed at once,
+            // so a broken file never stands in for a good one.
+            if (!saved && made != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { discardUnfinished() }
         }
+    }
+
+    /** Deletes the file of a backup that was started and never verified, if there is one. */
+    private suspend fun discardUnfinished() {
+        val left = settings.get(SettingsRepository.Keys.BACKUP_WRITING, "").ifBlank { return }
+        val gone = try {
+            DocumentsContract.deleteDocument(context.contentResolver, Uri.parse(left))
+        } catch (e: java.io.FileNotFoundException) {
+            true
+        } catch (e: Exception) {
+            // No access right now: tried again before the next backup.
+            false
+        }
+        if (gone) settings.set(SettingsRepository.Keys.BACKUP_WRITING, "")
     }
 
     /** The bytes of a backup file made now, without saving it anywhere (RestoreTest). */
@@ -232,8 +256,8 @@ class BackupRepository @Inject constructor(
         override fun close() = out.flush()
     }
 
-    /** Keeps the newest four backups in the folder; other files there are never touched. */
-    private fun prune(folder: Uri) {
+    /** Keeps the newest [keep] backups in the folder; other files there are never touched. */
+    private fun prune(folder: Uri, keep: Int) {
         val resolver = context.contentResolver
         val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, DocumentsContract.getTreeDocumentId(folder))
         val found = mutableMapOf<String, String>()
@@ -246,7 +270,7 @@ class BackupRepository @Inject constructor(
         )?.use { c ->
             while (c.moveToNext()) found[c.getString(1)] = c.getString(0)
         }
-        for (name in BackupFormat.toPrune(found.keys.toList(), KEEP)) {
+        for (name in BackupFormat.toPrune(found.keys.toList(), keep)) {
             val id = found[name] ?: continue
             try {
                 DocumentsContract.deleteDocument(resolver, DocumentsContract.buildDocumentUriUsingTree(folder, id))
@@ -465,7 +489,30 @@ class BackupRepository @Inject constructor(
 
     fun hasPassphrase(): Boolean = secrets.hasBackupPassphrase()
 
-    /** A folder and a passphrase: what the weekly backup needs. */
+    /**
+     * Test your passphrase: whether [typed] is the stored one, compared in constant time; null when none is set.
+     * Both copies are wiped from memory after.
+     */
+    fun passphraseMatches(typed: CharArray): Boolean? {
+        val stored = secrets.backupPassphrase() ?: return null.also { typed.fill(' ') }
+        try {
+            val a = String(stored).toByteArray(Charsets.UTF_8)
+            val b = String(typed).toByteArray(Charsets.UTF_8)
+            return java.security.MessageDigest.isEqual(a, b)
+        } finally {
+            stored.fill(' ')
+            typed.fill(' ')
+        }
+    }
+
+    /** True when the last verified backup is as old as he chose (weekly unless he picked daily). */
+    suspend fun due(now: Long = System.currentTimeMillis()): Boolean = Maintenance.backupDue(
+        settings.get(SettingsRepository.Keys.LAST_BACKUP_AT, "").toLongOrNull(),
+        now,
+        Maintenance.everyDays(settings.get(SettingsRepository.Keys.BACKUP_EVERY_DAYS, "").toIntOrNull(), DefaultSettings.BACKUP_EVERY_DAYS),
+    )
+
+    /** A folder and a passphrase: what the automatic backup needs. */
     suspend fun ready(): Boolean =
         hasPassphrase() && settings.get(SettingsRepository.Keys.BACKUP_FOLDER, "").isNotBlank()
 
@@ -475,7 +522,6 @@ class BackupRepository @Inject constructor(
     }
 
     companion object {
-        const val KEEP = 4
         private const val MIME = "application/octet-stream"
         private const val DERIVED_SEARCH = "search_doc"
         private const val DERIVED_VECTORS = "embedding_row"
@@ -495,6 +541,7 @@ class BackupRepository @Inject constructor(
             SettingsRepository.Keys.BACKUP_FOLDER,
             SettingsRepository.Keys.LAST_BACKUP_AT,
             SettingsRepository.Keys.LAST_BACKUP_LINE,
+            SettingsRepository.Keys.BACKUP_WRITING,
         )
     }
 }

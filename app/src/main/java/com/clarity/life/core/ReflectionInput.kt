@@ -106,9 +106,16 @@ object ReflectionInput {
 
     data class EventLine(val day: String, val situation: String, val action: String, val outcome: String)
 
+    /** An earlier conversation summary or event found in the whole history; [label] is written by code. */
+    data class EarlierLine(val label: String, val text: String)
+
+    /** The heading of the block of [EarlierLine]s in CONTEXT. */
+    const val EARLIER_HEADING = "EARLIER CONVERSATIONS AND EVENTS LIKE THIS ONE (found by the app in the whole history, oldest first)"
+
     /**
-     * The CONTEXT placeholder: profile, people, active notes with ids and their evidence, recent events and
-     * his earlier words. Every piece of it is his data, so all of it is escaped.
+     * The CONTEXT placeholder: profile, people, active notes with ids and their evidence, recent events, the
+     * earlier conversations and events most like this one ([earlier], Max plan Phase 3: a pattern months apart
+     * is in front of the job) and his earlier words. Every piece of it is his data, so all of it is escaped.
      */
     fun context(
         profile: List<ProfileLine>,
@@ -116,6 +123,7 @@ object ReflectionInput {
         notes: List<NoteLine>,
         events: List<EventLine>,
         earlierQuotes: List<String>,
+        earlier: List<EarlierLine> = emptyList(),
     ): String {
         val e = ContextBuilder::escape
         val parts = mutableListOf<String>()
@@ -143,6 +151,9 @@ object ReflectionInput {
                 "- ${ev.day}: " + listOf(ev.situation, ev.action, ev.outcome).filter { it.isNotBlank() }
                     .joinToString("; ") { e(it) }
             }
+        }
+        if (earlier.isNotEmpty()) {
+            parts += EARLIER_HEADING + "\n" + earlier.joinToString("\n") { "- ${e(it.label)}: ${e(it.text)}" }
         }
         if (earlierQuotes.isNotEmpty()) {
             parts += "THEIR WORDS FROM EARLIER CONVERSATIONS\n" + earlierQuotes.joinToString("\n") { "- \"${e(it)}\"" }

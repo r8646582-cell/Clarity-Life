@@ -43,9 +43,15 @@ class HealthViewModel @Inject constructor(
     @ApplicationContext private val context: android.content.Context,
     private val db: ClarityDatabase,
     private val settings: SettingsRepository,
+    private val reminders: com.clarity.life.promise.Reminders,
 ) : ViewModel() {
 
-    data class State(val lines: List<Pair<String, String>> = emptyList(), val restoreTestDue: Boolean = false)
+    data class State(
+        val lines: List<Pair<String, String>> = emptyList(),
+        val restoreTestDue: Boolean = false,
+        /** The last nightly database check found a problem: said plainly, above the counts. */
+        val databaseProblem: Boolean = false,
+    )
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state
@@ -76,13 +82,34 @@ class HealthViewModel @Inject constructor(
             // Formatted piece by piece: the cache share has a % sign in it, which format() would read as a code.
             lines.add("This month" to "${u.calls} calls, ${"%,d".format(u.tokensIn)} tokens in$cached, ${"%,d".format(u.tokensOut)} out")
         }
+        val checkedAt = settings.get(SettingsRepository.Keys.MAINTENANCE_AT, "").toLongOrNull()
+        lines.add(
+            "Nightly check" to (
+                checkedAt?.let { "${ago(now - it)}: " + settings.get(SettingsRepository.Keys.MAINTENANCE_LINE, "") }
+                    ?: "has not run yet"
+                ),
+        )
+        val (ahead, missing) = reminders.status(now)
+        lines.add(
+            "Reminders ahead" to when {
+                ahead == 0 -> "none"
+                missing == 0 -> "$ahead, each has its alarm"
+                else -> "$ahead, $missing had no alarm and were set again just now"
+            },
+        )
+        // Looking is enough to fix it: a lost alarm is set again at once, not only tonight.
+        if (missing > 0) reminders.heal(now)
         val backupAt = settings.get(SettingsRepository.Keys.LAST_BACKUP_AT, "").toLongOrNull()
         lines.add("Last verified backup" to (backupAt?.let { ago(now - it) } ?: "never"))
         val size = context.getDatabasePath(ClarityDatabase.NAME).length()
         lines.add("Database size" to "%.1f MB".format(size / 1_048_576.0))
         val restoreAt = settings.get(KEY_RESTORE_TEST, "").toLongOrNull()
         lines.add("Restore test" to (restoreAt?.let { "done ${ago(now - it)}" } ?: "not done yet"))
-        _state.value = State(lines, restoreAt == null || now - restoreAt > 365L * DAY)
+        _state.value = State(
+            lines,
+            restoreTestDue = restoreAt == null || now - restoreAt > 365L * DAY,
+            databaseProblem = settings.get(SettingsRepository.Keys.MAINTENANCE_DB_OK, "true") == "false",
+        )
     }
 
     /** He restored a backup on a second phone or an emulator and checked it: marked once a year. */
@@ -115,6 +142,7 @@ class HealthViewModel @Inject constructor(
             "gardening" to "Gardening",
             "backup" to "Backup",
             "index" to "Search index",
+            "maintenance" to "Nightly check",
         )
     }
 }
@@ -131,6 +159,15 @@ fun HealthSection(model: HealthViewModel = hiltViewModel()) {
         color = clarity.muted,
         modifier = Modifier.padding(vertical = 4.dp),
     )
+    if (state.databaseProblem) {
+        Text(
+            "Last night's database check found a problem. Your older backups were left as they are and no new " +
+                "backup replaced them. The safe repair is Restore from a backup, with the newest one.",
+            style = MaterialTheme.typography.bodySmall,
+            color = clarity.text,
+            modifier = Modifier.padding(vertical = 4.dp),
+        )
+    }
     Column(Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         state.lines.forEach { (k, v) ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

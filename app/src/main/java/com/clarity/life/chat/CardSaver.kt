@@ -219,7 +219,7 @@ class CardSaver @Inject constructor(
             val conversationId = db.messages().get(row.messageId)?.conversationId
             when (w) {
                 is PlanWork.Plan -> Result.Saved("plan:" + planner.applyPlan(w.steps, conversationId, now))
-                is PlanWork.Target -> Result.Saved("target:" + planner.applyTargetChange(w.step))
+                is PlanWork.Target -> Result.Saved("target:" + planner.applyTargetChange(w.step, now))
                 is PlanWork.Backlog -> Result.Saved("backlog:" + planner.applyBacklog(w.step, null, now))
             }
         }

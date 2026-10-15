@@ -78,8 +78,10 @@ object PlanStateText {
     ): List<String> {
         val remaining = total - done
         var head = "Backlog $bid \"$name\": total ${g(total)}, done ${g(done)}, remaining ${g(remaining)}"
-        if (p.status == "done" || p.status == "past_deadline") {
-            return listOf(head + if (p.status == "done") ", complete." else ", the deadline has passed.")
+        when (p.status) {
+            "done" -> return listOf("$head, complete.")
+            "past_deadline" -> return listOf("$head, the deadline has passed.")
+            "no_days_left" -> return listOf("$head, no scheduled days left before the deadline.")
         }
         head += ", scheduled days left ${p.daysLeft}${offDaysPhrase(schedule)}, " +
             "required ${numUp(p.requiredPerDay!!)} per day."
@@ -89,6 +91,14 @@ object PlanStateText {
                 "  Not enough data yet: fewer than ${Planner.MIN_ANSWERED} answered days " +
                     "in the last ${Planner.WINDOW} days.",
             )
+            // After a gap his own best stretch is still known.
+            if (p.bestPerDay != null) {
+                val tailB = if (p.shortBest!! > 0) ", short by ${g(p.shortBest)}." else "."
+                lines.add(
+                    "  Best fortnight so far: ${num(p.bestPerDay)} per day, " +
+                        "reaches ${g(p.reachesBest!!)} of ${g(remaining)}$tailB",
+                )
+            }
         } else {
             val tailT = if (p.shortTypical!! > 0) ", short by ${g(p.shortTypical)}." else "."
             lines.add(
@@ -137,6 +147,44 @@ object PlanStateText {
         val reaches = p.reachesByDeadline!!
         val tail = " At these steps it reaches ${g(reaches)} of ${g(p.remaining)} by the deadline, short by ${g(p.remaining - reaches)}"
         return if (p.status == "never") "$head$tail, and the steps end before the total." else "$head$tail."
+    }
+
+    /** "So far on the plan for B1 "CAF lectures" (14 Oct to 23 Oct): the steps asked for 23, done 20, behind by 3." */
+    fun planProgressLine(bid: String, name: String, p: PlanProgress): String {
+        val gap = p.done - p.asked
+        val tail = when {
+            gap < -Planner.EPS -> "behind by ${g(Planner.roundHalfUp(-gap, 0.1))}"
+            gap > Planner.EPS -> "ahead by ${g(Planner.roundHalfUp(gap, 0.1))}"
+            else -> "exactly on it"
+        }
+        val whenText = if (p.from == p.to) day(p.from) else "${day(p.from)} to ${day(p.to)}"
+        return "So far on the plan for $bid \"$name\" ($whenText): the steps asked for ${g(Planner.roundHalfUp(p.asked, 0.1))}, " +
+            "done ${g(Planner.roundHalfUp(p.done, 0.1))}, $tail."
+    }
+
+    /** Before and after a change of a target, from [Planner.changeCompare]. */
+    fun changeLine(tid: String, name: String, c: ChangeCompare): String =
+        "$tid \"$name\": changed on ${day(c.day)} (${c.fields.joinToString(", ")}). In the ${c.beforeDays} days before: " +
+            "done on ${c.before.done} of ${c.before.answered} answered days, ${num(c.before.amount / c.before.answered)} per answered day. " +
+            "Since: done on ${c.after.done} of ${c.after.answered}, ${num(c.after.amount / c.after.answered)} per answered day."
+
+    /** "Done rate by week, last 4 weeks (oldest first): 50%, 60%, too few answers, 67%." Null under two rates. */
+    fun trendLine(trend: List<TrendWeek>): String? {
+        if (trend.count { it.rate != null } < 2) return null
+        return "Done rate by week, last ${trend.size} weeks (oldest first): " +
+            trend.joinToString(", ") { t -> t.rate?.let { "${it.toInt()}%" } ?: "too few answers" } + "."
+    }
+
+    /** "B1 "Lectures": the plan asked for 14 in this period, done 12, behind by 2." (plan versus actual) */
+    fun planPeriodLine(bid: String, name: String, asked: Double, done: Double): String {
+        val gap = done - asked
+        val tail = when {
+            gap < -Planner.EPS -> "behind by ${g(Planner.roundHalfUp(-gap, 0.1))}"
+            gap > Planner.EPS -> "ahead by ${g(Planner.roundHalfUp(gap, 0.1))}"
+            else -> "exactly on it"
+        }
+        return "$bid \"$name\": the plan asked for ${g(Planner.roundHalfUp(asked, 0.1))} in this period, " +
+            "done ${g(Planner.roundHalfUp(done, 0.1))}, $tail."
     }
 
     fun reviewOptionsLine(options: List<ReviewOption>): String =

@@ -34,8 +34,15 @@ class ContextError(ValueError):
 
 
 def estimate_tokens(text):
-    """Deliberately pessimistic (3 characters per token) so a real tokenizer never finds us over a limit."""
-    return math.ceil(len(text) / 3)
+    """Estimated tokens: English letters, spaces and signs at 3 characters a token, every digit 1, every other
+    character (an emoji, an accented letter) 2. Measured against DeepSeek's own tokenizer (Max plan Phase 2): plain
+    English is about 1.4 times its real count, and digits, dates and emoji are no longer under-counted (at 3
+    characters a token, "38 of 52, 1.2 per day" lines came out at 0.7 of the real count, emoji at 0.6). Not a
+    guarantee for every text (a list of unusual names can still be under); the budgets stay far below the
+    provider's context window."""
+    digits = sum(1 for ch in text if "0" <= ch <= "9")
+    other = sum(1 for ch in text if ord(ch) > 127)
+    return math.ceil((len(text) - digits - other) / 3 + digits + 2 * other)
 
 
 def escape(text):

@@ -50,7 +50,7 @@ class RestoreTest {
     private fun backups(db: ClarityDatabase): BackupRepository {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val secrets = SecretStore(context)
-        val embedder = com.clarity.life.memory.Embedder(context)
+        val embedder = com.clarity.life.memory.TestEmbedder.shared
         return BackupRepository(
             context = context,
             db = db,
@@ -151,6 +151,83 @@ class RestoreTest {
         val titles = second.query("SELECT title FROM goal", null).use { c ->
             buildList { while (c.moveToNext()) add(c.getString(0)) }
         }
+        assertEquals(listOf("Stays"), titles)
+        assertEquals(0, second.query("SELECT COUNT(*) FROM message", null).use { it.moveToFirst(); it.getInt(0) })
+    }
+
+    // ---------- every backup format and database version ever written (docs/MAX-PLAN.md, Phase 1, step 3) ----------
+
+    /** contracts/backups/ is bundled into the test APK's assets (app/build.gradle.kts). */
+    private fun asset(name: String): ByteArray =
+        InstrumentationRegistry.getInstrumentation().context.assets.open(name).use { it.readBytes() }
+
+    private fun vectors() = org.json.JSONObject(asset("backup_vectors.json").toString(Charsets.UTF_8))
+
+    @Test
+    fun everySampleBackupRestoresIntoTodaysDatabase() = runBlocking {
+        val v = vectors()
+        val samples = v.getJSONArray("samples")
+        assertTrue(samples.length() >= 6)
+        for (i in 0 until samples.length()) {
+            val s = samples.getJSONObject(i)
+            val name = s.getString("file")
+            val phone = database()
+            try {
+                // Something already on this phone is replaced, not merged.
+                phone.planner().insertGoal(GoalRow(title = "Old goal on this phone", createdAt = now))
+                val bytes = asset(name)
+                val outcome = backups(phone).restoreBytes(bytes, v.getString("passphrase").toCharArray(), now)
+                assertTrue("$name: restore said $outcome", outcome is BackupRepository.Outcome.Restored)
+                assertEquals(name, s.getLong("created_at"), (outcome as BackupRepository.Outcome.Restored).createdAt)
+                val rows = s.getJSONObject("rows")
+                for (table in rows.keys()) {
+                    val n = phone.query("SELECT COUNT(*) FROM `$table`", null).use { it.moveToFirst(); it.getInt(0) }
+                    // The restore keeps this phone's own backup folder, so the old phone's is not counted.
+                    val want = rows.getInt(table) - if (table == "settings") 1 else 0
+                    assertEquals("$name: rows in $table", want, n)
+                }
+                // Schema 6 samples also carry the check-in times and a replaced profile value.
+                val probes = org.json.JSONArray()
+                v.getJSONArray("probes").let { for (j in 0 until it.length()) probes.put(it.get(j)) }
+                if (s.getInt("schema") >= 6) v.getJSONArray("probes_from_schema_6").let { for (j in 0 until it.length()) probes.put(it.get(j)) }
+                for (j in 0 until probes.length()) {
+                    val p = probes.getJSONObject(j)
+                    val col = p.getString("column")
+                    phone.query("SELECT `$col` FROM `${p.getString("table")}` WHERE id = ?", arrayOf<Any>(p.getLong("id"))).use { c ->
+                        assertTrue("$name: ${p.getString("table")} ${p.getLong("id")} is missing", c.moveToFirst())
+                        when (val want = p.get("value")) {
+                            is String -> assertEquals("$name: $p", want, c.getString(0))
+                            is Int -> assertEquals("$name: $p", want.toLong(), c.getLong(0))
+                            is Double -> assertEquals("$name: $p", want, c.getDouble(0), 0.0)
+                            else -> error("unexpected probe $p")
+                        }
+                    }
+                }
+                assertEquals("$name: the old phone's folder came along", null, phone.settings().get(SettingsRepository.Keys.BACKUP_FOLDER))
+                assertEquals("Alex", phone.settings().get("user_name"))
+                // Every conversation rebuilds its frozen context, and the search index is rebuilt from the rows.
+                assertEquals(0, phone.query("SELECT COUNT(*) FROM conversation WHERE prefix_json IS NOT NULL", null).use { it.moveToFirst(); it.getInt(0) })
+                assertTrue(phone.query("SELECT COUNT(*) FROM search_doc", null).use { it.moveToFirst(); it.getInt(0) } > 0)
+                // Today's app keeps working on the restored rows: a DAO write and read.
+                val conv = phone.conversations().insert(ConversationRow(startedAt = now, title = "After the restore"))
+                assertEquals("After the restore", phone.conversations().get(conv)?.title)
+            } finally {
+                phone.close()
+            }
+        }
+    }
+
+    @Test
+    fun aDamagedSampleChangesNothing() = runBlocking {
+        val v = vectors()
+        val bytes = asset("format2-schema5.cbk")
+        second.planner().insertGoal(GoalRow(title = "Stays", createdAt = now))
+        // One flipped byte in the second sealed chunk: the first chunk's rows are already in when it is found.
+        val nl = bytes.indexOf('\n'.code.toByte()) + 1
+        val damaged = bytes.clone().also { it[nl + 70_000] = (it[nl + 70_000].toInt() xor 1).toByte() }
+        val outcome = backups(second).restoreBytes(damaged, v.getString("passphrase").toCharArray(), now)
+        assertTrue("restore said $outcome", outcome is BackupRepository.Outcome.Failed)
+        val titles = second.query("SELECT title FROM goal", null).use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
         assertEquals(listOf("Stays"), titles)
         assertEquals(0, second.query("SELECT COUNT(*) FROM message", null).use { it.moveToFirst(); it.getInt(0) })
     }

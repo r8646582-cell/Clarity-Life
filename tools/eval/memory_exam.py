@@ -26,59 +26,30 @@ Run:   python3 tools/eval/memory_exam.py                      (keyword only, sta
 """
 import json
 import os
-import re
 import sqlite3
 import sys
-import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..", "..")
-MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "bge-small-en-v1.5")
+sys.path.insert(0, os.path.join(HERE, ".."))
+import retrieval as rv  # noqa: E402  (tools/retrieval.py: the retrieval reference)
+import recall_time as rt  # noqa: E402
+MODEL_DIR = os.path.join(ROOT, "app", "src", "main", "assets", "models", "gte-base-en-v1.5")
+MODEL_NAME = "gte-base-en-v1.5"
 
-# ---- mirror of core/Retrieval.kt ----
-MAX_TERMS, MAX_RESULTS, CANDIDATES, FUSE_DEPTH = 8, 5, 200, 20
-SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.62, 3, 4, 60
+# ---- core/Retrieval.kt: the pure part is tools/retrieval.py (Phase 2), used here as it is ----
+MAX_TERMS, CANDIDATES_PER_TERM, FUSE_DEPTH = rv.MAX_TERMS, rv.CANDIDATES_PER_TERM, rv.FUSE_DEPTH
+MAX_RESULTS = rv.MAX_RESULTS
+SEMANTIC_MIN, SEMANTIC_MIN_QUERY_WORDS, SEMANTIC_MIN_DOC_WORDS, RRF_K = 0.42, 3, 4, 60
 RECENT_SESSIONS = 5
-STOP = set("""about after again also always because been before being could didn does doesn doing done dont even ever
-every from going gonna have having here into just know like make many maybe more most much need never only other
-really said same should some still such sure than that their them then there these they thing things think this those
-today very want wanna well were what when where which while will with would yeah your yours okay""".split())
-WORD = re.compile(r"[a-z0-9]+")
-
-
-def norm(s):
-    s = unicodedata.normalize("NFKC", s).lower()
-    s = s.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
-    return " ".join(s.split())
-
-
-def terms(text):
-    out = []
-    for w in WORD.findall(norm(text)):
-        if len(w) >= 4 and w not in STOP and not w.isdigit() and w not in out:
-            out.append(w)
-    return sorted(out, key=lambda w: (-len(w), w))[:MAX_TERMS]
-
-
-def score(text, ts):
-    words = set(WORD.findall(norm(text)))
-    return sum(1 for t in ts if t in words)
-
-
-def strong(s, n):
-    return s >= min(2, n) and s > 0
-
-
-def word_count(text):
-    return len(WORD.findall(norm(text)))
+STOP, WORD = rv.STOP, rv.WORD
+norm, terms, stem, term_query, score, strong, word_count = (
+    rv.norm, rv.terms, rv.stem, rv.term_query, rv.score, rv.strong, rv.word_count)
 
 
 def fuse(*lists):
-    sc = {}
-    for lst in lists:
-        for i, k in enumerate(lst):
-            sc[k] = sc.get(k, 0.0) + 1.0 / (RRF_K + i + 1)
-    return [k for k, _ in sorted(sc.items(), key=lambda p: -p[1])]
+    """Reciprocal rank fusion with equal weights."""
+    return rv.fuse([(1.0, lst) for lst in lists])
 
 
 def event_text(e):
@@ -95,9 +66,12 @@ OUTCOME = {"open": "no answer yet", "kept": "done", "broken": "not done", "not_d
 RECENT_DAYS = 14
 
 
+STATUS = {"broken": "not_done"}
+
+
 def promise_text(p):
     """Mirror of PromiseText.searchText."""
-    return "%s (%s)" % (p["text"], OUTCOME.get(p["status"], "no answer yet"))
+    return rv.promise_text(p["text"], STATUS.get(p["status"], p["status"]))
 
 
 def promise_in_block(p, today):
@@ -132,7 +106,8 @@ class Index:
             if n["status"] == "retired":
                 self._add("note", n["id"], n["text"], None, n["lastSeen"])
         for p in data["promises"]:
-            self._add("promise", p["id"], promise_text(p), p["sourceSessionId"], p["createdAt"])
+            self._add("promise", p["id"], promise_text(p), None, p["createdAt"])
+        self.promises = data["promises"]
         self.emb = None
         if hybrid:
             self.emb = Embedder()
@@ -143,38 +118,52 @@ class Index:
         self.docs[(kind, ident)] = {"text": text, "session": session, "at": at}
 
     def keyword(self, ts):
+        """Mirror of SearchIndex.keywordHits: one read per word, newest first, then Retrieval.choose (Phase 2:
+        a single rare word counts too)."""
         if not ts:
             return []
-        q = " OR ".join("body:%s OR title:%s" % (t, t) for t in ts)
-        rows = self.db.execute("SELECT kind, ref_id FROM search_doc WHERE search_doc MATCH ? ORDER BY rowid DESC LIMIT ?",
-                               (q, CANDIDATES)).fetchall()
-        cands = [(k, int(r)) for k, r in rows]
-        scored = [(c, score(self.docs[c]["text"], ts)) for c in cands]
-        scored = [p for p in scored if strong(p[1], len(ts))]
-        scored.sort(key=lambda p: (-p[1], -self.docs[p[0]]["at"]))
-        out, seen = [], set()
-        for c, _ in scored:
-            t = norm(self.docs[c]["text"])
-            if t not in seen:
-                seen.add(t)
-                out.append(c)
-        return out[:FUSE_DEPTH]
+        cands, found = [], {}
+        for t in ts:
+            rows = self.db.execute("SELECT kind, ref_id FROM search_doc WHERE search_doc MATCH ? ORDER BY rowid DESC LIMIT ?",
+                                   (rv.term_query(t), rv.CANDIDATES_PER_TERM)).fetchall()
+            found[t] = len(rows)
+            for k, r in rows:
+                c = (k, int(r))
+                if c not in cands:
+                    cands.append(c)
+        total = self.db.execute("SELECT count(*) FROM search_doc").fetchone()[0]
+        return rv.choose([{"key": c, "text": self.docs[c]["text"], "at": self.docs[c]["at"]} for c in cands], ts,
+                         rare=rv.rare_terms(ts, found, total))
 
     def meaning(self, text):
         if self.emb is None or word_count(text) < SEMANTIC_MIN_QUERY_WORDS:
             return []
         q = self.emb.embed(text)
         sims = [(k, float(q @ v)) for k, v in self.vecs.items()]
-        best = [k for k, s in sorted(sims, key=lambda p: -p[1]) if s >= SEMANTIC_MIN][:FUSE_DEPTH * 2]
-        best = [k for k in best if k[0] == "summary" or word_count(self.docs[k]["text"]) >= SEMANTIC_MIN_DOC_WORDS]
-        return best[:FUSE_DEPTH]
+        best = [k for k, s in sorted(sims, key=lambda p: -p[1]) if s >= SEMANTIC_MIN][:rv.MEANING_CANDIDATES]
+        best = [k for k in best if k[0] != "message" or word_count(self.docs[k]["text"]) >= SEMANTIC_MIN_DOC_WORDS]
+        return rv.distinct_texts(best, {k: self.docs[k]["text"] for k in best})[:FUSE_DEPTH]
 
-    def relevant_past(self, question):
-        return fuse(self.keyword(terms(question)), self.meaning(question))[:MAX_RESULTS]
+    def relevant_past(self, question, today):
+        """Phase 2 (tools/retrieval.py): the period list (promises only in this fixture), keyword and meaning
+        results, weighted fusion, one result per conversation, at most MAX_RESULTS."""
+        period = rt.parse(question, today)
+        rest = period["rest"] if period["start"] else question
+        lists = []
+        if period["start"] is not None or period["promises"]:
+            items = [{"key": ("promise", p["id"]), "kind": "promise", "outcome": STATUS.get(p["status"], p["status"]),
+                      "text": self.docs[("promise", p["id"])]["text"], "day": p["dueAt"]}
+                     for p in self.promises if p.get("dueAt") and (period["start"] is None or period["start"] <= p["dueAt"] <= period["end"])]
+            lists.append((rv.W_DATED, rv.dated(items, rv.terms(rest), period["promises"], period["outcome"])))
+        lists.append((rv.W_NEW, self.keyword(rv.terms(rest))))
+        lists.append((rv.W_NEW, self.meaning(question)))
+        docs = {k: {"text": d["text"], "conversation": d["session"]} for k, d in self.docs.items()}
+        return rv.choose_final(rv.fuse(lists), docs)
 
 
 class Embedder:
-    """Mirror of memory/Embedder.kt: the bundled model, CLS pooling, normalised, no query prefix."""
+    """Mirror of memory/Embedder.kt: the bundled model (its two parts joined), CLS pooling, normalised, no query
+    prefix (Max plan Phase 4: gte-base-en-v1.5; bge-small-en-v1.5 before)."""
 
     def __init__(self):
         import numpy as np
@@ -183,12 +172,13 @@ class Embedder:
         self.np = np
         self.tok = BertWordPieceTokenizer(os.path.join(MODEL_DIR, "vocab.txt"), lowercase=True)
         self.tok.enable_truncation(512)
-        self.s = ort.InferenceSession(os.path.join(MODEL_DIR, "model_quantized.onnx"))
+        parts = sorted(n for n in os.listdir(MODEL_DIR) if n.startswith("model_quantized.onnx.part"))
+        self.s = ort.InferenceSession(b"".join(open(os.path.join(MODEL_DIR, n), "rb").read() for n in parts))
 
     def embed(self, text):
         np = self.np
         ids = np.array([self.tok.encode(text).ids], dtype=np.int64)
-        v = self.s.run(None, {"input_ids": ids, "attention_mask": np.ones_like(ids), "token_type_ids": np.zeros_like(ids)})[0][0, 0]
+        v = self.s.run(["last_hidden_state"], {"input_ids": ids, "attention_mask": np.ones_like(ids)})[0][0, 0]
         return v / np.linalg.norm(v)
 
 
@@ -211,7 +201,7 @@ def run(hybrid):
         gold = set(q["evidence"])
         if q["kind"] == "trap" or not gold:
             continue
-        hits = index.relevant_past(q["question"])
+        hits = index.relevant_past(q["question"], data["today"])
         sessions_hit = {index.docs[h]["session"] for h in hits if index.docs[h]["session"] is not None}
 
         def seen(ev):
@@ -237,7 +227,7 @@ def run(hybrid):
                      "missing": sorted(gold - got)})
     mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
     return {
-        "retriever": "new app, " + ("keyword + bge-small-en-v1.5 (RRF)" if hybrid else "keyword only"),
+        "retriever": "new app, " + ("keyword + " + MODEL_NAME if hybrid else "keyword only"),
         "questions": len(rows),
         "mean_coverage": mean([r["coverage"] for r in rows]),
         "mean_coverage_without_promises": mean([r["coverage_without_promises"] for r in rows if r["coverage_without_promises"] is not None]),

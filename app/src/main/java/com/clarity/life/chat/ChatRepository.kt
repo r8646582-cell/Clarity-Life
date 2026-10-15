@@ -15,6 +15,7 @@ import com.clarity.life.core.LiveText
 import com.clarity.life.core.MemoryBlocks
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.Planner
+import com.clarity.life.core.Spans
 import com.clarity.life.core.TimeFacts
 import androidx.room.withTransaction
 import com.clarity.life.data.ClarityDatabase
@@ -251,6 +252,18 @@ class ChatRepository @Inject constructor(
         db.diagnostics().log(ErrorLogRow(at = now, area = "chat", code = failure.code, detail = ""))
     }
 
+    /**
+     * The last resort when a reply ends in a way nothing else handled: a row still `streaming` becomes
+     * interrupted (keeping [partial]) or failed, so Talk never shows "thinking" for ever nor holds Send.
+     * A row that already ended is left alone. Returns the status the row has now, or null when it is gone.
+     */
+    suspend fun settleIfStreaming(messageId: Long, partial: String, failure: AiFailure, now: Long): String? {
+        val row = messages.get(messageId) ?: return null
+        if (row.status != "streaming") return row.status
+        if (partial.isNotEmpty()) interruptCoachReply(messageId, partial, now) else failCoachReply(messageId, failure, now)
+        return messages.get(messageId)?.status
+    }
+
     /** TryAgain: an interrupted or failed reply may be asked for again, which is an allowed transition. */
     suspend fun reopenReply(messageId: Long) {
         val row = messages.get(messageId) ?: return
@@ -290,11 +303,11 @@ class ChatRepository @Inject constructor(
 
         var prefix = conversation.prefixJson?.let { readPrefix(it) }
         if (prefix == null || conversation.prefixDay != today) {
-            prefix = buildPrefix(conversation)
+            prefix = Spans.span("packet: frozen part built") { buildPrefix(conversation, newText) }
             conversations.setPrefix(conversationId, writePrefix(prefix), today)
         }
 
-        val before = earlier ?: messages.ofConversation(conversationId).let { all ->
+        val before = earlier ?: Spans.span("packet: history read") { messages.ofConversation(conversationId) }.let { all ->
             val last = all.lastOrNull { it.role == "user" || it.content.isNotBlank() }
             if (last?.role == "user" && last.content == newText) all.filter { it.id < last.id } else all
         }
@@ -327,7 +340,7 @@ class ChatRepository @Inject constructor(
 
         // Read with every message, so a plan saved or a check-in answered a minute ago is already here.
         val dayKey = java.time.LocalDate.parse(today)
-        val tracker = planner.tracker(dayKey)
+        val tracker = Spans.span("packet: plan tracker") { planner.tracker(dayKey) }
         val tracking = tracker.goals.isNotEmpty() || tracker.targets.isNotEmpty() || tracker.backlogs.isNotEmpty()
         val part3 = buildList {
             // Day counts to the dates he mentioned, newest message first: the coach never counts days itself.
@@ -335,30 +348,38 @@ class ChatRepository @Inject constructor(
             add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary), com.clarity.life.core.DayCounts.lines(said, dayKey)))
             // In a plan chat PLAN_STATE is always there, so even with nothing tracked yet the coach has the
             // review options a first plan card needs; elsewhere it comes only once something is tracked.
-            if (tracking || conversation.chatType == "plan") add(PlanBlocks.planState(tracker, dayKey))
-            add(openPromises(now, tz))
-            add(PlanBlocks.checkinFacts(tracker, dayKey))
-            val results = cardResultLines(conversationId)
+            if (tracking || conversation.chatType == "plan") add(Spans.span("packet: PLAN_STATE") { PlanBlocks.planState(tracker, dayKey) })
+            add(Spans.span("packet: OPEN_PROMISES") { openPromises(now, tz) })
+            add(Spans.span("packet: CHECKIN_FACTS") { PlanBlocks.checkinFacts(tracker, dayKey) })
+            val results = Spans.span("packet: CARD_RESULTS") { cardResultLines(conversationId) }
             if (results.isNotEmpty()) add(Blocks.cardResults(results))
             if (start > 0) add(Blocks.earlier(conversation.summary))
             // The conversation he was just in, word for word, while it is fresh: its summary may not be written
             // yet, and this conversation's frozen memory would then never see it (contracts/context.md).
-            db.memory().lastOtherConversation(conversationId)?.takeIf { LastChat.fresh(it.lastAt, now) }?.let { other ->
-                val said = messages.ofConversation(other.id).filter {
-                    it.role == "user" || it.status == "complete" || it.status == "interrupted"
-                }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
-                add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
+            Spans.span("packet: last chat") {
+                db.memory().lastOtherConversation(conversationId)?.takeIf { LastChat.fresh(it.lastAt, now) }?.let { other ->
+                    val said = messages.ofConversation(other.id).filter {
+                        it.role == "user" || it.status == "complete" || it.status == "interrupted"
+                    }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
+                    add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
+                }
             }
-            // Keyword matches from his other conversations. Retrieval can never be what fails a reply.
+            // Matches from his other conversations and the records he keeps, searched with the new message, the
+            // period it names and his last few messages here (Max plan Phase 2). Retrieval can never be what
+            // fails a reply.
             try {
-                add(search.relevantPast(conversationId, newText, tz, boundary, now))
+                val earlierHis = stored.filter { it.role == "user" }.map { it.content }
+                // Active notes the frozen NOTES block had no room for can still come, when they match.
+                val sent = MemoryBlocks.idsIn(prefix)
+                val leftOut = Spans.span("packet: notes left out") { db.memory().activeNotes().filter { it.id !in sent } }
+                add(Spans.span("packet: RELEVANT_PAST") { search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title, leftOut) })
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
                 db.diagnostics().log(ErrorLogRow(at = now, area = "search", code = "relevant_past_failed", detail = ""))
             }
         }
-        val turn = Blocks.userTurn(part3, newText)
+        val turn = Spans.span("packet: final turn assembled") { Blocks.userTurn(part3, newText) }
 
         return ChatPacket(
             request = ChatRequest(
@@ -378,7 +399,7 @@ class ChatRepository @Inject constructor(
         )
     }
 
-    private suspend fun buildPrefix(conversation: ConversationRow): String {
+    private suspend fun buildPrefix(conversation: ConversationRow, text: String): String {
         val name = settings.promptName()
         val allowed = CardParser.CHAT_TYPES[conversation.chatType]?.joinToString(", ").orEmpty()
         val persona = prompts.fill(prompts.text(PromptStore.PERSONA), mapOf("USER_NAME" to name))
@@ -402,8 +423,8 @@ class ChatRepository @Inject constructor(
                 chatType = conversation.chatType,
                 offTheRecord = conversation.offTheRecord == 1,
             ),
-        ) + focusBlocks(conversation) + memoryBlocks(conversation.id) + openedFromBlocks(conversation)
-        val built = Blocks.systemMessage(persona, examples, cardsPrompt, mode, part2)
+        ) + focusBlocks(conversation) + Spans.span("frozen: memory blocks") { memoryBlocks(conversation.id, text) } + openedFromBlocks(conversation)
+        val built = Spans.span("frozen: system message assembled") { Blocks.systemMessage(persona, examples, cardsPrompt, mode, part2) }
         if (built.overBudget) {
             db.diagnostics().log(
                 ErrorLogRow(at = 0, area = "chat", code = "context_over_budget", detail = ""),
@@ -438,14 +459,14 @@ class ChatRepository @Inject constructor(
      * PROFILE, PEOPLE, NOTES, RECENT_SESSIONS and IDEAS_RECENT: one shared memory for every conversation
      * (spec section 3). Read when the prefix is built, so it is frozen for the conversation's day.
      */
-    private suspend fun memoryBlocks(conversationId: Long): List<com.clarity.life.core.Block> {
+    private suspend fun memoryBlocks(conversationId: Long, text: String): List<com.clarity.life.core.Block> {
         val m = db.memory()
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
         val today = Planner.dayKey(Instant.now().toString(), tz, boundary)
         fun ago(day: String) = runCatching { TimeFacts.ago(LocalDate.parse(day), today) }.getOrNull()
-        val evidence = m.allEvidence().groupBy { it.noteId }
-        val notes = m.activeNotes().map { n ->
+        val evidence = Spans.span("frozen: all evidence read") { m.allEvidence() }.groupBy { it.noteId }
+        val notes = Spans.span("frozen: active notes read") { m.activeNotes() }.map { n ->
             MemoryBlocks.Note(
                 n.id, n.kind, n.confidence, n.timesSeen, n.firstSeen, n.lastSeen, n.text,
                 (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
@@ -453,15 +474,25 @@ class ChatRepository @Inject constructor(
         }
         // Dated by the last message, with the clock times: "today" alone left a plan made at 9 am and a message
         // at 11 am in no order the coach could see.
-        val sessions = m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS).map { c ->
+        val sessions = Spans.span("frozen: recent sessions read") { m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS) }.map { c ->
             val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
             val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
             MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
         }
         return listOf(
-            MemoryBlocks.profile(m.profile().map { MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1) }),
+            MemoryBlocks.profile(
+                m.profile().let { entries ->
+                    // The newest replaced value of each key (profile_past, schema 6).
+                    val past = m.profilePast().groupBy { it.key }.mapValues { (_, rows) -> rows.maxBy { it.id } }
+                    entries.map {
+                        val before = past[it.key]
+                        MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1, it.sinceDay, before?.value, before?.untilDay)
+                    }
+                },
+            ),
             MemoryBlocks.people(m.people().map { MemoryBlocks.Person(it.name, it.relation, it.notes, it.updatedAt) }),
-            MemoryBlocks.notes(notes),
+            // Notes about what this conversation is about are the last to go when memory is large.
+            Spans.span("frozen: NOTES chosen") { MemoryBlocks.notes(notes, MemoryBlocks.relevantNotes(notes, text)) },
             // The last two quarterly chapters: what the coach carries forward for years (spec section 8).
             com.clarity.life.core.Chapters.block(
                 db.writing().latestChapters(com.clarity.life.core.Chapters.IN_CONTEXT).map {
@@ -505,6 +536,9 @@ class ChatRepository @Inject constructor(
             answered = p.answeredSince(since).map { com.clarity.life.promise.PromiseRepository.model(it) },
             now = Instant.ofEpochMilli(now),
             tz = tz,
+            // How his promises usually go, counted by code (Max plan Phase 2 step 6).
+            longer = p.answeredSince(now - java.time.Duration.ofDays(com.clarity.life.core.PromiseText.TALLY_DAYS).toMillis())
+                .map { com.clarity.life.promise.PromiseRepository.model(it) },
         )
     }
 

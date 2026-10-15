@@ -16,6 +16,13 @@ object FocusBlock {
 
     const val MAX_RESULTS = 3
 
+    /**
+     * The focus's week, from the day key it was made to today's day key: days 1 to 7 are week 1. Day keys, not
+     * the phone's calendar date, so it agrees with the rest of the app around a late day end and after travel.
+     */
+    fun week(startDay: java.time.LocalDate, today: java.time.LocalDate): Long =
+        (java.time.temporal.ChronoUnit.DAYS.between(startDay, today) / 7 + 1).coerceAtLeast(1)
+
     fun block(focus: Focus, current: Step?, results: List<Step>): Block {
         val items = buildList {
             val status = if (focus.status == "active") "" else " (${focus.status})"

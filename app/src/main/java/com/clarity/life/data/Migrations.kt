@@ -66,4 +66,64 @@ object Migrations {
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_brief_key` ON `brief` (`key`)")
         }
     }
+
+    /**
+     * Version 6 (Max plan Phase 3): facts with time. profile_entry.since_day (the day a value was first said),
+     * profile_past (values replaced by newer ones), and checkin.entered_minute and entered_day (his local time
+     * and day when he answered). Only adds; old rows keep NULL, which means "not known", never a guess.
+     */
+    val V5_TO_V6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `profile_entry` ADD COLUMN `since_day` TEXT")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `profile_past` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`key` TEXT NOT NULL, `value` TEXT NOT NULL, `since_day` TEXT, `until_day` TEXT NOT NULL, " +
+                    "`created_at` INTEGER NOT NULL)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_profile_past_key` ON `profile_past` (`key`, `id`)")
+            db.execSQL("ALTER TABLE `checkin` ADD COLUMN `entered_minute` INTEGER")
+            db.execSQL("ALTER TABLE `checkin` ADD COLUMN `entered_day` TEXT")
+        }
+    }
+
+    /**
+     * Max plan Phase 5: indexes only, for the queries the ten-year database showed reading a whole table
+     * (tools/query_plans.py). No row and no column changes; building them reads each table once.
+     */
+    val V6_TO_V7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            for (sql in V7_INDEXES) db.execSQL(sql)
+        }
+    }
+
+    /**
+     * Version 8 (Max plan Phase 6): target_version, a target's values from a day on (what the plan asked for on
+     * any day, and when it changed), and target.minutes, his estimate of a session's minutes for a day's load.
+     * Only adds. Old targets get no version rows: they are read as their current values from their start day
+     * (nothing is guessed about changes made before), and get that row the first time they change.
+     */
+    val V7_TO_V8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `target` ADD COLUMN `minutes` REAL")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `target_version` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`target_id` INTEGER NOT NULL, `from_day` TEXT NOT NULL, `minimum` REAL NOT NULL, " +
+                    "`target` REAL NOT NULL, `schedule` TEXT NOT NULL, `status` TEXT NOT NULL, " +
+                    "`created_at` INTEGER NOT NULL, FOREIGN KEY(`target_id`) REFERENCES `target`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `idx_target_version_day` ON `target_version` (`target_id`, `from_day`)",
+            )
+        }
+    }
+
+    val V7_INDEXES = listOf(
+        "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
+        "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",
+        "CREATE INDEX IF NOT EXISTS `idx_promise_due` ON `promise` (`due_at`)",
+        "CREATE INDEX IF NOT EXISTS `idx_quote_day` ON `quote` (`said_day`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `idx_job_status` ON `job` (`status`)",
+        "CREATE INDEX IF NOT EXISTS `idx_error_at` ON `error_log` (`at`)",
+    )
 }

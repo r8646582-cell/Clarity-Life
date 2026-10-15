@@ -51,7 +51,7 @@ class CardSaveTest {
         val secrets = SecretStore(context)
         val settings = SettingsRepository(db.settings(), secrets)
         val http = OkHttpClient()
-        val search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.Embedder(context))
+        val search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared)
         chat = ChatRepository(
             db = db,
             settings = settings,

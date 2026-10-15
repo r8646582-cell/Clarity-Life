@@ -55,6 +55,31 @@ class Reminders @Inject constructor(
         return due.size
     }
 
+    /**
+     * The self-check (docs/MAX-PLAN.md, Phase 1, step 8): every open reminder still ahead must have an alarm
+     * waiting. One that has none (a phone that cleared the app's alarms, a force stop) is set again at once, and
+     * the count is logged without a word of the promise. Returns how many were missing. Run by the nightly
+     * maintenance and shown in Settings, Health.
+     */
+    suspend fun heal(now: Long = System.currentTimeMillis()): Int {
+        val missing = db.promises().remindersAfter(now).filter { !isSet(it.id) }
+        for (p in missing) set(p.id, p.dueAt)
+        if (missing.isNotEmpty()) {
+            try {
+                db.diagnostics().log(ErrorLogRow(at = now, area = "reminder", code = "alarm_missing", detail = "n=${missing.size}"))
+            } catch (e: Exception) {
+                // The log is best effort.
+            }
+        }
+        return missing.size
+    }
+
+    /** For Settings, Health: how many reminders are ahead, and how many of them have no alarm right now. */
+    suspend fun status(now: Long = System.currentTimeMillis()): Pair<Int, Int> {
+        val ahead = db.promises().remindersAfter(now)
+        return ahead.size to ahead.count { !isSet(it.id) }
+    }
+
     /** "Check it for real" in Settings: a test reminder one minute from now, with no promise behind it. */
     fun setTest(now: Long = System.currentTimeMillis()) = set(TEST_ID, now + 60_000L)
 

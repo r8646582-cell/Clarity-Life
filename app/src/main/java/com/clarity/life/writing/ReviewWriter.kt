@@ -93,6 +93,8 @@ class ReviewWriter @Inject constructor(
         val p = db.planner()
         val targets = p.targetsDuring(first.toString(), last.toString())
         val byTarget = if (targets.isEmpty()) emptyMap() else p.checkinsOf(targets.map { it.id }).groupBy { it.targetId }
+        // Schema 8: each target's values over time, so plan versus actual reads what was asked on each day.
+        val versions = if (targets.isEmpty()) emptyMap() else p.targetVersions(targets.map { it.id }).groupBy { it.targetId }
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
         val previous = if (kind == "week") {
@@ -108,6 +110,10 @@ class ReviewWriter @Inject constructor(
                 PlanBlocks.Target(
                     t.id, t.name, t.goalId, t.backlogId, t.minimum, t.target, t.schedule,
                     (byTarget[t.id] ?: emptyList()).map { PlannerRepository.model(it) }, LocalDate.parse(t.startDay),
+                    t.endDay?.let(LocalDate::parse),
+                    versions = (versions[t.id] ?: emptyList()).map { PlannerRepository.version(it) },
+                    unit = t.unit,
+                    minutes = t.minutes,
                 )
             },
             backlogs = p.activeBacklogs().map { b ->
@@ -120,7 +126,8 @@ class ReviewWriter @Inject constructor(
             },
             rest = p.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),
             previous = previous,
-            availability = db.memory().profileEntry(PlannerRepository.AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
+            availability = settings.planHours()?.let { com.clarity.life.core.PlanLoad.hoursText(it) }
+                ?: db.memory().profileEntry(PlannerRepository.AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
         )
     }
 

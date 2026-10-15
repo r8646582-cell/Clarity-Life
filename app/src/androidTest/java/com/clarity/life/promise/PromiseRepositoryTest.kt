@@ -5,7 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.entity.PromiseRow
-import com.clarity.life.memory.Embedder
 import com.clarity.life.memory.SearchIndex
 import com.clarity.life.security.SecretStore
 import com.clarity.life.settings.SettingsRepository
@@ -38,7 +37,7 @@ class PromiseRepositoryTest {
             db,
             SettingsRepository(db.settings(), SecretStore(context)),
             reminders,
-            SearchIndex(db, Embedder(context)),
+            SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared),
         )
     }
 

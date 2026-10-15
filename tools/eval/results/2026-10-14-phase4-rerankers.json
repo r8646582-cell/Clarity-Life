@@ -1,0 +1,332 @@
+{
+ "pool": 30,
+ "embedder": "mdbr-leaf-mt (384)",
+ "runs": {
+  "none (the app today)": {
+   "exam2": 0.9666,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.8417,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.8646,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-tinybert-l2, replace": {
+   "repo": "Xenova/ms-marco-TinyBERT-L-2-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 4.5,
+   "ms_per_candidate": 0.41,
+   "exam2": 0.9639,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9167,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.9298,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-tinybert-l2, blend": {
+   "repo": "Xenova/ms-marco-TinyBERT-L-2-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 4.5,
+   "ms_per_candidate": 0.41,
+   "exam2": 0.9676,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.875,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.8854,
+    "time": 0.9474,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-minilm-l6, replace": {
+   "repo": "Xenova/ms-marco-MiniLM-L-6-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 23.1,
+   "ms_per_candidate": 3.06,
+   "exam2": 0.9682,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9417,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9375,
+    "time": 0.9211,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-minilm-l6, blend": {
+   "repo": "Xenova/ms-marco-MiniLM-L-6-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 23.1,
+   "ms_per_candidate": 3.06,
+   "exam2": 0.9777,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9375,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-minilm-l12, replace": {
+   "repo": "Xenova/ms-marco-MiniLM-L-12-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 34.2,
+   "ms_per_candidate": 6.06,
+   "exam2": 0.966,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9417,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9375,
+    "time": 0.9035,
+    "writing": 1.0
+   }
+  },
+  "ms-marco-minilm-l12, blend": {
+   "repo": "Xenova/ms-marco-MiniLM-L-12-v2",
+   "licence": "Apache-2.0",
+   "size_mb": 34.2,
+   "ms_per_candidate": 6.06,
+   "exam2": 0.9745,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9062,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "jina-tiny, replace": {
+   "repo": "jinaai/jina-reranker-v1-tiny-en",
+   "licence": "Apache-2.0",
+   "size_mb": 33.4,
+   "ms_per_candidate": 2.6,
+   "exam2": 0.9628,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9167,
+    "pattern": 0.85,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9375,
+    "time": 0.9298,
+    "writing": 1.0
+   }
+  },
+  "jina-tiny, blend": {
+   "repo": "jinaai/jina-reranker-v1-tiny-en",
+   "licence": "Apache-2.0",
+   "size_mb": 33.4,
+   "ms_per_candidate": 2.6,
+   "exam2": 0.9724,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.85,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "jina-turbo, replace": {
+   "repo": "jinaai/jina-reranker-v1-turbo-en",
+   "licence": "Apache-2.0",
+   "size_mb": 38.3,
+   "ms_per_candidate": 3.64,
+   "exam2": 0.9554,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9167,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9306,
+    "synthesis": 0.9375,
+    "time": 0.8684,
+    "writing": 1.0
+   }
+  },
+  "jina-turbo, blend": {
+   "repo": "jinaai/jina-reranker-v1-turbo-en",
+   "licence": "Apache-2.0",
+   "size_mb": 38.3,
+   "ms_per_candidate": 3.64,
+   "exam2": 0.9729,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9667,
+    "pattern": 0.875,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9062,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "mxbai-xsmall, replace": {
+   "repo": "mixedbread-ai/mxbai-rerank-xsmall-v1",
+   "licence": "Apache-2.0",
+   "size_mb": 87.2,
+   "ms_per_candidate": 14.06,
+   "exam2": 0.9586,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9167,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.886,
+    "writing": 1.0
+   }
+  },
+  "mxbai-xsmall, blend": {
+   "repo": "mixedbread-ai/mxbai-rerank-xsmall-v1",
+   "licence": "Apache-2.0",
+   "size_mb": 87.2,
+   "ms_per_candidate": 14.06,
+   "exam2": 0.9724,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9417,
+    "pattern": 0.9,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  },
+  "gte-modernbert, replace": {
+   "repo": "Alibaba-NLP/gte-reranker-modernbert-base",
+   "licence": "Apache-2.0",
+   "size_mb": 150.9,
+   "ms_per_candidate": 25.39,
+   "exam2": 0.9655,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9417,
+    "pattern": 0.875,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.9298,
+    "writing": 1.0
+   }
+  },
+  "gte-modernbert, blend": {
+   "repo": "Alibaba-NLP/gte-reranker-modernbert-base",
+   "licence": "Apache-2.0",
+   "size_mb": 150.9,
+   "ms_per_candidate": 25.39,
+   "exam2": 0.9708,
+   "exam1": 0.9421,
+   "leaks": 0,
+   "exam2_by_kind": {
+    "checkin": 1.0,
+    "followup": 0.9417,
+    "pattern": 0.875,
+    "people": 1.0,
+    "plan": 1.0,
+    "promise": 1.0,
+    "recall": 1.0,
+    "superseded": 0.9722,
+    "synthesis": 0.9167,
+    "time": 0.9737,
+    "writing": 1.0
+   }
+  }
+ }
+}

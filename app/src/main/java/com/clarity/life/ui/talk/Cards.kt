@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,6 +110,7 @@ fun SuggestionCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OfferedCard(card: CardRow, line: String?, preview: com.clarity.life.chat.CardSaver.Preview?, actions: CardActions) {
     val f = actions.fieldsOf(card)
@@ -127,7 +130,8 @@ private fun OfferedCard(card: CardRow, line: String?, preview: com.clarity.life.
                 val remind = f["remind"] == "true"
                 Kicker("Suggested promise")
                 Headline(f["text"].orEmpty())
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // The chips move to a second line when the text is large, instead of squeezing a word apart.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (res.ok) Chip(actions.show(res.date!!, res.time!!)) else Chip("Pick a time")
                     Chip(if (remind) "Reminder on" else "No reminder")
                 }

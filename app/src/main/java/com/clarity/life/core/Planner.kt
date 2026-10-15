@@ -30,7 +30,17 @@ import kotlin.math.floor
 class PlannerError(message: String) : Exception(message)
 
 /** A check-in row as the planner sees it. A row only exists when he answered. */
-data class CheckIn(val day: LocalDate, val level: String, val amount: Double = 0.0, val reason: String? = null)
+/**
+ * One answer. [minute]: his local time when he answered, minutes after midnight, only when he answered on the
+ * day itself (schema 6); null when not known or given on a later day, which says nothing about the day's time.
+ */
+data class CheckIn(
+    val day: LocalDate,
+    val level: String,
+    val amount: Double = 0.0,
+    val reason: String? = null,
+    val minute: Int? = null,
+)
 
 sealed class Schedule {
     /** daily, weekdays, a day list (Mon,Wed,Fri) or a range (Sat-Thu): fixed weekdays. */
@@ -76,6 +86,40 @@ data class Projection(
     val reachesBest: Double? = null,
     val shortBest: Double? = null,
 )
+
+/**
+ * Schema 8: a target's values from [from] on (tools/planner.py, the target history section). [status] is active,
+ * paused or ended.
+ */
+data class TargetVersion(
+    val from: LocalDate,
+    val minimum: Double,
+    val target: Double,
+    val schedule: String,
+    val status: String,
+)
+
+/** A target as the plan history reads it: its dates and its versions, oldest first. */
+data class TargetSpan(val start: LocalDate, val end: LocalDate?, val versions: List<TargetVersion>)
+
+data class Planned(val asked: Double, val days: Int)
+
+/** How far a plan's steps have got (plan_progress): [from]..[to], what they asked for and what was done. */
+data class PlanProgress(val from: LocalDate, val to: LocalDate, val asked: Double, val done: Double, val days: Int)
+
+data class ChangeSide(val answered: Int, val done: Int, val amount: Double)
+
+/** The latest change to a target and how it went before and since (change_compare). */
+data class ChangeCompare(
+    val day: LocalDate,
+    val fields: List<String>,
+    val beforeDays: Int,
+    val before: ChangeSide,
+    val after: ChangeSide,
+)
+
+/** One 7-day stretch of a done-rate trend (done_trend). [rate] is null with fewer than 3 answered days. */
+data class TrendWeek(val first: LocalDate, val last: LocalDate, val answered: Int, val done: Int, val rate: Double?)
 
 /** One weekly review's figures, as the re-plan trigger reads them. */
 data class ReviewPace(val projectedDone: Double, val remaining: Double, val answeredDays: Int)
@@ -127,6 +171,25 @@ object Planner {
 
     /** Mon=0 ... Sun=6, like the Python reference. */
     private fun weekday(d: LocalDate): Int = d.dayOfWeek.value - 1
+
+    /**
+     * A stored day key ("2026-10-14") as a date. The same as LocalDate.parse, read directly (Max plan Phase 5):
+     * the general parser cost about a second for ten years of check-ins on a slower phone. Anything else goes
+     * to LocalDate.parse, so a bad key fails exactly as before.
+     */
+    fun day(key: String): LocalDate {
+        if (key.length == 10 && key[4] == '-' && key[7] == '-') {
+            var ok = true
+            for (i in 0 until 10) if (i != 4 && i != 7 && key[i] !in '0'..'9') ok = false
+            if (ok) {
+                val y = key.substring(0, 4).toInt()
+                val m = key.substring(5, 7).toInt()
+                val d = key.substring(8, 10).toInt()
+                if (m in 1..12 && d in 1..java.time.YearMonth.of(y, m).lengthOfMonth()) return LocalDate.of(y, m, d)
+            }
+        }
+        return LocalDate.parse(key)
+    }
 
     /**
      * The local date a UTC instant belongs to, shifted by the day boundary hour.
@@ -305,15 +368,45 @@ object Planner {
         val lastEnd = today.minusDays(1)
         var end = minOf(days.min().plusDays((WINDOW - 1).toLong()), lastEnd)
         var best: Double? = null
+        // Each window reads only the check-ins inside it (Max plan Phase 5): ten years of daily answers made this
+        // about 13 million steps. The ones inside are counted in their given order, as [window] counts them, so
+        // every sum is the same to the last digit (BestPaceTest compares it with the plain way).
+        val inOrder = checkins.zipWithNext().all { (a, b) -> !b.day.isBefore(a.day) }
+        val byDay = if (inOrder) checkins.withIndex().toList() else checkins.withIndex().sortedBy { it.value.day }
+        val sortedDays = byDay.map { it.value.day }
+        val weekdays = (parseSchedule(schedule) as? Schedule.Days)?.weekdays
         while (!end.isAfter(lastEnd)) {
-            val w = window(checkins, schedule, end.minusDays((WINDOW - 1).toLong()), end, restDates)
-            if (w.answered >= MIN_ANSWERED) {
-                val p = w.amount / w.answered
+            val first = end.minusDays((WINDOW - 1).toLong())
+            var inside: List<IndexedValue<CheckIn>> =
+                byDay.subList(firstAtOrAfter(sortedDays, first), firstAtOrAfter(sortedDays, end.plusDays(1)))
+            if (!inOrder) inside = inside.sortedBy { it.index }
+            // As [window]: not a rest answer, and on a scheduled day (a fixed weekday that is not a rest day).
+            var answered = 0
+            var amount = 0.0
+            for ((_, c) in inside) {
+                if (c.level == "rest") continue
+                if (weekdays != null && (weekday(c.day) !in weekdays || c.day in restDates)) continue
+                answered++
+                amount += c.amount
+            }
+            if (answered >= MIN_ANSWERED) {
+                val p = amount / answered
                 if (best == null || p > best) best = p
             }
             end = end.plusDays(1)
         }
         return best
+    }
+
+    /** The position of the first day in [sorted] on or after [day] ([sorted].size when there is none). */
+    private fun firstAtOrAfter(sorted: List<LocalDate>, day: LocalDate): Int {
+        var lo = 0
+        var hi = sorted.size
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (sorted[mid].isBefore(day)) lo = mid + 1 else hi = mid
+        }
+        return lo
     }
 
     private fun reach(pace: Double, left: Int, remaining: Double, step: Double): Double {
@@ -369,19 +462,39 @@ object Planner {
             if (steps.all { it.end != null && it.end.isBefore(cur) }) break // every step has ended short of the total
             cur = cur.plusDays(1)
         }
-        val atDeadline = byDeadline ?: total // stopped before the deadline: finished early, or every step ended
+        // Never reached the deadline day in the loop: counting began after it (its day is answered), so nothing
+        // more lands by it; or it stopped before it, finished early or with every step ended.
+        val atDeadline = byDeadline ?: if ((if (todayAnswered) today.plusDays(1) else today).isAfter(deadline)) 0.0 else total
         val reaches = if (atDeadline < remaining - EPS) minOf(remaining, roundDown(atDeadline)) else remaining
         if (finish == null) return PlanFinish(remaining, "never", reaches)
         val spare = java.time.temporal.ChronoUnit.DAYS.between(finish, deadline).toInt()
         return PlanFinish(remaining, if (!finish.isAfter(deadline)) "finishes" else "late", reaches, finish, spare)
     }
 
-    /** Where the backlog ends up at the typical and the best pace, never rounded in the plan's favour. */
-    fun project(remaining: Double, left: Int, typical: Double?, best: Double?, step: Double = 1.0): Projection {
+    /**
+     * Where the backlog ends up at the typical and the best pace, never rounded in the plan's favour.
+     * With no scheduled day left: past_deadline, or no_days_left when [deadlinePassed] is false (the deadline is
+     * today and answered, or no scheduled day falls before it), so the deadline day never reads as passed.
+     * With no typical pace (after a gap) the best fortnight is still given; the status stays no_data.
+     */
+    fun project(
+        remaining: Double,
+        left: Int,
+        typical: Double?,
+        best: Double?,
+        step: Double = 1.0,
+        deadlinePassed: Boolean? = null,
+    ): Projection {
         if (remaining <= 0) return Projection(remaining, left, "done")
-        if (left <= 0) return Projection(remaining, left, "past_deadline")
+        if (left <= 0) return Projection(remaining, left, if (deadlinePassed == false) "no_days_left" else "past_deadline")
         val required = remaining / left
-        if (typical == null) return Projection(remaining, left, "no_data", requiredPerDay = required)
+        if (typical == null) {
+            val reachB = best?.let { reach(it, left, remaining, step) }
+            return Projection(
+                remaining, left, "no_data", requiredPerDay = required,
+                bestPerDay = best, reachesBest = reachB, shortBest = reachB?.let { remaining - it },
+            )
+        }
         val reachT = reach(typical, left, remaining, step)
         var reachB: Double? = null
         if (best != null) reachB = reach(best, left, remaining, step)
@@ -402,6 +515,164 @@ object Planner {
             reachesBest = reachB,
             shortBest = reachB?.let { remaining - it },
         )
+    }
+
+    /**
+     * The days a backlog is worked on, from the schedules of its live linked targets (tools/planner.py
+     * backlog_schedule): one distinct schedule as written; several with fixed days, the days of any of them
+     * (daily when every day); any Nx/week among them, a count of all their sessions a week, at most 7; none, daily.
+     */
+    fun backlogSchedule(schedules: List<String>): String {
+        val distinct = schedules.distinct()
+        if (distinct.isEmpty()) return "daily"
+        if (distinct.size == 1) return distinct[0]
+        val parsed = distinct.map { parseSchedule(it) }
+        if (parsed.all { it is Schedule.Days }) {
+            val days = parsed.flatMap { (it as Schedule.Days).weekdays }.toSortedSet()
+            return if (days.size == 7) "daily" else days.joinToString(",") { DAYS[it] }
+        }
+        val n = parsed.sumOf {
+            when (it) {
+                is Schedule.Days -> it.weekdays.size
+                is Schedule.Count -> it.perWeek
+            }
+        }
+        return "${minOf(7, n)}x/week"
+    }
+
+    // ---------- target history (schema 8): what a plan asked for, and before/after a change ----------
+
+    /** The version in force on [day], or null before the first one. */
+    fun versionOn(versions: List<TargetVersion>, day: LocalDate): TargetVersion? {
+        var out: TargetVersion? = null
+        for (v in versions) {
+            if (!v.from.isAfter(day)) out = v else break
+        }
+        return out
+    }
+
+    /**
+     * What the plan asked for from [first] to [last]: on every day that is not a planned rest day, each target
+     * adds the target amount in force that day when it is within its start and end, active then, and scheduled
+     * then. Null when a version in force on one of those days has an Nx/week schedule (no fixed days).
+     */
+    fun plannedAmount(
+        targets: List<TargetSpan>,
+        first: LocalDate,
+        last: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+    ): Planned? {
+        var asked = 0.0
+        val days = mutableSetOf<LocalDate>()
+        var cur = first
+        while (!cur.isAfter(last)) {
+            if (cur !in restDates) {
+                for (t in targets) {
+                    if (t.start.isAfter(cur) || (t.end != null && t.end.isBefore(cur))) continue
+                    val v = versionOn(t.versions, cur)
+                    if (v == null || v.status != "active") continue
+                    val s = parseSchedule(v.schedule) as? Schedule.Days ?: return null
+                    if (weekday(cur) in s.weekdays) {
+                        asked += v.target
+                        days += cur
+                    }
+                }
+            }
+            cur = cur.plusDays(1)
+        }
+        return Planned(asked, days.size)
+    }
+
+    /**
+     * How far the plan's steps have got: from the first step's start to yesterday (today when answered), what
+     * they asked for against every amount entered on those days. Null before a scheduled day has passed, or
+     * when it cannot be counted.
+     */
+    fun planProgress(
+        targets: List<TargetSpan>,
+        checkins: List<CheckIn>,
+        today: LocalDate,
+        todayAnswered: Boolean = false,
+        restDates: Set<LocalDate> = emptySet(),
+    ): PlanProgress? {
+        if (targets.isEmpty()) return null
+        val first = targets.minOf { it.start }
+        val last = if (todayAnswered) today else today.minusDays(1)
+        if (last.isBefore(first)) return null
+        val p = plannedAmount(targets, first, last, restDates) ?: return null
+        if (p.days == 0) return null
+        val done = checkins.filter { !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" }.sumOf { it.amount }
+        return PlanProgress(first, last, p.asked, done, p.days)
+    }
+
+    /** A change older than this many days is no longer news. */
+    const val CHANGE_LOOKBACK = 90L
+
+    private fun changedFields(a: TargetVersion, b: TargetVersion): List<String> = buildList {
+        if (abs(a.target - b.target) > EPS) add("target ${PlanStateText.g(a.target)} \u2192 ${PlanStateText.g(b.target)}")
+        if (abs(a.minimum - b.minimum) > EPS) add("minimum ${PlanStateText.g(a.minimum)} \u2192 ${PlanStateText.g(b.minimum)}")
+        if (a.schedule != b.schedule) add("${a.schedule} \u2192 ${b.schedule}")
+    }
+
+    private fun side(checkins: List<CheckIn>, schedule: String, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): ChangeSide {
+        if (first.isAfter(last)) return ChangeSide(0, 0, 0.0)
+        val w = window(checkins, schedule, first, last, rest)
+        return ChangeSide(w.answered, w.done, w.amount)
+    }
+
+    /**
+     * The latest change to a target's numbers or schedule in the last [CHANGE_LOOKBACK] days, with how it went
+     * in the [WINDOW] days before (old schedule) and since (new schedule, up to yesterday). Null when there is
+     * none, or fewer than [REASON_MIN_N] answered days on either side. A pause or resume is not a change.
+     */
+    fun changeCompare(
+        checkins: List<CheckIn>,
+        versions: List<TargetVersion>,
+        start: LocalDate,
+        today: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+    ): ChangeCompare? {
+        for (i in versions.indices.reversed()) {
+            if (i == 0) break
+            val before = versions[i - 1]
+            val after = versions[i]
+            val fields = changedFields(before, after)
+            if (fields.isEmpty()) continue
+            val day = after.from
+            if (!day.isBefore(today) || day.isBefore(today.minusDays(CHANGE_LOOKBACK))) return null
+            val bFirst = maxOf(day.minusDays(WINDOW.toLong()), start)
+            val b = side(checkins, before.schedule, bFirst, day.minusDays(1), restDates)
+            val a = side(checkins, after.schedule, day, today.minusDays(1), restDates)
+            if (b.answered < REASON_MIN_N || a.answered < REASON_MIN_N) return null
+            return ChangeCompare(day, fields, java.time.temporal.ChronoUnit.DAYS.between(bFirst, day).toInt(), b, a)
+        }
+        return null
+    }
+
+    const val TREND_WEEKS = 4
+
+    /**
+     * The done rate of each of the last [weeks] 7-day stretches ending on [last], oldest first (spec 6.2, the
+     * 28-day trend per target; rest days left out). A rate needs [REASON_MIN_N] answered scheduled days; days
+     * before [start] are not part of a stretch.
+     */
+    fun doneTrend(
+        checkins: List<CheckIn>,
+        schedule: String,
+        last: LocalDate,
+        restDates: Set<LocalDate> = emptySet(),
+        weeks: Int = TREND_WEEKS,
+        start: LocalDate? = null,
+    ): List<TrendWeek> = (weeks - 1 downTo 0).map { k ->
+        val b = last.minusDays(7L * k)
+        var a = b.minusDays(6)
+        if (start != null && start.isAfter(a)) a = start
+        if (a.isAfter(b)) {
+            TrendWeek(b.minusDays(6), b, 0, 0, null)
+        } else {
+            val w = window(checkins, schedule, a, b, restDates)
+            TrendWeek(a, b, w.answered, w.done, if (w.answered >= REASON_MIN_N) roundHalfUp(100.0 * w.done / w.answered) else null)
+        }
     }
 
     /** True when the last two weekly reviews both had enough data and both projected below 85% of what remained. */

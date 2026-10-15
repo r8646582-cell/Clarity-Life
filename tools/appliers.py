@@ -12,7 +12,16 @@ the model beyond what the rules allow:
   - an update may raise confidence by one step at most, only to "likely", only with seen_again and new
     verified evidence; "confirmed" only ever comes from his own tap or edit;
   - a note he edited or confirmed is never rewritten, merged or retired by a job;
-  - a note close to one he deleted is never re-created.
+  - a note close to one he deleted is never re-created, by shared words or by meaning (Max plan Phase 3).
+
+Meaning: ctx may carry "vectors", {text: unit vector}, made by the app's on-phone model (gte-base-en-v1.5 since
+Max plan Phase 4; bge-small-en-v1.5 before) for the texts it compares. A text without a vector is compared by words
+only, as before Phase 3 (meaning search off). The thresholds are measured on that model (tools/eval/note_meaning.py,
+and tools/eval/compare_embedders.py set them at the cost the bge lines had: no more different notes blocked or
+dropped): rewordings of one note score about 0.65 to 0.95, and so do opposites ("helps you sleep" and "keeps you
+awake" score high too). So meaning guards deletions
+generously (being too careful near something he deleted is the safe side), while a duplicate by meaning also
+needs the same kind and the same "not" in both, and a high score.
 """
 import re
 import sys
@@ -27,6 +36,9 @@ CONF = ["guess", "likely", "confirmed"]
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")   # newlines are allowed only in long text fields
 DELETED_SIMILARITY = 0.6
 DUPLICATE_SIMILARITY = 0.8
+DELETED_MEANING = 0.65    # cosine at or above which a text is too close in meaning to a note he deleted
+DUPLICATE_MEANING = 0.88  # cosine at or above which a note repeats an active note of the same kind
+NEGATIONS = {"not", "no", "never", "nor", "without", "cannot", "stop", "stopped", "none", "nothing"}
 LIMITS = {"notes_add": 3, "notes_update": 6, "profile": 3, "people": 3, "events": 5, "his_words": 2,
           "observations": 8, "ideas": 5, "disagreements": 2, "contradictions": 2}
 
@@ -45,6 +57,46 @@ def similarity(a, b):
     if not wa or not wb:
         return 0.0
     return len(wa & wb) / len(wa | wb)
+
+
+def meaning(ctx, a, b):
+    """Cosine of the two texts' unit vectors, or None when either has none (meaning search off)."""
+    vs = ctx.get("vectors") or {}
+    va, vb = vs.get(a), vs.get(b)
+    if va is None or vb is None or len(va) != len(vb):
+        return None
+    return sum(x * y for x, y in zip(va, vb))
+
+
+def negated(text):
+    """Whether a text says "not" in any of its usual ways: "doesn't" and "never" mean the opposite claim."""
+    return any(w in NEGATIONS or w.endswith("n't") for w in _words(text))
+
+
+def close_to_deleted(text, deleted, ctx):
+    """A note he deleted is never re-created, nor anything close to it: in words, or in meaning."""
+    for d in deleted:
+        if similarity(text, d) >= DELETED_SIMILARITY:
+            return True
+        m = meaning(ctx, text, d)
+        if m is not None and m >= DELETED_MEANING:
+            return True
+    return False
+
+
+def duplicate_of_active(text, kind, active, ctx):
+    """active: [(kind, text)]. A repeat in words (any kind), or in meaning (same kind, high score); never when one
+    says "not" and the other does not: "You never keep promises to your sister" is a change, not a repeat."""
+    for k, t in active:
+        if negated(text) != negated(t):
+            continue
+        if similarity(text, t) >= DUPLICATE_SIMILARITY:
+            return True
+        if k == kind:
+            m = meaning(ctx, text, t)
+            if m is not None and m >= DUPLICATE_MEANING:
+                return True
+    return False
 
 
 def _text(v, maxlen, multiline=False):
@@ -183,7 +235,7 @@ def apply_reflection(raw, ctx):
             ops.append(["event.add"] + fields)
 
         notes = {int(k): v for k, v in ctx.get("notes", {}).items()}
-        active_texts = [n["text"] for n in notes.values() if n["status"] == "active"]
+        active = [(n["kind"], n["text"]) for n in notes.values() if n["status"] == "active"]
         touched = set()
         for a in _list(notes_obj, "add", LIMITS["notes_add"], dropped):
             try:
@@ -195,10 +247,10 @@ def apply_reflection(raw, ctx):
             except (Bad, AttributeError) as e:
                 dropped.append("note.add: %s" % e)
                 continue
-            if any(similarity(text, d) >= DELETED_SIMILARITY for d in ctx.get("deleted_notes", [])):
+            if close_to_deleted(text, ctx.get("deleted_notes", []), ctx):
                 dropped.append("note.add: too close to a note he deleted")
                 continue
-            if any(similarity(text, t) >= DUPLICATE_SIMILARITY for t in active_texts):
+            if duplicate_of_active(text, a["kind"], active, ctx):
                 dropped.append("note.add: duplicate of an active note")
                 continue
             ev = _verify_evidence(a.get("evidence"), his, facts, dropped, "note.add")
@@ -206,7 +258,7 @@ def apply_reflection(raw, ctx):
                 dropped.append("note.add: no verified evidence")
                 continue
             ops.append(["note.add", a["kind"], text, "guess", ev])
-            active_texts.append(text)
+            active.append((a["kind"], text))
 
         for u in _list(notes_obj, "update", LIMITS["notes_update"], dropped):
             nid = u.get("id") if isinstance(u, dict) else None
@@ -224,6 +276,9 @@ def apply_reflection(raw, ctx):
                     text = _text(u["text"], 220)
                 except Bad as e:
                     dropped.append("note.update %d: %s" % (nid, e))
+                    continue
+                if close_to_deleted(text, ctx.get("deleted_notes", []), ctx):
+                    dropped.append("note.update %d: new text too close to a note he deleted" % nid)
                     continue
             elif u.get("text") is not None and u.get("text") != n["text"]:
                 dropped.append("note.update %d: his own note, text kept" % nid)
@@ -303,7 +358,10 @@ def apply_reflection(raw, ctx):
 
 
 def apply_gardening(raw, ctx):
-    """ctx: notes {id: {kind, confidence, status, edited, times_seen}}, people [id], profile {key: {confirmed}}."""
+    """ctx: notes {id: {kind, confidence, status, edited, times_seen}}, people [id], profile {key: {confirmed}},
+    deleted_notes [text] and vectors {text: unit vector} (both optional): no merged or rewritten text may come
+    close to a note he deleted (rule 5), in words or in meaning."""
+    deleted = ctx.get("deleted_notes", [])
     dropped, ops, used = [], [], set()
     try:
         obj = loads_strict(raw.strip())
@@ -343,6 +401,9 @@ def apply_gardening(raw, ctx):
         except Bad as e:
             dropped.append("merge: %s" % e)
             continue
+        if close_to_deleted(text, deleted, ctx):
+            dropped.append("merge: too close to a note he deleted")
+            continue
         used.update(ids)
         ops.append(["note.merge", sorted(ids), text, top, sum(notes[i]["times_seen"] for i in ids)])
 
@@ -355,6 +416,9 @@ def apply_gardening(raw, ctx):
             text = _text(r.get("text"), 220)
         except Bad as e:
             dropped.append("rewrite: %s" % e)
+            continue
+        if close_to_deleted(text, deleted, ctx):
+            dropped.append("rewrite: too close to a note he deleted")
             continue
         used.add(i)
         ops.append(["note.rewrite", i, text])
@@ -397,6 +461,50 @@ def apply_gardening(raw, ctx):
         except Bad as e:
             dropped.append("rewrite_profile: %s" % e)
     return {"ok": True, "ops": ops, "dropped": dropped}
+
+
+CLUSTER_MEANING = 0.82   # cosine at or above which two notes are suggested to gardening as one
+CLUSTER_WORDS = 0.5      # or this share of words in common
+CLUSTER_SIZE = 4         # at most this many notes in one suggestion
+CLUSTERS = 10            # at most this many suggestions
+
+
+def gardening_clusters(notes, ctx):
+    """Notes the code finds close, for gardening to consider merging (Max plan Phase 3 step 5). Suggestions only:
+    the model decides, and apply_gardening checks every merge as before. notes: {id: {kind, confidence, status,
+    edited, text}}. Only notes a job may touch (active, not edited, not confirmed), of the same kind, saying "not"
+    the same way, close in meaning (CLUSTER_MEANING) or in words (CLUSTER_WORDS). The closest pairs join first,
+    a group never grows past CLUSTER_SIZE; groups come out by their lowest id, each id list sorted."""
+    free = sorted(int(i) for i, n in notes.items()
+                  if n["status"] == "active" and not n["edited"] and n["confidence"] != "confirmed")
+    text = {i: notes[str(i)]["text"] if str(i) in notes else notes[i]["text"] for i in free}
+    kind = {i: notes[str(i)]["kind"] if str(i) in notes else notes[i]["kind"] for i in free}
+    pairs = []
+    for x in range(len(free)):
+        for y in range(x + 1, len(free)):
+            a, b = free[x], free[y]
+            if kind[a] != kind[b] or negated(text[a]) != negated(text[b]):
+                continue
+            m = meaning(ctx, text[a], text[b])
+            w = similarity(text[a], text[b])
+            if (m is not None and m >= CLUSTER_MEANING) or w >= CLUSTER_WORDS:
+                pairs.append((m if m is not None else w, a, b))
+    pairs.sort(key=lambda p: (-p[0], p[1], p[2]))
+    group = {i: [i] for i in free}
+    for _, a, b in pairs:
+        ga, gb = group[a], group[b]
+        if ga is gb or len(ga) + len(gb) > CLUSTER_SIZE:
+            continue
+        ga.extend(gb)
+        for i in gb:
+            group[i] = ga
+    seen, out = set(), []
+    for i in free:
+        g = group[i]
+        if len(g) >= 2 and id(g) not in seen:
+            seen.add(id(g))
+            out.append(sorted(g))
+    return out[:CLUSTERS]
 
 
 def _plain_text_problems(text):

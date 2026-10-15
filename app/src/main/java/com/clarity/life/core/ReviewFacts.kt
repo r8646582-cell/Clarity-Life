@@ -117,6 +117,14 @@ object ReviewFacts {
             f.missedByWeekday.filter { it.value >= Planner.REASON_MIN_N }.forEach { (day, n) ->
                 lines += "  Not on $n ${PLURAL_DAYS[Planner.DAYS.indexOf(day)]}."
             }
+            // Max plan Phase 6: the period before, the 28-day trend (spec 6.2) and the time of day he answered.
+            val (beforeFirst, beforeLast) = previousPeriod(kind, first)
+            val before = period(t.checkins, t.schedule, beforeFirst, beforeLast, rest)
+            if (before.answered > 0 && (t.start == null || !t.start.isAfter(beforeLast))) {
+                lines += "  The ${if (kind == "week") "week" else "month"} before: done on ${before.done} of ${before.answered} answered days."
+            }
+            PlanStateText.trendLine(Planner.doneTrend(t.checkins, t.schedule, last, rest, start = t.start))?.let { lines += "  $it" }
+            PlanBlocks.timeBandLinesOf(periodRows(t, first, last, rest)).forEach { lines += "  $it." }
         }
         val restDays = rest.count { !it.isBefore(first) && !it.isAfter(last) }
         if (restDays > 0) lines += "Planned rest days: $restDays."
@@ -132,6 +140,14 @@ object ReviewFacts {
                 bf.answerRate, availability,
             )
             paces += BacklogPace(b.id, bf.projection.reachesTypical, bf.projection.remaining, bf.windowAnswered)
+            // Plan versus actual in this period (spec section 8), each day under the values in force that day.
+            val spans = linked.filter { it.start != null }.map { TargetSpan(it.start!!, it.end, PlanBlocks.versionsOf(it)) }
+            val planned = if (spans.isEmpty()) null else Planner.plannedAmount(spans, first, last, rest)
+            if (planned != null && planned.days > 0) {
+                val done = linked.flatMap { it.checkins }
+                    .filter { !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" }.sumOf { it.amount }
+                lines += "  " + PlanStateText.planPeriodLine("B${b.id}", PlanBlocks.clean(b.name), planned.asked, done)
+            }
         }
         val replan = kind == "week" && paces.any { now ->
             val before = previous.firstOrNull { it.id == now.id } ?: return@any false
@@ -146,6 +162,18 @@ object ReviewFacts {
         if (replan) lines += "Re-plan flag: yes (below pace in two reviews in a row)."
         if (answered == 0) lines += "No check-ins were answered in this period, so there is too little data for a note."
         return Facts(kind, first, last, lines, paces, answered, replan)
+    }
+
+    /** The period just before: the 7 days before a week, the calendar month before a month. */
+    fun previousPeriod(kind: String, first: LocalDate): Pair<LocalDate, LocalDate> =
+        if (kind == "week") first.minusDays(7) to first.minusDays(1) else first.minusMonths(1) to first.minusDays(1)
+
+    /** A target's answers in the period on its scheduled days, rest left out (as [period] counts them). */
+    private fun periodRows(t: PlanBlocks.Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): List<CheckIn> {
+        val sched = (Planner.parseSchedule(t.schedule) as? Schedule.Days)?.let { Planner.scheduledDates(t.schedule, first, last, rest).toSet() }
+        return t.checkins.filter {
+            !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" && (sched == null || it.day in sched)
+        }
     }
 
     // ---------- review.facts_json ----------

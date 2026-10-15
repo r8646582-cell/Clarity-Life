@@ -1,6 +1,7 @@
 package com.clarity.life.memory
 
 import androidx.room.InvalidationTracker
+import com.clarity.life.core.Spans
 import com.clarity.life.core.VectorIndex
 import com.clarity.life.core.VectorMath
 import com.clarity.life.data.ClarityDatabase
@@ -50,9 +51,12 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         limit: Int,
         accept: (VectorIndex.Entry) -> Boolean,
     ): List<VectorIndex.Hit> = lock.withLock {
-        refresh()
+        Spans.span("meaning: vectors brought up to date") { refresh() }
         index.search(query, floor - VectorIndex.MARGIN, limit, accept)
     }
+
+    /** Reads the vectors now (start-up, in the background), so the first search of the day does not wait for it. */
+    suspend fun warm() = lock.withLock { refresh() }
 
     /** The exact cosine from the stored floats, or null when the vector has gone since. */
     suspend fun exact(query: FloatArray, entry: VectorIndex.Entry): Double? {
@@ -65,12 +69,15 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         // Cleared before reading, so a change made while this reads is picked up next time.
         if (!changed.getAndSet(false)) return
         val e = db.embeddings()
+        // The first load knows how many rows are coming: room for all of them at once.
+        if (seen == 0) index.reserve(e.countAll())
         readNew()
         if (seen != e.countAll()) {
             // Something was removed (or replaced): start again from nothing.
             index.clear()
             seen = 0
             lastRowSeen = 0L
+            index.reserve(e.countAll())
             readNew()
         }
     }
@@ -79,14 +86,16 @@ class VectorCache @Inject constructor(private val db: ClarityDatabase) {
         val e = db.embeddings()
         var after = lastRowSeen
         while (true) {
-            val rows = e.rowsAfter(after, BATCH)
+            val rows = Spans.span("vectors: rows read from the database") { e.rowsAfter(after, BATCH) }
             if (rows.isEmpty()) break
-            for (r in rows) {
-                seen++
-                after = r.rowId
-                if (r.model != Embedder.MODEL || r.dim != Embedder.DIM) continue
-                val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
-                index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+            Spans.span("vectors: decoded into the index") {
+                for (r in rows) {
+                    seen++
+                    after = r.rowId
+                    if (r.model != Embedder.MODEL || r.dim != Embedder.DIM) continue
+                    val v = VectorMath.fromBytes(r.vector, Embedder.DIM) ?: continue
+                    index.add(VectorIndex.Entry(r.kind, r.docId, r.conversationId, r.rowId), v)
+                }
             }
             if (rows.size < BATCH) break
         }

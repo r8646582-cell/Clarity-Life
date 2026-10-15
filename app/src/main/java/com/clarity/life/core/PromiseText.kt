@@ -57,10 +57,31 @@ object PromiseText {
      * OPEN_PROMISES (contracts/context.md): every open promise, soonest first, then what he answered in the
      * last [RECENT_DAYS] days, newest first. Never trimmed. Empty (and so omitted) when there is nothing.
      */
-    fun block(open: List<Promise>, answered: List<Promise>, now: Instant, tz: String): Block {
+    fun block(open: List<Promise>, answered: List<Promise>, now: Instant, tz: String, longer: List<Promise> = emptyList()): Block {
         val lines = open.sortedWith(compareBy({ it.dueAt }, { it.id })).map { openLine(it, now, tz) } +
-            recent(answered, now).map { outcomeLine(it, now, tz) }
+            recent(answered, now).map { outcomeLine(it, now, tz) } + listOfNotNull(tally(longer, now))
         return Block("OPEN_PROMISES", lines.map { BlockItem(it, 0) })
+    }
+
+    /** The days the promise tally counts back (Max plan Phase 2 step 6). */
+    const val TALLY_DAYS = 90L
+
+    /**
+     * How his promises usually go, counted by code: the ones answered and due in the last [TALLY_DAYS] days, by
+     * outcome, with the reasons he picked that are behind at least 3 of them. Null with fewer than 3 answered.
+     * "Promises due in the last 90 days and answered: 9; done 5, not done 3, moved 1, let go 0. Not done, reason: tired 3."
+     */
+    fun tally(answered: List<Promise>, now: Instant): String? {
+        val since = now.minus(Duration.ofDays(TALLY_DAYS))
+        val rows = answered.filter { it.status != "open" && it.dueAt.isAfter(since) && !it.dueAt.isAfter(now) }
+        if (rows.size < Planner.REASON_MIN_N) return null
+        fun n(status: String) = rows.count { it.status == status }
+        val reasons = rows.filter { it.status == "not_done" }.mapNotNull { it.reason?.trim()?.takeIf(String::isNotEmpty) }
+            .groupingBy { it }.eachCount().filter { it.value >= Planner.REASON_MIN_N }
+            .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+        val why = if (reasons.isEmpty()) "" else " Not done, reason: " + reasons.joinToString(", ") { "${it.key} ${it.value}" } + "."
+        return "Promises due in the last $TALLY_DAYS days and answered: ${rows.size}; done ${n("kept")}, not done ${n("not_done")}, " +
+            "moved ${n("moved")}, let go ${n("let_go")}.$why"
     }
 
     /** Answered promises recent enough for OPEN_PROMISES. */
@@ -93,6 +114,9 @@ object PromiseText {
         return if (sameDay) "Was due $clock, ${TimeFacts.spell(gap)} ago" else "Was due ${TimeFacts.cardTime(dueAt, tz)}"
     }
 
-    /** The text the search index keeps for a promise, so an old one can be found again (RELEVANT_PAST). */
-    fun searchText(p: Promise): String = "${p.text} (${outcome(p)})"
+    /**
+     * The text the search index keeps for a promise, so an old one can be found again (RELEVANT_PAST):
+     * "Promise: Call Mom (done)" ([SearchText.promise], tools/retrieval.py).
+     */
+    fun searchText(p: Promise): String = SearchText.promise(p.text, p.status, p.reason)
 }

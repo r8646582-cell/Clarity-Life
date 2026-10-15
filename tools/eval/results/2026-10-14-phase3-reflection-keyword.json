@@ -1,0 +1,242 @@
+{
+ "search": "keyword only",
+ "pairs": 26,
+ "within_reach_before": 0.1154,
+ "within_reach_phase3": 0.8846,
+ "missed": [
+  {
+   "question": "y03",
+   "kind": "synthesis",
+   "reflected": 29,
+   "earlier": 25,
+   "before": false,
+   "phase3": false
+  },
+  {
+   "question": "y04",
+   "kind": "synthesis",
+   "reflected": 20,
+   "earlier": 12,
+   "before": false,
+   "phase3": false
+  },
+  {
+   "question": "y15",
+   "kind": "synthesis",
+   "reflected": 13,
+   "earlier": 2,
+   "before": false,
+   "phase3": false
+  }
+ ],
+ "per_pair": [
+  {
+   "question": "r15",
+   "kind": "recall",
+   "reflected": 26,
+   "earlier": 22,
+   "before": true,
+   "phase3": true
+  },
+  {
+   "question": "r29",
+   "kind": "recall",
+   "reflected": 30,
+   "earlier": 29,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "u09",
+   "kind": "superseded",
+   "reflected": 28,
+   "earlier": 18,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "y02",
+   "kind": "synthesis",
+   "reflected": 24,
+   "earlier": 8,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "y03",
+   "kind": "synthesis",
+   "reflected": 29,
+   "earlier": 25,
+   "before": false,
+   "phase3": false
+  },
+  {
+   "question": "y04",
+   "kind": "synthesis",
+   "reflected": 20,
+   "earlier": 12,
+   "before": false,
+   "phase3": false
+  },
+  {
+   "question": "y05",
+   "kind": "synthesis",
+   "reflected": 26,
+   "earlier": 4,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "y13",
+   "kind": "synthesis",
+   "reflected": 17,
+   "earlier": 6,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "y15",
+   "kind": "synthesis",
+   "reflected": 13,
+   "earlier": 2,
+   "before": false,
+   "phase3": false
+  },
+  {
+   "question": "y16",
+   "kind": "synthesis",
+   "reflected": 28,
+   "earlier": 14,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "y16",
+   "kind": "synthesis",
+   "reflected": 28,
+   "earlier": 18,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "f04",
+   "kind": "followup",
+   "reflected": 24,
+   "earlier": 8,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "f06",
+   "kind": "followup",
+   "reflected": 26,
+   "earlier": 22,
+   "before": true,
+   "phase3": true
+  },
+  {
+   "question": "f14",
+   "kind": "followup",
+   "reflected": 18,
+   "earlier": 6,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa01",
+   "kind": "pattern",
+   "reflected": 20,
+   "earlier": 1,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa02",
+   "kind": "pattern",
+   "reflected": 20,
+   "earlier": 8,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa03",
+   "kind": "pattern",
+   "reflected": 28,
+   "earlier": 14,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa04",
+   "kind": "pattern",
+   "reflected": 17,
+   "earlier": 5,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa05",
+   "kind": "pattern",
+   "reflected": 26,
+   "earlier": 4,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa06",
+   "kind": "pattern",
+   "reflected": 27,
+   "earlier": 22,
+   "before": true,
+   "phase3": true
+  },
+  {
+   "question": "pa06",
+   "kind": "pattern",
+   "reflected": 27,
+   "earlier": 25,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa07",
+   "kind": "pattern",
+   "reflected": 21,
+   "earlier": 19,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa08",
+   "kind": "pattern",
+   "reflected": 24,
+   "earlier": 8,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa09",
+   "kind": "pattern",
+   "reflected": 20,
+   "earlier": 1,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pa10",
+   "kind": "pattern",
+   "reflected": 16,
+   "earlier": 13,
+   "before": false,
+   "phase3": true
+  },
+  {
+   "question": "pe08",
+   "kind": "people",
+   "reflected": 26,
+   "earlier": 4,
+   "before": false,
+   "phase3": true
+  }
+ ]
+}

@@ -183,6 +183,218 @@ class MigrationTest {
         db.close()
     }
 
+    /** Max plan Phase 3: facts with time. Old rows keep NULL ("not known"); the new table takes rows. */
+    @Test
+    fun version5To6KeepsEveryRowAndAddsTimes() {
+        helper.createDatabase(TEST_DB, 5).apply {
+            execSQL("INSERT INTO profile_entry (`key`, value, confirmed, updated_at) VALUES ('Work', 'Accounts assistant', 1, 1760000000000)")
+            execSQL("INSERT INTO target (id, name, target, schedule, start_day) VALUES (1, 'Lectures', 2, 'daily', '2026-10-01')")
+            execSQL("INSERT INTO checkin (target_id, day_key, level, amount, reason, entered_at) VALUES (1, '2026-10-02', 'not', 0, 'tired', 1760000000000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, Migrations.V5_TO_V6)
+        db.query("SELECT value, confirmed, since_day FROM profile_entry WHERE `key` = 'Work'").use {
+            assertTrue("the profile entry is gone", it.moveToFirst())
+            assertEquals("Accounts assistant", it.getString(0))
+            assertEquals(1, it.getInt(1))
+            assertTrue("an old entry's day is not known, not guessed", it.isNull(2))
+        }
+        db.query("SELECT level, reason, entered_minute, entered_day FROM checkin").use {
+            assertTrue("the check-in is gone", it.moveToFirst())
+            assertEquals("not", it.getString(0))
+            assertEquals("tired", it.getString(1))
+            assertTrue(it.isNull(2))
+            assertTrue(it.isNull(3))
+        }
+        db.execSQL(
+            "INSERT INTO profile_past (`key`, value, since_day, until_day, created_at) " +
+                "VALUES ('Work', 'Student', NULL, '2026-10-14', 1760000000000)",
+        )
+        db.query("SELECT COUNT(*) FROM profile_past").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+        db.close()
+    }
+
+    /** Max plan Phase 5: indexes only. Every row stays, and each new index is there and used. */
+    @Test
+    fun version6To7KeepsEveryRowAndAddsIndexes() {
+        helper.createDatabase(TEST_DB, 6).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'Kept', 1760000000000)")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at, status) VALUES (1, 1, 'user', 'still here', 1760000000000, 'complete')")
+            execSQL("INSERT INTO promise (text, due_at, due_text, created_at) VALUES ('Call Ammi', 1760100000000, 'tomorrow 7 pm', 1760000000000)")
+            execSQL("INSERT INTO quote (conversation_id, text, said_day) VALUES (1, 'still here', '2026-10-09')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 7, true, Migrations.V6_TO_V7)
+        db.query("SELECT content FROM message WHERE id = 1").use {
+            assertTrue("the message is gone", it.moveToFirst())
+            assertEquals("still here", it.getString(0))
+        }
+        for (table in listOf("conversation", "message", "promise", "quote")) {
+            db.query("SELECT COUNT(*) FROM `$table`").use {
+                it.moveToFirst()
+                assertEquals("rows in $table", 1, it.getInt(0))
+            }
+        }
+        val names = mutableSetOf<String>()
+        db.query("SELECT name FROM sqlite_master WHERE type = 'index'").use { while (it.moveToNext()) names += it.getString(0) }
+        for (name in listOf("idx_conversation_started", "idx_message_status", "idx_promise_due", "idx_quote_day", "idx_job_status", "idx_error_at")) {
+            assertTrue("index $name is missing", name in names)
+        }
+        db.query("EXPLAIN QUERY PLAN UPDATE message SET status = 'interrupted' WHERE status = 'streaming'").use {
+            val plan = buildString { while (it.moveToNext()) append(it.getString(3)).append(' ') }
+            assertTrue("the start-up sweep must use the index: $plan", "idx_message_status" in plan)
+        }
+        db.close()
+    }
+
+    /**
+     * Max plan Phase 6: target.minutes and target_version. Every target and check-in stays; an old target has no
+     * minutes and no history (read as its values from its start day), and a change can be recorded at once.
+     */
+    @Test
+    fun version7To8KeepsEveryTargetAndAddsItsHistory() {
+        helper.createDatabase(TEST_DB, 7).apply {
+            execSQL("INSERT INTO target (id, name, unit, minimum, target, schedule, start_day) VALUES (1, 'Lectures', 'lectures', 1, 2, 'Sat-Thu', '2026-10-10')")
+            execSQL("INSERT INTO checkin (target_id, day_key, level, amount, entered_at) VALUES (1, '2026-10-10', 'target', 2, 1760000000000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 8, true, Migrations.V7_TO_V8)
+        db.query("SELECT name, target, schedule, minutes FROM target WHERE id = 1").use {
+            assertTrue("the target is gone", it.moveToFirst())
+            assertEquals("Lectures", it.getString(0))
+            assertEquals(2.0, it.getDouble(1), 0.0)
+            assertEquals("Sat-Thu", it.getString(2))
+            assertTrue("an old target's minutes are not known, not guessed", it.isNull(3))
+        }
+        db.query("SELECT COUNT(*) FROM checkin").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM target_version").use {
+            it.moveToFirst()
+            assertEquals("no history is made up for an old target", 0, it.getInt(0))
+        }
+        db.execSQL("INSERT INTO target_version (target_id, from_day, minimum, target, schedule, status, created_at) VALUES (1, '2026-10-20', 1, 3, 'daily', 'active', 1760000000000)")
+        // One version per target per day: a second change that day replaces the first.
+        db.execSQL("INSERT OR REPLACE INTO target_version (target_id, from_day, minimum, target, schedule, status, created_at) VALUES (1, '2026-10-20', 1, 4, 'daily', 'active', 1760000000001)")
+        db.query("SELECT target FROM target_version WHERE target_id = 1").use {
+            assertEquals(1, it.count)
+            it.moveToFirst()
+            assertEquals(4.0, it.getDouble(0), 0.0)
+        }
+        db.close()
+    }
+
+    // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
+
+    /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
+    private fun sampleTables(file: String): org.json.JSONObject {
+        val ctx = InstrumentationRegistry.getInstrumentation().context
+        val vectors = org.json.JSONObject(ctx.assets.open("backup_vectors.json").use { it.readBytes().toString(Charsets.UTF_8) })
+        val bytes = ctx.assets.open(file).use { it.readBytes() }
+        val (_, json) = com.clarity.life.core.BackupFormat.opening(
+            java.io.ByteArrayInputStream(bytes),
+            vectors.getString("passphrase").toCharArray(),
+        )
+        return org.json.JSONObject(json.use { it.readBytes().toString(Charsets.UTF_8) }).getJSONObject("tables")
+    }
+
+    private fun insertAll(db: androidx.sqlite.db.SupportSQLiteDatabase, tables: org.json.JSONObject): Map<String, Int> {
+        val counts = mutableMapOf<String, Int>()
+        for (table in tables.keys()) {
+            val rows = tables.getJSONArray(table)
+            for (i in 0 until rows.length()) {
+                val row = rows.getJSONObject(i)
+                val values = android.content.ContentValues()
+                for (col in row.keys()) {
+                    when (val v = row.get(col)) {
+                        org.json.JSONObject.NULL -> values.putNull(col)
+                        is String -> values.put(col, v)
+                        is Int -> values.put(col, v.toLong())
+                        is Long -> values.put(col, v)
+                        is Double -> values.put(col, v)
+                        else -> error("unexpected value in $table.$col")
+                    }
+                }
+                db.insert(table, android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT, values)
+            }
+            if (rows.length() > 0) counts[table] = rows.length()
+        }
+        return counts
+    }
+
+    @Test
+    fun everyOldVersionWithRealRowsReachesTheNewest() {
+        // Version 2 only added a table, so version 1's rows are version 2's rows too.
+        val starts = listOf(
+            1 to "format1-schema1.cbk", 2 to "format1-schema1.cbk", 3 to "format2-schema3.cbk", 4 to "format2-schema4.cbk",
+            5 to "format2-schema5.cbk", 6 to "format2-schema6.cbk",
+        )
+        for ((version, sample) in starts) {
+            val name = "migrate-from-$version.db"
+            val tables = sampleTables(sample)
+            val counts = helper.createDatabase(name, version).let { old ->
+                insertAll(old, tables).also { old.close() }
+            }
+            // Every migration from there on, then Room checks the result against today's entities.
+            val db = helper.runMigrationsAndValidate(name, DATABASE_VERSION, true, *ClarityDatabase.MIGRATIONS)
+            for ((table, n) in counts) {
+                db.query("SELECT COUNT(*) FROM `$table`").use {
+                    it.moveToFirst()
+                    assertEquals("from version $version: rows in $table", n, it.getInt(0))
+                }
+            }
+            db.query("SELECT content FROM message WHERE id = 1").use {
+                assertTrue(it.moveToFirst())
+                assertTrue("from version $version: the words changed", it.getString(0).startsWith("I only study well in the morning — before 10, with tea ✓"))
+            }
+            db.query("SELECT start_done, total FROM backlog WHERE id = 1").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(4.5, it.getDouble(0), 0.0)
+                assertEquals(50.0, it.getDouble(1), 0.0)
+            }
+            db.query("PRAGMA foreign_key_check").use { assertEquals("from version $version: broken links", 0, it.count) }
+            db.close()
+        }
+    }
+
+    @Test
+    fun aMissingMigrationStopsWithAnErrorAndKeepsEveryRow() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "no-migration.db"
+        helper.createDatabase(name, 1).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'Kept', 1760000000000)")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at) VALUES (1, 1, 'user', 'still here', 1760000000000)")
+            close()
+        }
+        // The app's database with no way from version 1: Room must refuse to open, never start empty.
+        val room = Room.databaseBuilder(context, ClarityDatabase::class.java, name).build()
+        var refused = false
+        try {
+            room.openHelper.writableDatabase
+        } catch (e: IllegalStateException) {
+            refused = true
+        } finally {
+            room.close()
+        }
+        assertTrue("a database with no migration path must not open", refused)
+        val raw = android.database.sqlite.SQLiteDatabase.openDatabase(
+            context.getDatabasePath(name).path,
+            null,
+            android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
+        )
+        raw.rawQuery("SELECT content FROM message WHERE id = 1", null).use {
+            assertTrue("the message is gone", it.moveToFirst())
+            assertEquals("still here", it.getString(0))
+        }
+        assertEquals(1, raw.version)
+        raw.close()
+        context.deleteDatabase(name)
+    }
+
     @Test
     fun everyMigrationStepIsWritten() {
         // One migration per version step, always. A gap would mean Room had nothing to run.
@@ -212,6 +424,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 8
     }
 }

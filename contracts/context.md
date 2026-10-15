@@ -34,9 +34,9 @@ Each block starts with `## NAME` on its own line, in this fixed order. A block w
 | Block | Content | Trim |
 |---|---|---|
 | FLAGS | `tough_love: gentle|balanced|firm`, `listen_only: true|false`, `chat_type`, `off_the_record` | never |
-| PROFILE | up to 30 entries, one line each, with grade (confirmed/likely/guess) | lowest grade first |
+| PROFILE | up to 30 entries, one line each, with grade (confirmed/likely/guess) and, since Max plan Phase 3, the day the value was first said and the newest value it replaced, both written by code: `Work (confirmed, since 1 Apr 2026): Studying full time; before that, until 1 Apr 2026: Accounts assistant` (no day for entries from before schema 6) | lowest grade first |
 | PEOPLE | name, relation, one line | least recently mentioned first |
-| NOTES | active notes: id, kind, grade, times seen, first/last seen as a period, text, up to 2 evidence lines | guess before likely before confirmed; fewer times seen first |
+| NOTES | active notes: id, kind, grade, times seen, first/last seen as a period, text, up to 2 evidence lines | guess before likely before confirmed; within a grade, notes sharing no word with the message the prefix was built for go first, then fewer times seen first. A note left out can still come in RELEVANT_PAST when a message matches it |
 | FOCUS | when the chat belongs to a focus: id, name, why, rolling summary, current step, last 3 step results | never |
 | CHAPTERS | last 2 chapters | older first |
 | RECENT_SESSIONS | the last 5 conversation summaries, newest by their last message, each with its day, when it started and when its last message was, and how long ago that day was, all written by code: `Wed 14 Oct, 9:05 am to 9:40 am (today) "Title": summary` | oldest first |
@@ -63,7 +63,7 @@ Rebuilt for every request and placed in the final user message, before `## MESSA
 | CARD_RESULTS | what they did with each card under the coach's last reply: saved, not now, or no answer yet; or one line saying no button was shown, when that reply spoke of one and had no card; and one line for each card the parser threw away, with its reason, so the coach can correct it | never |
 | EARLIER | the running summary of the part of this conversation that is no longer in the history window | never |
 | LAST_CHAT | only when another conversation's last message was less than 6 hours ago (never an off-the-record one): one code-written line naming it, then its last 8 messages, oldest first, each cut to 500 characters, theirs stamped with the time they wrote it. See below | oldest message first |
-| RELEVANT_PAST | top matches (max 5) from keyword plus meaning search, each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
+| RELEVANT_PAST | up to 12 matches from his conversations and the records he keeps (see below), each with its day, time, how long ago (counted in code from day keys; hours and minutes too within the last 24 hours) and conversation title; omitted when nothing is strong | lowest score first, before LAST_CHAT |
 
 PLAN_STATE, OPEN_PROMISES and CARD_RESULTS are volatile on purpose: if they save a plan or a promise mid-conversation, the very next reply already sees it, so the coach never suggests a duplicate or talks about a plan that no longer exists. Budget for Part 3: 4,000 estimated tokens.
 
@@ -76,6 +76,16 @@ Coach: Deal. Alarm for 11, and if the power is back, one lecture. If not, rest.
 [9:31 am] They: ok good night
 ```
 Shown with every request while that conversation's last message is less than 6 hours old. "Ago" is counted in code with `TimeFacts.spell`. The coach's lines are context, never evidence about them (rule 4).
+
+### RELEVANT_PAST (Max plan Phase 2)
+What is searched (`SearchIndex`, kept in step with the raw rows and rebuildable): his messages, conversation summaries, his verified quotes, events, retired notes (labelled with the days they were first and last seen), every promise with its outcome ("Promise: Call Mom (done)"), and every other record he keeps: weekly letters, week and month reviews, chapters, goals (finished and set aside too), goal changes with their reason, targets (ended too) and the check-ins that carry a reason or a note. Each record reads as written by `SearchText` (`tools/retrieval.py`), starting with what it is ("Letter", "Goal", "Check-in") and with dates written out. Never: the coach's replies, an off-the-record conversation, a note he deleted, a deleted letter.
+
+How one request searches (the pure part is `tools/retrieval.py` and `tools/recall_time.py`, pinned by `contracts/retrieval_vectors.json` and `contracts/recall_time_vectors.json`; `Retrieval.kt` and `RecallTime.kt` pass the same vectors):
+1. **The period he names**, read in code (`RecallTime`): "in August", "last week", "yesterday", "on 12 October", "late September", "since March" become exact days. What falls in it is a list of its own: promises due in it, conversations held in it, letters, reviews and chapters about it, goal changes made in it, and every check-in of a period of at most a week. With the words promise, promised or committed, only promises come (unless none falls in the period), and the outcome he names (break, kept, moved, let go) comes first; with no period, every promise is the pool. The coach never works out a date: this only chooses what is looked up.
+2. **The new message**, by keyword (at least two shared words, or one rare word: found in at most 5% of the index) and by meaning (the on-phone model, gte-base-en-v1.5 since Max plan Phase 4: cosine at least 0.42, the line bge-small had at 0.62; each text once).
+3. **The conversation**: when this conversation has earlier messages (or a title), the same two searches again for the title, his last 3 messages and the new one, so "yeah, same again" finds what it points at.
+4. **Notes left out**: active notes the frozen NOTES block had no room for, by keyword against the new message (weight 1), labelled as not in the list above. Never a retired or deleted note this way (retired notes are in the index; deleted ones are nowhere).
+The lists are merged by weighted reciprocal rank fusion (period 2, new message 1, conversation 0.5); a near-duplicate of a chosen result is left out, at most one result comes from each conversation, and at most 12 are sent. The 4,000-token budget drops the weakest first. Measured with `tools/eval/memory_exam2.py`.
 
 ### NOW
 One sentence, written by code, that names the day the moment counts as (the day boundary: midnight by default, 1 to 6 am if they choose; the example uses 4 am):
@@ -93,6 +103,7 @@ P4 "Study 1 hour at 8am", due Monday 5 October, 8:00 am (in 1 day 7 hours).
 P2 "Call Mom", was due Saturday 6:00 pm, 6 hours 40 minutes ago, no answer yet.
 P3 "Study 20 minutes at 5pm", was due Friday 5:00 pm, 1 day 7 hours ago: not done, reason: tired.
 ```
+The block ends with one line counted by code when at least 3 promises due in the last 90 days were answered: `Promises due in the last 90 days and answered: 7; done 1, not done 4, moved 1, let go 1. Not done, reason: tired 3.` (a reason only with at least 3 behind it).
 Outcomes are `done`, `not done` (with `, reason: X` when they picked a chip), `moved to a new time` (the new time is its own open line) and `let go`. Older promises are in the search index with their outcome, so RELEVANT_PAST can bring one back.
 
 ## Card step (every reply's cards, in JSON mode)
@@ -109,16 +120,30 @@ Backlog B1 "Chemistry lectures": total 40, done 0, remaining 40, scheduled days 
 Target T3 "Chemistry lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days.
 Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
 Re-plan flag: yes (below pace in two reviews in a row).        <- only when true
-  Not enough data yet: fewer than 7 answered days in the last 14 days.   <- replaces the pace and status lines when true
+  Not enough data yet: fewer than 7 answered days in the last 14 days.   <- replaces the pace and status lines when true (the Best fortnight line still follows it when his history has one)
+Backlog B2 "Essays": total 25, done 21, remaining 4, no scheduled days left before the deadline.   <- the deadline is today and answered, or no scheduled day falls before it ("the deadline has passed." only after it)
   Plan steps for B1 "CAF lectures": 2 per day, daily, 14 Oct to 20 Oct; 3 per day, daily, 21 Oct to 27 Oct; 4 per day, daily, from 28 Oct. At these steps it finishes on 2 Jan (Saturday), 30 days before the deadline.   <- after a backlog's lines when its linked targets have start days
 ```
 Display rounding never flatters the plan: required pace is rounded up, "reaches" is rounded down, and the Status line is decided from the same numbers that are shown. The coach copies ids, numbers, the status and review dates exactly. It never calculates. A plan card is only accepted when Review options were offered.
 
 How the app assembles it (`core/PlanBlocks.kt`, tested against the sample above in `PlanBlocksTest`):
 - Ids are the database ids: G2 is goal 2, T3 target 3, B1 backlog 1. Each goal is followed by its backlogs, then its targets; backlogs and targets without a goal come last. With nothing tracked yet the block says `No goals, targets or backlogs yet.` and still ends with the review options.
-- A backlog's done = `start_done` + the amounts entered on its linked targets from the day the backlog was made (earlier work is already in `start_done`, so it is never counted twice). Its pace and days left use the first linked target's schedule and the whole history of its linked targets, added up per day.
-- Pace windows start no earlier than the first start day of any target ever linked to the backlog (ended ramp steps included), so days before a plan existed are never unanswered days, and a plan that has not started has no answer rate. The pace reads the answers of every linked target, ended steps included.
+- A backlog's facts come from `backlog_facts` in `tools/planner.py` (Max plan Phase 6; vectors in `contracts/planner_vectors.json`). Done = `start_done` + the amounts entered on its linked targets from the day the backlog was made (earlier work is already in `start_done`, so it is never counted twice). Its pace and days left use `backlog_schedule`: the days of every live linked target (one schedule as written; several with fixed days, the days of any of them; any Nx/week among them, a count of all their sessions, at most 7 a week), with the whole history of its linked targets added up per day (`merge_by_day`). Days left never start before the first live linked target does.
+- Pace windows start no earlier than the first start day of any target ever linked to the backlog (ended ramp steps included), so days before a plan existed are never unanswered days, and a plan that has not started has no answer rate. A backlog nothing was ever linked to has no window either (`Answer rate not tracked.`). The pace reads the answers of every linked target, ended steps included.
 - The plan steps line comes from `plan_finish` and `plan_line` in `tools/planner.py`: the backlog's live linked targets in start order, each adding its target on its scheduled days from its start to its end, counted from today (tomorrow when today is answered), rest days skipped. It says where the steps finish it and how many days before the deadline, or how many they reach by the deadline and how short that is. An Nx/week step cannot be dated, and the line says so.
+- Since Max plan Phase 6 (schema 8) every target keeps its values from each day a change took effect (`target_version`), and a backlog with plan steps gets one more line after the plan steps line, from `plan_progress` and `plan_progress_line` in `tools/planner.py`:
+  ```
+    So far on the plan for B1 "CAF lectures" (14 Oct to 22 Oct): the steps asked for 20, done 18, behind by 2.
+  ```
+  From the first step's start to yesterday (today once answered): what every target ever linked to it asked for on each day under the values in force that day (active, within its dates, scheduled, not a planned rest day), against every amount entered on those days. `ahead by`, `behind by` or `exactly on it`. Left out before a scheduled day has passed, and when a step is Nx/week (it has no fixed days). A target from before schema 8 is read as its current values from its start day.
+- Since Max plan Phase 6 step 3, just before the review options, the time the live targets of every goal take on each of the next 7 days, against his hours (`day_load` and `load_lines` in `tools/planner.py`; Kotlin `PlanLoad`):
+  ```
+  Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): Wed 14 Oct 165 of 120 min, 45 over; Thu 15 Oct 120 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 150 of 240 min; Sun 18 Oct planned rest day; Mon 19 Oct 195 of 120 min, 75 over; Tue 20 Oct 150 of 120 min, 30 over.
+  Not in these minutes (no time estimate): T4 "Reading".
+  T6 "Run" is 3x/week, not on fixed days: 90 min a week, not in the days above.
+  Next 7 days in all: 915 of 780 min available, Nx/week targets included.
+  ```
+  A session's minutes are the target itself when its unit is minutes or hours (min, mins, minute, minutes, h, hr, hrs, hour, hours), else his own estimate set in Plan (`target.minutes`), else not known (listed as having no time estimate, never guessed). His hours are seven numbers of minutes, Monday to Sunday, that he sets in Plan (settings key `plan_hours`); with them set, the Availability line of every backlog says them ("Mon to Thu 120 min, Fri 60 min, Sat 240 min, Sun none") instead of the profile entry. Without them the days show minutes only (`his hours are not set`). Nothing at all is written while no target has a time and his hours are not set.
 - Review options use the days on which at least one active day-based target is scheduled (every day when there are none), minus planned rest days.
 
 ## CHECKIN_FACTS line formats (counted in code, `core/PlanBlocks.kt`)
@@ -128,7 +153,23 @@ T3 "Chemistry lectures", last 14 days: 10 answered of 12 scheduled, done on 6.
 T3 "Chemistry lectures", last 14 days: tired on 3 of 4 days marked Not or Part.
 T3 "Chemistry lectures", last 14 days: marked Not on 3 Sundays.
 ```
-The today line lists only targets scheduled today (`not answered yet`, `done (target)`, `marked Not, reason: tired`, `marked Part (minimum)`, `rest`), or says `Today (Friday) is a planned rest day.` A 14-day line is written only with at least 3 answers behind it (otherwise `too few answers to count` when 3 or more days were scheduled); reason and weekday lines only with at least 3 items behind the number, and a reason is never counted above the days marked Not or Part. The time of day is not recorded, so there are no time-band lines. Reflection may copy these lines word for word as count evidence.
+Since Max plan Phase 2 two more kinds of line, under the same three-item rule:
+```
+T3 "Chemistry lectures", last 90 days: family on 5 of 9 days marked Not or Part.     <- only when 90 days hold more short days than 14
+T3 "Chemistry lectures", last 90 days: marked Not on 5 Tuesdays.
+T3 "Chemistry lectures": tired on 3 of 4 days marked Not or Part in the last 14 days, on 0 of 3 in the 14 days before.   <- the 14 before need 3 short days
+```
+The today line lists only targets scheduled today (`not answered yet`, `done (target)`, `marked Not, reason: tired`, `marked Part (minimum)`, `rest`), or says `Today (Friday) is a planned rest day.` A 14-day line is written only with at least 3 answers behind it (otherwise `too few answers to count` when 3 or more days were scheduled); reason and weekday lines only with at least 3 items behind the number, and a reason is never counted above the days marked Not or Part. Since Max plan Phase 3 a check-in records his local time and day of answering (schema 6), and one more kind of line counts it, over the last 90 days:
+```
+T3 "Chemistry lectures", last 90 days: answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them.
+```
+Since Max plan Phase 6 one more kind of line, from `change_compare` and `change_line` in `tools/planner.py`, for his latest change to a target's number, minimum or schedule in the last 90 days (a pause or resume is not a change), when both sides hold at least 3 answered days:
+```
+T3 "Lectures": changed on 12 Oct (target 1 → 2). In the 14 days before: done on 14 of 14 answered days, 1.0 per answered day. Since: done on 5 of 6, 1.7 per answered day.
+```
+The days before are read under the old schedule and never before the target started; the days since under the new one, up to yesterday.
+
+The bands are in the morning (4:00 to 12:00), in the afternoon (12:00 to 17:00), in the evening (17:00 to 22:00) and late at night (22:00 to 4:00). Only answers given on the day itself count (one given the next day says nothing about the day's time; answers from before schema 6 have no time). A band's line needs at least 3 days marked Not or Part in it, and another band must hold at least 3 answers too. Reflection may copy these lines word for word as count evidence.
 
 ## Dates on plan, backlog and target_change cards
 Read in code by `PlanDates` (`tools/plan_dates.py`, `contracts/plan_date_vectors.json`): today, tomorrow, a weekday, `20 Nov`, `Nov 20`, `20 Nov 2026`, `2026-11-20`, counted from their day key. Anything else, a date in the past, an end before its start, or a review date that is not 1 to 28 days ahead, means the card saves nothing. The card shows every date it read before they tap. A ramp step (`weeks`: a whole number, 1 to 52, never with `end`) ends `7 × weeks − 1` days after its start, and the next target with no `start` begins the day after it; a target that follows no step starts today as before. On saving, the first step updates an existing target of that name and later steps are new targets linked to the same backlog, whose pace then reads every step's answers from the first step's start.
@@ -136,5 +177,5 @@ Read in code by `PlanDates` (`tools/plan_dates.py`, `contracts/plan_date_vectors
 ## Rules that keep this safe
 - Anything originating from them or from the model (messages, notes, quotes, summaries, letters, pasted text) is escaped before it is sent: `[[` and `]]` become `[ [` and `] ]` (repeated until none remain), and a line starting with `## ` (after any spaces) is indented by two spaces. A note or a pasted email can never smuggle in a block header, a fake NOW, or a card.
 - Block text is data, not instructions. The persona says so (Grounding).
-- Token counts are estimated with `estimate_tokens` (3 characters per token), which is deliberately pessimistic, so a real tokenizer never finds the request over a limit.
+- Token counts are estimated with `estimate_tokens`: English letters, spaces and signs at 3 characters a token, every digit 1, every other character (an emoji, an accented letter) 2. Measured against DeepSeek's own tokenizer (Max plan Phase 2): plain English comes out about 1.4 times its real count, and numbers, dates and emoji are no longer under-counted (at 3 characters a token they were, by up to 40%). No simple rule is an upper bound for every text (a list of unusual names can still come out under), so the budgets stay far below the provider's context window.
 - The request also sets the provider's maximum output high (at least 16,000 tokens, since thinking counts against it). There is no reply length cap in the app.

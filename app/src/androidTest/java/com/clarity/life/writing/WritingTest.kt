@@ -51,7 +51,7 @@ class WritingTest {
         chat = ChatRepository(
             db = db, settings = settings, prompts = prompts, mainClient = OpenAiCompatibleClient(http),
             anthropicClient = AnthropicClient(http),
-            search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.Embedder(context)),
+            search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared),
             planner = planner,
         )
     }

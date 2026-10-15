@@ -36,6 +36,13 @@ class SettingsRepository @Inject constructor(
         const val HIDE_IN_RECENTS_ON = "hide_in_recents_on"
         const val LAST_BACKUP_AT = "last_backup_at"
         const val LAST_BACKUP_LINE = "last_backup_line"
+        const val BACKUP_EVERY_DAYS = "backup_every_days"
+        const val BACKUP_KEEP = "backup_keep"
+        /** The file of a backup being written, until it is verified: removed if the app dies half way. */
+        const val BACKUP_WRITING = "backup_writing"
+        const val MAINTENANCE_AT = "maintenance_at"
+        const val MAINTENANCE_LINE = "maintenance_line"
+        const val MAINTENANCE_DB_OK = "maintenance_db_ok"
         const val MAX_OUTPUT_TOKENS = "max_output_tokens"
         const val DAY_BOUNDARY_HOUR = "day_boundary_hour"
         const val TIME_ZONE = "time_zone"
@@ -44,6 +51,9 @@ class SettingsRepository @Inject constructor(
         const val SUNDAY_ALERT_ON = "sunday_alert_on"
         const val TOUGH_LOVE = "tough_love"
         const val LISTEN_ONLY = "listen_only"
+
+        /** Max plan Phase 6: his minutes for planning, Monday to Sunday ([com.clarity.life.core.PlanLoad.parseHours]). */
+        const val PLAN_HOURS = "plan_hours"
     }
 
     suspend fun get(key: String, fallback: String): String = dao.get(key) ?: fallback
@@ -67,14 +77,22 @@ class SettingsRepository @Inject constructor(
 
     suspend fun timeZone(): String = get(Keys.TIME_ZONE, java.util.TimeZone.getDefault().id)
 
+    /** His minutes for planning per weekday, Monday first, as he set them in Plan; null when not set. */
+    suspend fun planHours(): List<Double>? = com.clarity.life.core.PlanLoad.parseHours(dao.get(Keys.PLAN_HOURS))
+
+    /** Set by his tap in Plan only; null clears them (not set). */
+    suspend fun setPlanHours(hours: List<Double>?) =
+        set(Keys.PLAN_HOURS, hours?.let { com.clarity.life.core.PlanLoad.storeHours(it) } ?: "")
+
+    fun watchPlanHours(): kotlinx.coroutines.flow.Flow<List<Double>?> = dao.watchAll()
+        .map { rows -> com.clarity.life.core.PlanLoad.parseHours(rows.firstOrNull { it.key == Keys.PLAN_HOURS }?.value) }
+        .distinctUntilChanged()
+
     /**
      * His time zone and day boundary, live. A screen that read them once kept the old day after he changed
      * "when your day ends" in Settings, while the coach (which reads them on every message) had the new one.
      */
-    fun watchDay(): kotlinx.coroutines.flow.Flow<Day> =
-        dao.watchAll()
-            .map { rows -> day(rows.associate { it.key to it.value }) }
-            .distinctUntilChanged()
+    fun watchDay(): kotlinx.coroutines.flow.Flow<Day> = watchDay(dao.watchAll(), phoneZone)
 
     data class Day(val timeZone: String, val boundaryHour: Int)
 
@@ -130,9 +148,28 @@ class SettingsRepository @Inject constructor(
     fun setKey(provider: String, value: String?) = secrets.setApiKey(provider, value?.trim())
 
     companion object {
+        /**
+         * The phone's time zone as the screens last saw it. It is not a settings row, so a change of zone (a
+         * flight) never reached the screens while the coach, which reads it fresh, had the new one (bug scan
+         * 14 Oct 2026, full scan, finding 3). [refreshPhoneZone] runs each time the app comes to the front.
+         */
+        private val phoneZone = kotlinx.coroutines.flow.MutableStateFlow(java.util.TimeZone.getDefault().id)
+
+        fun refreshPhoneZone() {
+            phoneZone.value = java.util.TimeZone.getDefault().id
+        }
+
+        /** The live day from the stored rows and the phone's zone: a new value when either changes. */
+        fun watchDay(
+            rows: kotlinx.coroutines.flow.Flow<List<SettingRow>>,
+            zone: kotlinx.coroutines.flow.Flow<String>,
+        ): kotlinx.coroutines.flow.Flow<Day> =
+            kotlinx.coroutines.flow.combine(rows, zone) { r, z -> day(r.associate { it.key to it.value }, z) }
+                .distinctUntilChanged()
+
         /** The same reading as [timeZone] and [dayBoundaryHour], from the stored rows. */
-        fun day(values: Map<String, String>): Day = Day(
-            timeZone = values[Keys.TIME_ZONE] ?: java.util.TimeZone.getDefault().id,
+        fun day(values: Map<String, String>, phoneZone: String = java.util.TimeZone.getDefault().id): Day = Day(
+            timeZone = values[Keys.TIME_ZONE] ?: phoneZone,
             boundaryHour = values[Keys.DAY_BOUNDARY_HOUR]?.toIntOrNull() ?: DefaultSettings.DAY_BOUNDARY_HOUR,
         )
 

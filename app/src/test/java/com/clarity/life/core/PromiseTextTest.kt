@@ -83,4 +83,21 @@ class PromiseTextTest {
         assertEquals("tired", PromiseText.REASONS.first())
         assertEquals("other", PromiseText.REASONS.last())
     }
+
+    @Test
+    fun howPromisesUsuallyGoIsCountedWithThreeBehindEachReason() {
+        val now = java.time.Instant.parse("2026-10-14T05:00:00Z")
+        fun p(id: Long, daysAgo: Long, status: String, reason: String? = null) =
+            PromiseText.Promise(id, "p$id", now.minus(java.time.Duration.ofDays(daysAgo)), status, reason)
+        val rows = listOf(
+            p(1, 2, "kept"), p(2, 5, "not_done", "tired"), p(3, 9, "not_done", "tired"), p(4, 20, "not_done", " tired "),
+            p(5, 30, "not_done", "forgot"), p(6, 40, "moved"), p(7, 60, "let_go"), p(8, 95, "not_done", "tired"),
+            p(9, 1, "open"),
+        )
+        org.junit.Assert.assertEquals(
+            "Promises due in the last 90 days and answered: 7; done 1, not done 4, moved 1, let go 1. Not done, reason: tired 3.",
+            PromiseText.tally(rows, now),
+        )
+        org.junit.Assert.assertNull("fewer than 3 answered say nothing", PromiseText.tally(rows.take(2), now))
+    }
 }

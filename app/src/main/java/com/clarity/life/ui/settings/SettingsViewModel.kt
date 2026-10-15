@@ -57,6 +57,9 @@ class SettingsViewModel @Inject constructor(
         val hasPassphrase: Boolean = false,
         val backupLine: String? = null,
         val backingUp: Boolean = false,
+        /** Automatic backups: every 1 or 7 days, keeping the newest 4, 8, 14 or 30 (Maintenance). */
+        val backupEveryDays: Int = DefaultSettings.BACKUP_EVERY_DAYS,
+        val backupKeep: Int = DefaultSettings.BACKUP_KEEP,
         /** A backup file he picked to restore, and the day it was made (read from its header). */
         val restoreUri: String? = null,
         val restoreMade: String? = null,
@@ -110,6 +113,14 @@ class SettingsViewModel @Inject constructor(
             backupFolder = folderName(settings.get(SettingsRepository.Keys.BACKUP_FOLDER, "")),
             hasPassphrase = backups.hasPassphrase(),
             backupLine = backupLine(),
+            backupEveryDays = com.clarity.life.core.Maintenance.everyDays(
+                settings.get(SettingsRepository.Keys.BACKUP_EVERY_DAYS, "").toIntOrNull(),
+                DefaultSettings.BACKUP_EVERY_DAYS,
+            ),
+            backupKeep = com.clarity.life.core.Maintenance.keep(
+                settings.get(SettingsRepository.Keys.BACKUP_KEEP, "").toIntOrNull(),
+                DefaultSettings.BACKUP_KEEP,
+            ),
             appLock = settings.getBool(SettingsRepository.Keys.APP_LOCK_ON, DefaultSettings.APP_LOCK_ON),
             hideInRecents = settings.getBool(SettingsRepository.Keys.HIDE_IN_RECENTS_ON, DefaultSettings.HIDE_IN_RECENTS_ON),
             canLock = com.clarity.life.security.AppLock.canLock(context),
@@ -164,6 +175,34 @@ class SettingsViewModel @Inject constructor(
         backups.setPassphrase(first.toCharArray())
         _state.value = _state.value.copy(hasPassphrase = true)
         return null
+    }
+
+    fun setBackupEvery(days: Int) {
+        require(days in com.clarity.life.core.Maintenance.BACKUP_EVERY_DAYS)
+        viewModelScope.launch {
+            settings.set(SettingsRepository.Keys.BACKUP_EVERY_DAYS, days.toString())
+            _state.value = _state.value.copy(backupEveryDays = days)
+        }
+    }
+
+    /** Takes effect at the next backup: only then are older files pruned, and only after it was verified. */
+    fun setBackupKeep(count: Int) {
+        require(count in com.clarity.life.core.Maintenance.BACKUP_KEEP)
+        viewModelScope.launch {
+            settings.set(SettingsRepository.Keys.BACKUP_KEEP, count.toString())
+            _state.value = _state.value.copy(backupKeep = count)
+        }
+    }
+
+    /**
+     * Test your passphrase: he types what he wrote on paper, and the app says whether it is the one his backups
+     * are sealed with. Nothing is shown or stored; a wrong answer only says it does not match.
+     */
+    fun testPassphrase(typed: String): String = when (backups.passphraseMatches(typed.toCharArray())) {
+        null -> "No passphrase is set yet."
+        true -> "That is your backup passphrase. Keep the paper safe."
+        false -> "That is not your backup passphrase. Check the paper, or set a new one with Change (new backups " +
+            "then use the new one; older backups still need the old one)."
     }
 
     fun backUpNow() = viewModelScope.launch {

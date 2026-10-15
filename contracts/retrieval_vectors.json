@@ -1,0 +1,1637 @@
+{
+ "about": "Shared cases for the pure part of retrieval (tools/retrieval.py, Retrieval.kt, SearchText.kt). Lists of [weight, keys] are fusion inputs.",
+ "cases": [
+  {
+   "name": "longest first, common words out",
+   "fn": "terms",
+   "args": {
+    "text": "I just can't do the chemistry lectures in the evening, you know?"
+   },
+   "expect": [
+    "chemistry",
+    "lectures",
+    "evening"
+   ]
+  },
+  {
+   "name": "three-letter words count unless common",
+   "fn": "terms",
+   "args": {
+    "text": "did the CAF lectures after my nap, you see"
+   },
+   "expect": [
+    "lectures",
+    "caf",
+    "nap"
+   ]
+  },
+  {
+   "name": "question words that say nothing are out",
+   "fn": "terms",
+   "args": {
+    "text": "What happened? Tell me what he told you"
+   },
+   "expect": []
+  },
+  {
+   "name": "at most eight words",
+   "fn": "terms",
+   "args": {
+    "text": "alpha bravo charlie delta echo foxtrot golf hotel india juliet"
+   },
+   "expect": [
+    "charlie",
+    "foxtrot",
+    "juliet",
+    "alpha",
+    "bravo",
+    "delta",
+    "hotel",
+    "india"
+   ]
+  },
+  {
+   "name": "digits alone are not searched",
+   "fn": "terms",
+   "args": {
+    "text": "2026 room 12 b2b"
+   },
+   "expect": [
+    "room",
+    "b2b"
+   ]
+  },
+  {
+   "name": "stem of lectures",
+   "fn": "stem",
+   "args": {
+    "word": "lectures"
+   },
+   "expect": "lectur"
+  },
+  {
+   "name": "stem of lecturing",
+   "fn": "stem",
+   "args": {
+    "word": "lecturing"
+   },
+   "expect": "lectur"
+  },
+  {
+   "name": "stem of studies",
+   "fn": "stem",
+   "args": {
+    "word": "studies"
+   },
+   "expect": "study"
+  },
+  {
+   "name": "stem of studied",
+   "fn": "stem",
+   "args": {
+    "word": "studied"
+   },
+   "expect": "study"
+  },
+  {
+   "name": "stem of napping",
+   "fn": "stem",
+   "args": {
+    "word": "napping"
+   },
+   "expect": "nap"
+  },
+  {
+   "name": "stem of class",
+   "fn": "stem",
+   "args": {
+    "word": "class"
+   },
+   "expect": "class"
+  },
+  {
+   "name": "stem of focus",
+   "fn": "stem",
+   "args": {
+    "word": "focus"
+   },
+   "expect": "focus"
+  },
+  {
+   "name": "stem of analysis",
+   "fn": "stem",
+   "args": {
+    "word": "analysis"
+   },
+   "expect": "analysis"
+  },
+  {
+   "name": "stem of lecture",
+   "fn": "stem",
+   "args": {
+    "word": "lecture"
+   },
+   "expect": "lectur"
+  },
+  {
+   "name": "stem of running",
+   "fn": "stem",
+   "args": {
+    "word": "running"
+   },
+   "expect": "run"
+  },
+  {
+   "name": "stem of stopped",
+   "fn": "stem",
+   "args": {
+    "word": "stopped"
+   },
+   "expect": "stop"
+  },
+  {
+   "name": "stem of hoped",
+   "fn": "stem",
+   "args": {
+    "word": "hoped"
+   },
+   "expect": "hop"
+  },
+  {
+   "name": "prefix query on the stem",
+   "fn": "term_query",
+   "args": {
+    "term": "lectures"
+   },
+   "expect": "body:lectur* OR title:lectur*"
+  },
+  {
+   "name": "a y stem loses its y in the prefix",
+   "fn": "term_query",
+   "args": {
+    "term": "studied"
+   },
+   "expect": "body:stud* OR title:stud*"
+  },
+  {
+   "name": "forms of a word score once each",
+   "fn": "score",
+   "args": {
+    "text": "Two CAF lectures done before the nap",
+    "ts": [
+     "lecture",
+     "naps"
+    ]
+   },
+   "expect": 2
+  },
+  {
+   "name": "strong: two shared words",
+   "fn": "strong",
+   "args": {
+    "s": 2,
+    "n": 3
+   },
+   "expect": true
+  },
+  {
+   "name": "not strong: one of three",
+   "fn": "strong",
+   "args": {
+    "s": 1,
+    "n": 3
+   },
+   "expect": false
+  },
+  {
+   "name": "strong: the only word",
+   "fn": "strong",
+   "args": {
+    "s": 1,
+    "n": 1
+   },
+   "expect": true
+  },
+  {
+   "name": "not strong: nothing shared",
+   "fn": "strong",
+   "args": {
+    "s": 0,
+    "n": 1
+   },
+   "expect": false
+  },
+  {
+   "name": "rare: a word in at most 5% of the rows",
+   "fn": "rare_terms",
+   "args": {
+    "ts": [
+     "power",
+     "study",
+     "physio",
+     "zebra"
+    ],
+    "found": {
+     "power": 19,
+     "study": 90,
+     "physio": 3,
+     "zebra": 0
+    },
+    "total": 518
+   },
+   "expect": [
+    "physio",
+    "power"
+   ]
+  },
+  {
+   "name": "rare: a word that filled its read is never rare",
+   "fn": "rare_terms",
+   "args": {
+    "ts": [
+     "study"
+    ],
+    "found": {
+     "study": 100
+    },
+    "total": 100000
+   },
+   "expect": []
+  },
+  {
+   "name": "rare: an empty index has no rare words",
+   "fn": "rare_terms",
+   "args": {
+    "ts": [
+     "power"
+    ],
+    "found": {
+     "power": 1
+    },
+    "total": 0
+   },
+   "expect": []
+  },
+  {
+   "name": "choose: strong only, most shared first, same text once",
+   "fn": "choose",
+   "args": {
+    "candidates": [
+     {
+      "key": "a",
+      "text": "the evening was fine",
+      "at": 1
+     },
+     {
+      "key": "b",
+      "text": "chemistry lectures in the evening are dead for me",
+      "at": 2
+     },
+     {
+      "key": "c",
+      "text": "two chemistry lectures today",
+      "at": 3
+     },
+     {
+      "key": "d",
+      "text": "Two  chemistry lectures today",
+      "at": 4
+     },
+     {
+      "key": "e",
+      "text": "a power cut all evening",
+      "at": 5
+     }
+    ],
+    "ts": [
+     "chemistry",
+     "lectures",
+     "evening"
+    ]
+   },
+   "expect": [
+    "b",
+    "c"
+   ]
+  },
+  {
+   "name": "choose: a rare word alone counts, after the strong ones",
+   "fn": "choose",
+   "args": {
+    "candidates": [
+     {
+      "key": "a",
+      "text": "the evening was fine",
+      "at": 1
+     },
+     {
+      "key": "b",
+      "text": "chemistry lectures in the evening are dead for me",
+      "at": 2
+     },
+     {
+      "key": "c",
+      "text": "two chemistry lectures today",
+      "at": 3
+     },
+     {
+      "key": "d",
+      "text": "Two  chemistry lectures today",
+      "at": 4
+     },
+     {
+      "key": "e",
+      "text": "a power cut all evening",
+      "at": 5
+     },
+     {
+      "key": "f",
+      "text": "the power went off",
+      "at": 9
+     }
+    ],
+    "ts": [
+     "chemistry",
+     "lectures",
+     "power"
+    ],
+    "rare": [
+     "power"
+    ]
+   },
+   "expect": [
+    "c",
+    "b",
+    "f",
+    "e"
+   ]
+  },
+  {
+   "name": "choose: at most max_results",
+   "fn": "choose",
+   "args": {
+    "candidates": [
+     {
+      "key": "a",
+      "text": "the evening was fine",
+      "at": 1
+     },
+     {
+      "key": "b",
+      "text": "chemistry lectures in the evening are dead for me",
+      "at": 2
+     },
+     {
+      "key": "c",
+      "text": "two chemistry lectures today",
+      "at": 3
+     },
+     {
+      "key": "d",
+      "text": "Two  chemistry lectures today",
+      "at": 4
+     },
+     {
+      "key": "e",
+      "text": "a power cut all evening",
+      "at": 5
+     }
+    ],
+    "ts": [
+     "chemistry",
+     "lectures",
+     "evening"
+    ],
+    "max_results": 1
+   },
+   "expect": [
+    "b"
+   ]
+  },
+  {
+   "name": "distinct texts keep the first copy",
+   "fn": "distinct_texts",
+   "args": {
+    "keys": [
+     "x",
+     "y",
+     "z",
+     "w"
+    ],
+    "texts": {
+     "x": "Feeling low energy.",
+     "y": "feeling  low energy.",
+     "z": "Something else",
+     "w": "FEELING LOW ENERGY."
+    }
+   },
+   "expect": [
+    "x",
+    "z"
+   ]
+  },
+  {
+   "name": "conversation query: last three of his messages, then the new one",
+   "fn": "conversation_query",
+   "args": {
+    "new": "How much was it again?",
+    "earlier": [
+     "hi",
+     "I bought the UPS last month.",
+     "  ",
+     "It was a good buy",
+     "the router is fine"
+    ]
+   },
+   "expect": "I bought the UPS last month. It was a good buy the router is fine How much was it again?"
+  },
+  {
+   "name": "conversation query: the title comes first",
+   "fn": "conversation_query",
+   "args": {
+    "new": "same again?",
+    "earlier": [
+     "the power went"
+    ],
+    "title": "Power cuts"
+   },
+   "expect": "Power cuts the power went same again?"
+  },
+  {
+   "name": "conversation query: nothing before the new message",
+   "fn": "conversation_query",
+   "args": {
+    "new": "hello there",
+    "earlier": []
+   },
+   "expect": null
+  },
+  {
+   "name": "conversation query: only a title",
+   "fn": "conversation_query",
+   "args": {
+    "new": "what next",
+    "earlier": [],
+    "title": "Tax plan"
+   },
+   "expect": "Tax plan what next"
+  },
+  {
+   "name": "fuse: weights, then first appearance",
+   "fn": "fuse",
+   "args": {
+    "lists": [
+     [
+      2.0,
+      [
+       "d1",
+       "d2"
+      ]
+     ],
+     [
+      1.0,
+      [
+       "k1",
+       "d2",
+       "k2"
+      ]
+     ],
+     [
+      1.0,
+      [
+       "m1",
+       "k1"
+      ]
+     ],
+     [
+      0.5,
+      [
+       "c1",
+       "k2"
+      ]
+     ]
+    ]
+   },
+   "expect": [
+    "d2",
+    "d1",
+    "k1",
+    "k2",
+    "m1",
+    "c1"
+   ]
+  },
+  {
+   "name": "fuse: equal scores keep the order they first appeared in",
+   "fn": "fuse",
+   "args": {
+    "lists": [
+     [
+      1.0,
+      [
+       "a",
+       "b"
+      ]
+     ],
+     [
+      1.0,
+      [
+       "b",
+       "a"
+      ]
+     ]
+    ]
+   },
+   "expect": [
+    "a",
+    "b"
+   ]
+  },
+  {
+   "name": "fuse: nothing",
+   "fn": "fuse",
+   "args": {
+    "lists": []
+   },
+   "expect": []
+  },
+  {
+   "name": "near duplicate: same words reordered",
+   "fn": "near_duplicate",
+   "args": {
+    "a": "Two lectures done before noon",
+    "b": "before noon, two lectures done!"
+   },
+   "expect": true
+  },
+  {
+   "name": "near duplicate: different things",
+   "fn": "near_duplicate",
+   "args": {
+    "a": "Two lectures done before noon",
+    "b": "Walked twenty minutes after Asr"
+   },
+   "expect": false
+  },
+  {
+   "name": "near duplicate: no words, compared as text",
+   "fn": "near_duplicate",
+   "args": {
+    "a": "...",
+    "b": "..."
+   },
+   "expect": true
+  },
+  {
+   "name": "choose final: one per conversation, near duplicates out, unknown keys skipped",
+   "fn": "choose_final",
+   "args": {
+    "keys": [
+     "s1",
+     "m1",
+     "gone",
+     "l1",
+     "l2",
+     "m2",
+     "p1",
+     "r1"
+    ],
+    "docs": {
+     "s1": {
+      "text": "He bought a UPS for 9,500.",
+      "conversation": 27
+     },
+     "m1": {
+      "text": "Got the UPS for 9,500, router stays on.",
+      "conversation": 27
+     },
+     "m2": {
+      "text": "The power went again during my lecture.",
+      "conversation": 30
+     },
+     "l1": {
+      "text": "Letter \"A box\": The UPS changed the evenings.",
+      "conversation": null
+     },
+     "l2": {
+      "text": "Letter \"A box\": the UPS changed the evenings",
+      "conversation": null
+     },
+     "p1": {
+      "text": "Promise: Buy the router UPS (done)",
+      "conversation": null
+     },
+     "r1": {
+      "text": "Month review",
+      "conversation": null
+     }
+    }
+   },
+   "expect": [
+    "s1",
+    "l1",
+    "m2",
+    "p1",
+    "r1"
+   ]
+  },
+  {
+   "name": "choose final: at most max_results",
+   "fn": "choose_final",
+   "args": {
+    "keys": [
+     "s1",
+     "m2",
+     "l1",
+     "p1",
+     "r1"
+    ],
+    "docs": {
+     "s1": {
+      "text": "He bought a UPS for 9,500.",
+      "conversation": 27
+     },
+     "m1": {
+      "text": "Got the UPS for 9,500, router stays on.",
+      "conversation": 27
+     },
+     "m2": {
+      "text": "The power went again during my lecture.",
+      "conversation": 30
+     },
+     "l1": {
+      "text": "Letter \"A box\": The UPS changed the evenings.",
+      "conversation": null
+     },
+     "l2": {
+      "text": "Letter \"A box\": the UPS changed the evenings",
+      "conversation": null
+     },
+     "p1": {
+      "text": "Promise: Buy the router UPS (done)",
+      "conversation": null
+     },
+     "r1": {
+      "text": "Month review",
+      "conversation": null
+     }
+    },
+    "max_results": 3
+   },
+   "expect": [
+    "s1",
+    "m2",
+    "l1"
+   ]
+  },
+  {
+   "name": "dated: promises only when he asks about promises, the named outcome first, newest first",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "promise:5",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Submit the exam form (not done, reason: power cut)",
+      "day": "2026-08-21"
+     },
+     {
+      "key": "promise:4",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Email Sir Waqas (not done, reason: forgot)",
+      "day": "2026-08-03"
+     },
+     {
+      "key": "promise:9",
+      "kind": "promise",
+      "outcome": "let_go",
+      "text": "Promise: Call Hina back (let go)",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "promise:13",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Do the sales tax practice set (not done, reason: tired)",
+      "day": "2026-08-30"
+     },
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [],
+    "promises": true,
+    "outcome": "not_done"
+   },
+   "expect": [
+    "promise:13",
+    "promise:5",
+    "promise:4",
+    "promise:9"
+   ]
+  },
+  {
+   "name": "dated: no outcome named, promises newest first",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "promise:5",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Submit the exam form (not done, reason: power cut)",
+      "day": "2026-08-21"
+     },
+     {
+      "key": "promise:4",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Email Sir Waqas (not done, reason: forgot)",
+      "day": "2026-08-03"
+     },
+     {
+      "key": "promise:9",
+      "kind": "promise",
+      "outcome": "let_go",
+      "text": "Promise: Call Hina back (let go)",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "promise:13",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Do the sales tax practice set (not done, reason: tired)",
+      "day": "2026-08-30"
+     },
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [],
+    "promises": true,
+    "outcome": null
+   },
+   "expect": [
+    "promise:13",
+    "promise:5",
+    "promise:9",
+    "promise:4"
+   ]
+  },
+  {
+   "name": "dated: period alone, by kind then newest",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "promise:5",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Submit the exam form (not done, reason: power cut)",
+      "day": "2026-08-21"
+     },
+     {
+      "key": "promise:4",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Email Sir Waqas (not done, reason: forgot)",
+      "day": "2026-08-03"
+     },
+     {
+      "key": "promise:9",
+      "kind": "promise",
+      "outcome": "let_go",
+      "text": "Promise: Call Hina back (let go)",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "promise:13",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Do the sales tax practice set (not done, reason: tired)",
+      "day": "2026-08-30"
+     },
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [],
+    "promises": false,
+    "outcome": null
+   },
+   "expect": [
+    "promise:13",
+    "promise:5",
+    "promise:9",
+    "promise:4",
+    "review:3",
+    "letter:7",
+    "summary:21",
+    "checkin:40",
+    "chapter:2"
+   ]
+  },
+  {
+   "name": "dated: his other words choose first",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "promise:5",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Submit the exam form (not done, reason: power cut)",
+      "day": "2026-08-21"
+     },
+     {
+      "key": "promise:4",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Email Sir Waqas (not done, reason: forgot)",
+      "day": "2026-08-03"
+     },
+     {
+      "key": "promise:9",
+      "kind": "promise",
+      "outcome": "let_go",
+      "text": "Promise: Call Hina back (let go)",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "promise:13",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Do the sales tax practice set (not done, reason: tired)",
+      "day": "2026-08-30"
+     },
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [
+     "law",
+     "tax"
+    ],
+    "promises": false,
+    "outcome": null
+   },
+   "expect": [
+    "letter:7",
+    "promise:13",
+    "review:3",
+    "summary:21",
+    "checkin:40"
+   ]
+  },
+  {
+   "name": "dated: words nobody shares leave the period to choose",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "promise:5",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Submit the exam form (not done, reason: power cut)",
+      "day": "2026-08-21"
+     },
+     {
+      "key": "promise:4",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Email Sir Waqas (not done, reason: forgot)",
+      "day": "2026-08-03"
+     },
+     {
+      "key": "promise:9",
+      "kind": "promise",
+      "outcome": "let_go",
+      "text": "Promise: Call Hina back (let go)",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "promise:13",
+      "kind": "promise",
+      "outcome": "not_done",
+      "text": "Promise: Do the sales tax practice set (not done, reason: tired)",
+      "day": "2026-08-30"
+     },
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [
+     "zebra"
+    ],
+    "promises": false,
+    "outcome": null,
+    "max_results": 3
+   },
+   "expect": [
+    "promise:13",
+    "promise:5",
+    "promise:9"
+   ]
+  },
+  {
+   "name": "dated: promises asked about but none in the period, the rest come",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "summary:21",
+      "kind": "summary",
+      "text": "He dropped Law; two papers at once is too much.",
+      "day": "2026-08-12"
+     },
+     {
+      "key": "review:3",
+      "kind": "review",
+      "text": "Month review, August 2026: Tax lectures: 30 of 40.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "letter:7",
+      "kind": "letter",
+      "text": "Letter \"Two papers\": Law went, Tax stayed.",
+      "day": "2026-08-16"
+     },
+     {
+      "key": "chapter:2",
+      "kind": "chapter",
+      "text": "Chapter \"Settling in\": Omar left.",
+      "day": "2026-08-31"
+     },
+     {
+      "key": "checkin:40",
+      "kind": "checkin",
+      "text": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family",
+      "day": "2026-08-24"
+     }
+    ],
+    "rest_terms": [],
+    "promises": true,
+    "outcome": "kept",
+    "max_results": 2
+   },
+   "expect": [
+    "review:3",
+    "letter:7"
+   ]
+  },
+  {
+   "name": "dated: equal on everything, the key decides",
+   "fn": "dated",
+   "args": {
+    "items": [
+     {
+      "key": "summary:9",
+      "kind": "summary",
+      "text": "a",
+      "day": "2026-08-01"
+     },
+     {
+      "key": "summary:10",
+      "kind": "summary",
+      "text": "b",
+      "day": "2026-08-01"
+     }
+    ],
+    "rest_terms": [],
+    "promises": false,
+    "outcome": null
+   },
+   "expect": [
+    "summary:10",
+    "summary:9"
+   ]
+  },
+  {
+   "name": "day text 2026-10-05",
+   "fn": "day_text",
+   "args": {
+    "day": "2026-10-05"
+   },
+   "expect": "5 Oct 2026"
+  },
+  {
+   "name": "day text 2025-01-31",
+   "fn": "day_text",
+   "args": {
+    "day": "2025-01-31"
+   },
+   "expect": "31 Jan 2025"
+  },
+  {
+   "name": "amount text 2",
+   "fn": "amount_text",
+   "args": {
+    "x": 2
+   },
+   "expect": "2"
+  },
+  {
+   "name": "amount text 2.0",
+   "fn": "amount_text",
+   "args": {
+    "x": 2.0
+   },
+   "expect": "2"
+  },
+  {
+   "name": "amount text 1.5",
+   "fn": "amount_text",
+   "args": {
+    "x": 1.5
+   },
+   "expect": "1.5"
+  },
+  {
+   "name": "amount text 0.25",
+   "fn": "amount_text",
+   "args": {
+    "x": 0.25
+   },
+   "expect": "0.25"
+  },
+  {
+   "name": "amount text 0",
+   "fn": "amount_text",
+   "args": {
+    "x": 0
+   },
+   "expect": "0"
+  },
+  {
+   "name": "promise text, not done with a reason",
+   "fn": "promise_text",
+   "args": {
+    "text": "Submit the exam form",
+    "status": "not_done",
+    "reason": "power cut"
+   },
+   "expect": "Promise: Submit the exam form (not done, reason: power cut)"
+  },
+  {
+   "name": "promise text, not done without a reason",
+   "fn": "promise_text",
+   "args": {
+    "text": "Call Mom",
+    "status": "not_done",
+    "reason": "  "
+   },
+   "expect": "Promise: Call Mom (not done)"
+  },
+  {
+   "name": "promise text, kept",
+   "fn": "promise_text",
+   "args": {
+    "text": "Buy the UPS",
+    "status": "kept"
+   },
+   "expect": "Promise: Buy the UPS (done)"
+  },
+  {
+   "name": "promise text, moved",
+   "fn": "promise_text",
+   "args": {
+    "text": "Buy the UPS",
+    "status": "moved"
+   },
+   "expect": "Promise: Buy the UPS (moved to a new time)"
+  },
+  {
+   "name": "promise text, let go",
+   "fn": "promise_text",
+   "args": {
+    "text": "Call Hina",
+    "status": "let_go"
+   },
+   "expect": "Promise: Call Hina (let go)"
+  },
+  {
+   "name": "promise text, open",
+   "fn": "promise_text",
+   "args": {
+    "text": "Walk 20 minutes",
+    "status": "open"
+   },
+   "expect": "Promise: Walk 20 minutes (no answer yet)"
+  },
+  {
+   "name": "letter text",
+   "fn": "letter_text",
+   "args": {
+    "title": "Tuesdays",
+    "body": "Every Tuesday ended at zero."
+   },
+   "expect": "Letter \"Tuesdays\": Every Tuesday ended at zero."
+  },
+  {
+   "name": "review text, month",
+   "fn": "review_text",
+   "args": {
+    "kind": "month",
+    "first": "2026-09-01",
+    "last": "2026-09-30",
+    "facts": "Tax lectures: 38 of 52 planned.\nReasons: power cut 7.",
+    "narrative": "Power cuts were the main thing."
+   },
+   "expect": "Month review, September 2026: Tax lectures: 38 of 52 planned. Reasons: power cut 7. Power cuts were the main thing."
+  },
+  {
+   "name": "review text, week",
+   "fn": "review_text",
+   "args": {
+    "kind": "week",
+    "first": "2026-10-05",
+    "last": "2026-10-11",
+    "facts": "Tax lectures: 9 of 12.",
+    "narrative": ""
+   },
+   "expect": "Week review, 5 Oct 2026 to 11 Oct 2026: Tax lectures: 9 of 12."
+  },
+  {
+   "name": "review text, nothing in it",
+   "fn": "review_text",
+   "args": {
+    "kind": "week",
+    "first": "2026-10-05",
+    "last": "2026-10-11",
+    "facts": "",
+    "narrative": "  "
+   },
+   "expect": "Week review, 5 Oct 2026 to 11 Oct 2026"
+  },
+  {
+   "name": "chapter text",
+   "fn": "chapter_text",
+   "args": {
+    "title": "The Tax push",
+    "first": "2026-09-01",
+    "last": "2026-10-14",
+    "body": "Power cuts, a UPS."
+   },
+   "expect": "Chapter \"The Tax push\", 1 Sep 2026 to 14 Oct 2026: Power cuts, a UPS."
+  },
+  {
+   "name": "goal text, finished with a deadline",
+   "fn": "goal_text",
+   "args": {
+    "title": "Pass CAF 1",
+    "status": "done",
+    "deadline": "2026-06-14"
+   },
+   "expect": "Goal \"Pass CAF 1\" (finished, deadline 14 Jun 2026)"
+  },
+  {
+   "name": "goal text, active without a deadline",
+   "fn": "goal_text",
+   "args": {
+    "title": "Look after my knee",
+    "status": "active",
+    "deadline": null
+   },
+   "expect": "Goal \"Look after my knee\" (active)"
+  },
+  {
+   "name": "goal text, set aside",
+   "fn": "goal_text",
+   "args": {
+    "title": "Learn French",
+    "status": "archived",
+    "deadline": null
+   },
+   "expect": "Goal \"Learn French\" (set aside)"
+  },
+  {
+   "name": "revision text with a reason",
+   "fn": "revision_text",
+   "args": {
+    "goal_title": "Pass CAF 5 Tax",
+    "day": "2026-08-12",
+    "text": "Pass CAF 5 Tax (deadline 1 Dec)",
+    "reason": "two papers at once is too much"
+   },
+   "expect": "Goal \"Pass CAF 5 Tax\" changed on 12 Aug 2026: Pass CAF 5 Tax (deadline 1 Dec). Reason: two papers at once is too much"
+  },
+  {
+   "name": "revision text without a reason",
+   "fn": "revision_text",
+   "args": {
+    "goal_title": "Pass CAF 5 Tax",
+    "day": "2026-07-20",
+    "text": "Pass CAF 5 Tax and CAF 3 Law",
+    "reason": ""
+   },
+   "expect": "Goal \"Pass CAF 5 Tax\" changed on 20 Jul 2026: Pass CAF 5 Tax and CAF 3 Law"
+  },
+  {
+   "name": "target text, ended",
+   "fn": "target_text",
+   "args": {
+    "name": "Timed past paper",
+    "target": 1.0,
+    "minimum": 1.0,
+    "unit": "papers",
+    "schedule": "3x/week",
+    "start": "2026-04-01",
+    "end": "2026-06-13",
+    "status": "ended"
+   },
+   "expect": "Target \"Timed past paper\": 1 papers (minimum 1), 3x/week, from 1 Apr 2026 to 13 Jun 2026, ended"
+  },
+  {
+   "name": "target text, open, no unit",
+   "fn": "target_text",
+   "args": {
+    "name": "Walk",
+    "target": 20,
+    "minimum": 10,
+    "unit": "",
+    "schedule": "daily",
+    "start": "2026-03-25",
+    "end": null,
+    "status": "active"
+   },
+   "expect": "Target \"Walk\": 20 (minimum 10), daily, from 25 Mar 2026, active"
+  },
+  {
+   "name": "check-in text: Not with a reason",
+   "fn": "checkin_text",
+   "args": {
+    "target_name": "Tax lectures",
+    "day": "2026-08-24",
+    "level": "not",
+    "amount": 0,
+    "unit": "lectures",
+    "reason": "family",
+    "note": ""
+   },
+   "expect": "Check-in \"Tax lectures\", 24 Aug 2026: marked Not, reason: family"
+  },
+  {
+   "name": "check-in text: Part with a reason and a note",
+   "fn": "checkin_text",
+   "args": {
+    "target_name": "Tax lectures",
+    "day": "2026-09-14",
+    "level": "minimum",
+    "amount": 1,
+    "unit": "lectures",
+    "reason": "power cut",
+    "note": "router  off"
+   },
+   "expect": "Check-in \"Tax lectures\", 14 Sep 2026: marked Part (minimum), 1 lectures, reason: power cut, note: router off"
+  },
+  {
+   "name": "check-in text: done, no reason",
+   "fn": "checkin_text",
+   "args": {
+    "target_name": "Walk",
+    "day": "2026-10-12",
+    "level": "target",
+    "amount": 20,
+    "unit": "minutes",
+    "reason": null,
+    "note": null
+   },
+   "expect": "Check-in \"Walk\", 12 Oct 2026: done (target), 20 minutes"
+  },
+  {
+   "name": "check-in text: beyond",
+   "fn": "checkin_text",
+   "args": {
+    "target_name": "Tax lectures",
+    "day": "2026-10-12",
+    "level": "beyond",
+    "amount": 3,
+    "unit": "lectures",
+    "reason": null,
+    "note": ""
+   },
+   "expect": "Check-in \"Tax lectures\", 12 Oct 2026: done, beyond the target, 3 lectures"
+  },
+  {
+   "name": "check-in text: rest day",
+   "fn": "checkin_text",
+   "args": {
+    "target_name": "Tax lectures",
+    "day": "2026-09-05",
+    "level": "rest",
+    "amount": 0,
+    "unit": "lectures",
+    "reason": null,
+    "note": null
+   },
+   "expect": "Check-in \"Tax lectures\", 5 Sep 2026: rest day"
+  },
+  {
+   "name": "reflection queries: all of his new messages joined; each: the newest six of four words or more, newest first",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": [
+     "hi",
+     "Tuesdays are always bad because Khala's family visits.",
+     "  ",
+     "ok",
+     "I'm at lecture 31 of 60 and the exam is 1 December.",
+     "yes exactly",
+     "Power cut again today, router off, nothing done.",
+     "Sir Waqas said finish by end of November.",
+     "My mum asked about the fee again tonight.",
+     "I slept at 2 again",
+     "It is what it is I guess"
+    ]
+   },
+   "expect": {
+    "all": "hi Tuesdays are always bad because Khala's family visits. ok I'm at lecture 31 of 60 and the exam is 1 December. yes exactly Power cut again today, router off, nothing done. Sir Waqas said finish by end of November. My mum asked about the fee again tonight. I slept at 2 again It is what it is I guess",
+    "each": [
+     "It is what it is I guess",
+     "I slept at 2 again",
+     "My mum asked about the fee again tonight.",
+     "Sir Waqas said finish by end of November.",
+     "Power cut again today, router off, nothing done.",
+     "I'm at lecture 31 of 60 and the exam is 1 December."
+    ]
+   }
+  },
+  {
+   "name": "reflection queries: nothing long enough to search alone still searches everything by keyword",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": [
+     "hi",
+     "ok thanks",
+     "yes"
+    ]
+   },
+   "expect": {
+    "all": "hi ok thanks yes",
+    "each": []
+   }
+  },
+  {
+   "name": "reflection queries: no messages",
+   "fn": "reflection_queries",
+   "args": {
+    "his_new": []
+   },
+   "expect": {
+    "all": "",
+    "each": []
+   }
+  },
+  {
+   "name": "reflection choose: summaries and events only, not this conversation, not shown already, one per conversation",
+   "fn": "reflection_choose",
+   "args": {
+    "keys": [
+     "summary:29",
+     "message:410",
+     "event:2",
+     "summary:25",
+     "event:1",
+     "letter:3",
+     "summary:22",
+     "summary:12",
+     "event:7",
+     "summary:8"
+    ],
+    "docs": {
+     "summary:29": {
+      "kind": "summary",
+      "text": "At lecture 31 of 60.",
+      "conversation": 29
+     },
+     "message:410": {
+      "kind": "message",
+      "text": "Power cut again",
+      "conversation": 25
+     },
+     "event:2": {
+      "kind": "event",
+      "text": "evening power cut; did two lectures",
+      "conversation": 27
+     },
+     "summary:25": {
+      "kind": "summary",
+      "text": "Load shedding stops his lectures.",
+      "conversation": 25
+     },
+     "event:1": {
+      "kind": "event",
+      "text": "exam form deadline during a power cut",
+      "conversation": 22
+     },
+     "letter:3": {
+      "kind": "letter",
+      "text": "Letter: power cuts",
+      "conversation": null
+     },
+     "summary:22": {
+      "kind": "summary",
+      "text": "He missed the exam form deadline in a power cut.",
+      "conversation": 22
+     },
+     "summary:12": {
+      "kind": "summary",
+      "text": "Load shedding stops his lectures!",
+      "conversation": 12
+     },
+     "event:7": {
+      "kind": "event",
+      "text": "an old event",
+      "conversation": 3
+     },
+     "summary:8": {
+      "kind": "summary",
+      "text": "Three weeks into the gym.",
+      "conversation": 8
+     }
+    },
+    "conversation": 29,
+    "shown": [
+     "event:2"
+    ]
+   },
+   "expect": [
+    "summary:25",
+    "event:1",
+    "event:7",
+    "summary:8"
+   ]
+  },
+  {
+   "name": "reflection choose: at most the number asked for",
+   "fn": "reflection_choose",
+   "args": {
+    "keys": [
+     "summary:1",
+     "summary:2",
+     "summary:3"
+    ],
+    "docs": {
+     "summary:1": {
+      "kind": "summary",
+      "text": "one thing",
+      "conversation": 1
+     },
+     "summary:2": {
+      "kind": "summary",
+      "text": "another thing",
+      "conversation": 2
+     },
+     "summary:3": {
+      "kind": "summary",
+      "text": "a third thing",
+      "conversation": 3
+     }
+    },
+    "conversation": 9,
+    "max_results": 2
+   },
+   "expect": [
+    "summary:1",
+    "summary:2"
+   ]
+  }
+ ]
+}

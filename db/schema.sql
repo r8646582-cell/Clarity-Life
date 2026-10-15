@@ -1,4 +1,4 @@
--- Clarity: database schema, version 5 (the design reference; Room entities must match it exactly).
+-- Clarity: database schema, version 8 (the design reference; Room entities must match it exactly).
 -- Rules: no table is ever dropped by a migration; every change adds a migration plus a MigrationTest.
 -- Times: *_at columns are UTC epoch milliseconds. Day columns (day_key, *_day, deadline, period_*) are local dates 'YYYY-MM-DD'.
 -- Derived data (search_doc, embedding_row, review.facts_json) can be rebuilt from the raw rows.
@@ -38,6 +38,8 @@ CREATE TABLE conversation (
   history_start_id INTEGER NOT NULL DEFAULT 0  -- first message id in the history window; only moves forward
 );
 
+CREATE INDEX idx_conversation_started ON conversation(started_at);  -- schema 7: the drawer, newest first
+
 CREATE TABLE message (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   conversation_id INTEGER NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
@@ -50,6 +52,7 @@ CREATE TABLE message (
   tokens_out INTEGER
 );
 CREATE INDEX idx_message_conv ON message(conversation_id, id);
+CREATE INDEX idx_message_status ON message(status);           -- schema 7: the start-up sweep finds 'streaming' replies
 
 CREATE TABLE goal (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,9 +114,23 @@ CREATE TABLE target (
   start_day TEXT NOT NULL,
   end_day TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','ended')),
+  minutes REAL CHECK (minutes IS NULL OR minutes > 0),  -- schema 8: his estimate of one session's minutes at the target level, for a day's load
   CHECK (minimum <= target)
 );
 CREATE INDEX idx_target_status ON target(status);
+
+CREATE TABLE target_version (          -- schema 8: a target's values from a day on (what the plan asked for, and when it changed)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_id INTEGER NOT NULL REFERENCES target(id) ON DELETE CASCADE,
+  from_day TEXT NOT NULL,               -- his day key when the change took effect (the target's start when later)
+  minimum REAL NOT NULL CHECK (minimum >= 0),
+  target REAL NOT NULL CHECK (target > 0),
+  schedule TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active','paused','ended')),
+  created_at INTEGER NOT NULL,
+  CHECK (minimum <= target)
+);
+CREATE UNIQUE INDEX idx_target_version_day ON target_version(target_id, from_day);  -- one version per target per day; the newest change that day wins
 
 CREATE TABLE rest_day (                -- a planned day off for every target: neither done nor missed, not counted in days left
   day_key TEXT PRIMARY KEY NOT NULL,
@@ -130,6 +147,8 @@ CREATE TABLE checkin (
   reason TEXT,
   note TEXT,
   entered_at INTEGER NOT NULL,
+  entered_minute INTEGER,               -- schema 6: his local time when he answered, minutes after midnight (0..1439), stored at write time
+  entered_day TEXT,                     -- schema 6: his day key when he answered; NULL for answers from before schema 6
   UNIQUE (target_id, day_key)           -- a missing row is "no answer"; one answer per target per day
 );
 CREATE INDEX idx_checkin_day ON checkin(day_key);
@@ -148,6 +167,7 @@ CREATE TABLE promise (
   resolved_at INTEGER
 );
 CREATE INDEX idx_promise_status ON promise(status, due_at);
+CREATE INDEX idx_promise_due ON promise(due_at);              -- schema 7: promises due in a period, answered since a day
 
 CREATE TABLE card (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,8 +212,21 @@ CREATE TABLE profile_entry (
   key TEXT PRIMARY KEY NOT NULL,
   value TEXT NOT NULL,
   confirmed INTEGER NOT NULL DEFAULT 0 CHECK (confirmed IN (0,1)),
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  since_day TEXT                        -- schema 6: the day this value was first said (his day key); NULL = before schema 6, not known
 );
+
+CREATE TABLE profile_past (            -- schema 6: a profile value that was replaced by a newer one, so an old fact never poses as current
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  since_day TEXT,                       -- the day it was first said, when known
+  until_day TEXT NOT NULL,              -- the day it was replaced (the day the newer value was said)
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_profile_past_key ON profile_past(key, id);
+-- Written by code only when reflection replaces a value with a different one; a correction in his own words
+-- (the old value was wrong, not old) and his own edit write none. Deleting the entry deletes its past too.
 
 CREATE TABLE person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -277,6 +310,7 @@ CREATE TABLE quote (
   text TEXT NOT NULL,                   -- only inserted after QuoteCheck passes
   said_day TEXT NOT NULL
 );
+CREATE INDEX idx_quote_day ON quote(said_day, id);            -- schema 7: Your story and letters read quotes by day
 
 CREATE TABLE reflection_item (         -- what reflection learns that is neither a note nor a quote (schema version 2)
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -314,6 +348,7 @@ CREATE TABLE error_log (               -- never any message text, key or persona
   code TEXT NOT NULL,                  -- http_429, json_rejected, card_dropped, quote_rejected ...
   detail TEXT NOT NULL DEFAULT ''
 );
+CREATE INDEX idx_error_at ON error_log(at);                   -- schema 7: Health and the yearly clean-up
 
 CREATE TABLE usage_month (
   month TEXT PRIMARY KEY NOT NULL,     -- 2026-10
@@ -326,7 +361,7 @@ CREATE TABLE usage_month (
 CREATE TABLE job (                     -- idempotence: one row per unit of background work
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL UNIQUE,            -- type + period or conversation + hash of inputs
-  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','brief','gardening','backup','index')),
+  type TEXT NOT NULL CHECK (type IN ('reflection','review_week','review_month','letter','chapter','story','brief','gardening','backup','index','maintenance')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','succeeded','failed','skipped')),
   attempts INTEGER NOT NULL DEFAULT 0,
   last_error TEXT,
@@ -334,3 +369,4 @@ CREATE TABLE job (                     -- idempotence: one row per unit of backg
   started_at INTEGER,
   finished_at INTEGER
 );
+CREATE INDEX idx_job_status ON job(status);                  -- schema 7: waiting and running jobs

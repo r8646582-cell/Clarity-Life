@@ -332,7 +332,7 @@
     "mode_focus.md"
   ],
   "part1_budget": {
-    "_comment": "Part 1 = persona + examples + cards + the largest chat-type file, with placeholders filled. Estimated with tools/context.estimate_tokens (3 characters per token, pessimistic); real usage is about a quarter lower. Keeps the fixed prefix from growing unnoticed.",
+    "_comment": "Part 1 = persona + examples + cards + the largest chat-type file, with placeholders filled. Estimated with tools/context.estimate_tokens (letters at 3 characters a token, digits 1, other characters 2); real usage is about 30% lower. Keeps the fixed prefix from growing unnoticed.",
     "max_estimated_tokens": 23000
   }
 }

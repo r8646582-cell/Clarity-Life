@@ -14,6 +14,7 @@ import com.clarity.life.core.Vectors.strings
 import java.time.LocalDate
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -107,6 +108,62 @@ class PlannerTest {
         )
     }
 
+    private fun versions(o: JsonObject): List<TargetVersion> =
+        (o["versions"]?.jsonArray ?: kotlinx.serialization.json.JsonArray(emptyList())).map { it.jsonObject }.map {
+            TargetVersion(LocalDate.parse(it.str("from")), it.dbl("minimum"), it.dbl("target"), it.str("schedule"), it.str("status"))
+        }
+
+    private fun spans(args: JsonObject): List<TargetSpan> = args.getValue("targets").jsonArray.map { it.jsonObject }.map {
+        TargetSpan(LocalDate.parse(it.str("start")), it.strOrNull("end")?.let(LocalDate::parse), versions(it))
+    }
+
+    private fun versionJson(v: TargetVersion): JsonElement = json(
+        mapOf("from" to v.from.toString(), "minimum" to v.minimum, "target" to v.target, "schedule" to v.schedule, "status" to v.status),
+    )
+
+    private fun progressJson(p: PlanProgress): JsonElement = json(
+        mapOf("from" to p.from.toString(), "to" to p.to.toString(), "asked" to p.asked, "done" to p.done, "days" to p.days),
+    )
+
+    private fun progress(o: JsonObject) =
+        PlanProgress(LocalDate.parse(o.str("from")), LocalDate.parse(o.str("to")), o.dbl("asked"), o.dbl("done"), o.int("days"))
+
+    private fun sideJson(c: ChangeSide) = mapOf("answered" to c.answered, "done" to c.done, "amount" to c.amount)
+
+    private fun side(o: JsonObject) = ChangeSide(o.int("answered"), o.int("done"), o.dbl("amount"))
+
+    private fun changeJson(c: ChangeCompare): JsonElement = json(
+        mapOf(
+            "day" to c.day.toString(), "fields" to c.fields, "before_days" to c.beforeDays,
+            "before" to sideJson(c.before), "after" to sideJson(c.after),
+        ),
+    )
+
+    private fun change(o: JsonObject) = ChangeCompare(
+        LocalDate.parse(o.str("day")),
+        o.strings("fields"),
+        o.int("before_days"),
+        side(o.getValue("before").jsonObject),
+        side(o.getValue("after").jsonObject),
+    )
+
+    private fun trendJson(t: TrendWeek): JsonElement = json(
+        mapOf("first" to t.first.toString(), "last" to t.last.toString(), "answered" to t.answered, "done" to t.done, "rate" to t.rate),
+    )
+
+    private fun loadJson(l: PlanLoad.Load): JsonElement = json(
+        mapOf(
+            "days" to l.days.map {
+                mapOf("day" to it.day.toString(), "rest" to it.rest, "minutes" to it.minutes, "timed" to it.timed, "untimed" to it.untimed)
+            },
+            "weekly" to l.weekly.map { mapOf("id" to it.id, "per_week" to it.perWeek, "minutes" to it.minutes) },
+        ),
+    )
+
+    private fun checkinJson(c: CheckIn): JsonElement = jsonNoNulls(
+        listOf("day" to c.day.toString(), "level" to c.level, "amount" to c.amount, "reason" to c.reason),
+    )
+
     private fun steps(args: JsonObject): List<PlanStep> = args.getValue("steps").jsonArray.map { it.jsonObject }.map {
         PlanStep(it.dbl("target"), it.str("schedule"), LocalDate.parse(it.str("start")), it.strOrNull("end")?.let(LocalDate::parse))
     }
@@ -182,8 +239,145 @@ class PlannerTest {
         )
 
         "project" -> projectJson(
-            Planner.project(args.dbl("remaining"), args.int("left"), args.dblOrNull("typical"), args.dblOrNull("best")),
+            Planner.project(
+                args.dbl("remaining"), args.int("left"), args.dblOrNull("typical"), args.dblOrNull("best"),
+                deadlinePassed = args["deadline_passed"]?.jsonPrimitive?.booleanOrNull,
+            ),
         )
+
+        "backlog_schedule" -> json(Planner.backlogSchedule(args.strings("schedules")))
+
+        "merge_by_day" -> json(
+            PlanBlocks.mergeByDay(checkins(args.getValue("rows").jsonArray.map { it.jsonObject })).map(::checkinJson),
+        )
+
+        "backlog_facts" -> {
+            val today = LocalDate.parse(args.str("today"))
+            fun target(i: Int, t: JsonObject) = PlanBlocks.Target(
+                id = i + 1L, name = "T", goalId = null, backlogId = 1L, minimum = t.dblOrNull("minimum") ?: 0.0,
+                target = t.dbl("target"), schedule = t.str("schedule"),
+                checkins = checkins(t["checkins"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
+                start = t.strOrNull("start")?.let(LocalDate::parse),
+                end = t.strOrNull("end")?.let(LocalDate::parse),
+                versions = versions(t),
+            )
+            val linked = args.getValue("targets").jsonArray.map { it.jsonObject }.mapIndexed { i, t -> target(i, t) }
+            val off = (args["off_targets"]?.jsonArray ?: kotlinx.serialization.json.JsonArray(emptyList()))
+                .map { it.jsonObject }.mapIndexed { i, t -> target(100 + i, t) }
+            val b = PlanBlocks.Backlog(
+                id = 1L, name = "B", goalId = null, total = args.dbl("total"), startDone = args.dbl("start_done"),
+                deadline = LocalDate.parse(args.str("deadline")), createdDay = LocalDate.parse(args.str("created_day")),
+                doneElsewhere = checkins(args["done_elsewhere"]?.jsonArray?.map { it.jsonObject } ?: emptyList()),
+                firstStart = args.strOrNull("first_start")?.let(LocalDate::parse),
+                offTargets = off,
+            )
+            val f = PlanBlocks.backlogFacts(b, linked, today, restDates(args))
+            json(
+                mapOf(
+                    "done" to f.done, "schedule" to f.schedule, "days_left" to f.projection.daysLeft,
+                    "projection" to projectJson(f.projection), "window_answered" to f.windowAnswered,
+                    "answer_rate" to f.answerRate, "finish" to f.finish?.let(::planFinishJson),
+                    "progress" to f.progress?.let(::progressJson),
+                ),
+            )
+        }
+
+        "version_on" -> json(
+            Planner.versionOn(versions(args), LocalDate.parse(args.str("day")))?.let(::versionJson),
+        )
+
+        "planned_amount" -> json(
+            Planner.plannedAmount(spans(args), LocalDate.parse(args.str("first")), LocalDate.parse(args.str("last")), restDates(args))
+                ?.let { mapOf("asked" to it.asked, "days" to it.days) },
+        )
+
+        "plan_progress" -> json(
+            Planner.planProgress(
+                spans(args),
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                LocalDate.parse(args.str("today")),
+                args.boolOr("today_answered", false),
+                restDates(args),
+            )?.let(::progressJson),
+        )
+
+        "change_compare" -> json(
+            Planner.changeCompare(
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                versions(args),
+                LocalDate.parse(args.str("start")),
+                LocalDate.parse(args.str("today")),
+                restDates(args),
+            )?.let(::changeJson),
+        )
+
+        "session_minutes" -> json(PlanLoad.sessionMinutes(args.strOrNull("unit"), args.dbl("target"), args.dblOrNull("minutes")))
+
+        "parse_hours" -> json(PlanLoad.parseHours(args.strOrNull("text")))
+
+        "hours_text" -> json(PlanLoad.hoursText(args.getValue("hours").jsonArray.map { it.jsonPrimitive.content.toDouble() }))
+
+        "day_load" -> loadJson(
+            PlanLoad.dayLoad(
+                args.getValue("targets").jsonArray.map { it.jsonObject }.map { t ->
+                    PlanLoad.Item(
+                        id = t.int("id").toLong(), schedule = t.str("schedule"), target = t.dbl("target"),
+                        start = t.strOrNull("start")?.let(LocalDate::parse), end = t.strOrNull("end")?.let(LocalDate::parse),
+                        versions = versions(t), unit = t.strOrNull("unit") ?: "", minutes = t.dblOrNull("minutes"),
+                    )
+                },
+                LocalDate.parse(args.str("today")),
+                restDates(args),
+                args.intOr("days", PlanLoad.LOAD_DAYS),
+            ),
+        )
+
+        "load_lines" -> {
+            val l = args.getValue("load").jsonObject
+            val load = PlanLoad.Load(
+                l.getValue("days").jsonArray.map { it.jsonObject }.map { r ->
+                    PlanLoad.Day(
+                        LocalDate.parse(r.str("day")), r.bool("rest"), r.dbl("minutes"),
+                        r.getValue("timed").jsonArray.map { it.jsonPrimitive.content.toLong() },
+                        r.getValue("untimed").jsonArray.map { it.jsonPrimitive.content.toLong() },
+                    )
+                },
+                l.getValue("weekly").jsonArray.map { it.jsonObject }.map { w ->
+                    PlanLoad.Weekly(w.int("id").toLong(), w.int("per_week"), w.dblOrNull("minutes"))
+                },
+            )
+            val names = args.getValue("names").jsonArray.associate { n ->
+                val a = n.jsonArray
+                a[0].jsonPrimitive.content.toLong() to PlanLoad.Name(a[1].jsonPrimitive.content, a[2].jsonPrimitive.content)
+            }
+            val hours = args["hours"]?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.jsonArray?.map { it.jsonPrimitive.content.toDouble() }
+            json(PlanLoad.loadLines(load, names, hours))
+        }
+
+        "done_trend" -> json(
+            Planner.doneTrend(
+                checkins(args.getValue("checkins").jsonArray.map { it.jsonObject }),
+                args.str("schedule"),
+                LocalDate.parse(args.str("last")),
+                restDates(args),
+                args.intOr("weeks", Planner.TREND_WEEKS),
+                args.strOrNull("start")?.let(LocalDate::parse),
+            ).map(::trendJson),
+        )
+
+        "trend_line" -> json(
+            PlanStateText.trendLine(
+                args.getValue("trend").jsonArray.map { it.jsonObject }.map {
+                    TrendWeek(LocalDate.parse(it.str("first")), LocalDate.parse(it.str("last")), it.int("answered"), it.int("done"), it.dblOrNull("rate"))
+                },
+            ),
+        )
+
+        "plan_period_line" -> json(PlanStateText.planPeriodLine(args.str("bid"), args.str("name"), args.dbl("asked"), args.dbl("done")))
+
+        "plan_progress_line" -> json(PlanStateText.planProgressLine(args.str("bid"), args.str("name"), progress(args.getValue("p").jsonObject)))
+
+        "change_line" -> json(PlanStateText.changeLine(args.str("tid"), args.str("name"), change(args.getValue("c").jsonObject)))
 
         "replan_flag" -> json(
             Planner.replanFlag(

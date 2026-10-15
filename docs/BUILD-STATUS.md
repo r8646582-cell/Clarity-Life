@@ -120,7 +120,7 @@ Built and checked on CI (no phone or emulator on the build machine; CI runs the 
 | EARLIER: the conversation is reflected right after a reply that moved the history window | done |
 | FTS search (`SearchIndex`, `Retrieval`): their messages and summaries, RELEVANT_PAST, Rebuild search in Settings, a one-time build after the update | done |
 | Forget this conversation: asks first; removes index rows and notes learned only from it | done |
-| Meaning search: bge-small-en-v1.5 (int8 ONNX, 34 MB, bundled in the APK as the owner chose), ONNX Runtime 1.20.0, `WordPiece` tokenizer matching the reference on all 20 cases (`TokenizerTest`), vectors checked against `contracts/embedding_vectors.json` on first load and in `EmbedderTest` | done |
+| Meaning search: gte-base-en-v1.5 since Max plan Phase 4 (int8 ONNX, 147 MB in two parts; bge-small-en-v1.5, 34 MB, before), bundled in the APK as the owner chose, ONNX Runtime 1.20.0, `WordPiece` tokenizer matching the reference on all 20 cases (`TokenizerTest`), vectors checked against `contracts/embedding_vectors.json` on first load and in `EmbedderTest` | done |
 | Hybrid retrieval: keyword and meaning matches merged by reciprocal rank fusion; keyword only when the model is off; Re-index meaning in Settings | done |
 | The memory exam: ported to `tools/eval/memory_exam.py` (fixtures from the old repo, unchanged). 81.7% of the evidence within reach without promises, against the old app's 76.7%: no regression. Promise questions wait for stage C. | done |
 | Search also covers their verified quotes, the events reflection recorded and retired notes (the exam showed they were missing); keyword candidates are read newest first | done |

@@ -122,6 +122,54 @@ class PlanBlocksTest {
     }
 
     @Test
+    fun theLongerViewAndAGrowingReasonAreCountedToo() {
+        fun c(day: String, level: String, reason: String?) = CheckIn(LocalDate.parse(day), level, 0.0, reason)
+        val rows = listOf(
+            c("2026-08-04", "not", "family"), c("2026-08-11", "not", "family"),
+            c("2026-09-15", "not", "family"), c("2026-09-16", "minimum", "family"), c("2026-09-22", "not", "family"),
+            c("2026-10-03", "not", "tired"), c("2026-10-04", "not", "tired"), c("2026-10-05", "minimum", "tired"),
+            c("2026-10-06", "not", "no time"),
+            CheckIn(LocalDate.parse("2026-10-07"), "target", 1.0), CheckIn(LocalDate.parse("2026-10-08"), "target", 1.0),
+        )
+        assertEquals(
+            """
+            T3 "Chemistry lectures", last 14 days: 6 answered of 12 scheduled, done on 3.
+            T3 "Chemistry lectures", last 14 days: tired on 3 of 4 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: family on 5 of 9 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: tired on 3 of 9 days marked Not or Part.
+            T3 "Chemistry lectures", last 90 days: marked Not on 5 Tuesdays.
+            T3 "Chemistry lectures": tired on 3 of 4 days marked Not or Part in the last 14 days, on 0 of 3 in the 14 days before.
+            """.trimIndent(),
+            text(PlanBlocks.checkinFacts(syllabus(rows), today)),
+        )
+    }
+
+    /** Max plan Phase 3 step 4: the time he answered, only on the day itself, three items behind each number. */
+    @Test
+    fun theTimeOfDayHeAnsweredIsCountedWhenTwoBandsHoldAnswers() {
+        fun c(day: String, level: String, reason: String?, minute: Int?) =
+            CheckIn(LocalDate.parse(day), level, if (level == "target") 1.0 else 0.0, reason, minute)
+        val late = 23 * 60
+        val evening = 19 * 60
+        val rows = listOf(
+            c("2026-09-15", "not", "family", late), c("2026-10-03", "not", "tired", late),
+            c("2026-10-04", "not", "tired", 30), c("2026-10-06", "not", "no time", late),
+            c("2026-09-16", "minimum", "family", evening), c("2026-10-07", "target", null, evening),
+            c("2026-10-08", "target", null, evening),
+            // No time known (answered on a later day, or before schema 6): not counted in any band.
+            c("2026-09-22", "not", "family", null),
+        )
+        val facts = text(PlanBlocks.checkinFacts(syllabus(rows), today))
+        val line = "T3 \"Chemistry lectures\", last 90 days: answered late at night (22:00 to 4:00) on 4 days, marked Not or Part on 4 of them."
+        assertTrue(facts, facts.contains(line))
+        assertTrue("one Not or Part in the evening is too few for a line", !facts.contains("in the evening"))
+
+        // Every timed answer in one band says nothing about the time: no line.
+        val oneBand = rows.map { if (it.minute == evening) it.copy(minute = late) else it }
+        assertTrue(!text(PlanBlocks.checkinFacts(syllabus(oneBand), today)).contains("answered late at night"))
+    }
+
+    @Test
     fun aTargetThatHasNotStartedHasNoTodayLine() {
         val sat = LocalDate.parse("2026-10-10")
         val t = syllabus().let { it.copy(targets = it.targets.map { x -> x.copy(start = LocalDate.parse("2026-10-11")) }) }
@@ -187,5 +235,90 @@ class PlanBlocksTest {
         assertEquals(9, f.windowAnswered)
         assertEquals(100.0, f.answerRate!!, 0.0)
         assertEquals(20.0 / 9, f.projection.typicalPerDay!!, 1e-9)
+    }
+
+    @Test
+    fun theCoachSeesHowFarTheRampHasGot() {
+        // Step 1 (2 a day, 14 to 20 Oct) ended; one day was marked Not. Step 2 (3 a day) runs from 21 Oct.
+        val start = LocalDate.parse("2026-10-14")
+        val today = LocalDate.parse("2026-10-23")
+        val step1Rows = (0..6).map { CheckIn(start.plusDays(it.toLong()), if (it == 2) "not" else "target", if (it == 2) 0.0 else 2.0) }
+        val step2Rows = (7..8).map { CheckIn(start.plusDays(it.toLong()), "target", 3.0) }
+        val step1 = PlanBlocks.Target(1, "CAF lectures", 1, 1, 1.0, 2.0, "daily", step1Rows, start, LocalDate.parse("2026-10-20"))
+        val step2 = PlanBlocks.Target(2, "CAF lectures", 1, 1, 1.0, 3.0, "daily", step2Rows, LocalDate.parse("2026-10-21"))
+        val t = PlanBlocks.Tracker(
+            goals = listOf(PlanBlocks.Goal(1, "Clear the CAF course", LocalDate.parse("2027-02-01"))),
+            targets = listOf(step2),
+            backlogs = listOf(
+                PlanBlocks.Backlog(
+                    1, "CAF lectures", 1, 300.0, 0.0, LocalDate.parse("2027-02-01"), start, step1Rows, start,
+                    offTargets = listOf(step1),
+                ),
+            ),
+            restDays = emptySet(),
+        )
+        val block = text(PlanBlocks.planState(t, today))
+        assertTrue(
+            block,
+            block.contains("  So far on the plan for B1 \"CAF lectures\" (14 Oct to 22 Oct): the steps asked for 20, done 18, behind by 2."),
+        )
+    }
+
+    @Test
+    fun theCoachSeesHowAChangeWent() {
+        val today = LocalDate.parse("2026-10-18")
+        val before = (0..13).map { CheckIn(LocalDate.parse("2026-09-28").plusDays(it.toLong()), "target", 1.0) }
+        val after = (0..5).map { CheckIn(LocalDate.parse("2026-10-12").plusDays(it.toLong()), if (it == 5) "not" else "target", if (it == 5) 0.0 else 2.0) }
+        val x = PlanBlocks.Target(
+            3, "Lectures", null, null, 0.0, 2.0, "daily", before + after, LocalDate.parse("2026-09-28"),
+            versions = listOf(
+                TargetVersion(LocalDate.parse("2026-09-28"), 0.0, 1.0, "daily", "active"),
+                TargetVersion(LocalDate.parse("2026-10-12"), 0.0, 2.0, "daily", "active"),
+            ),
+        )
+        val facts = text(PlanBlocks.checkinFacts(PlanBlocks.Tracker(emptyList(), listOf(x), emptyList(), emptySet()), today))
+        assertTrue(
+            facts,
+            facts.contains(
+                "T3 \"Lectures\": changed on 12 Oct (target 1 \u2192 2). In the 14 days before: done on 14 of 14 answered days, " +
+                    "1.0 per answered day. Since: done on 5 of 6, 1.7 per answered day.",
+            ),
+        )
+        // With no history recorded (made before schema 8) there is no change to report.
+        val old = text(PlanBlocks.checkinFacts(PlanBlocks.Tracker(emptyList(), listOf(x.copy(versions = emptyList())), emptyList(), emptySet()), today))
+        assertTrue(old, !old.contains("changed on"))
+    }
+
+    @Test
+    fun theCoachReadsTheTimeOfEveryGoalAgainstHisHours() {
+        val today = LocalDate.parse("2026-10-14")
+        val gym = PlanBlocks.Target(5, "Gym", 1, null, 0.0, 45.0, "Mon,Wed,Fri", emptyList(), LocalDate.parse("2026-10-01"), unit = "min")
+        val lectures = PlanBlocks.Target(3, "Lectures", 2, 1, 1.0, 2.0, "Sat-Thu", emptyList(), LocalDate.parse("2026-10-01"), unit = "lectures", minutes = 90.0)
+        val reading = PlanBlocks.Target(4, "Reading", 1, null, 0.0, 20.0, "daily", emptyList(), LocalDate.parse("2026-10-01"), unit = "pages")
+        val hours = listOf(120.0, 120.0, 120.0, 120.0, 60.0, 240.0, 0.0)
+        val t = PlanBlocks.Tracker(
+            goals = listOf(PlanBlocks.Goal(1, "Get fit", null), PlanBlocks.Goal(2, "Clear the lectures", LocalDate.parse("2026-11-20"))),
+            targets = listOf(gym, lectures, reading),
+            backlogs = listOf(PlanBlocks.Backlog(1, "Lectures", 2, 40.0, 0.0, LocalDate.parse("2026-11-20"), today)),
+            restDays = setOf(LocalDate.parse("2026-10-18")),
+            hours = hours,
+        )
+        val block = text(PlanBlocks.planState(t, today))
+        assertTrue(
+            block,
+            block.contains(
+                "Time planned, next 7 days (minutes from his targets and his own time estimates; his hours from Plan): " +
+                    "Wed 14 Oct 135 of 120 min, 15 over; Thu 15 Oct 90 of 120 min; Fri 16 Oct 45 of 60 min; Sat 17 Oct 90 of 240 min; " +
+                    "Sun 18 Oct planned rest day; Mon 19 Oct 135 of 120 min, 15 over; Tue 20 Oct 90 of 120 min.",
+            ),
+        )
+        assertTrue(block, block.contains("Not in these minutes (no time estimate): T4 \"Reading\"."))
+        assertTrue(block, block.contains("Availability: Mon to Thu 120 min, Fri 60 min, Sat 240 min, Sun none."))
+        // The load comes just before the review options.
+        val lines = block.lines()
+        assertTrue(block, lines[lines.indexOfFirst { it.startsWith("Review options") } - 1].startsWith("Next 7 days in all: "))
+        // Without times and hours there is nothing to add up, so nothing is said.
+        val none = text(PlanBlocks.planState(t.copy(targets = listOf(reading), hours = null), today))
+        assertTrue(none, !none.contains("Time planned"))
     }
 }

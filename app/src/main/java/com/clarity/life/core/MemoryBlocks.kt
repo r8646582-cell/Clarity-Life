@@ -13,7 +13,19 @@ package com.clarity.life.core
  */
 object MemoryBlocks {
 
-    data class Profile(val key: String, val value: String, val confirmed: Boolean)
+    /**
+     * [since]: the day key this value was first said (schema 6), null when not known. [before] and [beforeUntil]:
+     * the value it replaced and the day it was replaced (profile_past, the newest one), so the coach never takes
+     * an old fact for a current one, nor misses that something changed (Max plan Phase 3).
+     */
+    data class Profile(
+        val key: String,
+        val value: String,
+        val confirmed: Boolean,
+        val since: String? = null,
+        val before: String? = null,
+        val beforeUntil: String? = null,
+    )
 
     data class Person(val name: String, val relation: String, val notes: String, val updatedAt: Long)
 
@@ -62,7 +74,13 @@ object MemoryBlocks {
         "PROFILE",
         entries.take(PROFILE_MAX).mapIndexed { i, e ->
             val grade = if (e.confirmed) "confirmed" else "guess"
-            BlockItem("${e.key} ($grade): ${e.value}", (if (e.confirmed) PROFILE_CONFIRMED_RANK else PROFILE_GUESS_RANK) + i + 1)
+            val since = e.since?.let { ", since ${SearchText.day(it)}" }.orEmpty()
+            val before = if (e.before != null && e.beforeUntil != null) {
+                "; before that, until ${SearchText.day(e.beforeUntil)}: ${e.before}"
+            } else {
+                ""
+            }
+            BlockItem("${e.key} ($grade$since): ${e.value}$before", (if (e.confirmed) PROFILE_CONFIRMED_RANK else PROFILE_GUESS_RANK) + i + 1)
         },
     )
 
@@ -78,7 +96,12 @@ object MemoryBlocks {
         )
     }
 
-    fun notes(notes: List<Note>): Block = Block(
+    /**
+     * NOTES. [relevant] are the notes that share a word with what the conversation is about (its first message,
+     * or the message that rebuilt the prefix; Max plan Phase 2): under a tight budget they are the last of their
+     * grade to go. Notes that do not fit can still reach the coach through RELEVANT_PAST ([idsIn]).
+     */
+    fun notes(notes: List<Note>, relevant: Set<Long> = emptySet()): Block = Block(
         "NOTES",
         notes.map { n ->
             val head = "note ${n.id}, ${n.kind}, ${n.confidence}, ${KnowText.seen(n.timesSeen, n.firstSeen, n.lastSeen)}: ${n.text}"
@@ -90,9 +113,39 @@ object MemoryBlocks {
                 "likely" -> LIKELY_RANK
                 else -> GUESS_RANK
             }
-            BlockItem((listOf(head) + lines).joinToString("\n"), base + (999 - n.timesSeen.coerceIn(1, 999)) + 1)
+            // Within a grade: relevant notes go last, then the ones seen most often.
+            val step = if (n.id in relevant) 1 else RELEVANT_STEP
+            BlockItem((listOf(head) + lines).joinToString("\n"), base + step + (SEEN_CAP - n.timesSeen.coerceIn(1, SEEN_CAP)))
         },
     )
+
+    private const val RELEVANT_STEP = 500
+    private const val SEEN_CAP = 499
+
+    /** The notes that share a searched word with [text] (one is enough: a note is short). */
+    fun relevantNotes(notes: List<Note>, text: String): Set<Long> {
+        val terms = Retrieval.terms(text)
+        if (terms.isEmpty()) return emptySet()
+        // The same as Retrieval.score(note, terms) > 0, with the words' stems made once, not once per note.
+        val wanted = terms.map { Retrieval.stem(it) }.toSet()
+        return notes.filter { n -> Retrieval.stems(n.text).any { it in wanted } }.map { it.id }.toSet()
+    }
+
+    private val NOTE_LINE = Regex("^note (\\d+), ")
+
+    /** The ids of the notes a stored system message sends in its NOTES block. */
+    fun idsIn(system: String): Set<Long> {
+        val out = HashSet<Long>()
+        var inNotes = false
+        for (line in system.lineSequence()) {
+            if (line.startsWith("## ")) {
+                inNotes = line.trim() == "## NOTES"
+                continue
+            }
+            if (inNotes) NOTE_LINE.find(line)?.let { out += it.groupValues[1].toLong() }
+        }
+        return out
+    }
 
     /** [sessions] newest first (by their last message); the oldest of the five is dropped first. */
     fun recentSessions(sessions: List<Session>): Block {

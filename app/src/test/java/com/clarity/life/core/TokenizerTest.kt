@@ -12,7 +12,7 @@ import org.junit.Test
 class TokenizerTest {
 
     private val tokenizer by lazy {
-        WordPiece(Vectors.readText("app/src/main/assets/models/bge-small-en-v1.5/vocab.txt").split("\n").map { it.trimEnd('\r') })
+        WordPiece(Vectors.readText("app/src/main/assets/models/gte-base-en-v1.5/vocab.txt").split("\n").map { it.trimEnd('\r') })
     }
 
     @Test

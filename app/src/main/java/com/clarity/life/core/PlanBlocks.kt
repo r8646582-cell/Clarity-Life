@@ -29,7 +29,20 @@ object PlanBlocks {
         val start: LocalDate? = null,
         /** Last day it is tracked (a ramp step), or null when it runs on. */
         val end: LocalDate? = null,
+        /** Schema 8: its values from a day on, oldest first; empty means none recorded (see [versionsOf]). */
+        val versions: List<TargetVersion> = emptyList(),
+        val unit: String = "",
+        /** Schema 8: his estimate of one session's minutes at the target level, or null. */
+        val minutes: Double? = null,
     )
+
+    /**
+     * A target's versions; one with none recorded (made before schema 8, or restored from an older backup) is
+     * read as its current values, active, from its start day (tools/planner.py target_versions).
+     */
+    fun versionsOf(t: Target): List<TargetVersion> = t.versions.ifEmpty {
+        listOf(TargetVersion(t.start ?: LocalDate.of(1, 1, 1), t.minimum, t.target, t.schedule, "active"))
+    }
 
     data class Backlog(
         val id: Long,
@@ -47,6 +60,8 @@ object PlanBlocks {
          * does not restart at every step. Null: worked out from the linked targets (no start known: no clipping).
          */
         val firstStart: LocalDate? = null,
+        /** Its paused and ended targets (ended ramp steps), for what the plan asked for so far. */
+        val offTargets: List<Target> = emptyList(),
     )
 
     /** Everything active in the tracker, as the database holds it today. */
@@ -57,7 +72,12 @@ object PlanBlocks {
         val restDays: Set<LocalDate>,
         val availability: String = "not set",
         val replanFlag: Boolean = false,
-    )
+        /** Max plan Phase 6: his minutes for planning per weekday, Monday first, set in Plan; null when not set. */
+        val hours: List<Double>? = null,
+    ) {
+        /** What the Availability line says: his hours from Plan when set, else his profile entry as written. */
+        val availabilityText: String get() = hours?.let { PlanLoad.hoursText(it) } ?: availability
+    }
 
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
@@ -95,9 +115,12 @@ object PlanBlocks {
     )
 
     /**
-     * A backlog's progress comes from the targets linked to it. With more than one, their answers are added up
-     * per day and the first target's schedule counts the days; with none, nothing is tracked yet.
-     * Done = start_done + the amounts entered from the backlog's creation day on; the pace uses all history.
+     * A backlog's progress comes from the targets linked to it (tools/planner.py backlog_facts; PlannerTest runs
+     * its vectors through here). Their answers are added up per day. Done = start_done + the amounts entered from
+     * the backlog's creation day on. Days left and the pace use [Planner.backlogSchedule] (the days of every live
+     * linked target, not only the first one's); days left never start before the first live target does. The
+     * pace reads every answer given toward it, ended ramp steps included, from the first start of any target ever
+     * linked to it. With nothing ever linked there is no pace window and no answer rate.
      */
     data class BacklogFacts(
         val done: Double,
@@ -108,19 +131,22 @@ object PlanBlocks {
         /** The plan's own steps toward it (its linked targets with a start, in order) and where they finish it. */
         val steps: List<PlanStep> = emptyList(),
         val finish: PlanFinish? = null,
+        /** How far the plan's steps have got, over every target ever linked to it (null without steps). */
+        val progress: PlanProgress? = null,
     )
 
     fun backlogFacts(b: Backlog, linked: List<Target>, today: LocalDate, rest: Set<LocalDate>): BacklogFacts {
-        val schedule = linked.firstOrNull()?.schedule ?: "daily"
-        // The pace reads every answer given toward it, ended ramp steps included, so it does not reset each step.
+        val schedule = Planner.backlogSchedule(linked.map { it.schedule })
         val merged = mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-        val done = b.startDone + mergeByDay(linked.flatMap { it.checkins } + b.doneElsewhere)
-            .filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
+        val done = b.startDone + merged.filter { !it.day.isBefore(b.createdDay) }.sumOf { it.amount }
         val remaining = b.total - done
         val todayAnswered = merged.any { it.day == today }
-        val left = Planner.daysLeft(schedule, today, b.deadline, todayAnswered, rest)
+        var countFrom = if (todayAnswered) today.plusDays(1) else today
+        val firstLive = linked.mapNotNull { it.start }.minOrNull()
+        if (firstLive != null && firstLive.isAfter(countFrom)) countFrom = firstLive
+        val left = Planner.scheduledCount(schedule, countFrom, b.deadline, rest)
         // Pace counts only from the day tracking began, so a new plan never shows days before it as unanswered.
-        val start = b.firstStart ?: linked.mapNotNull { it.start }.minOrNull()
+        val start = b.firstStart ?: firstLive ?: if (linked.isEmpty() && b.doneElsewhere.isEmpty()) today else null
         val typical = Planner.typicalPace(merged, schedule, today, rest, start)
         val best = Planner.bestPace(merged, schedule, today, rest, start)
         val steps = linked.filter { it.start != null }.sortedBy { it.start }
@@ -128,11 +154,19 @@ object PlanBlocks {
         return BacklogFacts(
             done = done,
             schedule = schedule,
-            projection = Planner.project(remaining, left, typical.pace, best),
+            projection = Planner.project(remaining, left, typical.pace, best, deadlinePassed = b.deadline.isBefore(today)),
             windowAnswered = typical.answered,
             answerRate = typical.answerRate,
             steps = steps,
             finish = if (steps.isEmpty()) null else Planner.planFinish(steps, remaining, today, b.deadline, todayAnswered, rest),
+            progress = if (steps.isEmpty()) {
+                null
+            } else {
+                Planner.planProgress(
+                    (linked + b.offTargets).filter { it.start != null }.map { TargetSpan(it.start!!, it.end, versionsOf(it)) },
+                    merged, today, todayAnswered, rest,
+                )
+            },
         )
     }
 
@@ -157,10 +191,12 @@ object PlanBlocks {
             val f = backlogFacts(b, linked, today, t.restDays)
             lines += PlanStateText.backlogLines(
                 "B${b.id}", clean(b.name), b.total, f.done, f.schedule, f.projection, f.windowAnswered,
-                f.answerRate, t.availability,
+                f.answerRate, t.availabilityText,
             )
             // Where the plan's own steps take it, counted here (a ramp is judged by its steps, not a flat pace).
             f.finish?.let { PlanStateText.planLine("B${b.id}", clean(b.name), f.steps, it) }?.let { lines += "  $it" }
+            // How far the steps have got so far (Max plan Phase 6): whether a ramp is holding, in numbers.
+            f.progress?.let { lines += "  " + PlanStateText.planProgressLine("B${b.id}", clean(b.name), it) }
         }
         fun targetLine(x: Target) {
             val w = Planner.typicalPace(x.checkins, x.schedule, today, t.restDays, x.start)
@@ -182,10 +218,25 @@ object PlanBlocks {
         t.backlogs.filter { it.goalId == null || it.goalId !in goalIds }.forEach { backlogLines(it) }
         t.targets.filter { it.goalId == null || it.goalId !in goalIds }.forEach { targetLine(it) }
         if (lines.isEmpty()) lines += "No goals, targets or backlogs yet."
+        lines += loadLines(t, today)
         lines += PlanStateText.reviewOptionsLine(reviewOptions(t, today))
         if (t.replanFlag) lines += "Re-plan flag: yes (below pace in two reviews in a row)."
         return Block("PLAN_STATE", lines.map { BlockItem(it, 0) })
     }
+
+    /**
+     * Max plan Phase 6: the time the live targets of every goal take on each of the next 7 days, against his hours
+     * ([PlanLoad]). Empty when no target has a session time and his hours are not set.
+     */
+    fun loadLines(t: Tracker, today: LocalDate): List<String> = PlanLoad.loadLines(
+        PlanLoad.dayLoad(
+            t.targets.map { PlanLoad.Item(it.id, it.schedule, it.target, it.start, it.end, it.versions, it.unit, it.minutes) },
+            today,
+            t.restDays,
+        ),
+        t.targets.associate { it.id to PlanLoad.Name("T${it.id} \"${clean(it.name)}\"", it.schedule) },
+        t.hours,
+    )
 
     /**
      * CHECKIN_FACTS: counted here, never by the model. Today's state per target, then per target over the
@@ -212,22 +263,97 @@ object PlanBlocks {
             } else if (w.scheduled != null && w.scheduled >= Planner.REASON_MIN_N) {
                 lines += "$head: ${w.answered} answered of ${w.scheduled} scheduled; too few answers to count."
             }
-            val scheduled = scheduledIn(x, first, last, t.restDays)
-            val rows = x.checkins.filter {
-                !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" &&
-                    (scheduled == null || it.day in scheduled)
+            val recent = answers(x, first, last, t.restDays)
+            windowLines(recent).forEach { lines += "$head: $it." }
+            // The longer view (Max plan Phase 2 step 6): the same counts over the last LONG_WINDOW days, when they
+            // hold more than the last 14 do, so a pattern months long is counted by code too.
+            val long = answers(x, today.minusDays(LONG_WINDOW.toLong()), last, t.restDays)
+            if (long.short.size > recent.short.size) {
+                windowLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
             }
-            val short = rows.filter { it.level in Planner.SHORT_LEVELS }
-            val reasons = short.mapNotNull { it.reason }.groupingBy { it }.eachCount()
-                .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
-                .take(3).map { it.key to it.value }
-            Planner.reasonLines(reasons, short.size).forEach { lines += "$head: $it." }
-            val missed = rows.filter { it.level == "not" }
-            missed.groupingBy { it.day.dayOfWeek.value - 1 }.eachCount()
-                .filter { it.value >= Planner.REASON_MIN_N }.toSortedMap()
-                .forEach { (wd, n) -> lines += "$head: marked Not on $n ${DAY_NAMES[wd]}s." }
+            // When he answers (Max plan Phase 3 step 4): the time of day he answered on the day itself.
+            timeBandLines(long).forEach { lines += "T${x.id} \"${clean(x.name)}\", last $LONG_WINDOW days: $it." }
+            // Before and after his latest change to it (Max plan Phase 6), each side under its own schedule.
+            x.start?.let { start ->
+                Planner.changeCompare(x.checkins, versionsOf(x), start, today, t.restDays)
+                    ?.let { lines += PlanStateText.changeLine("T${x.id}", clean(x.name), it) }
+            }
+            // A reason that has grown or shrunk: the last 14 days against the 14 before them.
+            val before = answers(x, first.minusDays(Planner.WINDOW.toLong()), first.minusDays(1), t.restDays)
+            if (before.short.size >= Planner.REASON_MIN_N) {
+                for ((reason, n) in topReasons(recent.short)) {
+                    if (n < Planner.REASON_MIN_N || n > recent.short.size) continue
+                    val m = before.short.count { it.reason == reason }
+                    lines += "T${x.id} \"${clean(x.name)}\": $reason on $n of ${recent.short.size} days marked Not or Part " +
+                        "in the last ${Planner.WINDOW} days, on $m of ${before.short.size} in the ${Planner.WINDOW} days before."
+                }
+            }
         }
         return Block("CHECKIN_FACTS", lines.map { BlockItem(it, 0) })
+    }
+
+    /** Days counted in the longer view of CHECKIN_FACTS. */
+    const val LONG_WINDOW = 90
+
+    private class Answers(val rows: List<CheckIn>, val short: List<CheckIn>)
+
+    /** The answers on scheduled days from [first] to [last], rest days left out. */
+    private fun answers(x: Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): Answers {
+        val scheduled = scheduledIn(x, first, last, rest)
+        val rows = x.checkins.filter {
+            !it.day.isBefore(first) && !it.day.isAfter(last) && it.level != "rest" &&
+                (scheduled == null || it.day in scheduled)
+        }
+        return Answers(rows, rows.filter { it.level in Planner.SHORT_LEVELS })
+    }
+
+    private fun topReasons(short: List<CheckIn>): List<Pair<String, Int>> =
+        short.mapNotNull { it.reason }.groupingBy { it }.eachCount()
+            .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .take(3).map { it.key to it.value }
+
+    /** Reason counts and weekday Not counts of one window, each with at least 3 items behind it. */
+    private fun windowLines(a: Answers): List<String> {
+        val out = Planner.reasonLines(topReasons(a.short), a.short.size).toMutableList()
+        a.rows.filter { it.level == "not" }.groupingBy { it.day.dayOfWeek.value - 1 }.eachCount()
+            .filter { it.value >= Planner.REASON_MIN_N }.toSortedMap()
+            .forEach { (wd, n) -> out += "marked Not on $n ${DAY_NAMES[wd]}s" }
+        return out
+    }
+
+    /** A part of the day, by the minute he answered (his local time, minutes after midnight). */
+    class Band(val name: String, val contains: (Int) -> Boolean)
+
+    val BANDS = listOf(
+        Band("in the morning (4:00 to 12:00)") { it in 240 until 720 },
+        Band("in the afternoon (12:00 to 17:00)") { it in 720 until 1020 },
+        Band("in the evening (17:00 to 22:00)") { it in 1020 until 1320 },
+        Band("late at night (22:00 to 4:00)") { it >= 1320 || it < 240 },
+    )
+
+    /** The time-band lines for answers already chosen (a review's period): see [timeBandLines]. */
+    fun timeBandLinesOf(rows: List<CheckIn>): List<String> =
+        timeBandLines(Answers(rows, rows.filter { it.level in Planner.SHORT_LEVELS }))
+
+    /**
+     * Time-band lines: "answered late at night (22:00 to 4:00) on 9 days, marked Not or Part on 6 of them". Only
+     * answers given on the day itself count (schema 6 records the time). A band is written when at least 3 of
+     * its days were marked Not or Part, and only when another band holds at least 3 answers too, so the line
+     * says something about the time and not just about him.
+     */
+    private fun timeBandLines(a: Answers): List<String> {
+        val timed = a.rows.filter { it.minute != null }
+        val byBand = BANDS.map { b -> b to timed.filter { b.contains(it.minute!!) } }
+        val busy = byBand.count { it.second.size >= Planner.REASON_MIN_N }
+        if (busy < 2) return emptyList()
+        return byBand.mapNotNull { (b, rows) ->
+            val short = rows.count { it.level in Planner.SHORT_LEVELS }
+            if (rows.size < Planner.REASON_MIN_N || short < Planner.REASON_MIN_N) {
+                null
+            } else {
+                "answered ${b.name} on ${rows.size} days, marked Not or Part on $short of them"
+            }
+        }
     }
 
     private fun scheduledIn(x: Target, first: LocalDate, last: LocalDate, rest: Set<LocalDate>): Set<LocalDate>? =

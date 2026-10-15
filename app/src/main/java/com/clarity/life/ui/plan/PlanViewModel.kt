@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.PlanDates
+import com.clarity.life.core.PlanLoad
 import com.clarity.life.core.PlanStateText
 import com.clarity.life.core.Planner
 import com.clarity.life.core.PromiseText
@@ -100,6 +101,12 @@ class PlanViewModel @Inject constructor(
         val looseTargets: List<TargetView> = emptyList(),
         val oldGoals: List<GoalRow> = emptyList(),
         val quietLine: String? = null,
+        /** Max plan Phase 6: his minutes for planning per weekday (Monday first), or null when not set. */
+        val hours: List<Double>? = null,
+        /** The time the live targets of every goal take on each of the next 7 days, counted by [PlanLoad]. */
+        val week: PlanLoad.Load? = null,
+        /** Target names by id, for the targets the week lists without a time. */
+        val names: Map<Long, String> = emptyMap(),
     ) {
         val answeredToday: Int get() = todayRows.count { it.answer != null }
     }
@@ -108,6 +115,11 @@ class PlanViewModel @Inject constructor(
     private val zone: StateFlow<Pair<String, Int>> = settings.watchDay()
         .map { it.timeZone to it.boundaryHour }
         .stateIn(viewModelScope, SharingStarted.Eagerly, SettingsRepository.defaultDay().let { it.timeZone to it.boundaryHour })
+
+    private data class DaySettings(val tz: String, val boundary: Int, val hours: List<Double>?)
+
+    /** The day settings and his hours together (a combine takes at most five flows). */
+    private val dayAndHours = combine(zone, settings.watchPlanHours()) { (tz, boundary), hours -> DaySettings(tz, boundary, hours) }
     private val quietLine = MutableStateFlow<String?>(null)
 
     /** The day changes at the day boundary, so the lists are worked out again every minute. */
@@ -133,15 +145,23 @@ class PlanViewModel @Inject constructor(
     val state: StateFlow<State> = combine(
         rows,
         planner.checkinsFrom(LocalDate.of(2000, 1, 1)),
-        zone,
+        dayAndHours,
         minute,
         quietLine,
-    ) { r, checkins, (tz, boundary), now, line ->
-        build(r, checkins, tz, boundary, now, line)
+    ) { r, checkins, d, now, line ->
+        build(r, checkins, d.tz, d.boundary, now, line, d.hours)
     }.flowOn(kotlinx.coroutines.Dispatchers.Default) // the whole history is read; never on the main thread
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
 
-    private fun build(r: Rows, checkins: List<CheckinRow>, tz: String, boundary: Int, now: Long, line: String?): State {
+    private fun build(
+        r: Rows,
+        checkins: List<CheckinRow>,
+        tz: String,
+        boundary: Int,
+        now: Long,
+        line: String?,
+        hours: List<Double>? = null,
+    ): State {
         val today = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, boundary)
         val byTarget = checkins.groupBy { it.targetId }
         val live = r.targets.filter { t ->
@@ -167,7 +187,9 @@ class PlanViewModel @Inject constructor(
             val linked = live.filter { it.backlogId == b.id }
             val model = PlanBlocks.Backlog(
                 b.id, b.name, b.goalId, b.total, b.startDone, LocalDate.parse(b.deadline),
-                Planner.dayKey(Instant.ofEpochMilli(b.createdAt).toString(), tz, boundary),
+                // The day stored when it was made, as PLAN_STATE reads it, so a later time zone or day
+                // boundary change never makes this screen and the coach disagree about what is done.
+                b.startDay?.let(LocalDate::parse) ?: Planner.dayKey(Instant.ofEpochMilli(b.createdAt).toString(), tz, boundary),
                 r.targets.filter { it.backlogId == b.id && it !in live }.flatMap(::history),
                 r.targets.filter { it.backlogId == b.id }.minOfOrNull { LocalDate.parse(it.startDay) },
             )
@@ -246,6 +268,19 @@ class PlanViewModel @Inject constructor(
             looseTargets = shown.filter { it.goalId == null || it.goalId !in goalIds }.map(::targetView),
             oldGoals = r.goals.filter { it.status != "active" },
             quietLine = line,
+            hours = hours,
+            // A live target's row holds the values in force from today on, so it is all the week needs.
+            week = PlanLoad.dayLoad(
+                live.map {
+                    PlanLoad.Item(
+                        it.id, it.schedule, it.target, LocalDate.parse(it.startDay), it.endDay?.let(LocalDate::parse),
+                        emptyList(), it.unit, it.minutes,
+                    )
+                },
+                today,
+                r.rest,
+            ),
+            names = live.associate { it.id to it.name },
         )
     }
 
@@ -279,6 +314,7 @@ class PlanViewModel @Inject constructor(
     fun statusText(p: com.clarity.life.core.Projection): String = when (p.status) {
         "done" -> "Complete."
         "past_deadline" -> "The deadline has passed."
+        "no_days_left" -> "No scheduled days left before the deadline."
         "no_data" -> "Not enough data yet: fewer than ${Planner.MIN_ANSWERED} answered days in the last ${Planner.WINDOW} days."
         else -> {
             val key = if (p.status != "short" || p.bestPerDay != null) p.status else "short_no_best"
@@ -394,6 +430,15 @@ class PlanViewModel @Inject constructor(
 
     fun setTargetStatus(id: Long, status: String, today: LocalDate) = act { planner.setTargetStatus(id, status, today) }
 
+    /** His estimate of one session's minutes for a target; null clears it. */
+    fun setTargetMinutes(id: Long, minutes: Double?) = act { planner.setTargetMinutes(id, minutes) }
+
+    /** His minutes for planning per weekday, Monday first; null clears them. */
+    fun setHours(hours: List<Double>?) = act { settings.setPlanHours(hours) }
+
+    /** Whether a target's unit already says how long it takes (minutes or hours). */
+    fun timedByUnit(t: TargetRow): Boolean = PlanLoad.sessionMinutes(t.unit, 1.0) != null
+
     fun addBacklog(goalId: Long?, name: String, total: Double, unit: String, startDone: Double, deadline: LocalDate) = act {
         planner.addBacklog(goalId, name, total, unit, startDone, deadline, System.currentTimeMillis())
     }
@@ -437,7 +482,7 @@ class PlanViewModel @Inject constructor(
         fun goalStatus(backlogs: List<BacklogView>, targets: List<TargetView>): String {
             val statuses = backlogs.map { it.facts.projection.status }
             return when {
-                statuses.any { it == "short" || it == "needs_best" || it == "past_deadline" } -> "behind"
+                statuses.any { it == "short" || it == "needs_best" || it == "past_deadline" || it == "no_days_left" } -> "behind"
                 statuses.isNotEmpty() && statuses.all { it == "ok" || it == "done" } -> "on pace"
                 statuses.isEmpty() && targets.any { it.answered >= Planner.MIN_ANSWERED } -> "tracking"
                 else -> "no data yet"

@@ -1,0 +1,703 @@
+{
+ "lines": {
+  "DELETED_MEANING": 0.65,
+  "DUPLICATE_MEANING": 0.88,
+  "DELETED_SIMILARITY": 0.6,
+  "DUPLICATE_SIMILARITY": 0.8
+ },
+ "rewordings caught as a deleted note, words only (before Phase 3)": "0 of 31",
+ "rewordings caught as a deleted note, words and meaning": "31 of 31",
+ "different notes blocked near a deleted one (the cost)": "12 of 37",
+ "rewordings dropped as duplicates": "6 of 31",
+ "different notes dropped as duplicates (an opposite with no \"not\" in it)": "1 of 37",
+ "meaning, rewordings": [
+  0.653,
+  0.915
+ ],
+ "meaning, different notes": [
+  0.319,
+  0.894
+ ],
+ "pairs": [
+  {
+   "same": true,
+   "meaning": 0.882,
+   "words": 0.29,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You resent your mother for worrying about money.",
+   "b": "Your mother's worry about money makes you angry at her."
+  },
+  {
+   "same": true,
+   "meaning": 0.8,
+   "words": 0.12,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You resent your mother for worrying about money.",
+   "b": "You feel bitter that your mum keeps fretting over finances."
+  },
+  {
+   "same": true,
+   "meaning": 0.888,
+   "words": 0.36,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You resent your mother for worrying about money.",
+   "b": "Money worries from your mother annoy you."
+  },
+  {
+   "same": true,
+   "meaning": 0.901,
+   "words": 0.36,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You resent your mother for worrying about money.",
+   "b": "When your mother worries about money you feel resentment toward her."
+  },
+  {
+   "same": true,
+   "meaning": 0.804,
+   "words": 0.24,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You avoid your father when he asks about exams.",
+   "b": "When your dad brings up your exams, you stay out of his way."
+  },
+  {
+   "same": true,
+   "meaning": 0.807,
+   "words": 0.31,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You avoid your father when he asks about exams.",
+   "b": "You dodge conversations with your father about your results."
+  },
+  {
+   "same": true,
+   "meaning": 0.724,
+   "words": 0.25,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You scroll on your phone in bed after 11 pm and lose the next morning.",
+   "b": "Late-night phone use in bed costs you your mornings."
+  },
+  {
+   "same": true,
+   "meaning": 0.715,
+   "words": 0.18,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You scroll on your phone in bed after 11 pm and lose the next morning.",
+   "b": "Using your phone late at night ruins the next day's start."
+  },
+  {
+   "same": true,
+   "meaning": 0.862,
+   "words": 0.17,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You feel guilty when you rest on Sundays.",
+   "b": "Taking Sunday off leaves you feeling guilty."
+  },
+  {
+   "same": true,
+   "meaning": 0.76,
+   "words": 0.13,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You feel guilty when you rest on Sundays.",
+   "b": "Resting at the weekend makes you feel bad about yourself."
+  },
+  {
+   "same": true,
+   "meaning": 0.752,
+   "words": 0.22,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You compare yourself to your cousin Bilal and feel behind.",
+   "b": "Seeing how far Bilal has got makes you feel you are falling behind."
+  },
+  {
+   "same": true,
+   "meaning": 0.792,
+   "words": 0.33,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You compare yourself to your cousin Bilal and feel behind.",
+   "b": "You measure yourself against your cousin and come up short."
+  },
+  {
+   "same": true,
+   "meaning": 0.855,
+   "words": 0.27,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You drink too much coffee before exams.",
+   "b": "Before exams you have lots of caffeine."
+  },
+  {
+   "same": true,
+   "meaning": 0.781,
+   "words": 0.18,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You put off emails you are afraid of.",
+   "b": "Emails that scare you get delayed."
+  },
+  {
+   "same": true,
+   "meaning": 0.675,
+   "words": 0.08,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You put off emails you are afraid of.",
+   "b": "You procrastinate on messages that make you anxious."
+  },
+  {
+   "same": true,
+   "meaning": 0.862,
+   "words": 0.38,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Your weight bothers you.",
+   "b": "You are unhappy about your body weight."
+  },
+  {
+   "same": true,
+   "meaning": 0.825,
+   "words": 0.09,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Your weight bothers you.",
+   "b": "You feel self-conscious about how heavy you are."
+  },
+  {
+   "same": false,
+   "meaning": 0.47,
+   "words": 0.14,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You resent your mother for worrying about money.",
+   "b": "Your mother's support keeps you going through exams."
+  },
+  {
+   "same": false,
+   "meaning": 0.593,
+   "words": 0.23,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You resent your mother for worrying about money.",
+   "b": "You worry about money since the job ended."
+  },
+  {
+   "same": false,
+   "meaning": 0.612,
+   "words": 0.13,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You resent your mother for worrying about money.",
+   "b": "You want to pay your parents back one day."
+  },
+  {
+   "same": false,
+   "meaning": 0.685,
+   "words": 0.21,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You avoid your father when he asks about exams.",
+   "b": "Your father drives you to the exam centre."
+  },
+  {
+   "same": false,
+   "meaning": 0.558,
+   "words": 0.19,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You avoid your father when he asks about exams.",
+   "b": "You avoid starting past papers when they feel too hard."
+  },
+  {
+   "same": false,
+   "meaning": 0.338,
+   "words": 0.18,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You scroll on your phone in bed after 11 pm and lose the next morning.",
+   "b": "Early mornings in the rooftop room give you your best focus."
+  },
+  {
+   "same": false,
+   "meaning": 0.504,
+   "words": 0.05,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You scroll on your phone in bed after 11 pm and lose the next morning.",
+   "b": "Gym days help you fall asleep before midnight."
+  },
+  {
+   "same": false,
+   "meaning": 0.553,
+   "words": 0.2,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You scroll on your phone in bed after 11 pm and lose the next morning.",
+   "b": "Putting the phone on the kitchen charger helps you sleep."
+  },
+  {
+   "same": false,
+   "meaning": 0.641,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You feel guilty when you rest on Sundays.",
+   "b": "A walk on Sunday evening clears your head."
+  },
+  {
+   "same": false,
+   "meaning": 0.583,
+   "words": 0.4,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You feel guilty when you rest on Sundays.",
+   "b": "You feel guilty when you miss a lecture."
+  },
+  {
+   "same": false,
+   "meaning": 0.454,
+   "words": 0.14,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You compare yourself to your cousin Bilal and feel behind.",
+   "b": "Bilal helps you with tax questions."
+  },
+  {
+   "same": false,
+   "meaning": 0.476,
+   "words": 0.21,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You put off emails you are afraid of.",
+   "b": "You put off past papers when the topic is new."
+  },
+  {
+   "same": false,
+   "meaning": 0.466,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You put off emails you are afraid of.",
+   "b": "Emailing Sir Waqas early saved you a week."
+  },
+  {
+   "same": false,
+   "meaning": 0.497,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Taking on two papers at once overwhelms you.",
+   "b": "Timed past papers steadily raise your scores."
+  },
+  {
+   "same": false,
+   "meaning": 0.444,
+   "words": 0.13,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Taking on two papers at once overwhelms you.",
+   "b": "Two lectures a day is a pace you can keep."
+  },
+  {
+   "same": false,
+   "meaning": 0.533,
+   "words": 0.17,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Studying alone since Omar left feels lonely.",
+   "b": "Studying with Omar kept you on track."
+  },
+  {
+   "same": false,
+   "meaning": 0.548,
+   "words": 0.08,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Studying alone since Omar left feels lonely.",
+   "b": "You study better alone in the morning."
+  },
+  {
+   "same": true,
+   "meaning": 0.653,
+   "words": 0.54,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You want a qualified career, not to stay an assistant.",
+   "b": "You do not want to stay an accounts assistant forever."
+  },
+  {
+   "same": false,
+   "meaning": 0.657,
+   "words": 0.33,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You want a qualified career, not to stay an assistant.",
+   "b": "You want to enjoy your work as an assistant more."
+  },
+  {
+   "same": true,
+   "meaning": 0.857,
+   "words": 0.24,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Physical tiredness on gym days gets you to sleep before midnight.",
+   "b": "On gym days you fall asleep earlier because you are tired."
+  },
+  {
+   "same": false,
+   "meaning": 0.711,
+   "words": 0.2,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Physical tiredness on gym days gets you to sleep before midnight.",
+   "b": "You skip the gym when you sleep badly."
+  },
+  {
+   "same": false,
+   "meaning": 0.385,
+   "words": 0.09,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Your weight bothers you.",
+   "b": "Walking 20 minutes a day helps your knee."
+  },
+  {
+   "same": false,
+   "meaning": 0.607,
+   "words": 0.38,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Your weight bothers you.",
+   "b": "Your knee bothers you after long walks."
+  },
+  {
+   "same": false,
+   "meaning": 0.671,
+   "words": 0.6,
+   "deleted_check": true,
+   "words_only_deleted_check": true,
+   "duplicate_check": false,
+   "a": "Studying at the library helps you focus.",
+   "b": "Studying at the library does not help you focus."
+  },
+  {
+   "same": true,
+   "meaning": 0.758,
+   "words": 0.45,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Studying at the library helps you focus.",
+   "b": "You focus far better at the library than at home."
+  },
+  {
+   "same": false,
+   "meaning": 0.81,
+   "words": 0.88,
+   "deleted_check": true,
+   "words_only_deleted_check": true,
+   "duplicate_check": false,
+   "a": "You keep promises you make to your sister.",
+   "b": "You never keep promises you make to your sister."
+  },
+  {
+   "same": false,
+   "meaning": 0.894,
+   "words": 0.5,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "Walking after dinner helps you sleep.",
+   "b": "Walking after dinner keeps you awake."
+  },
+  {
+   "same": false,
+   "meaning": 0.773,
+   "words": 0.38,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You study best in the morning.",
+   "b": "You study best at night."
+  },
+  {
+   "same": true,
+   "meaning": 0.915,
+   "words": 0.18,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You study best in the morning.",
+   "b": "Mornings are when your study goes best."
+  },
+  {
+   "same": true,
+   "meaning": 0.793,
+   "words": 0.18,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You start the week strong and fade by Thursday.",
+   "b": "Your weeks begin well and run out of steam by Thursday."
+  },
+  {
+   "same": false,
+   "meaning": 0.815,
+   "words": 0.58,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You start the week strong and fade by Thursday.",
+   "b": "You start the week slowly and pick up by Thursday."
+  },
+  {
+   "same": true,
+   "meaning": 0.667,
+   "words": 0.36,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Lists on paper help you plan the day.",
+   "b": "Writing your plan on paper helps you."
+  },
+  {
+   "same": false,
+   "meaning": 0.468,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Lists on paper help you plan the day.",
+   "b": "Apps for planning do not work for you."
+  },
+  {
+   "same": true,
+   "meaning": 0.76,
+   "words": 0.18,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You skip lectures when the power goes out.",
+   "b": "Power cuts stop your lectures."
+  },
+  {
+   "same": false,
+   "meaning": 0.669,
+   "words": 0.33,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You skip lectures when the power goes out.",
+   "b": "You skip lectures on Tuesdays when family visits."
+  },
+  {
+   "same": true,
+   "meaning": 0.84,
+   "words": 0.33,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You get anxious before calls with your manager.",
+   "b": "Calls with your boss make you nervous beforehand."
+  },
+  {
+   "same": false,
+   "meaning": 0.635,
+   "words": 0.44,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You get anxious before calls with your manager.",
+   "b": "You get anxious before exams."
+  },
+  {
+   "same": false,
+   "meaning": 0.509,
+   "words": 0.36,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You get anxious before calls with your manager.",
+   "b": "Calls with your sister calm you down."
+  },
+  {
+   "same": true,
+   "meaning": 0.912,
+   "words": 0.3,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You value being honest with your friends.",
+   "b": "Honesty with friends matters to you."
+  },
+  {
+   "same": false,
+   "meaning": 0.454,
+   "words": 0.4,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You value being honest with your friends.",
+   "b": "You value time alone with your family."
+  },
+  {
+   "same": true,
+   "meaning": 0.717,
+   "words": 0.5,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Tea breaks every hour help you keep going.",
+   "b": "Short breaks each hour keep you going."
+  },
+  {
+   "same": false,
+   "meaning": 0.457,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Tea breaks every hour help you keep going.",
+   "b": "Long breaks make it hard to restart."
+  },
+  {
+   "same": true,
+   "meaning": 0.767,
+   "words": 0.23,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You are good at explaining tax rules to others.",
+   "b": "You explain tax well to your classmates."
+  },
+  {
+   "same": false,
+   "meaning": 0.688,
+   "words": 0.36,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You are good at explaining tax rules to others.",
+   "b": "You struggle to understand tax rules."
+  },
+  {
+   "same": true,
+   "meaning": 0.81,
+   "words": 0.53,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You have not decided whether to tell your father about the break.",
+   "b": "Whether to tell your father about the break is still open."
+  },
+  {
+   "same": false,
+   "meaning": 0.722,
+   "words": 0.46,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You have not decided whether to tell your father about the break.",
+   "b": "You told your father about the break."
+  },
+  {
+   "same": false,
+   "meaning": 0.502,
+   "words": 0.44,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You have not decided whether to tell your father about the break.",
+   "b": "You have not decided whether to take the job in Karachi."
+  },
+  {
+   "same": true,
+   "meaning": 0.893,
+   "words": 0.21,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": true,
+   "a": "You eat junk food when you are stressed about exams.",
+   "b": "Exam stress makes you reach for junk food."
+  },
+  {
+   "same": false,
+   "meaning": 0.319,
+   "words": 0.07,
+   "deleted_check": false,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "You eat junk food when you are stressed about exams.",
+   "b": "You cook healthy meals on Sundays."
+  },
+  {
+   "same": true,
+   "meaning": 0.702,
+   "words": 0.08,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Studying alone since Omar left feels lonely.",
+   "b": "You miss Omar as a study partner."
+  },
+  {
+   "same": false,
+   "meaning": 0.878,
+   "words": 0.44,
+   "deleted_check": true,
+   "words_only_deleted_check": false,
+   "duplicate_check": false,
+   "a": "Your mother worries about money.",
+   "b": "You resent your mother for worrying about money."
+  }
+ ]
+}

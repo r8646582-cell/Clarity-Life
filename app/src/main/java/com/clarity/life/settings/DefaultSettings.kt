@@ -62,14 +62,18 @@ object DefaultSettings {
     const val MAX_OUTPUT_TOKENS = 16000
     const val BACKGROUND_TEMPERATURE = 0.3
 
-    /** Stage B. CLS pooling, 384 dimensions (spec section 7). */
-    const val EMBEDDING_MODEL = "bge-small-en-v1.5"
+    /** The bundled meaning model (spec section 7): gte-base-en-v1.5 since Max plan Phase 4, 768 numbers per vector. */
+    const val EMBEDDING_MODEL = "gte-base-en-v1.5"
 
     /**
      * When his day ends: midnight, like a calendar (the owner's choice, 13 Oct 2026; it was 4 am). A night owl
      * can pick 1 to 6 am in Settings so a 12:30 am check-in still counts for the day before.
      */
     const val DAY_BOUNDARY_HOUR = 0
+
+    /** Automatic backups (spec section 9): weekly, keeping the last four; Settings offers daily and more. */
+    const val BACKUP_EVERY_DAYS = 7
+    const val BACKUP_KEEP = 4
 
     const val WEEKLY_LETTER_ON = true
     // On, silent: the spec's recommendation (section 17), chosen by the owner in the audit follow-up of 10 Oct 2026.

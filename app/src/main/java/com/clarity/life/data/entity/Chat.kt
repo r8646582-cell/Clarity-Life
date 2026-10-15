@@ -33,7 +33,8 @@ data class FocusRow(
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("focus_id")],
+    // Schema 7 (Max plan Phase 5): the drawer lists conversations newest first without sorting all of them.
+    indices = [Index("focus_id"), Index(value = ["started_at"], name = "idx_conversation_started")],
 )
 data class ConversationRow(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -65,7 +66,11 @@ data class ConversationRow(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["conversation_id", "id"], name = "idx_message_conv")],
+    // Schema 7: the start-up sweep finds replies still "streaming" without reading every message.
+    indices = [
+        Index(value = ["conversation_id", "id"], name = "idx_message_conv"),
+        Index(value = ["status"], name = "idx_message_status"),
+    ],
 )
 data class MessageRow(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

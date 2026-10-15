@@ -11,6 +11,10 @@ data class GardeningContext(
     val people: Set<Long> = emptySet(),
     /** key -> confirmed by him. */
     val profile: Map<String, Boolean> = emptyMap(),
+    /** The notes he deleted: no merged or rewritten text may come close to one (rule 5). */
+    val deletedNotes: List<String> = emptyList(),
+    /** Unit vectors of the texts compared, from the on-phone model; null for a text without one. */
+    val vectors: (String) -> FloatArray? = JobFields.NO_VECTORS,
 )
 
 /**
@@ -18,7 +22,8 @@ data class GardeningContext(
  *
  * Gardening only tidies: it merges, rewrites or retires notes and merges people. A note he edited or
  * confirmed is never touched, each note takes at most one operation, a merge keeps the highest existing
- * confidence (never raises it), and a confirmed profile entry is never rewritten.
+ * confidence (never raises it), a confirmed profile entry is never rewritten, and no merged or rewritten text
+ * comes close to a note he deleted, in words or in meaning.
  */
 object GardeningApplier {
 
@@ -71,6 +76,10 @@ object GardeningApplier {
                 dropped.add("merge: ${e.message}")
                 continue
             }
+            if (JobFields.closeToDeleted(t, ctx.deletedNotes, ctx.vectors)) {
+                dropped.add("merge: too close to a note he deleted")
+                continue
+            }
             used.addAll(ids)
             ops.add(JobOp.NoteMerge(ids.sorted(), t, top, ids.sumOf { notes.getValue(it).timesSeen }))
         }
@@ -86,6 +95,10 @@ object GardeningApplier {
                 text(ro.map["text"], 220)
             } catch (e: FieldBad) {
                 dropped.add("rewrite: ${e.message}")
+                continue
+            }
+            if (JobFields.closeToDeleted(t, ctx.deletedNotes, ctx.vectors)) {
+                dropped.add("rewrite: too close to a note he deleted")
                 continue
             }
             used.add(i)

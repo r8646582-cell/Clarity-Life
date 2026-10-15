@@ -26,6 +26,7 @@ object Values {
         "plan.status" to setOf("active", "replaced", "ended"),
         "backlog.status" to setOf("active", "done", "archived"),
         "target.status" to setOf("active", "paused", "ended"),
+        "target_version.status" to setOf("active", "paused", "ended"),
         "checkin.level" to setOf("rest", "not", "minimum", "target", "beyond"),
         "promise.status" to setOf("open", "kept", "not_done", "moved", "let_go"),
         "card.type" to setOf("promise", "plan", "target_change", "backlog", "focus", "note", "mode"),
@@ -38,7 +39,7 @@ object Values {
         "reflection_item.kind" to setOf("idea", "disagreement", "contradiction"),
         "job.type" to setOf(
             "reflection", "review_week", "review_month", "letter", "chapter", "story", "brief", "gardening", "backup",
-            "index",
+            "index", "maintenance",
         ),
         "job.status" to setOf("pending", "running", "succeeded", "failed", "skipped"),
     )

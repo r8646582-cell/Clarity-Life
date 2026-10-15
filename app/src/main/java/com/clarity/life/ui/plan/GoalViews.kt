@@ -98,6 +98,7 @@ fun GoalsSection(
             state.looseBacklogs.forEach { ManageBacklog(it, model) }
             state.looseTargets.forEach { ManageTarget(it, model, state) }
         }
+        if (state.goals.isNotEmpty() || state.looseTargets.isNotEmpty()) TimeCard(state, model)
         PrimaryButton("Plan with coach", onClick = onPlanWithCoach)
         AddGoalForm(state, model)
         if (state.oldGoals.isNotEmpty()) {
@@ -176,6 +177,7 @@ private fun GoalPage(
         if (b != null) PaceCard(b, model)
         if (g.steps.isNotEmpty()) StepsCard(g, state, model)
         if (b != null) WeekCard(b)
+        TimeCard(state, model)
         g.plan?.let { p ->
             OutlineCard {
                 val review = LocalDate.parse(p.reviewDay)
@@ -466,7 +468,11 @@ private fun ProgressLine(b: PlanViewModel.BacklogView, model: PlanViewModel) {
         }
         if (p.status != "done" && p.typicalPerDay == null) {
             Text(
-                "Your usual and best pace show after ${Planner.MIN_ANSWERED} answered days.",
+                if (p.bestPerDay != null) {
+                    "Your usual pace shows again after ${Planner.MIN_ANSWERED} answered days in ${Planner.WINDOW}."
+                } else {
+                    "Your usual and best pace show after ${Planner.MIN_ANSWERED} answered days."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = clarity.muted,
             )
@@ -548,6 +554,7 @@ private fun ManageTarget(t: PlanViewModel.TargetView, model: PlanViewModel, stat
                 (t.row.endDay?.let { " to ${model.day(it)}" } ?: ""),
         )
         t.reasons.forEach { Quiet("Not or Part: $it.") }
+        if (t.row.status != "ended" && !model.timedByUnit(t.row)) MinutesField(t, model)
         Row {
             if (t.row.status == "active") {
                 TextButton(onClick = { model.setTargetStatus(t.row.id, "paused", state.today) }) { Text("Pause", color = clarity.muted) }
@@ -555,6 +562,112 @@ private fun ManageTarget(t: PlanViewModel.TargetView, model: PlanViewModel, stat
                 TextButton(onClick = { model.setTargetStatus(t.row.id, "active", state.today) }) { Text("Resume", color = clarity.yellow) }
             }
             TextButton(onClick = { model.setTargetStatus(t.row.id, "ended", state.today) }) { Text("End it", color = clarity.muted) }
+        }
+    }
+}
+
+/**
+ * His own estimate of the minutes one session takes, so the week can add up his time (Max plan Phase 6). A target
+ * counted in minutes or hours needs none.
+ */
+@Composable
+private fun MinutesField(t: PlanViewModel.TargetView, model: PlanViewModel) {
+    var text by rememberSaveable(t.row.id) { mutableStateOf(t.row.minutes?.let { model.n(it) } ?: "") }
+    val m = number(text)
+    val ok = text.isBlank() || (m != null && m >= 1 && m <= 1440)
+    Field(
+        "Minutes one session takes (your estimate)",
+        text,
+        { text = it.take(5) },
+        number = true,
+        hint = if (ok) "Used to add up your time each day. Leave it empty if you do not know." else "From 1 to 1440 minutes",
+    )
+    val saved = t.row.minutes
+    val changed = if (text.isBlank()) saved != null else m != saved
+    if (ok && changed) {
+        TextButton(onClick = { model.setTargetMinutes(t.row.id, if (text.isBlank()) null else m) }) {
+            Text("Save the time", color = clarity.yellow)
+        }
+    }
+}
+
+/**
+ * Your week (Max plan Phase 6): the time the targets of every goal take on each of the next 7 days, against the
+ * hours he says he has, all counted by [com.clarity.life.core.PlanLoad]. Nothing red: a day over is said in
+ * words. Set your hours opens seven fields, Monday to Sunday.
+ */
+@Composable
+private fun TimeCard(state: PlanViewModel.State, model: PlanViewModel) {
+    val week = state.week ?: return
+    var editing by rememberSaveable { mutableStateOf(false) }
+    OutlineCard {
+        Kicker("Your time, next 7 days", modifier = Modifier.padding(bottom = 6.dp))
+        val hours = state.hours
+        val anyTime = week.days.any { it.timed.isNotEmpty() } || week.weekly.any { it.minutes != null }
+        if (!anyTime && hours == null) {
+            Quiet("Give a target the minutes one session takes (under Edit), and set your hours, to see whether your days fit.")
+        } else {
+            week.days.forEach { d ->
+                val label = "${Planner.DAYS[d.day.dayOfWeek.value - 1]} ${d.day.dayOfMonth}"
+                val m = Planner.roundHalfUp(d.minutes)
+                val value = when {
+                    d.rest -> "Rest day"
+                    hours == null -> "${model.n(m)} min"
+                    else -> {
+                        val have = Planner.roundHalfUp(hours[d.day.dayOfWeek.value - 1])
+                        "${model.n(m)} of ${model.n(have)} min" + if (m - have > 1e-9) ", ${model.n(m - have)} over" else ""
+                    }
+                }
+                val over = hours != null && !d.rest && m - Planner.roundHalfUp(hours[d.day.dayOfWeek.value - 1]) > 1e-9
+                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(label, style = MaterialTheme.typography.bodyMedium, color = clarity.text, modifier = Modifier.weight(1f))
+                    Text(value, style = MaterialTheme.typography.bodyMedium, color = if (over) clarity.yellow else clarity.muted)
+                }
+            }
+            val untimed = week.days.flatMap { it.untimed }.distinct()
+            if (untimed.isNotEmpty()) {
+                Quiet("Not counted (no time given): " + untimed.joinToString(", ") { state.names[it] ?: "a target" } + ".")
+            }
+            week.weekly.forEach { w ->
+                Quiet(
+                    "${state.names[w.id] ?: "A target"}: ${w.perWeek} a week, not on fixed days" +
+                        (w.minutes?.let { ", ${model.n(Planner.roundHalfUp(it))} min a week." } ?: "."),
+                )
+            }
+        }
+        if (!editing) {
+            TextButton(onClick = { editing = true }) {
+                Text(if (hours == null) "Set your hours" else "Change your hours", color = clarity.yellow)
+            }
+        } else {
+            HoursForm(hours, onDone = { editing = false }, model)
+        }
+    }
+}
+
+/** Seven fields, Monday to Sunday, in hours (1.5 is an hour and a half); stored as minutes. */
+@Composable
+private fun HoursForm(hours: List<Double>?, onDone: () -> Unit, model: PlanViewModel) {
+    val names = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    val fields = names.indices.map { i ->
+        rememberSaveable(i) { mutableStateOf(hours?.let { model.n(it[i] / 60.0) } ?: "") }
+    }
+    FormBox("Hours you have for your plans") {
+        Quiet("The time you can really give your goals on a usual day, after work, school and rest.")
+        names.forEachIndexed { i, n ->
+            Field(n, fields[i].value, { fields[i].value = it.take(5) }, number = true)
+        }
+        val values = fields.map { f -> if (f.value.isBlank()) 0.0 else number(f.value) }
+        val ok = values.all { it != null && it >= 0 && it <= 24 }
+        FormButtons(ok, onCancel = onDone) {
+            model.setHours(values.map { Planner.roundHalfUp(it!! * 60.0) })
+            onDone()
+        }
+        if (hours != null) {
+            TextButton(onClick = {
+                model.setHours(null)
+                onDone()
+            }) { Text("Clear my hours", color = clarity.muted) }
         }
     }
 }

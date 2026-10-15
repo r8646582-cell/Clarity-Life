@@ -5,7 +5,9 @@ import com.clarity.life.core.CheckIn
 import com.clarity.life.core.PlanApply
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.Planner
+import com.clarity.life.core.TargetVersion
 import com.clarity.life.core.PromiseText
+import com.clarity.life.core.Spans
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.Values
 import com.clarity.life.data.entity.BacklogRow
@@ -15,6 +17,7 @@ import com.clarity.life.data.entity.GoalRow
 import com.clarity.life.data.entity.PlanRow
 import com.clarity.life.data.entity.RestDayRow
 import com.clarity.life.data.entity.TargetRow
+import com.clarity.life.data.entity.TargetVersionRow
 import com.clarity.life.settings.SettingsRepository
 import java.time.Instant
 import java.time.LocalDate
@@ -124,16 +127,57 @@ class PlannerRepository @Inject constructor(
         Values.requireTargetLevels(minimum, target)
         if (!Planner.isSchedule(schedule)) throw Refused("bad schedule")
         if (end != null && end.isBefore(start)) throw Refused("end before start")
-        return dao.insertTarget(
+        val id = dao.insertTarget(
             TargetRow(
                 goalId = goalId, planId = planId, backlogId = backlogId, name = n, unit = unit.trim(),
                 minimum = minimum, target = target, schedule = schedule.trim(), startDay = start.toString(),
                 endDay = end?.toString(),
             ),
         )
+        dao.putTargetVersion(
+            TargetVersionRow(
+                targetId = id, fromDay = start.toString(), minimum = minimum, target = target,
+                schedule = schedule.trim(), status = "active", createdAt = System.currentTimeMillis(),
+            ),
+        )
+        return id
+    }
+
+    /**
+     * Schema 8: records [after] as the target's values from [today] on (from its start, when that is later), in
+     * the caller's transaction. A target with no history yet (made before schema 8) first gets [before], its
+     * values until now, from its start day, so what the plan asked for before the change stays known.
+     */
+    private suspend fun recordVersion(before: TargetRow, after: TargetRow, today: LocalDate) {
+        val now = System.currentTimeMillis()
+        if (dao.targetVersionCount(before.id) == 0) {
+            dao.putTargetVersion(
+                TargetVersionRow(
+                    targetId = before.id, fromDay = before.startDay, minimum = before.minimum, target = before.target,
+                    schedule = before.schedule, status = "active", createdAt = now,
+                ),
+            )
+        }
+        val from = maxOf(today.toString(), after.startDay)
+        dao.putTargetVersion(
+            TargetVersionRow(
+                targetId = after.id, fromDay = from, minimum = after.minimum, target = after.target,
+                schedule = after.schedule, status = after.status, createdAt = now,
+            ),
+        )
     }
 
     /** Pause, resume or end a target. Ending sets its last day to today; its check-ins stay forever. */
+    /**
+     * Max plan Phase 6: his own estimate of the minutes one session of a target takes, for a day's load; null
+     * clears it. Any time from 1 minute to 24 hours.
+     */
+    suspend fun setTargetMinutes(id: Long, minutes: Double?) = db.withTransaction {
+        if (minutes != null && !(minutes >= 1.0 && minutes <= 1440.0)) throw Refused("minutes are 1 to 1440")
+        val t = dao.target(id) ?: throw Refused("target gone")
+        dao.updateTarget(t.copy(minutes = minutes))
+    }
+
     suspend fun setTargetStatus(id: Long, status: String, today: LocalDate) = db.withTransaction {
         Values.requireValid("target.status", status)
         val t = dao.target(id) ?: throw Refused("target gone")
@@ -142,7 +186,9 @@ class PlannerRepository @Inject constructor(
         } else {
             t.endDay
         }
-        dao.updateTarget(t.copy(status = status, endDay = end))
+        val changed = t.copy(status = status, endDay = end)
+        dao.updateTarget(changed)
+        if (changed.status != t.status) recordVersion(t, changed, today)
     }
 
     suspend fun addBacklog(
@@ -210,6 +256,10 @@ class PlannerRepository @Inject constructor(
             throw Refused("a reason only goes with Not or Part")
         }
         dao.target(targetId) ?: throw Refused("target gone")
+        // Schema 6: his local time and day of answering, stored now so a later change of time zone never moves them.
+        val tz = settings.timeZone()
+        val at = com.clarity.life.core.TimeFacts.local(Instant.ofEpochMilli(now), tz)
+        val enteredDay = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, settings.dayBoundaryHour()).toString()
         val row = CheckinRow(
             targetId = targetId,
             dayKey = day.toString(),
@@ -218,6 +268,8 @@ class PlannerRepository @Inject constructor(
             reason = reason,
             note = note?.trim()?.takeIf { it.isNotEmpty() },
             enteredAt = now,
+            enteredMinute = at.hour * 60 + at.minute,
+            enteredDay = enteredDay,
         )
         val old = dao.checkin(targetId, day.toString())
         if (old == null) dao.insertCheckin(row) else dao.updateCheckin(row.copy(id = old.id))
@@ -236,8 +288,8 @@ class PlannerRepository @Inject constructor(
 
     /** The active tracker as PLAN_STATE and CHECKIN_FACTS read it on [today]. */
     suspend fun tracker(today: LocalDate): PlanBlocks.Tracker {
-        val targets = liveTargets(today)
-        val checkins = if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id })
+        val targets = Spans.span("tracker: live targets read") { liveTargets(today) }
+        val checkins = Spans.span("tracker: their check-ins read") { if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id }) }
         val byTarget = checkins.groupBy { it.targetId }
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
@@ -254,28 +306,39 @@ class PlannerRepository @Inject constructor(
         val liveIds = targets.map { it.id }.toSet()
         // A paused or ended target's check-ins still count toward its backlog's done, never toward the pace.
         val offTargets = if (backlogs.isEmpty()) emptyList() else dao.targetsOfBacklogs(backlogs.map { it.id }).filter { it.id !in liveIds }
-        val offCheckins = if (offTargets.isEmpty()) emptyMap() else dao.checkinsOf(offTargets.map { it.id }).groupBy { it.targetId }
+        val offCheckins = Spans.span("tracker: ended targets' check-ins read") {
+            if (offTargets.isEmpty()) emptyMap() else dao.checkinsOf(offTargets.map { it.id }).groupBy { it.targetId }
+        }
+        // Schema 8: each target's values over time, for what the plan asked for and the last change to it.
+        val versions = Spans.span("tracker: target history read") {
+            val ids = (targets + offTargets).map { it.id }
+            if (ids.isEmpty()) emptyMap() else dao.targetVersions(ids).groupBy { it.targetId }
+        }
+        fun target(t: TargetRow, checkins: List<CheckIn>) = PlanBlocks.Target(
+            t.id, t.name, t.goalId, t.backlogId, t.minimum, t.target, t.schedule, checkins,
+            LocalDate.parse(t.startDay),
+            t.endDay?.let(LocalDate::parse),
+            versions = (versions[t.id] ?: emptyList()).map { version(it) },
+            unit = t.unit,
+            minutes = t.minutes,
+        )
         return PlanBlocks.Tracker(
             goals = dao.activeGoals().map { PlanBlocks.Goal(it.id, it.title, it.deadline?.let(LocalDate::parse)) },
-            targets = targets.map { t ->
-                PlanBlocks.Target(
-                    t.id, t.name, t.goalId, t.backlogId, t.minimum, t.target, t.schedule,
-                    (byTarget[t.id] ?: emptyList()).map { model(it) },
-                    LocalDate.parse(t.startDay),
-                    t.endDay?.let(LocalDate::parse),
-                )
-            },
+            targets = targets.map { t -> target(t, (byTarget[t.id] ?: emptyList()).map { model(it) }) },
             backlogs = backlogs.map { b ->
+                val off = offTargets.filter { it.backlogId == b.id }
                 PlanBlocks.Backlog(
                     b.id, b.name, b.goalId, b.total, b.startDone, LocalDate.parse(b.deadline),
                     LocalDate.parse(b.startDay!!),
-                    offTargets.filter { it.backlogId == b.id }.flatMap { t -> (offCheckins[t.id] ?: emptyList()).map { model(it) } },
+                    off.flatMap { t -> (offCheckins[t.id] ?: emptyList()).map { model(it) } },
                     (targets + offTargets).filter { it.backlogId == b.id }.minOfOrNull { LocalDate.parse(it.startDay) },
+                    offTargets = off.map { t -> target(t, emptyList()) },
                 )
             },
-            restDays = dao.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),
+            restDays = dao.restDays().map { Planner.day(it.dayKey) }.toSet(),
             availability = db.memory().profileEntry(AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
             replanFlag = dao.latestWeeklyReplanFlag() == 1,
+            hours = settings.planHours(),
         )
     }
 
@@ -320,13 +383,18 @@ class PlannerRepository @Inject constructor(
                 goalId, planId, t.backlog?.let { backlogIds[it] }, t.name, t.unit, t.minimum, t.target,
                 t.schedule, t.start, t.end,
             )
-            is PlanApply.TargetStep.Change -> applyTargetChange(t, planId, t.backlog?.let { backlogIds[it] })
+            is PlanApply.TargetStep.Change -> applyTargetChange(t, now, planId, t.backlog?.let { backlogIds[it] })
         }
         return planId
     }
 
     /** A target change he tapped. Only the shown fields change; the levels are checked together. */
-    suspend fun applyTargetChange(step: PlanApply.TargetStep.Change, planId: Long? = null, backlogId: Long? = null): Long {
+    suspend fun applyTargetChange(
+        step: PlanApply.TargetStep.Change,
+        now: Long,
+        planId: Long? = null,
+        backlogId: Long? = null,
+    ): Long {
         val t = dao.target(step.old.id) ?: throw Refused("target gone")
         if (t.status == "ended") throw Refused("target ended")
         val changed = t.copy(
@@ -341,6 +409,9 @@ class PlannerRepository @Inject constructor(
         if (!Planner.isSchedule(changed.schedule)) throw Refused("bad schedule")
         if (changed.endDay != null && changed.endDay < changed.startDay) throw Refused("end before start")
         dao.updateTarget(changed)
+        if (changed.minimum != t.minimum || changed.target != t.target || changed.schedule != t.schedule) {
+            recordVersion(t, changed, today(now))
+        }
         return t.id
     }
 
@@ -364,7 +435,12 @@ class PlannerRepository @Inject constructor(
         /** The profile entry that holds his usual hours per weekday (spec section 6.1). */
         const val AVAILABILITY = "availability"
 
-        fun model(c: CheckinRow) = CheckIn(LocalDate.parse(c.dayKey), c.level, c.amount, c.reason)
+        fun model(c: CheckinRow) = CheckIn(
+            Planner.day(c.dayKey), c.level, c.amount, c.reason,
+            minute = c.enteredMinute?.takeIf { c.enteredDay == c.dayKey },
+        )
+
+        fun version(v: TargetVersionRow) = TargetVersion(LocalDate.parse(v.fromDay), v.minimum, v.target, v.schedule, v.status)
 
         fun model(t: TargetRow) = PlanApply.OldTarget(
             t.id, t.goalId, t.name, t.unit, t.minimum, t.target, t.schedule, t.endDay?.let(LocalDate::parse),

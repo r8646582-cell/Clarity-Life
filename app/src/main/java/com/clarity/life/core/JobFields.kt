@@ -81,6 +81,17 @@ internal object JobFields {
     const val DELETED_SIMILARITY = 0.6
     const val DUPLICATE_SIMILARITY = 0.8
 
+    /**
+     * Cosine at or above which a text is too close in meaning to a note he deleted (Max plan Phase 3). The lines
+     * belong to the model: set in Phase 4 for gte-base-en-v1.5 (tools/eval/compare_embedders.py).
+     */
+    const val DELETED_MEANING = 0.65
+
+    /** Cosine at or above which a note repeats an active note of the same kind that says "not" the same way. */
+    const val DUPLICATE_MEANING = 0.88
+
+    private val NEGATIONS = setOf("not", "no", "never", "nor", "without", "cannot", "stop", "stopped", "none", "nothing")
+
     // ---------- Python string semantics ----------
 
     /** Python's str.isspace(), so strip() and split() agree with the reference on every character. */
@@ -170,6 +181,46 @@ internal object JobFields {
         if (wa.isEmpty() || wb.isEmpty()) return 0.0
         return (wa intersect wb).size.toDouble() / (wa union wb).size
     }
+
+    /**
+     * The cosine of two texts' unit vectors from [vectors] (the on-phone model), or null when either has none:
+     * meaning search is off, and the texts are compared by words only, as before Phase 3.
+     */
+    fun meaning(vectors: (String) -> FloatArray?, a: String, b: String): Double? {
+        val va = vectors(a) ?: return null
+        val vb = vectors(b) ?: return null
+        if (va.size != vb.size) return null
+        return VectorMath.dot(va, vb)
+    }
+
+    /** Whether a text says "not" in any of its usual ways: "doesn't" and "never" mean the opposite claim. */
+    fun negated(text: String): Boolean = wordSet(text).any { it in NEGATIONS || it.endsWith("n't") }
+
+    /** A note he deleted is never re-created, nor anything close to it: in words, or in meaning. */
+    fun closeToDeleted(text: String, deleted: List<String>, vectors: (String) -> FloatArray?): Boolean =
+        deleted.any { d ->
+            similarity(text, d) >= DELETED_SIMILARITY || (meaning(vectors, text, d)?.let { it >= DELETED_MEANING } == true)
+        }
+
+    /**
+     * [active] are (kind, text) pairs. A repeat in words (of any kind), or in meaning (the same kind and a high
+     * score); never when one says "not" and the other does not, which is a change, not a repeat. Opposites
+     * score as high as rewordings on this model, hence the guards.
+     */
+    fun duplicateOfActive(
+        text: String,
+        kind: String,
+        active: List<Pair<String, String>>,
+        vectors: (String) -> FloatArray?,
+    ): Boolean = active.any { (k, t) ->
+        negated(text) == negated(t) && (
+            similarity(text, t) >= DUPLICATE_SIMILARITY ||
+                (k == kind && (meaning(vectors, text, t)?.let { it >= DUPLICATE_MEANING } == true))
+            )
+    }
+
+    /** No vectors: meaning search off. */
+    val NO_VECTORS: (String) -> FloatArray? = { null }
 
     /** Parse the model's whole output strictly, or say why not. */
     fun parse(raw: String): Pair<Jv?, String?> = try {

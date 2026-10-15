@@ -1,12 +1,11 @@
 package com.clarity.life.core
 
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
  * The meaning-search vectors kept in memory, so a message does not read every vector from the database
  * (spec section 7). Each unit vector is stored as [dim] signed bytes and one scale, a quarter of its float
- * size: about 23 MB for 60,000 vectors of 384. Scores from here are close to the exact cosine (well within
+ * size: about 46 MB for 60,000 vectors of 768 (the model since Max plan Phase 4). Scores from here are close to the exact cosine (well within
  * [MARGIN]); the caller takes the best ones and scores them again exactly from the stored floats, so what
  * meaning search finds does not change. Pure, tested on the JVM.
  */
@@ -35,14 +34,31 @@ class VectorIndex(private val dim: Int) {
         maxRowId = 0L
     }
 
+    /**
+     * Room for [count] vectors in all, made once (Max plan Phase 5): growing by doubling copied tens of megabytes
+     * several times at ten years, and briefly held the old and the new copy together.
+     */
+    fun reserve(count: Int) {
+        if (count <= entries.size) return
+        entries = entries.copyOf(count)
+        data = data.copyOf(count * dim)
+        scales = scales.copyOf(count)
+    }
+
     fun add(entry: Entry, vector: FloatArray) {
         require(vector.size == dim) { "vector of the wrong size" }
         if (size == entries.size) grow()
         var max = 0f
-        for (x in vector) max = maxOf(max, abs(x))
+        for (x in vector) {
+            val a = abs(x)
+            if (a > max) max = a
+        }
         val scale = if (max == 0f) 1f else max / 127f
         val base = size * dim
-        for (i in 0 until dim) data[base + i] = (vector[i] / scale).roundToInt().coerceIn(-127, 127).toByte()
+        for (i in 0 until dim) {
+            val q = Math.round(vector[i] / scale)
+            data[base + i] = (if (q > 127) 127 else if (q < -127) -127 else q).toByte()
+        }
         scales[size] = scale
         entries[size] = entry
         size++
@@ -58,7 +74,7 @@ class VectorIndex(private val dim: Int) {
         var qmax = 0f
         for (x in query) qmax = maxOf(qmax, abs(x))
         val qscale = if (qmax == 0f) 1f else qmax / 127f
-        val q = IntArray(dim) { (query[it] / qscale).roundToInt().coerceIn(-127, 127) }
+        val q = IntArray(dim) { Math.round(query[it] / qscale).coerceIn(-127, 127) }
         val hits = ArrayList<Hit>()
         for (n in 0 until size) {
             val e = entries[n]!!
@@ -83,7 +99,7 @@ class VectorIndex(private val dim: Int) {
     companion object {
         /**
          * How far below the real threshold a candidate is still kept for exact scoring. The int8 error on a
-         * cosine of two 384-dimension unit vectors is far smaller than this.
+         * cosine of two 768-dimension unit vectors is far smaller than this.
          */
         const val MARGIN = 0.03
     }

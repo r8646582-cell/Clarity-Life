@@ -126,4 +126,34 @@ class ReviewFactsTest {
         assertEquals("October 2026, Thu 1 Oct to Sat 31 Oct.", f.lines[0])
         assertTrue(f.lines.toString(), f.lines.contains("  Not on 4 Sundays."))
     }
+
+    /** Max plan Phase 6: the week before, the 28-day trend, and plan versus actual under the values of each day. */
+    @Test
+    fun aWeekComparesWithTheWeekBeforeAndWithThePlan() {
+        val start = LocalDate.parse("2026-09-14")
+        // Four weeks before this one, every day answered: done on 3, 4, 5 and 6 days of 7; this week on all 7.
+        val rows = (0 until 35).map { i ->
+            val day = start.plusDays(i.toLong())
+            val week = i / 7
+            val done = (i % 7) < listOf(3, 4, 5, 6, 7)[week]
+            CheckIn(day, if (done) "target" else "not", if (done) 2.0 else 0.0)
+        }
+        // The target was raised from 1 to 2 a day on 12 Oct, the Monday of this week.
+        val t = PlanBlocks.Target(
+            3, "Lectures", 2, 1, 0.0, 2.0, "daily", rows, start,
+            versions = listOf(
+                TargetVersion(start, 0.0, 1.0, "daily", "active"),
+                TargetVersion(LocalDate.parse("2026-10-12"), 0.0, 2.0, "daily", "active"),
+            ),
+        )
+        val backlog = PlanBlocks.Backlog(1, "Lectures", 2, 200.0, 0.0, LocalDate.parse("2026-12-31"), start)
+        val f = ReviewFacts.build("week", LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18"), listOf(t), listOf(backlog), emptySet())
+        assertTrue(f.text, f.lines.contains("  The week before: done on 6 of 7 answered days."))
+        assertTrue(f.text, f.lines.contains("  Done rate by week, last 4 weeks (oldest first): 57%, 71%, 86%, 100%."))
+        assertTrue(f.text, f.lines.contains("  B1 \"Lectures\": the plan asked for 14 in this period, done 14, exactly on it."))
+        // The same week read against the old value would have said ahead: the change counts from its day only.
+        val old = ReviewFacts.build("week", LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"), listOf(t), listOf(backlog), emptySet())
+        assertTrue(old.text, old.lines.contains("  B1 \"Lectures\": the plan asked for 7 in this period, done 12, ahead by 5."))
+        assertEquals(f, ReviewFacts.fromJson(ReviewFacts.toJson(f)))
+    }
 }

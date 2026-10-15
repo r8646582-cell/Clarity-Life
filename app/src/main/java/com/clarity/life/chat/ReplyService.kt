@@ -47,7 +47,18 @@ class ReplyService : Service() {
     private val guard = CoroutineExceptionHandler { _, e ->
         com.clarity.life.CrashLog.record(this, e)
         bus.fail("Something in the app went wrong (${e.javaClass.simpleName}). Details are in Settings, at the bottom.")
-        bus.end(coachMessageId)
+        val id = coachMessageId
+        val kept = partial.toString()
+        // The row must not stay streaming: Talk would show "thinking" for ever and hold Send. Its own scope,
+        // because this service's scope is cancelled as the service stops.
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                chat.settleIfStreaming(id, kept, AiFailure("unexpected", "the reply could not be finished", retryable = true), System.currentTimeMillis())
+            } catch (e2: Exception) {
+                com.clarity.life.CrashLog.record(this@ReplyService, e2)
+            }
+        }
+        bus.end(id)
         stopSelf()
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + guard)
@@ -101,7 +112,19 @@ class ReplyService : Service() {
 
     private suspend fun run(conversationId: Long, messageId: Long) {
         val now = System.currentTimeMillis()
-        val endpoint = chat.endpointForChat()
+        // Reading the key can throw (the Android Keystore fails now and then on some phones): that ends the
+        // reply as failed, with Try again, like any other failure.
+        val endpoint = try {
+            chat.endpointForChat()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            com.clarity.life.CrashLog.record(this, e)
+            chat.failCoachReply(messageId, AiFailure("no_key_read", "the API key could not be read", retryable = true), now)
+            bus.fail("The API key could not be read. Try again; if it keeps failing, paste it again in Settings, Coach.")
+            finish(messageId)
+            return
+        }
         if (endpoint == null) {
             chat.failCoachReply(
                 messageId,
@@ -183,8 +206,10 @@ class ReplyService : Service() {
             // Error, and catching only Exception let one close the whole app on the first chat.
             com.clarity.life.CrashLog.record(this, e)
             bus.fail("Something in the app went wrong (${e.javaClass.simpleName}). Details are in Settings, at the bottom.")
-            chat.failCoachReply(
+            // Only a row still streaming is settled: a reply already stored as complete stays complete.
+            chat.settleIfStreaming(
                 messageId,
+                partial.toString(),
                 AiFailure("unexpected", "the reply could not be finished", retryable = true),
                 System.currentTimeMillis(),
             )

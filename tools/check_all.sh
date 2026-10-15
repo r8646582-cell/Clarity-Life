@@ -10,10 +10,16 @@ python3 tools/test_planner.py
 python3 tools/test_textcheck.py
 python3 tools/test_promise_times.py
 python3 tools/test_plan_dates.py
+python3 tools/test_recall_time.py
+python3 tools/test_retrieval.py
 python3 tools/test_story.py
 python3 tools/test_context.py
 python3 tools/test_appliers.py
 python3 tools/test_bench.py
+python3 tools/test_backup_format.py
 python3 tools/check_schema.py
+python3 tools/query_plans.py
 python3 tools/mutation_check.py
+python3 tools/test_memory_exam2.py
+python3 tools/test_memory_floor.py
 echo "ALL CONTRACT CHECKS PASSED"

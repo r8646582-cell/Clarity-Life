@@ -59,7 +59,7 @@ class ApplierTest {
     @Test
     fun vectorCountMatchesThePythonReference() {
         // A guard against the file failing to load silently: the contract has 69 cases today (7 for the morning brief).
-        assertEquals(69, Vectors.cases("contracts/applier_vectors.json").size)
+        assertEquals(84, Vectors.cases("contracts/applier_vectors.json").size)
     }
 
     private fun call(fn: String, args: JsonObject, fixtures: JsonObject): JsonObject {
@@ -70,6 +70,9 @@ class ApplierTest {
         return when (fn) {
             "apply_reflection" -> result(ReflectionApplier.apply(args.str("raw"), reflectionContext(ctx())))
             "apply_gardening" -> result(GardeningApplier.apply(args.str("raw"), gardeningContext(ctx())))
+            "gardening_clusters" -> obj(
+                "groups" to GardeningInput.clusters(notes(args["notes"]?.jsonObject), vectors(ctx())),
+            )
             "check_text_job" -> {
                 val r = TextJobCheck.check(
                     args.str("kind"), args.str("text"), args.strings("inputs"), args.strings("his_messages"),
@@ -129,13 +132,24 @@ class ApplierTest {
         people = c.strings("people"),
         profile = profile(c["profile"]?.jsonObject),
         inFocus = c["in_focus"]?.jsonPrimitive?.content == "true",
+        vectors = vectors(c),
     )
 
     private fun gardeningContext(c: JsonObject) = GardeningContext(
         notes = notes(c["notes"]?.jsonObject),
         people = c.strings("people").map { it.toLong() }.toSet(),
         profile = profile(c["profile"]?.jsonObject),
+        deletedNotes = c.strings("deleted_notes"),
+        vectors = vectors(c),
     )
+
+    /** "vectors": {text: [floats]}, the on-phone model's vectors the case gives; a text without one has none. */
+    private fun vectors(c: JsonObject): (String) -> FloatArray? {
+        val m = (c["vectors"]?.jsonObject ?: JsonObject(emptyMap())).mapValues { (_, v) ->
+            v.jsonArray.map { it.jsonPrimitive.content.toFloat() }.toFloatArray()
+        }
+        return { m[it] }
+    }
 
     private fun obj(vararg pairs: Pair<String, Any?>): JsonObject = json(mapOf(*pairs)).jsonObject
 

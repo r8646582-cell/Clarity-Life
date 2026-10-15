@@ -95,6 +95,26 @@ class PlannerRepositoryTest {
         assertEquals(1, db.planner().checkinsOf(t).size)
     }
 
+    /** Max plan Phase 6: every change he taps is kept with its day, so what the plan asked for stays known. */
+    @Test
+    fun aTargetsChangesAreKeptWithTheirDay() = runBlocking {
+        val later = 1_792_065_600_000L // 15 Oct 2026, 12:00 UTC: five days after the target started
+        val t = lectures(planner.createGoal("Lectures", "studies", "custom", null, now))
+        assertEquals(listOf("2026-10-10" to 2.0), db.planner().targetVersions(listOf(t)).map { it.fromDay to it.target })
+        val old = planner.oldTargets().first { it.id == t }
+        planner.applyTargetChange(PlanApply.TargetStep.Change(old, target = 3.0), later)
+        val day = planner.today(later).toString()
+        assertEquals(listOf("2026-10-10" to 2.0, day to 3.0), db.planner().targetVersions(listOf(t)).map { it.fromDay to it.target })
+        // A change of its end alone is not a new version; pausing it is.
+        planner.applyTargetChange(PlanApply.TargetStep.Change(planner.oldTargets().first { it.id == t }, end = LocalDate.parse("2026-12-01")), later)
+        assertEquals(2, db.planner().targetVersions(listOf(t)).size)
+        planner.setTargetStatus(t, "paused", LocalDate.parse(day))
+        assertEquals("paused", db.planner().targetVersions(listOf(t)).last().status)
+        assertEquals(2, db.planner().targetVersions(listOf(t)).size)  // same day: the pause replaces that day's row
+        val tracker = planner.tracker(LocalDate.parse(day))
+        assertTrue("a paused target is not live", tracker.targets.none { it.id == t })
+    }
+
     @Test
     fun savingASyllabusPlanTwiceMakesVersionsAndReusesTheTarget() = runBlocking {
         val g = planner.createGoal("Clear the lectures", "studies", "custom", LocalDate.parse("2026-11-20"), now)
