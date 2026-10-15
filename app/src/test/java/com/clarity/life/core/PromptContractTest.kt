@@ -59,7 +59,7 @@ class PromptContractTest {
     @Test
     fun theContractItselfIsTheOneInTheRepo() {
         // A sanity check that the Kotlin reader sees the same contract the Python checker does.
-        assertEquals(19, contract.blockNames.size) // LAST_CHAT joined on 14 Oct 2026
+        assertEquals(20, contract.blockNames.size) // LAST_CHAT joined on 14 Oct 2026, MEMORY_UPDATES on 15 Oct
         assertTrue(contract.prompts.containsKey("persona.md"))
         assertTrue(contract.bannedPhrasesForReplies.isNotEmpty())
         assertTrue(contract.part1MaxEstimatedTokens > 0)

@@ -477,6 +477,51 @@
    }
   },
   {
+   "name": "user turn: MEMORY_UPDATES sits after EARLIER and before LAST_CHAT",
+   "fn": "build_user_turn",
+   "args": {
+    "part3_blocks": [
+     {
+      "name": "LAST_CHAT",
+      "items": [
+       {
+        "text": "Your other conversation \"Nap\"",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "MEMORY_UPDATES",
+      "items": [
+       {
+        "text": "Added to what you know since this conversation began",
+        "drop": 0
+       },
+       {
+        "text": "Note, new: note 3, pattern, guess: Walks help",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "EARLIER",
+      "items": [
+       {
+        "text": "They planned two lectures.",
+        "drop": 0
+       }
+      ]
+     }
+    ],
+    "text": "hi"
+   },
+   "expect": {
+    "content": "## EARLIER\nThey planned two lectures.\n\n## MEMORY_UPDATES\nAdded to what you know since this conversation began\nNote, new: note 3, pattern, guess: Walks help\n\n## LAST_CHAT\nYour other conversation \"Nap\"\n\n## MESSAGE\nhi",
+    "dropped": 0,
+    "over_budget": false
+   }
+  },
+  {
    "name": "user turn: no volatile blocks",
    "fn": "build_user_turn",
    "args": {
@@ -695,6 +740,63 @@
    "expect": {
     "role": "user",
     "content": "[Fri 9 Oct, 21:40] ok"
+   }
+  },
+  {
+   "name": "history: a coach reply with no card ends with the no-card line when asked",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Rest tonight.",
+    "no_card_line": true
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Rest tonight.\n[[cards: none]]"
+   }
+  },
+  {
+   "name": "history: a coach reply with a card never gets the no-card line",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Here it is.",
+    "cards": [
+     "{\"type\":\"mode\",\"to\":\"plan\"}"
+    ],
+    "no_card_line": true
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Here it is.\n[[suggest: {\"type\":\"mode\",\"to\":\"plan\"}]]"
+   }
+  },
+  {
+   "name": "history: a reply whose only card was left out (brackets) gets the no-card line",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Okay.",
+    "cards": [
+     "{\"type\":\"note\",\"text\":\"a ]] b\"}"
+    ],
+    "no_card_line": true
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Okay.\n[[cards: none]]"
+   }
+  },
+  {
+   "name": "history: without the flag nothing is added",
+   "fn": "history_message",
+   "args": {
+    "role": "coach",
+    "text": "Rest tonight."
+   },
+   "expect": {
+    "role": "assistant",
+    "content": "Rest tonight."
    }
   }
  ]

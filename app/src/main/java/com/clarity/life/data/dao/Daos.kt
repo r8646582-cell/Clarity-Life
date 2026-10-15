@@ -82,7 +82,7 @@ interface ConversationDao {
     @Query("UPDATE conversation SET prefix_json = NULL, prefix_day = NULL")
     suspend fun clearAllPrefixes()
 
-    /** A reflection was applied: every other conversation builds its frozen context again, with the new summary. */
+    /** A reflection changed a focus summary: every other conversation builds its frozen context again (FOCUS). */
     @Query("UPDATE conversation SET prefix_json = NULL, prefix_day = NULL WHERE id != :exceptId AND prefix_json IS NOT NULL")
     suspend fun clearPrefixesExcept(exceptId: Long)
 

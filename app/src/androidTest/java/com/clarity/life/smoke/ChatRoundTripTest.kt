@@ -79,4 +79,50 @@ class ChatRoundTripTest {
             db.close()
         }
     }
+
+    /**
+     * Improvement report C3: a note another conversation's reflection adds after this conversation's frozen
+     * part was built comes in MEMORY_UPDATES with the next message, and the frozen part stays byte for byte.
+     */
+    @Test
+    fun aNoteLearnedElsewhereArrivesWithoutRebuildingTheFrozenPart() = runBlocking {
+        val secrets = SecretStore(context)
+        val db = androidx.room.Room.inMemoryDatabaseBuilder(context, com.clarity.life.data.ClarityDatabase::class.java).build()
+        try {
+            val http = OkHttpClient()
+            val settings = SettingsRepository(db.settings(), secrets)
+            val chat = ChatRepository(
+                db = db,
+                settings = settings,
+                prompts = PromptStore(context, db.promptOverrides()),
+                mainClient = OpenAiCompatibleClient(http),
+                anthropicClient = AnthropicClient(http),
+                search = com.clarity.life.memory.SearchIndex(db, com.clarity.life.memory.TestEmbedder.shared),
+                planner = com.clarity.life.planner.PlannerRepository(db, settings),
+            )
+            val now = System.currentTimeMillis()
+            val id = chat.startConversation("free", null, now)
+            chat.addHisMessage(id, "I keep putting off my chemistry revision.", now)
+            val reply = chat.openCoachReply(id, now, "test-model")
+            val first = chat.buildPacket(id, reply, now)
+            assertTrue(!first.request.messages.last().content.contains("## MEMORY_UPDATES"))
+            chat.closeCoachReply(id, reply, "What is the first small step?", "free", com.clarity.life.core.KnownIds(), "stop", null, now)
+
+            db.memory().insertNote(
+                com.clarity.life.data.entity.NoteRow(
+                    kind = "what_helps", text = "A walk before revision helps", confidence = "guess",
+                    firstSeen = "2026-10-15", lastSeen = "2026-10-15", createdAt = System.currentTimeMillis() + 1,
+                ),
+            )
+            val later = now + 60_000
+            chat.addHisMessage(id, "ok what now", later)
+            val second = chat.buildPacket(id, chat.openCoachReply(id, later, "test-model"), later)
+            assertEquals("the frozen part is not built again", first.request.system, second.request.system)
+            val turn = second.request.messages.last().content
+            assertTrue(turn, turn.contains("## MEMORY_UPDATES"))
+            assertTrue(turn, turn.contains("Note, new: note") && turn.contains("A walk before revision helps"))
+        } finally {
+            db.close()
+        }
+    }
 }

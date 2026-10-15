@@ -15,8 +15,8 @@ import math
 
 PART2_ORDER = ["FLAGS", "PROFILE", "PEOPLE", "NOTES", "FOCUS", "CHAPTERS", "RECENT_SESSIONS", "IDEAS_RECENT",
                "LETTER", "REVIEW"]
-PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
-               "RELEVANT_PAST"]
+PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "MEMORY_UPDATES",
+               "LAST_CHAT", "RELEVANT_PAST"]
 NEVER_TRIM = {"FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
               "CARD_RESULTS"}
 MESSAGE_HEADER = "## MESSAGE"
@@ -117,12 +117,19 @@ def build_user_turn(part3_blocks, text):
     return {"content": (blocks + "\n\n" if blocks else "") + body, "dropped": dropped, "over_budget": over}
 
 
-def history_message(role, text, stamp=None, cards=None):
+NO_CARD_LINE = "[[cards: none]]"
+
+
+def history_message(role, text, stamp=None, cards=None, no_card_line=False):
     """A stored message as it is sent again later. His messages carry the stamp the app wrote, for example
     [Fri 9 Oct, 21:40]. Coach messages go as they were shown, escaped, and then the cards that reply offered
     are put back as card lines, from the stored, already validated card JSON. Without them the coach reads its
     own past replies as "tap it below" with no card line, copies that, and stops sending cards. A stored card
-    that holds a bracket pair is left out rather than escaped, so a card line is never mangled."""
+    that holds a bracket pair is left out rather than escaped, so a card line is never mangled.
+
+    With no_card_line (improvement report, C2), a coach reply that offered no card ends with the "no card"
+    signal [[cards: none]], for the same reason: the coach sees its past replies end with it and keeps
+    sending it. The app passes it for replies whose words do not point at a button."""
     if role == "user":
         return {"role": "user", "content": "[%s] %s" % (stamp, escape(text)) if stamp else escape(text)}
     if role == "coach":
@@ -131,5 +138,7 @@ def history_message(role, text, stamp=None, cards=None):
             if "[[" in payload or "]]" in payload or "\n" in payload or "\r" in payload:
                 continue
             lines.append("[[suggest: %s]]" % payload)
+        if no_card_line and len(lines) == (1 if text.strip() else 0):
+            lines.append(NO_CARD_LINE)
         return {"role": "assistant", "content": "\n".join(lines)}
     raise ContextError("bad role")

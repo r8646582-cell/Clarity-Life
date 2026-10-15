@@ -120,7 +120,9 @@ class ReflectionApplyTest {
         assertEquals(msg, c.reflectedUpToMessageId)
         assertEquals("the placeholder title is replaced", "Mornings and the exam", c.title)
         assertEquals("succeeded", db.jobs().byKey("reflection:$conv:$msg")!!.status)
-        assertNull("the other conversation builds its memory again, with the new summary", db.conversations().get(other)!!.prefixJson)
+        // Improvement report C3: the other conversation keeps its frozen part (and the provider's cache); the new
+        // summary and notes reach it in MEMORY_UPDATES with its next message.
+        assertEquals("{\"system\":\"before\"}", db.conversations().get(other)!!.prefixJson)
         assertNotNull("the reflected one keeps its cache: its messages are in its own history", c.prefixJson)
 
         // The same work again changes nothing.

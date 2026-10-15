@@ -36,8 +36,8 @@ object ContextBuilder {
         "LETTER", "REVIEW",
     )
     val PART3_ORDER = listOf(
-        "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
-        "RELEVANT_PAST",
+        "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "MEMORY_UPDATES",
+        "LAST_CHAT", "RELEVANT_PAST",
     )
     val NEVER_TRIM = setOf(
         "FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
@@ -251,16 +251,28 @@ object ContextBuilder {
      * the coach reads its own past replies as "tap it below" with no card line, copies that, and stops sending
      * cards. A stored card that holds a bracket pair or a line break is left out, so a card line is never mangled.
      */
-    fun historyMessage(role: String, text: String, stamp: String? = null, cards: List<String> = emptyList()): HistoryMessage =
+    /** The "no card" signal (improvement report, C2), as [CardParser] reads it and the history repeats it. */
+    const val NO_CARD_LINE = "[[cards: none]]"
+
+    fun historyMessage(
+        role: String,
+        text: String,
+        stamp: String? = null,
+        cards: List<String> = emptyList(),
+        /** A reply that offered no card ends with [NO_CARD_LINE] (tools/context.py history_message). */
+        noCardLine: Boolean = false,
+    ): HistoryMessage =
         when (role) {
             "user" -> HistoryMessage("user", if (stamp != null) "[$stamp] ${escape(text)}" else escape(text))
             "coach" -> {
                 val lines = mutableListOf<String>()
                 if (text.isNotBlank()) lines.add(escape(text))
+                val proseLines = lines.size
                 for (payload in cards) {
                     if (payload.contains("[[") || payload.contains("]]") || payload.contains('\n') || payload.contains('\r')) continue
                     lines.add("[[suggest: $payload]]")
                 }
+                if (noCardLine && lines.size == proseLines) lines.add(NO_CARD_LINE)
                 HistoryMessage("assistant", lines.joinToString("\n"))
             }
             else -> throw ContextError("bad role")

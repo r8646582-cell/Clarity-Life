@@ -69,6 +69,7 @@ class MemoryRepository @Inject constructor(
         var skipped = 0
         var title = ""
         var summary = conversation.summary
+        var focusChanged = false
         for (op in ops) {
             val done: Boolean = when (op) {
                 is JobOp.ConversationSet -> { title = op.title; true }
@@ -109,6 +110,7 @@ class MemoryRepository @Inject constructor(
                     val focusId = conversation.focusId
                     if (focusId != null && dao.focus(focusId) != null) {
                         dao.setFocusSummary(focusId, op.summary, now)
+                        focusChanged = true
                         true
                     } else {
                         false
@@ -134,8 +136,10 @@ class MemoryRepository @Inject constructor(
         }
         if (conversation.offTheRecord == 0) search.indexSummary(conversationId, summary)
         // A conversation started before this summary existed (often seconds after this one ended, while it was
-        // still being written) would otherwise not see it, or the notes it brought, until tomorrow.
-        db.conversations().clearPrefixesExcept(conversationId)
+        // still being written) sees it, and the notes, people and profile lines it brought, in MEMORY_UPDATES with
+        // its next message (improvement report C3), so its frozen part keeps the provider's cache. Only a changed
+        // focus summary still builds the other frozen parts again: the FOCUS block is not in MEMORY_UPDATES.
+        if (focusChanged) db.conversations().clearPrefixesExcept(conversationId)
         db.jobs().setState(
             id = job.id,
             status = StateMachines.move(StateMachines.JOB, job.status, "succeeded"),

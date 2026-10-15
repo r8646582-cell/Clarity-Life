@@ -1,5 +1,6 @@
 package com.clarity.life.core
 
+import com.clarity.life.core.Vectors.boolOr
 import com.clarity.life.core.Vectors.int
 import com.clarity.life.core.Vectors.intOr
 import com.clarity.life.core.Vectors.json
@@ -104,6 +105,7 @@ class ContextBuilderTest {
                 args.str("text"),
                 args.strOrNull("stamp"),
                 args["cards"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty(),
+                args.boolOr("no_card_line", false),
             )
             json(mapOf("role" to m.role, "content" to m.content))
         }

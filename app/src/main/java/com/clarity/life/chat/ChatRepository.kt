@@ -13,6 +13,7 @@ import com.clarity.life.core.KnownIds
 import com.clarity.life.core.LastChat
 import com.clarity.life.core.LiveText
 import com.clarity.life.core.MemoryBlocks
+import com.clarity.life.core.MemoryUpdates
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.Planner
 import com.clarity.life.core.Spans
@@ -303,11 +304,14 @@ class ChatRepository @Inject constructor(
         val boundary = settings.dayBoundaryHour()
         val today = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, boundary).toString()
 
-        var prefix = conversation.prefixJson?.let { readPrefix(it) }
-        if (prefix == null || conversation.prefixDay != today) {
-            prefix = Spans.span("packet: frozen part built") { buildPrefix(conversation, newText) }
-            conversations.setPrefix(conversationId, writePrefix(prefix), today)
+        var frozen = conversation.prefixJson?.let { readPrefix(it) }
+        // A frozen part stored before MEMORY_UPDATES existed has no stamp: built again once.
+        if (frozen?.stamp == null || conversation.prefixDay != today) {
+            frozen = Spans.span("packet: frozen part built") { buildPrefix(conversation, newText) }
+            conversations.setPrefix(conversationId, writePrefix(frozen), today)
         }
+        val prefix = frozen.system
+        val stamp = frozen.stamp!!
 
         val before = earlier ?: Spans.span("packet: history read") { messages.ofConversation(conversationId) }.let { all ->
             val last = all.lastOrNull { it.role == "user" || it.content.isNotBlank() }
@@ -330,6 +334,9 @@ class ChatRepository @Inject constructor(
                     null
                 },
                 cards = if (row.role == "coach") offered[row.id].orEmpty() else emptyList(),
+                // A past reply with no card ends with the "no card" signal, so the coach keeps using it
+                // (improvement report, C2); not one whose words pointed at a button it never sent.
+                noCardLine = row.role == "coach" && !com.clarity.life.core.CardTalk.pointsAtAButton(row.content),
             )
         }
         val counts = history.map { ContextBuilder.estimateTokens(it.content) }
@@ -373,7 +380,17 @@ class ChatRepository @Inject constructor(
                 val earlierHis = stored.filter { it.role == "user" }.map { it.content }
                 // Active notes the frozen NOTES block had no room for can still come, when they match.
                 val sent = MemoryBlocks.idsIn(prefix)
-                val leftOut = Spans.span("packet: notes left out") { db.memory().activeNotes().filter { it.id !in sent } }
+                val active = Spans.span("packet: active notes read") { db.memory().activeNotes() }
+                // What the shared memory gained since the frozen part was built (improvement report C3). Like
+                // retrieval, it can never be what fails a reply: without it the coach has this morning's memory.
+                try {
+                    add(Spans.span("packet: MEMORY_UPDATES") { memoryUpdates(conversationId, prefix, stamp, active, today) })
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    db.diagnostics().log(ErrorLogRow(at = now, area = "chat", code = "memory_updates_failed", detail = ""))
+                }
+                val leftOut = active.filter { it.id !in sent }
                 add(Spans.span("packet: RELEVANT_PAST") { search.relevantPast(conversationId, newText, tz, boundary, now, earlierHis, conversation.title, leftOut) })
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -401,7 +418,66 @@ class ChatRepository @Inject constructor(
         )
     }
 
-    private suspend fun buildPrefix(conversation: ConversationRow, text: String): String {
+    /** The stored frozen part: the system message and its [MemoryUpdates.Stamp] (null in one stored before it). */
+    private class Frozen(val system: String, val stamp: MemoryUpdates.Stamp?)
+
+    /** MEMORY_UPDATES: read only what changed; evidence only for the notes that go in it. */
+    private suspend fun memoryUpdates(
+        conversationId: Long,
+        prefix: String,
+        stamp: MemoryUpdates.Stamp,
+        active: List<com.clarity.life.data.entity.NoteRow>,
+        today: String,
+    ): com.clarity.life.core.Block {
+        val m = db.memory()
+        val day = LocalDate.parse(today)
+        fun ago(d: String) = runCatching { TimeFacts.ago(LocalDate.parse(d), day) }.getOrNull()
+        fun note(n: com.clarity.life.data.entity.NoteRow, evidence: List<MemoryBlocks.Evidence>) = MemoryUpdates.NoteNow(
+            MemoryBlocks.Note(n.id, n.kind, n.confidence, n.timesSeen, n.firstSeen, n.lastSeen, n.text, evidence),
+            n.createdAt,
+        )
+        val sent = MemoryBlocks.idsIn(prefix)
+        val notes = active.map { note(it, emptyList()) }
+            .filter { MemoryUpdates.noteNeeded(prefix, sent, stamp, it) }
+            .map { n ->
+                note(active.first { it.id == n.note.id }, m.evidenceOf(n.note.id).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) })
+            }
+        val past = m.profilePast().groupBy { it.key }.mapValues { (_, rows) -> rows.maxBy { it.id } }
+        return MemoryUpdates.block(
+            prefix,
+            stamp,
+            notes,
+            m.people().map { MemoryUpdates.PersonNow(MemoryBlocks.Person(it.name, it.relation, it.notes, it.updatedAt)) },
+            m.profile().map {
+                val before = past[it.key]
+                MemoryUpdates.ProfileNow(
+                    MemoryBlocks.Profile(it.key, it.value, it.confirmed == 1, it.sinceDay, before?.value, before?.untilDay),
+                    it.updatedAt,
+                )
+            },
+            recentSessions(conversationId),
+        )
+    }
+
+    /** The recent sessions as RECENT_SESSIONS and MEMORY_UPDATES write them, newest first. */
+    private suspend fun recentSessions(conversationId: Long): List<MemoryUpdates.SessionNow> {
+        val tz = settings.timeZone()
+        val boundary = settings.dayBoundaryHour()
+        val today = Planner.dayKey(Instant.now().toString(), tz, boundary)
+        return db.memory().recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS).map { c ->
+            val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
+            val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
+            MemoryUpdates.SessionNow(
+                c.id,
+                MemoryBlocks.Session(day, c.title, c.summary, runCatching { TimeFacts.ago(LocalDate.parse(day), today) }.getOrNull(), span),
+            )
+        }
+    }
+
+    private suspend fun buildPrefix(conversation: ConversationRow, text: String): Frozen {
+        // Taken before anything is read: whatever is written while this builds counts as new in MEMORY_UPDATES.
+        val builtAt = System.currentTimeMillis()
+        val sessions = recentSessions(conversation.id)
         val name = settings.promptName()
         val allowed = CardParser.CHAT_TYPES[conversation.chatType]?.joinToString(", ").orEmpty()
         val persona = prompts.fill(prompts.text(PromptStore.PERSONA), mapOf("USER_NAME" to name))
@@ -425,14 +501,14 @@ class ChatRepository @Inject constructor(
                 chatType = conversation.chatType,
                 offTheRecord = conversation.offTheRecord == 1,
             ),
-        ) + focusBlocks(conversation) + Spans.span("frozen: memory blocks") { memoryBlocks(conversation.id, text) } + openedFromBlocks(conversation)
+        ) + focusBlocks(conversation) + Spans.span("frozen: memory blocks") { memoryBlocks(text, sessions) } + openedFromBlocks(conversation)
         val built = Spans.span("frozen: system message assembled") { Blocks.systemMessage(persona, examples, cardsPrompt, mode, part2) }
         if (built.overBudget) {
             db.diagnostics().log(
                 ErrorLogRow(at = 0, area = "chat", code = "context_over_budget", detail = ""),
             )
         }
-        return built.system
+        return Frozen(built.system, MemoryUpdates.stamp(builtAt, sessions))
     }
 
     /** FOCUS, when the conversation belongs to one (contracts/context.md); frozen with the prefix. */
@@ -461,7 +537,7 @@ class ChatRepository @Inject constructor(
      * PROFILE, PEOPLE, NOTES, RECENT_SESSIONS and IDEAS_RECENT: one shared memory for every conversation
      * (spec section 3). Read when the prefix is built, so it is frozen for the conversation's day.
      */
-    private suspend fun memoryBlocks(conversationId: Long, text: String): List<com.clarity.life.core.Block> {
+    private suspend fun memoryBlocks(text: String, recent: List<MemoryUpdates.SessionNow>): List<com.clarity.life.core.Block> {
         val m = db.memory()
         val tz = settings.timeZone()
         val boundary = settings.dayBoundaryHour()
@@ -476,11 +552,7 @@ class ChatRepository @Inject constructor(
         }
         // Dated by the last message, with the clock times: "today" alone left a plan made at 9 am and a message
         // at 11 am in no order the coach could see.
-        val sessions = Spans.span("frozen: recent sessions read") { m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS) }.map { c ->
-            val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
-            val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
-            MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
-        }
+        val sessions = recent.map { it.session }
         return listOf(
             MemoryBlocks.profile(
                 m.profile().let { entries ->
@@ -598,15 +670,30 @@ class ChatRepository @Inject constructor(
         return row.type
     }
 
-    private fun readPrefix(stored: String): String? = try {
-        (json.parseToJsonElement(stored) as? JsonObject)
-            ?.get("system")?.let { (it as? JsonPrimitive)?.contentOrNull }
+    /** {"system": ..., "built_at": ms, "sessions": {"conversation id": key}}; the last two since C3. */
+    private fun readPrefix(stored: String): Frozen? = try {
+        val obj = json.parseToJsonElement(stored) as? JsonObject
+        val system = obj?.get("system")?.let { (it as? JsonPrimitive)?.contentOrNull }
+        val builtAt = (obj?.get("built_at") as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
+        val sessions = (obj?.get("sessions") as? JsonObject)?.mapNotNull { (k, v) ->
+            val id = k.toLongOrNull()
+            val key = (v as? JsonPrimitive)?.contentOrNull?.toIntOrNull()
+            if (id != null && key != null) id to key else null
+        }?.toMap()
+        system?.let { Frozen(it, if (builtAt != null && sessions != null) MemoryUpdates.Stamp(builtAt, sessions) else null) }
     } catch (e: Exception) {
         null
     }
 
-    private fun writePrefix(system: String): String =
-        JsonObject(mapOf("system" to JsonPrimitive(system))).toString()
+    private fun writePrefix(frozen: Frozen): String = JsonObject(
+        buildMap {
+            put("system", JsonPrimitive(frozen.system))
+            frozen.stamp?.let { s ->
+                put("built_at", JsonPrimitive(s.builtAt))
+                put("sessions", JsonObject(s.sessions.entries.associate { (k, v) -> k.toString() to JsonPrimitive(v) }))
+            }
+        },
+    ).toString()
 
     /** Adds one call's tokens to this month's total and to its [kind] (one of [com.clarity.life.data.UsageKind]). */
     suspend fun recordUsage(kind: String, usage: com.clarity.life.ai.Usage, now: Long) =
