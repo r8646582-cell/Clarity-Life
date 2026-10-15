@@ -173,6 +173,25 @@ object Planner {
     private fun weekday(d: LocalDate): Int = d.dayOfWeek.value - 1
 
     /**
+     * A stored day key ("2026-10-14") as a date. The same as LocalDate.parse, read directly (Max plan Phase 5):
+     * the general parser cost about a second for ten years of check-ins on a slower phone. Anything else goes
+     * to LocalDate.parse, so a bad key fails exactly as before.
+     */
+    fun day(key: String): LocalDate {
+        if (key.length == 10 && key[4] == '-' && key[7] == '-') {
+            var ok = true
+            for (i in 0 until 10) if (i != 4 && i != 7 && key[i] !in '0'..'9') ok = false
+            if (ok) {
+                val y = key.substring(0, 4).toInt()
+                val m = key.substring(5, 7).toInt()
+                val d = key.substring(8, 10).toInt()
+                if (m in 1..12 && d in 1..java.time.YearMonth.of(y, m).lengthOfMonth()) return LocalDate.of(y, m, d)
+            }
+        }
+        return LocalDate.parse(key)
+    }
+
+    /**
      * The local date a UTC instant belongs to, shifted by the day boundary hour.
      * The shift is wall-clock arithmetic, so a clock change never moves a result to another date.
      */
@@ -350,16 +369,28 @@ object Planner {
         var end = minOf(days.min().plusDays((WINDOW - 1).toLong()), lastEnd)
         var best: Double? = null
         // Each window reads only the check-ins inside it (Max plan Phase 5): ten years of daily answers made this
-        // about 13 million steps. They go to [window] in their given order, so every sum is the same as before.
-        val byDay = checkins.withIndex().sortedBy { it.value.day }
+        // about 13 million steps. The ones inside are counted in their given order, as [window] counts them, so
+        // every sum is the same to the last digit (BestPaceTest compares it with the plain way).
+        val inOrder = checkins.zipWithNext().all { (a, b) -> !b.day.isBefore(a.day) }
+        val byDay = if (inOrder) checkins.withIndex().toList() else checkins.withIndex().sortedBy { it.value.day }
         val sortedDays = byDay.map { it.value.day }
+        val weekdays = (parseSchedule(schedule) as? Schedule.Days)?.weekdays
         while (!end.isAfter(lastEnd)) {
             val first = end.minusDays((WINDOW - 1).toLong())
-            val inside = byDay.subList(firstAtOrAfter(sortedDays, first), firstAtOrAfter(sortedDays, end.plusDays(1)))
-                .sortedBy { it.index }.map { it.value }
-            val w = window(inside, schedule, first, end, restDates)
-            if (w.answered >= MIN_ANSWERED) {
-                val p = w.amount / w.answered
+            var inside: List<IndexedValue<CheckIn>> =
+                byDay.subList(firstAtOrAfter(sortedDays, first), firstAtOrAfter(sortedDays, end.plusDays(1)))
+            if (!inOrder) inside = inside.sortedBy { it.index }
+            // As [window]: not a rest answer, and on a scheduled day (a fixed weekday that is not a rest day).
+            var answered = 0
+            var amount = 0.0
+            for ((_, c) in inside) {
+                if (c.level == "rest") continue
+                if (weekdays != null && (weekday(c.day) !in weekdays || c.day in restDates)) continue
+                answered++
+                amount += c.amount
+            }
+            if (answered >= MIN_ANSWERED) {
+                val p = amount / answered
                 if (best == null || p > best) best = p
             }
             end = end.plusDays(1)

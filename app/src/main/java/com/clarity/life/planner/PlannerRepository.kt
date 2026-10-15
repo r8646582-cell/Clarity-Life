@@ -335,7 +335,7 @@ class PlannerRepository @Inject constructor(
                     offTargets = off.map { t -> target(t, emptyList()) },
                 )
             },
-            restDays = dao.restDays().map { LocalDate.parse(it.dayKey) }.toSet(),
+            restDays = dao.restDays().map { Planner.day(it.dayKey) }.toSet(),
             availability = db.memory().profileEntry(AVAILABILITY)?.value?.takeIf { it.isNotBlank() } ?: "not set",
             replanFlag = dao.latestWeeklyReplanFlag() == 1,
             hours = settings.planHours(),
@@ -436,7 +436,7 @@ class PlannerRepository @Inject constructor(
         const val AVAILABILITY = "availability"
 
         fun model(c: CheckinRow) = CheckIn(
-            LocalDate.parse(c.dayKey), c.level, c.amount, c.reason,
+            Planner.day(c.dayKey), c.level, c.amount, c.reason,
             minute = c.enteredMinute?.takeIf { c.enteredDay == c.dayKey },
         )
 

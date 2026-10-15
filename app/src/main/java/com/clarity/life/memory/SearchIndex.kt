@@ -577,22 +577,26 @@ class SearchIndex @Inject constructor(
         // One read per word, so the newest matches of a common word never crowd out a rare one.
         val rows = LinkedHashMap<Pair<String, String>, SearchDocRow>()
         val found = HashMap<String, Int>()
-        for (term in terms) {
-            val hits = try {
-                dao.match(Retrieval.termQuery(term), r.conversationId, Retrieval.CANDIDATES_PER_TERM)
-            } catch (e: Exception) {
-                // A query FTS cannot read is a reason to send nothing for that word, never to fail the reply.
-                emptyList()
+        Spans.span("keyword: words looked up in the index") {
+            for (term in terms) {
+                val hits = try {
+                    dao.match(Retrieval.termQuery(term), r.conversationId, Retrieval.CANDIDATES_PER_TERM)
+                } catch (e: Exception) {
+                    // A query FTS cannot read is a reason to send nothing for that word, never to fail the reply.
+                    emptyList()
+                }
+                found[term] = hits.size
+                for (h in hits) rows.putIfAbsent(h.kind to h.refId, h)
             }
-            found[term] = hits.size
-            for (h in hits) rows.putIfAbsent(h.kind to h.refId, h)
         }
         val keys = rows.values.mapNotNull { h -> h.refId.toLongOrNull()?.let { Key(h.kind, it) } }
-        val docs = r.resolve(keys)
+        val docs = Spans.span("keyword: candidates read") { r.resolve(keys) }
         // The key goes with its candidate through the scoring, so two equal texts can never be confused.
         val tagged = keys.mapNotNull { k -> docs[k]?.let { d -> d.candidate.copy(label = k.toString()) } }
-        val rare = Retrieval.rareTerms(terms, found, indexSize())
-        return Retrieval.choose(tagged, terms, Retrieval.FUSE_DEPTH, rare).mapNotNull { Key.parse(it.candidate.label) }
+        val rare = Spans.span("keyword: index size") { Retrieval.rareTerms(terms, found, indexSize()) }
+        return Spans.span("keyword: candidates scored") {
+            Retrieval.choose(tagged, terms, Retrieval.FUSE_DEPTH, rare).mapNotNull { Key.parse(it.candidate.label) }
+        }
     }
 
     /**

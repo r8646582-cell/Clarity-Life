@@ -184,8 +184,14 @@ object Retrieval {
      */
     fun choose(candidates: List<Candidate>, terms: List<String>, max: Int = FUSE_DEPTH, rare: Set<String> = emptySet()): List<Hit> {
         val rareStems = rare.map(::stem).toSet()
-        return candidates.map { Hit(it, score(it.text, terms)) }
-            .filter { strongEnough(it.score, terms.size) || (it.score == 1 && stems(it.candidate.text).any { s -> s in rareStems }) }
+        // As [score], with each text's stems and the words' stems made once (Max plan Phase 5: up to 800
+        // candidates a search, and each was read into stems two or three times).
+        val termStems = terms.map(::stem)
+        return candidates.mapNotNull { c ->
+            val textStems = stems(c.text)
+            val score = termStems.count { it in textStems }
+            if (strongEnough(score, terms.size) || (score == 1 && textStems.any { s -> s in rareStems })) Hit(c, score) else null
+        }
             .distinctBy { TextCheck.norm(it.candidate.text) }
             .sortedWith(compareByDescending<Hit> { it.score }.thenByDescending { it.candidate.at })
             .take(max)
@@ -236,13 +242,21 @@ object Retrieval {
      * of a result already chosen is left out, and at most [MAX_PER_CONVERSATION] come from one conversation.
      */
     fun <K> chooseFinal(keys: List<K>, docs: Map<K, Doc>, max: Int = MAX_RESULTS): List<K> {
+        // [nearDuplicate] with each text's stems made once, not once per pair.
+        val stemsOf = HashMap<K, Set<String>>()
+        fun near(a: K, b: K): Boolean {
+            val sa = stemsOf.getOrPut(a) { stems(docs.getValue(a).text) }
+            val sb = stemsOf.getOrPut(b) { stems(docs.getValue(b).text) }
+            if (sa.isEmpty() || sb.isEmpty()) return TextCheck.norm(docs.getValue(a).text) == TextCheck.norm(docs.getValue(b).text)
+            return (sa intersect sb).size.toDouble() / (sa union sb).size >= NEAR_DUPLICATE
+        }
         val out = ArrayList<K>()
         val per = HashMap<Long, Int>()
         for (k in keys) {
             val d = docs[k] ?: continue
             val c = d.conversation
             if (c != null && (per[c] ?: 0) >= MAX_PER_CONVERSATION) continue
-            if (out.any { nearDuplicate(d.text, docs.getValue(it).text) }) continue
+            if (out.any { near(k, it) }) continue
             out += k
             if (c != null) per[c] = (per[c] ?: 0) + 1
             if (out.size >= max) break

@@ -70,4 +70,21 @@ class VectorIndexTest {
         repeat(500) { index.add(VectorIndex.Entry("event", it.toLong(), -1, it + 1L), unit(r)) }
         assertEquals(500, index.size)
     }
+
+    @Test
+    fun roomReservedFirstGivesTheSameScores() {
+        val r = Random(8)
+        val vectors = List(300) { unit(r) }
+        val grown = VectorIndex(dim)
+        val reserved = VectorIndex(dim).apply { reserve(300) }
+        vectors.forEachIndexed { i, v ->
+            grown.add(VectorIndex.Entry("message", i.toLong(), 1, i + 1L), v)
+            reserved.add(VectorIndex.Entry("message", i.toLong(), 1, i + 1L), v)
+        }
+        // Past the reserved room it still grows.
+        reserved.add(VectorIndex.Entry("message", 300, 1, 301), vectors[0])
+        assertEquals(301, reserved.size)
+        val q = vectors[7]
+        assertEquals(grown.search(q, -1.0, 300) { true }, reserved.search(q, -1.0, 300) { it.docId < 300 })
+    }
 }

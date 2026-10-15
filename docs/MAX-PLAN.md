@@ -280,6 +280,62 @@ Not done, said plainly:
 4. In Talk, ask about something from an older conversation in different words than you used then: the coach
    should still bring it up. Replies should not feel slower to start; if they do, say so.
 
+### Phase 5: speed and battery (14 Oct 2026, built, CI run #155 green; waiting for the owner's OK)
+
+**How it was measured.** Every request is now timed in named parts (`Spans`: a step name and milliseconds, never any
+text; off in the app, on only in the ten-year timing run), so each fix went where the time really was. Ten years on
+the CI emulator (7,306 conversations, 73,060 messages, 43,836 meaning vectors of 768 numbers, 9,328 check-ins).
+Said plainly: the emulator runs the debug build, and CI machines differ. Making the same test data took 10.3 s in run
+#149 and 6.7 s in run #155, so run #155's machine was roughly 1.5 times faster; read the "after" column with that
+in mind. A phone runs the release build, which is faster than the debug build.
+
+| Measure (ten years) | Phase 4 end (run #149) | Phase 5 (run #155) | Target |
+|---|---|---|---|
+| Request, new conversation | 5,218 ms | **1,454 ms** | < 300 ms |
+| Request, next message | 2,836 ms | **1,468 ms** | < 300 ms |
+| Search, first of the session | 7,524 ms | **550 ms** (the vectors are read at start-up now) | < 150 ms |
+| Search, later (median of 4) | 733 ms | **397 ms** | < 150 ms |
+| Plan tracker | 743 ms | **303 ms** | |
+| Start-up repair sweep | 65 ms | **3 ms** | |
+| Start-up database work (open, sweep, index check, drawer) | about 0.55 s | **about 0.43 s** | start-up < 1.5 s |
+| Background warm-up after start-up (records, model, vectors) | (was paid by the first message) | 4,045 ms, in the background | |
+| Settings, rebuild search index | 2,793 ms | 1,790 ms | |
+| Memory in use after search | 80 MB | 55 MB | |
+
+| Step | What was built | How it is proven |
+|---|---|---|
+| 1. Time every part | `Spans` in search, the frozen part, the final turn and the plan tracker; the timing run prints each part, slowest first | CI prints them on every push |
+| 2. Search made ready at start-up | After the start-up work, in the background: the records' index brought up to date, the meaning model loaded, every vector read into memory. Nothing he wrote changes | timing run ("start-up warm-up") |
+| 3. Database indexes | `tools/query_plans.py` (in `check_all.sh`) plans all 184 queries on the database exactly as Room creates it and fails on a whole-table read of a growing table without a written reason. It found 17; database version 7 adds six indexes (conversation by start, message by status, promise by due time, quote by day, job by status, log by time); the rest are meant (rebuilds, one-off clean-ups) and say why | `MigrationTest` (6 to 7 keeps every row, each index there and used; the version 6 sample backup migrates to 7) |
+| 4. The slow calculations | Trimming the frozen part kept re-rendering and re-counting the whole text after each dropped note (2.6 s): now running totals. Best pace re-read every check-in for every 14-day window (13 million steps): now only the ones inside. Day keys read directly instead of through the general date parser. Notes, keyword scoring and result choosing each stem a text once, not two or three times; plain ASCII skips the Unicode normalizer | each with a test against the plain way: `TrimBlocksTest` (300 random cases and a ten-year memory), `BestPaceTest`, `DayParseTest`; the shared vectors unchanged |
+| 5. Vector memory | Decoded in one bulk copy (about 15 times faster); the in-memory index takes its full size once instead of doubling, so it never briefly holds two copies (about 34 MB at ten years, one copy) | `VectorIndexTest` |
+| 6. Battery | The meaning-vector indexer runs only when the battery is not low (after a model change it is minutes to hours of work). The nightly maintenance already waited for a battery that is not low; reflection and writing need the network and back off when it fails | by reading the code; on the phone below |
+| 7. R8 | The release build already shrinks and optimises (R8 full mode, AGP 8.7) with keep rules for SQLCipher and ONNX Runtime; CI builds it on every push ("minified" job) | CI |
+
+Not done, said plainly:
+- **The targets are not met.** A message still waits about 1.5 s at ten years on the emulator before it is sent
+  (target 0.3 s), and a search about 0.4 s (target 0.15 s). What is left: keyword search (reading and scoring up to
+  800 candidates, twice a message), the period's records, the plan tracker reading every check-in, and making the
+  message's vector (twice). Going further means reading less (for example a running total of a backlog's check-ins
+  instead of every one), which changes how numbers are made, so it belongs with Phase 6 and its vectors first.
+- **Baseline profiles are not added.** They make the release app start and run its first minutes faster on the
+  phone, but need a new library (androidx.profileinstaller) and a benchmark module to make them. CLAUDE.md says to
+  ask first: the owner decides.
+- The warm-up costs a few seconds of work each time the app is started fresh (about 4 s on the emulator at ten
+  years, much less with a year of data); it saves the same wait on his first message.
+- Speed and battery on his phone are not measured; only the emulator. The Phase 4 model's time per text on the
+  emulator is about 27 to 40 ms.
+- The tracker is not cached between messages: a cached one could miss a check-in saved a moment earlier, and after
+  the fixes it costs about 0.15 to 0.3 s.
+
+**What the owner checks on the phone** (after installing this build over the old one):
+1. Open the app once: it updates the database to version 7 (only indexes; nothing in your data changes). Settings,
+   Health should still say "database ok" after the next night.
+2. Open the app and wait a few seconds before sending the first message: the reply should start sooner than before.
+3. Open the conversation list (the drawer) and the Plan tab: both should open at least as fast as before.
+4. If the phone is low on battery, new messages may not be searchable by meaning until it charges; keyword search
+   still finds them. Nothing to do.
+
 ### Phase 6: planner, check-ins and reviews (14 Oct 2026, built; waiting for the owner's OK)
 
 Every rule was run through real-use cases first (`tools/planner.py`, then the Kotlin port running the same

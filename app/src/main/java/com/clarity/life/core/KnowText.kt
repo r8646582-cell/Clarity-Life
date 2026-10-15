@@ -12,7 +12,7 @@ object KnowText {
     private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
     private fun day(key: String): LocalDate? = try {
-        LocalDate.parse(key)
+        Planner.day(key)
     } catch (e: DateTimeParseException) {
         null
     }
