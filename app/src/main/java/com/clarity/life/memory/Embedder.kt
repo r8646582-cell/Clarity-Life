@@ -46,7 +46,7 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
     fun embed(text: String): FloatArray? {
         val l = load() ?: return null
         return try {
-            run(l, text)
+            com.clarity.life.core.PhoneTimings.timed(com.clarity.life.core.PhoneTimings.EMBED) { run(l, text) }
         } catch (e: Exception) {
             null
         }

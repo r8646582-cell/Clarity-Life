@@ -63,7 +63,16 @@ fun TalkHome(
     onOpen: (Long) -> Unit,
 ) {
     // The start-up warm-up waits for this (FirstScreen), so loading the meaning model never slows the home.
-    LaunchedEffect(Unit) { com.clarity.life.FirstScreen.mark() }
+    LaunchedEffect(Unit) {
+        // Health shows the start-up time measured on his phone: from the process start to this home on screen.
+        if (!com.clarity.life.FirstScreen.isShown) {
+            com.clarity.life.core.PhoneTimings.record(
+                com.clarity.life.core.PhoneTimings.START,
+                android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime(),
+            )
+        }
+        com.clarity.life.FirstScreen.mark()
+    }
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {

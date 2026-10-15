@@ -171,7 +171,7 @@ class ReviewWriter @Inject constructor(
                     "NOTES" to notes,
                     "PREVIOUS_REVIEW" to previous,
                 )
-                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_WEEKLY), values), month)
+                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_WEEKLY), values), month, com.clarity.life.data.UsageKind.REVIEW)
                 val checked = TextJobCheck.check("review_weekly", raw, values.values.toList(), his)
                 if (!checked.ok) return failed(job, "check_failed", now)
                 dao.setNarrative(review.id, checked.body, "[]")
@@ -199,7 +199,7 @@ class ReviewWriter @Inject constructor(
                 )
                 val known = PlanBlocks.known(tracker, today)
                 val ids = (known.goals + known.targets + known.backlogs).toList()
-                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_MONTHLY), values), month)
+                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_MONTHLY), values), month, com.clarity.life.data.UsageKind.REVIEW)
                 val checked = TextJobCheck.monthly(raw, ids, values.values.toList(), his)
                 if (!checked.ok) return failed(job, "check_failed", now)
                 val revisit = StrictJson.write(

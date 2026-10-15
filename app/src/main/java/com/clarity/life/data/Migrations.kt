@@ -118,6 +118,21 @@ object Migrations {
         }
     }
 
+    /**
+     * Version 9 (improvement report, C1): usage_kind, this month's calls and tokens split by what made them, so
+     * Health shows where the money goes. Only adds. Months before it have no split (only their total).
+     */
+    val V8_TO_V9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `usage_kind` (`month` TEXT NOT NULL, `kind` TEXT NOT NULL, " +
+                    "`calls` INTEGER NOT NULL DEFAULT 0, `tokens_in` INTEGER NOT NULL DEFAULT 0, " +
+                    "`tokens_out` INTEGER NOT NULL DEFAULT 0, `tokens_cached` INTEGER NOT NULL DEFAULT 0, " +
+                    "PRIMARY KEY(`month`, `kind`))",
+            )
+        }
+    }
+
     val V7_INDEXES = listOf(
         "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
         "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",

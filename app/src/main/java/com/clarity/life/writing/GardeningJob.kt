@@ -111,7 +111,7 @@ class GardeningJob @Inject constructor(
                 "PEOPLE" to GardeningInput.people(people),
                 "SUMMARIES" to GardeningInput.summaries(sessions),
             )
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7))
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), com.clarity.life.data.UsageKind.GARDENING)
             // Checked against every note (retired and deleted too), so an id that is not active is refused.
             val ctx = GardeningContext(
                 notes = m.allNotes().associate { n ->

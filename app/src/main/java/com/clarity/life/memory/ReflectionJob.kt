@@ -149,7 +149,7 @@ class ReflectionJob @Inject constructor(
                     is ChatChunk.Finished -> {
                         finish = chunk.reason
                         chunk.usage?.let { u ->
-                            db.diagnostics().addUsage(today.take(7), 1, u.tokensIn, u.tokensOut, u.tokensCached)
+                            db.diagnostics().addUsage(today.take(7), com.clarity.life.data.UsageKind.REFLECTION, 1, u.tokensIn, u.tokensOut, u.tokensCached)
                         }
                     }
                 }

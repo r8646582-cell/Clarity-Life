@@ -14,6 +14,9 @@ object FirstScreen : FirstScreenGate()
 open class FirstScreenGate {
     private val shown = CompletableDeferred<Unit>()
 
+    /** Whether [mark] was called in this process. */
+    val isShown: Boolean get() = shown.isCompleted
+
     /** Talk's home is on show. Later calls do nothing. */
     fun mark() {
         shown.complete(Unit)

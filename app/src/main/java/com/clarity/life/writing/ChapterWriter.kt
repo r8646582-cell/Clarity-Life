@@ -92,7 +92,7 @@ class ChapterWriter @Inject constructor(
             )
             // His own words: the quotes saved from the period and every message he wrote in it.
             val his = quotes.map { it.text } + dao.hisMessagesBetween(from, to)
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7))
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), com.clarity.life.data.UsageKind.CHAPTER)
             val checked = TextJobCheck.check("chapter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             dao.insertChapter(

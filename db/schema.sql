@@ -358,6 +358,16 @@ CREATE TABLE usage_month (
   tokens_cached INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE usage_kind (              -- schema 9: the same counts split by what made the call (Health, cost by job)
+  month TEXT NOT NULL,                 -- 2026-10, his local month
+  kind TEXT NOT NULL CHECK (kind IN ('chat','card_step','reflection','review','letter','chapter','story','gardening','bench')),
+  calls INTEGER NOT NULL DEFAULT 0,
+  tokens_in INTEGER NOT NULL DEFAULT 0,
+  tokens_out INTEGER NOT NULL DEFAULT 0,
+  tokens_cached INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (month, kind)
+);
+
 CREATE TABLE job (                     -- idempotence: one row per unit of background work
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL UNIQUE,            -- type + period or conversation + hash of inputs

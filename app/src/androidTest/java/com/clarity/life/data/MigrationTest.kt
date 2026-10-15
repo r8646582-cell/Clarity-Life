@@ -288,6 +288,33 @@ class MigrationTest {
         db.close()
     }
 
+    /** Improvement report C1: usage_kind is added empty; the month's total is untouched; one row per month and kind. */
+    @Test
+    fun version8To9KeepsTheMonthTotalAndAddsTheSplit() {
+        helper.createDatabase(TEST_DB, 8).apply {
+            execSQL("INSERT INTO usage_month (month, calls, tokens_in, tokens_out, tokens_cached) VALUES ('2026-10', 41, 180000, 9000, 150000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 9, true, Migrations.V8_TO_V9)
+        db.query("SELECT calls, tokens_in FROM usage_month WHERE month = '2026-10'").use {
+            assertTrue("the month's total is gone", it.moveToFirst())
+            assertEquals(41, it.getInt(0))
+            assertEquals(180000, it.getInt(1))
+        }
+        db.query("SELECT COUNT(*) FROM usage_kind").use {
+            it.moveToFirst()
+            assertEquals("no split is made up for the calls before it", 0, it.getInt(0))
+        }
+        db.execSQL("INSERT INTO usage_kind (month, kind, calls) VALUES ('2026-10', 'chat', 1)")
+        db.execSQL("INSERT OR REPLACE INTO usage_kind (month, kind, calls) VALUES ('2026-10', 'chat', 2)")
+        db.query("SELECT calls FROM usage_kind").use {
+            assertEquals(1, it.count)
+            it.moveToFirst()
+            assertEquals(2, it.getInt(0))
+        }
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -424,6 +451,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 9
     }
 }

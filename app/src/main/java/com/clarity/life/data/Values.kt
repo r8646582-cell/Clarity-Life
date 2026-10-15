@@ -42,6 +42,10 @@ object Values {
             "index", "maintenance",
         ),
         "job.status" to setOf("pending", "running", "succeeded", "failed", "skipped"),
+        "usage_kind.kind" to setOf(
+            UsageKind.CHAT, UsageKind.CARD_STEP, UsageKind.REFLECTION, UsageKind.REVIEW, UsageKind.LETTER,
+            UsageKind.CHAPTER, UsageKind.STORY, UsageKind.GARDENING, UsageKind.BENCH,
+        ),
     )
 
     /** Columns the schema restricts to 0 or 1. */
@@ -88,4 +92,17 @@ object Values {
     fun requireTimesSeen(timesSeen: Int) {
         if (timesSeen < 1) throw InvalidValue("a note has been seen at least once")
     }
+}
+
+/** What made a model call, for the usage split in Health (usage_kind.kind). */
+object UsageKind {
+    const val CHAT = "chat"
+    const val CARD_STEP = "card_step"
+    const val REFLECTION = "reflection"
+    const val REVIEW = "review"
+    const val LETTER = "letter"
+    const val CHAPTER = "chapter"
+    const val STORY = "story"
+    const val GARDENING = "gardening"
+    const val BENCH = "bench"
 }

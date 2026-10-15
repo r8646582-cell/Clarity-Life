@@ -14,6 +14,7 @@ import com.clarity.life.data.entity.JobRow
 import com.clarity.life.data.entity.MessageRow
 import com.clarity.life.data.entity.PromptOverrideRow
 import com.clarity.life.data.entity.SettingRow
+import com.clarity.life.data.entity.UsageKindRow
 import com.clarity.life.data.entity.UsageMonthRow
 import kotlinx.coroutines.flow.Flow
 
@@ -223,8 +224,20 @@ interface DiagnosticsDao {
     @Query("SELECT * FROM usage_month WHERE month = :month")
     suspend fun usage(month: String): UsageMonthRow?
 
+    @Upsert
+    suspend fun putUsageKind(row: UsageKindRow)
+
+    @Query("SELECT * FROM usage_kind WHERE month = :month AND kind = :kind")
+    suspend fun usageKind(month: String, kind: String): UsageKindRow?
+
+    /** Health, cost by job: this month's calls and tokens for each kind of call, the most input first. */
+    @Query("SELECT * FROM usage_kind WHERE month = :month ORDER BY tokens_in DESC, kind")
+    suspend fun usageByKind(month: String): List<UsageKindRow>
+
+    /** The month's total and its split by [kind] (one of [com.clarity.life.data.UsageKind]), in one transaction. */
     @Transaction
-    suspend fun addUsage(month: String, calls: Long, tokensIn: Long, tokensOut: Long, tokensCached: Long) {
+    suspend fun addUsage(month: String, kind: String, calls: Long, tokensIn: Long, tokensOut: Long, tokensCached: Long) {
+        com.clarity.life.data.Values.requireValid("usage_kind.kind", kind)
         val row = usage(month) ?: UsageMonthRow(month)
         putUsage(
             row.copy(
@@ -232,6 +245,15 @@ interface DiagnosticsDao {
                 tokensIn = row.tokensIn + tokensIn,
                 tokensOut = row.tokensOut + tokensOut,
                 tokensCached = row.tokensCached + tokensCached,
+            ),
+        )
+        val split = usageKind(month, kind) ?: UsageKindRow(month, kind)
+        putUsageKind(
+            split.copy(
+                calls = split.calls + calls,
+                tokensIn = split.tokensIn + tokensIn,
+                tokensOut = split.tokensOut + tokensOut,
+                tokensCached = split.tokensCached + tokensCached,
             ),
         )
     }

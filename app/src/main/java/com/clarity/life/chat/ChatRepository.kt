@@ -229,6 +229,7 @@ class ChatRepository @Inject constructor(
         usage?.let {
             db.diagnostics().addUsage(
                 month = monthKey(now, settings.timeZone()),
+                kind = com.clarity.life.data.UsageKind.CHAT,
                 calls = 1,
                 tokensIn = it.tokensIn,
                 tokensOut = it.tokensOut,
@@ -277,12 +278,13 @@ class ChatRepository @Inject constructor(
      * conversation is open, and only rebuilt when he switches chat type or comes back on a later day, so
      * the provider's prefix cache keeps working (contracts/context.md).
      */
-    suspend fun buildPacket(conversationId: Long, replyId: Long, now: Long): ChatPacket {
-        val rows = messages.ofConversation(conversationId)
-        val his = rows.lastOrNull { it.role == "user" && it.id < replyId }
-            ?: throw IllegalStateException("reply $replyId answers no message")
-        return buildPacket(conversationId, his.content, now, rows.filter { it.id < his.id })
-    }
+    suspend fun buildPacket(conversationId: Long, replyId: Long, now: Long): ChatPacket =
+        com.clarity.life.core.PhoneTimings.timed(com.clarity.life.core.PhoneTimings.PACKET) {
+            val rows = messages.ofConversation(conversationId)
+            val his = rows.lastOrNull { it.role == "user" && it.id < replyId }
+                ?: throw IllegalStateException("reply $replyId answers no message")
+            buildPacket(conversationId, his.content, now, rows.filter { it.id < his.id })
+        }
 
     /**
      * [earlier] is the history before the message being answered; that message itself goes only in the final
@@ -606,6 +608,10 @@ class ChatRepository @Inject constructor(
     private fun writePrefix(system: String): String =
         JsonObject(mapOf("system" to JsonPrimitive(system))).toString()
 
+    /** Adds one call's tokens to this month's total and to its [kind] (one of [com.clarity.life.data.UsageKind]). */
+    suspend fun recordUsage(kind: String, usage: com.clarity.life.ai.Usage, now: Long) =
+        db.diagnostics().addUsage(monthKey(now, settings.timeZone()), kind, 1, usage.tokensIn, usage.tokensOut, usage.tokensCached)
+
     /** The usage counter is grouped by his local month, not by UTC. */
     private fun monthKey(now: Long, tz: String): String =
         TimeFacts.local(Instant.ofEpochMilli(now), tz).toLocalDate().toString().take(7)
@@ -679,6 +685,7 @@ class ChatRepository @Inject constructor(
             usage?.let {
                 db.diagnostics().addUsage(
                     month = monthKey(now, settings.timeZone()),
+                    kind = com.clarity.life.data.UsageKind.CARD_STEP,
                     calls = 1,
                     tokensIn = it.tokensIn,
                     tokensOut = it.tokensOut,

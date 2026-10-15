@@ -38,6 +38,8 @@ checks = [
     ("zero backlog total rejected", fails("INSERT INTO backlog(name,total,unit,deadline,created_at) VALUES ('x',0,'u','2026-11-20',?)", (NOW,))),
     ("bad promise status rejected", fails("INSERT INTO promise(text,due_at,due_text,status,created_at) VALUES ('x',?, 'now','done',?)", (NOW, NOW))),
     ("a second story for the same month rejected", (db.execute("INSERT INTO story(period_start,period_end,short,created_at,key) VALUES ('2026-10-01','2026-10-31','s',?,'story:2026-10')", (NOW,)) and False) or fails("INSERT INTO story(period_start,period_end,short,created_at,key) VALUES ('2026-10-01','2026-10-31','t',?,'story:2026-10')", (NOW,))),
+    ("bad usage kind rejected", fails("INSERT INTO usage_kind(month,kind) VALUES ('2026-10','summary')")),
+    ("a second usage row for the same month and kind rejected", (db.execute("INSERT INTO usage_kind(month,kind) VALUES ('2026-10','chat')") and False) or fails("INSERT INTO usage_kind(month,kind) VALUES ('2026-10','chat')")),
     ("bad job type rejected", fails("INSERT INTO job(key,type,created_at) VALUES ('x:1','summary',?)", (NOW,))),
     ("bad note confidence rejected", fails("INSERT INTO note(kind,text,confidence,first_seen,last_seen,created_at) VALUES ('pattern','x','sure','2026-10-10','2026-10-10',?)", (NOW,))),
     ("bad card type rejected", fails("INSERT INTO card(message_id,type,payload_json,created_at) VALUES (1,'reminder','{}',?)", (NOW,))),

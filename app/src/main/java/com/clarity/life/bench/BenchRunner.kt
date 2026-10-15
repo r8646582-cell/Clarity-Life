@@ -163,7 +163,14 @@ class BenchRunner @Inject constructor(
 
     private suspend fun collect(endpoint: com.clarity.life.ai.Endpoint, request: ChatRequest): String {
         val out = StringBuilder()
-        chat.stream(endpoint, request).collect { chunk -> if (chunk is ChatChunk.Text) out.append(chunk.text) }
+        chat.stream(endpoint, request).collect { chunk ->
+            when (chunk) {
+                is ChatChunk.Text -> out.append(chunk.text)
+                // The bench's calls count in Health under their own name, so a run is not mistaken for chat.
+                is ChatChunk.Finished -> chunk.usage?.let { chat.recordUsage(com.clarity.life.data.UsageKind.BENCH, it, System.currentTimeMillis()) }
+                else -> Unit
+            }
+        }
         return out.toString()
     }
 

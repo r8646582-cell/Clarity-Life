@@ -48,6 +48,21 @@ data class UsageMonthRow(
 )
 
 /**
+ * Schema 9: the same counts as [UsageMonthRow], split by what made the call (chat, the card step, memory,
+ * letters, reviews ...), so Health can show where the money goes. [UsageMonthRow] stays the month's total.
+ */
+@Entity(tableName = "usage_kind", primaryKeys = ["month", "kind"])
+data class UsageKindRow(
+    val month: String,
+    /** One of [com.clarity.life.data.UsageKind]. */
+    val kind: String,
+    @ColumnInfo(defaultValue = "0") val calls: Long = 0,
+    @ColumnInfo(name = "tokens_in", defaultValue = "0") val tokensIn: Long = 0,
+    @ColumnInfo(name = "tokens_out", defaultValue = "0") val tokensOut: Long = 0,
+    @ColumnInfo(name = "tokens_cached", defaultValue = "0") val tokensCached: Long = 0,
+)
+
+/**
  * One row per unit of background work, with a deterministic key and a unique index, so a job that runs
  * twice is a no-op the second time (spec section 18, point 7).
  */

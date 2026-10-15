@@ -34,8 +34,8 @@ import kotlinx.coroutines.launch
 /**
  * Health (spec section 18, point 13): loud, content-free diagnostics. The last run of each background job,
  * how often each error code was logged in the last 30 days (cards dropped, quotes or numbers rejected, JSON
- * rejected ...), interrupted replies, this month's calls and how much of the input the cache covered, backup
- * age, database size, and the yearly restore test he marks himself. A rising count after a model or prompt
+ * rejected ...), interrupted replies, this month's calls and how much of the input the cache covered (in all
+ * and by job), timings and memory measured on this phone, backup age, database size, and the yearly restore test he marks himself. A rising count after a model or prompt
  * change says something shifted. No message text and no key ever appears here.
  */
 @HiltViewModel
@@ -81,7 +81,16 @@ class HealthViewModel @Inject constructor(
             val cached = if (u.tokensIn > 0) " (${u.tokensCached * 100 / u.tokensIn}% from the cache)" else ""
             // Formatted piece by piece: the cache share has a % sign in it, which format() would read as a code.
             lines.add("This month" to "${u.calls} calls, ${"%,d".format(u.tokensIn)} tokens in$cached, ${"%,d".format(u.tokensOut)} out")
+            // Where it went, by job (improvement report, C1). Months before schema 9 have only the total.
+            lines += com.clarity.life.core.UsageSplit.lines(
+                d.usageByKind(month).map { com.clarity.life.core.UsageSplit.Kind(it.kind, it.calls, it.tokensIn, it.tokensOut, it.tokensCached) },
+            )
         }
+        // Measured on this phone since the app started (improvement report, S6): durations only.
+        lines += com.clarity.life.core.PhoneTimings.lines()
+        val rt = Runtime.getRuntime()
+        val pss = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { android.os.Debug.getPss() } / 1024
+        lines.add("Memory in use" to "$pss MB in all, ${(rt.totalMemory() - rt.freeMemory()) / 1_048_576} MB of it app objects")
         val checkedAt = settings.get(SettingsRepository.Keys.MAINTENANCE_AT, "").toLongOrNull()
         lines.add(
             "Nightly check" to (

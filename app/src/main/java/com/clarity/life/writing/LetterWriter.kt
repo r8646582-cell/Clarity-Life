@@ -125,7 +125,7 @@ class LetterWriter @Inject constructor(
             )
             val his = conversations.flatMap { c -> c.messages.filter { it.first == "user" }.map { it.second } } +
                 db.planner().checkinsBetween(monday.toString(), sunday.toString()).mapNotNull { it.note }
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7))
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), com.clarity.life.data.UsageKind.LETTER)
             val checked = TextJobCheck.check("letter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             val inserted = dao.insertLetter(
@@ -270,7 +270,7 @@ class LetterWriter @Inject constructor(
             val his = dao.hisMessagesBetween(from, to) +
                 dao.quotesWithin(wordsFrom.toString(), last.toString()).map { it.text } +
                 db.planner().checkinsBetween(wordsFrom.toString(), last.toString()).mapNotNull { it.note }
-            val raw = call.text(endpoint, prompts.fill(prompts.text(prompt), values), today.toString().take(7))
+            val raw = call.text(endpoint, prompts.fill(prompts.text(prompt), values), today.toString().take(7), com.clarity.life.data.UsageKind.LETTER)
             val checked = TextJobCheck.check("letter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             dao.insertLetter(
