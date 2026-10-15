@@ -45,6 +45,32 @@ class PlannerRepositoryTest {
     private suspend fun lectures(goal: Long): Long =
         planner.addTarget(goal, null, "Lectures", "lectures", 1.0, 2.0, "Sat-Thu", today, null)
 
+    /**
+     * Improvement report S3: the remembered tracker always equals a fresh read once a write has landed. Room
+     * tells the cache about a write a moment after it commits, so this waits up to two seconds for that.
+     */
+    @Test
+    fun theRememberedTrackerFollowsEveryWrite() = runBlocking {
+        suspend fun same() {
+            val deadline = System.currentTimeMillis() + 2_000
+            while (planner.tracker(today) != planner.readTracker(today) && System.currentTimeMillis() < deadline) {
+                kotlinx.coroutines.delay(20)
+            }
+            assertEquals(planner.readTracker(today), planner.tracker(today))
+        }
+        same()
+        val g = planner.createGoal("Clear the lectures", "studies", "custom", LocalDate.parse("2026-11-20"), now)
+        same()
+        val t = lectures(g)
+        same()
+        planner.checkIn(t, today, today, "target", 2.0, null, null, now)
+        same()
+        assertEquals(1, planner.tracker(today).targets.single().checkins.size)
+        planner.clearCheckIn(t, today)
+        same()
+        assertTrue(planner.tracker(today).targets.single().checkins.isEmpty())
+    }
+
     @Test
     fun oneAnswerPerTargetPerDayAndUndoIsNoAnswer() = runBlocking {
         val g = planner.createGoal("Clear the lectures", "studies", "custom", LocalDate.parse("2026-11-20"), now)

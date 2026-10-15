@@ -39,6 +39,21 @@ class PlannerRepository @Inject constructor(
 ) {
     private val dao get() = db.planner()
 
+    /**
+     * The tracker, remembered until any table it is read from changes (improvement report, S3): every message
+     * needs it, and at ten years reading it took about 0.3 s. Any check-in, plan, target, goal, rest day, review
+     * or setting saved clears it. Words that depend on the clock ("due in 3 hours") are made from it afresh.
+     */
+    private val trackerCache = com.clarity.life.core.StampedCache<LocalDate, PlanBlocks.Tracker>(TRACKER_MAX_AGE_MS)
+
+    init {
+        db.invalidationTracker.addObserver(
+            object : androidx.room.InvalidationTracker.Observer(TRACKER_TABLES) {
+                override fun onInvalidated(tables: Set<String>) = trackerCache.changed()
+            },
+        )
+    }
+
     val goals get() = dao.watchGoals()
     val targets get() = dao.watchTargets()
     val backlogs get() = dao.watchBacklogs()
@@ -289,7 +304,10 @@ class PlannerRepository @Inject constructor(
         dao.activeTargets().filter { t -> t.endDay == null || !LocalDate.parse(t.endDay).isBefore(today) }
 
     /** The active tracker as PLAN_STATE and CHECKIN_FACTS read it on [today]. */
-    suspend fun tracker(today: LocalDate): PlanBlocks.Tracker {
+    suspend fun tracker(today: LocalDate): PlanBlocks.Tracker = trackerCache.get(today) { readTracker(today) }
+
+    /** [tracker] read from the database, never remembered (TrackerCacheTest compares the two). */
+    suspend fun readTracker(today: LocalDate): PlanBlocks.Tracker {
         val targets = Spans.span("tracker: live targets read") { liveTargets(today) }
         val checkins = Spans.span("tracker: their check-ins read") { if (targets.isEmpty()) emptyList() else dao.checkinsOf(targets.map { it.id }) }
         val byTarget = checkins.groupBy { it.targetId }
@@ -436,6 +454,15 @@ class PlannerRepository @Inject constructor(
     companion object {
         /** The profile entry that holds his usual hours per weekday (spec section 6.1). */
         const val AVAILABILITY = "availability"
+
+        /** Every table [readTracker] reads, and the plan and promise tables to be safe: a write to any clears it. */
+        val TRACKER_TABLES = arrayOf(
+            "goal", "plan", "target", "target_version", "backlog", "checkin", "rest_day", "promise", "review",
+            "profile_entry", "settings",
+        )
+
+        /** However quiet the tables, a remembered tracker is read again after this long. */
+        private const val TRACKER_MAX_AGE_MS = 10 * 60 * 1000L
 
         fun model(c: CheckinRow) = CheckIn(
             Planner.day(c.dayKey), c.level, c.amount, c.reason,
