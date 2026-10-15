@@ -589,10 +589,16 @@ class SearchIndex @Inject constructor(
                 for (h in hits) rows.putIfAbsent(h.kind to h.refId, h)
             }
         }
-        val keys = rows.values.mapNotNull { h -> h.refId.toLongOrNull()?.let { Key(h.kind, it) } }
-        val docs = Spans.span("keyword: candidates read") { r.resolve(keys) }
-        // The key goes with its candidate through the scoring, so two equal texts can never be confused.
-        val tagged = keys.mapNotNull { k -> docs[k]?.let { d -> d.candidate.copy(label = k.toString()) } }
+        // Candidate texts and recency are read directly from search_doc; resolving the full rows from the
+        // underlying tables happens only for the few winners kept after fusion (S4).
+        val tagged = rows.values.mapNotNull { h ->
+            val id = h.refId.toLongOrNull() ?: return@mapNotNull null
+            Retrieval.Candidate(
+                text = h.body,
+                at = h.rowId ?: 0L,
+                label = Key(h.kind, id).toString(),
+            )
+        }
         val rare = Spans.span("keyword: index size") { Retrieval.rareTerms(terms, found, indexSize()) }
         return Spans.span("keyword: candidates scored") {
             Retrieval.choose(tagged, terms, Retrieval.FUSE_DEPTH, rare).mapNotNull { Key.parse(it.candidate.label) }

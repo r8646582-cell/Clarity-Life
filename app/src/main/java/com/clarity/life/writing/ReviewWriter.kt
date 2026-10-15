@@ -144,7 +144,9 @@ class ReviewWriter @Inject constructor(
             if (planner.today(now).isAfter(LocalDate.parse(review.periodEnd))) jobs.skip(key, type, now)
             return Outcome.NothingToDo
         }
-        val endpoint = settings.backgroundEndpoint(json = review.kind == "month") ?: return Outcome.NothingToDo
+        val isJson = review.kind == "month"
+        val endpoint = settings.backgroundEndpoint(json = isJson) ?: return Outcome.NothingToDo
+        val fallback = settings.fallbackBackgroundEndpoint(json = isJson)
         val job = when (val c = jobs.claim(key, type, now, retry)) {
             is JobClaims.Claim.Settled -> return if (c.status == "failed") Outcome.Failed("failed") else Outcome.NothingToDo
             is JobClaims.Claim.Run -> c.job
@@ -171,7 +173,7 @@ class ReviewWriter @Inject constructor(
                     "NOTES" to notes,
                     "PREVIOUS_REVIEW" to previous,
                 )
-                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_WEEKLY), values), month, job = "review")
+                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_WEEKLY), values), month, job = "review", fallback = fallback)
                 val checked = TextJobCheck.check("review_weekly", raw, values.values.toList(), his)
                 if (!checked.ok) return failed(job, "check_failed", now)
                 dao.setNarrative(review.id, checked.body, "[]")
@@ -199,7 +201,7 @@ class ReviewWriter @Inject constructor(
                 )
                 val known = PlanBlocks.known(tracker, today)
                 val ids = (known.goals + known.targets + known.backlogs).toList()
-                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_MONTHLY), values), month, job = "review")
+                val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_MONTHLY), values), month, job = "review", fallback = fallback)
                 val checked = TextJobCheck.monthly(raw, ids, values.values.toList(), his)
                 if (!checked.ok) return failed(job, "check_failed", now)
                 val revisit = StrictJson.write(

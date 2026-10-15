@@ -44,4 +44,23 @@ class BackgroundEndpointTest {
         assertEquals(false, e.thinking)
         assertEquals(DefaultSettings.BACKGROUND_TEMPERATURE, e.temperature)
     }
+
+    @Test
+    fun perChatTypeThinkingDefaults() {
+        assertEquals("low", DefaultSettings.CHAT_THINKING_FREE)
+        assertEquals("high", DefaultSettings.CHAT_THINKING_UNTANGLE)
+        assertEquals("high", DefaultSettings.CHAT_THINKING_DECIDE)
+        assertEquals("high", DefaultSettings.CHAT_THINKING_PLAN)
+    }
+
+    @Test
+    fun fallbackEndpointUsesChatModelAndSettings() {
+        val bgEndpoint = SettingsRepository.background(chat, "cheaper-model", json = true)
+        val fallback = SettingsRepository.background(chat, chat.model, json = true)
+        assertEquals("cheaper-model", bgEndpoint.model)
+        assertEquals("chat-model", fallback.model)
+        assertEquals(chat.provider, fallback.provider)
+        assertEquals(chat.apiKey, fallback.apiKey)
+        assertEquals(DefaultSettings.BACKGROUND_READ_TIMEOUT_S, fallback.readTimeoutS)
+    }
 }

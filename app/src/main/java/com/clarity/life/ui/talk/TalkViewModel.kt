@@ -343,7 +343,7 @@ class TalkViewModel @Inject constructor(
         quietLine.value = null
         bus.fail(null)
         guarded {
-            val endpoint = chat.endpointForChat()
+            val endpoint = chat.endpointForChat(state.value.chatType)
             if (endpoint == null) {
                 hasKey.value = false
                 quietLine.value = "Add your API key in Settings, Coach, and this will send."

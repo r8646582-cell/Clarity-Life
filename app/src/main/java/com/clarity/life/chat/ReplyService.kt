@@ -112,10 +112,11 @@ class ReplyService : Service() {
 
     private suspend fun run(conversationId: Long, messageId: Long) {
         val now = System.currentTimeMillis()
+        val chatType = chat.conversations.get(conversationId)?.chatType ?: "free"
         // Reading the key can throw (the Android Keystore fails now and then on some phones): that ends the
         // reply as failed, with Try again, like any other failure.
         val endpoint = try {
-            chat.endpointForChat()
+            chat.endpointForChat(chatType)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Throwable) {

@@ -67,6 +67,7 @@ class StoryWriter @Inject constructor(
             return Outcome.NothingToDo
         }
         val endpoint = settings.backgroundEndpoint(json = true) ?: return Outcome.NothingToDo
+        val fallback = settings.fallbackBackgroundEndpoint(json = true)
         val job = when (val c = jobs.claim(key, TYPE, now, false, MAX_CHECKS)) {
             is JobClaims.Claim.Settled -> return if (c.status == "failed") Outcome.Failed("failed") else Outcome.NothingToDo
             is JobClaims.Claim.Run -> c.job
@@ -112,7 +113,7 @@ class StoryWriter @Inject constructor(
             )
             // His own words: the quotes he was shown and every message he wrote in the month.
             val his = quotes.map { it.text } + w.hisMessagesBetween(from, to)
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "story")
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "story", fallback = fallback)
             val checked = TextJobCheck.story(raw, quotes.associate { it.id to it.saidDay }, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             val overcame = StrictJson.write(

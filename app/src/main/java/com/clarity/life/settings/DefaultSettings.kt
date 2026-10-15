@@ -17,6 +17,14 @@ object DefaultSettings {
     /** Fast, and good enough for chat at a low thinking level (the owner's choice, 10 Oct 2026). */
     const val CHAT_MODEL = "deepseek-flash"
     const val CHAT_THINKING = "low"
+    const val CHAT_THINKING_FREE = "low"
+    const val CHAT_THINKING_UNTANGLE = "high"
+    const val CHAT_THINKING_DECIDE = "high"
+    const val CHAT_THINKING_PLAN = "high"
+
+    /** Background AI settings: default to chat provider and base URL when empty (C4). */
+    const val BACKGROUND_PROVIDER = ""
+    const val BACKGROUND_BASE_URL = ""
 
     /** Reflection, reviews and chapters run on the fast model too. */
     const val BACKGROUND_MODEL = CHAT_MODEL

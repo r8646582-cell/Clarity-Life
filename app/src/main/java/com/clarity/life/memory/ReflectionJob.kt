@@ -139,25 +139,30 @@ class ReflectionJob @Inject constructor(
             )
             // The filled prompt is the whole request: no prompt text is ever written in Kotlin.
             val request = ChatRequest(system = "", messages = listOf(ChatMessage(ChatMessage.USER, prompt)))
-            val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
-            val raw = StringBuilder()
-            var finish: String? = null
-            client.stream(endpoint, request).collect { chunk ->
-                when (chunk) {
-                    is ChatChunk.Text -> raw.append(chunk.text)
-                    is ChatChunk.Thinking -> Unit
-                    is ChatChunk.Finished -> {
-                        finish = chunk.reason
-                        chunk.usage?.let { u ->
-                            db.diagnostics().addUsage(today.take(7), 1, u.tokensIn, u.tokensOut, u.tokensCached, job = "memory")
-                        }
-                    }
+            val fallback = settings.fallbackBackgroundEndpoint(json = true)
+            val (rawText, finish) = try {
+                streamCall(endpoint, request, today)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (fallback != null && fallback != endpoint) {
+                    db.diagnostics().log(
+                        ErrorLogRow(
+                            at = now,
+                            area = "reflection",
+                            code = "primary_failed_fallback_used",
+                            detail = "${endpoint.provider}/${endpoint.model}: ${e.message}",
+                        ),
+                    )
+                    streamCall(fallback, request, today)
+                } else {
+                    throw e
                 }
             }
             if (finish == "length") return fail(job, "cut_off", now)
 
             val result = ReflectionApplier.apply(
-                raw.toString(),
+                rawText,
                 ReflectionContext(
                     hisMessages = selection.newHis,
                     hisEarlierQuotes = inputs.earlierQuotes,
@@ -297,6 +302,29 @@ class ReflectionJob @Inject constructor(
             profile = profile.associate { it.key to (it.confirmed == 1) },
             earlierQuotes = ReflectionInput.earlierQuotesShown(noteLines, quotes),
         )
+    }
+
+    private suspend fun streamCall(
+        endpoint: com.clarity.life.ai.Endpoint,
+        request: ChatRequest,
+        today: String,
+    ): Pair<String, String?> {
+        val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
+        val raw = StringBuilder()
+        var finish: String? = null
+        client.stream(endpoint, request).collect { chunk ->
+            when (chunk) {
+                is ChatChunk.Text -> raw.append(chunk.text)
+                is ChatChunk.Thinking -> Unit
+                is ChatChunk.Finished -> {
+                    finish = chunk.reason
+                    chunk.usage?.let { u ->
+                        db.diagnostics().addUsage(today.take(7), 1, u.tokensIn, u.tokensOut, u.tokensCached, job = "memory")
+                    }
+                }
+            }
+        }
+        return raw.toString() to finish
     }
 
     private fun dayKey(at: Long, tz: String, boundary: Int): String =

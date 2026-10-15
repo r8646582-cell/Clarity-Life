@@ -628,7 +628,7 @@ class ChatRepository @Inject constructor(
     // ---------- providers ----------
 
     /** Only the provider he chose. When it is down the reply fails honestly; no other model is ever used. */
-    suspend fun endpointForChat(): Endpoint? = settings.chatEndpoint()
+    suspend fun endpointForChat(chatType: String? = null): Endpoint? = settings.chatEndpoint(chatType)
 
     fun clientFor(endpoint: Endpoint): AiClient =
         if (endpoint.provider == "anthropic") anthropicClient else mainClient

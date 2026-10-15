@@ -27,8 +27,14 @@ class SettingsRepository @Inject constructor(
         const val PROVIDER = "provider"
         const val BASE_URL = "base_url"
         const val CHAT_MODEL = "chat_model"
+        const val BACKGROUND_PROVIDER = "background_provider"
+        const val BACKGROUND_BASE_URL = "background_base_url"
         const val BACKGROUND_MODEL = "background_model"
         const val CHAT_THINKING = "chat_thinking"
+        const val CHAT_THINKING_FREE = "chat_thinking_free"
+        const val CHAT_THINKING_UNTANGLE = "chat_thinking_untangle"
+        const val CHAT_THINKING_DECIDE = "chat_thinking_decide"
+        const val CHAT_THINKING_PLAN = "chat_thinking_plan"
         const val LETTER_MODEL = "letter_model"
         const val LETTER_THINKING = "letter_thinking"
         const val BACKUP_FOLDER = "backup_folder"
@@ -97,32 +103,95 @@ class SettingsRepository @Inject constructor(
     data class Day(val timeZone: String, val boundaryHour: Int)
 
     /** The main provider, as a ready-to-use endpoint. Null when he has not pasted a key yet. */
-    suspend fun chatEndpoint(): Endpoint? {
+    suspend fun chatEndpoint(chatType: String? = null): Endpoint? {
         val provider = get(Keys.PROVIDER, DefaultSettings.PROVIDER)
         val key = secrets.apiKey(provider)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val thinking = chatThinking(chatType)
         return Endpoint(
             provider = provider,
             baseUrl = get(Keys.BASE_URL, DefaultSettings.BASE_URL).trim(),
             apiKey = key,
             model = get(Keys.CHAT_MODEL, DefaultSettings.CHAT_MODEL).trim(),
             maxOutputTokens = getInt(Keys.MAX_OUTPUT_TOKENS, DefaultSettings.MAX_OUTPUT_TOKENS),
-            thinking = chatThinking() != Thinking.OFF,
-            effort = chatThinking(),
+            thinking = thinking != Thinking.OFF,
+            effort = thinking,
         )
     }
 
-    suspend fun chatThinking(): String = Thinking.parse(dao.get(Keys.CHAT_THINKING), DefaultSettings.CHAT_THINKING)
+    suspend fun chatThinking(chatType: String? = null): String {
+        val (key, default) = when (chatType) {
+            "free" -> Keys.CHAT_THINKING_FREE to DefaultSettings.CHAT_THINKING_FREE
+            "untangle" -> Keys.CHAT_THINKING_UNTANGLE to DefaultSettings.CHAT_THINKING_UNTANGLE
+            "decide" -> Keys.CHAT_THINKING_DECIDE to DefaultSettings.CHAT_THINKING_DECIDE
+            "plan" -> Keys.CHAT_THINKING_PLAN to DefaultSettings.CHAT_THINKING_PLAN
+            else -> Keys.CHAT_THINKING to DefaultSettings.CHAT_THINKING
+        }
+        val stored = dao.get(key)
+        if (stored != null) return Thinking.parse(stored, default)
+        val global = dao.get(Keys.CHAT_THINKING)
+        return if (global != null) Thinking.parse(global, default) else default
+    }
 
     suspend fun letterThinking(): String =
         Thinking.parse(dao.get(Keys.LETTER_THINKING), DefaultSettings.LETTER_THINKING)
 
+    suspend fun backgroundProvider(): String {
+        val custom = get(Keys.BACKGROUND_PROVIDER, "").trim()
+        return if (custom.isNotEmpty()) custom else get(Keys.PROVIDER, DefaultSettings.PROVIDER)
+    }
+
+    suspend fun backgroundBaseUrl(): String {
+        val custom = get(Keys.BACKGROUND_BASE_URL, "").trim()
+        if (custom.isNotEmpty()) return custom
+        val bgProvider = backgroundProvider()
+        val chatProvider = get(Keys.PROVIDER, DefaultSettings.PROVIDER)
+        if (bgProvider == chatProvider) {
+            return get(Keys.BASE_URL, DefaultSettings.BASE_URL).trim()
+        }
+        return when (bgProvider) {
+            "anthropic" -> DefaultSettings.ANTHROPIC_BASE_URL
+            "deepseek" -> DefaultSettings.BASE_URL
+            else -> ""
+        }
+    }
+
+    suspend fun backgroundApiKey(): String? =
+        secrets.backgroundApiKey()?.takeIf { it.isNotBlank() }
+            ?: secrets.apiKey(backgroundProvider())?.takeIf { it.isNotBlank() }
+            ?: secrets.apiKey(get(Keys.PROVIDER, DefaultSettings.PROVIDER))?.takeIf { it.isNotBlank() }
+
     /**
-     * Background jobs: the fast model, no thinking and a low temperature for the strict-JSON jobs
-     * (reflection, monthly review), thinking at [DefaultSettings.BACKGROUND_THINKING] for the weekly review.
+     * Background jobs (C4): independent provider, key and model if configured; defaults to the chat ones.
+     * The fast model, no thinking and a low temperature for the strict-JSON jobs (reflection, monthly review),
+     * thinking at [DefaultSettings.BACKGROUND_THINKING] for the weekly review.
      */
     suspend fun backgroundEndpoint(json: Boolean): Endpoint? {
-        val base = chatEndpoint() ?: return null
-        return background(base, get(Keys.BACKGROUND_MODEL, DefaultSettings.BACKGROUND_MODEL), json)
+        val bgProvider = backgroundProvider()
+        val key = backgroundApiKey() ?: return null
+        val base = Endpoint(
+            provider = bgProvider,
+            baseUrl = backgroundBaseUrl(),
+            apiKey = key,
+            model = get(Keys.BACKGROUND_MODEL, DefaultSettings.BACKGROUND_MODEL).trim(),
+            maxOutputTokens = getInt(Keys.MAX_OUTPUT_TOKENS, DefaultSettings.MAX_OUTPUT_TOKENS),
+            thinking = false,
+            effort = Thinking.OFF,
+        )
+        return background(base, base.model, json)
+    }
+
+    /**
+     * Fallback endpoint for background jobs (C4): when a separate background provider fails, that job falls back
+     * to the main chat provider. Returns null if background is already identical to chat.
+     */
+    suspend fun fallbackBackgroundEndpoint(json: Boolean): Endpoint? {
+        val chat = chatEndpoint() ?: return null
+        val bg = backgroundEndpoint(json) ?: return null
+        if (chat.provider == bg.provider && chat.baseUrl == bg.baseUrl && chat.apiKey == bg.apiKey &&
+            get(Keys.BACKGROUND_MODEL, DefaultSettings.BACKGROUND_MODEL).trim() == chat.model) {
+            return null
+        }
+        return background(chat, chat.model, json)
     }
 
     /** The weekly letter only: the bigger model (V4 Pro by default), thinking high. */
@@ -146,6 +215,13 @@ class SettingsRepository @Inject constructor(
     fun hasKey(provider: String): Boolean = secrets.hasApiKey(provider)
 
     fun setKey(provider: String, value: String?) = secrets.setApiKey(provider, value?.trim())
+
+    fun hasBackgroundKey(bgProvider: String): Boolean =
+        secrets.hasBackgroundApiKey() || secrets.hasApiKey(bgProvider)
+
+    fun setBackgroundKey(value: String?) = secrets.setBackgroundApiKey(value?.trim())
+
+    fun clearBackgroundKey() = secrets.setBackgroundApiKey(null)
 
     companion object {
         /**

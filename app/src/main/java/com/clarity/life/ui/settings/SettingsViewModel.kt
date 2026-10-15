@@ -34,8 +34,15 @@ class SettingsViewModel @Inject constructor(
         val provider: String = DefaultSettings.PROVIDER,
         val baseUrl: String = DefaultSettings.BASE_URL,
         val chatModel: String = DefaultSettings.CHAT_MODEL,
+        val backgroundProvider: String = DefaultSettings.BACKGROUND_PROVIDER,
+        val backgroundBaseUrl: String = DefaultSettings.BACKGROUND_BASE_URL,
         val backgroundModel: String = DefaultSettings.BACKGROUND_MODEL,
+        val backgroundKeySet: Boolean = false,
         val chatThinking: String = DefaultSettings.CHAT_THINKING,
+        val chatThinkingFree: String = DefaultSettings.CHAT_THINKING_FREE,
+        val chatThinkingUntangle: String = DefaultSettings.CHAT_THINKING_UNTANGLE,
+        val chatThinkingDecide: String = DefaultSettings.CHAT_THINKING_DECIDE,
+        val chatThinkingPlan: String = DefaultSettings.CHAT_THINKING_PLAN,
         val letterModel: String = DefaultSettings.LETTER_MODEL,
         val letterThinking: String = DefaultSettings.LETTER_THINKING,
         val userName: String = DefaultSettings.USER_NAME,
@@ -85,22 +92,37 @@ class SettingsViewModel @Inject constructor(
         "anthropic" to "Anthropic",
     )
 
+    val backgroundProviders = listOf(
+        "" to "Same as chat",
+        "deepseek" to "DeepSeek",
+        "compat" to "OpenAI-style",
+        "anthropic" to "Anthropic",
+    )
+
     init {
         viewModelScope.launch { reload() }
     }
 
     private suspend fun reload() {
         val provider = settings.get(SettingsRepository.Keys.PROVIDER, DefaultSettings.PROVIDER)
+        val bgProvider = settings.get(SettingsRepository.Keys.BACKGROUND_PROVIDER, DefaultSettings.BACKGROUND_PROVIDER)
         _state.value = State(
             loaded = true,
             provider = provider,
             baseUrl = settings.get(SettingsRepository.Keys.BASE_URL, DefaultSettings.BASE_URL),
             chatModel = settings.get(SettingsRepository.Keys.CHAT_MODEL, DefaultSettings.CHAT_MODEL),
+            backgroundProvider = bgProvider,
+            backgroundBaseUrl = settings.backgroundBaseUrl(),
             backgroundModel = settings.get(
                 SettingsRepository.Keys.BACKGROUND_MODEL,
                 DefaultSettings.BACKGROUND_MODEL,
             ),
+            backgroundKeySet = settings.hasBackgroundKey(bgProvider),
             chatThinking = settings.chatThinking(),
+            chatThinkingFree = settings.chatThinking("free"),
+            chatThinkingUntangle = settings.chatThinking("untangle"),
+            chatThinkingDecide = settings.chatThinking("decide"),
+            chatThinkingPlan = settings.chatThinking("plan"),
             letterModel = settings.get(SettingsRepository.Keys.LETTER_MODEL, DefaultSettings.LETTER_MODEL),
             letterThinking = settings.letterThinking(),
             userName = settings.userName(),
@@ -337,6 +359,48 @@ class SettingsViewModel @Inject constructor(
 
     fun setChatThinking(level: String) =
         save(SettingsRepository.Keys.CHAT_THINKING, level) { copy(chatThinking = level, testLine = null) }
+
+    fun setChatThinkingFree(level: String) =
+        save(SettingsRepository.Keys.CHAT_THINKING_FREE, level) { copy(chatThinkingFree = level) }
+
+    fun setChatThinkingUntangle(level: String) =
+        save(SettingsRepository.Keys.CHAT_THINKING_UNTANGLE, level) { copy(chatThinkingUntangle = level) }
+
+    fun setChatThinkingDecide(level: String) =
+        save(SettingsRepository.Keys.CHAT_THINKING_DECIDE, level) { copy(chatThinkingDecide = level) }
+
+    fun setChatThinkingPlan(level: String) =
+        save(SettingsRepository.Keys.CHAT_THINKING_PLAN, level) { copy(chatThinkingPlan = level) }
+
+    fun setBackgroundProvider(id: String) {
+        viewModelScope.launch {
+            settings.set(SettingsRepository.Keys.BACKGROUND_PROVIDER, id)
+            val bgUrl = settings.backgroundBaseUrl()
+            val keySet = settings.hasBackgroundKey(id)
+            _state.value = _state.value.copy(
+                backgroundProvider = id,
+                backgroundBaseUrl = bgUrl,
+                backgroundKeySet = keySet,
+            )
+        }
+    }
+
+    fun setBackgroundBaseUrl(value: String) =
+        save(SettingsRepository.Keys.BACKGROUND_BASE_URL, value) { copy(backgroundBaseUrl = value) }
+
+    fun pasteBackgroundKey(value: String) {
+        settings.setBackgroundKey(value)
+        _state.value = _state.value.copy(
+            backgroundKeySet = settings.hasBackgroundKey(_state.value.backgroundProvider),
+        )
+    }
+
+    fun clearBackgroundKey() {
+        settings.clearBackgroundKey()
+        _state.value = _state.value.copy(
+            backgroundKeySet = settings.hasBackgroundKey(_state.value.backgroundProvider),
+        )
+    }
 
     fun setLetterModel(value: String) =
         save(SettingsRepository.Keys.LETTER_MODEL, value) { copy(letterModel = value) }

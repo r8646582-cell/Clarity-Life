@@ -43,6 +43,21 @@ class SecretStore @Inject constructor(private val context: Context) {
 
     fun hasApiKey(provider: String): Boolean = prefs.contains(apiKeyName(provider))
 
+    fun backgroundApiKey(): String? =
+        prefs.getString(KEY_BACKGROUND_API, null)?.let { String(cipher.open(it), Charsets.UTF_8) }
+
+    fun setBackgroundApiKey(value: String?) {
+        val editor = prefs.edit()
+        if (value.isNullOrBlank()) {
+            editor.remove(KEY_BACKGROUND_API)
+        } else {
+            editor.putString(KEY_BACKGROUND_API, cipher.seal(value.toByteArray(Charsets.UTF_8)))
+        }
+        editor.apply()
+    }
+
+    fun hasBackgroundApiKey(): Boolean = prefs.contains(KEY_BACKGROUND_API)
+
     /**
      * The backup passphrase, sealed like the API keys, so the weekly backup can run while he is away. It never
      * leaves the phone and is never shown again; he keeps it on paper (spec section 9).
@@ -71,6 +86,7 @@ class SecretStore @Inject constructor(private val context: Context) {
 
     companion object {
         private const val KEY_ALIAS = "clarity_secrets_v1"
+        private const val KEY_BACKGROUND_API = "bg_api_key"
         private const val BACKUP_PASSPHRASE = "backup_passphrase"
         private const val DB_KEY = "db_key"
     }

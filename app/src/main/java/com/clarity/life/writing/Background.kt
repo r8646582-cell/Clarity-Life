@@ -30,7 +30,35 @@ class BackgroundCall @Inject constructor(
     class CutOff : Exception("cut_off")
 
     /** Throws [AiFailure] when the provider fails, and [CutOff] when the reply hit the length limit. */
-    suspend fun text(endpoint: Endpoint, prompt: String, month: String, job: String = "background"): String {
+    suspend fun text(
+        endpoint: Endpoint,
+        prompt: String,
+        month: String,
+        job: String = "background",
+        fallback: Endpoint? = null,
+    ): String {
+        return try {
+            execute(endpoint, prompt, month, job)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (fallback != null && fallback != endpoint) {
+                db.diagnostics().log(
+                    ErrorLogRow(
+                        at = System.currentTimeMillis(),
+                        area = "background",
+                        code = "primary_failed_fallback_used",
+                        detail = "${endpoint.provider}/${endpoint.model}: ${e.message}",
+                    ),
+                )
+                execute(fallback, prompt, month, job)
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private suspend fun execute(endpoint: Endpoint, prompt: String, month: String, job: String): String {
         val request = ChatRequest(system = "", messages = listOf(ChatMessage(ChatMessage.USER, prompt)))
         val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
         val out = StringBuilder()

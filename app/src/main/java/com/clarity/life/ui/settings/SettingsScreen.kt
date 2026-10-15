@@ -64,6 +64,7 @@ fun SettingsScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     var key by remember { mutableStateOf("") }
+    var bgKey by remember { mutableStateOf("") }
     // One group open at a time; the health check opens the one a problem lives in.
     var openGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     // No key yet (a new person, or "Paste my key" on Talk): Coach opens by itself, with the key box in view.
@@ -153,17 +154,57 @@ fun SettingsScreen(
             Label("Chat model")
             Field(state.chatModel, model::setChatModel)
             Label("Chat thinking")
-            Levels(state.chatThinking, model::setChatThinking)
-            Hint(
-                if (state.provider == "anthropic") {
-                    "Claude always thinks a little, so Off works like Low. High and Max are slower and more careful."
-                } else {
-                    "Low is quick; High and Max are slower and more careful."
-                },
-            )
+            Hint("Thinking level per chat type: Low is quick; High and Max are slower and more careful.")
+            Text("Free talk", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
+            Levels(state.chatThinkingFree, model::setChatThinkingFree)
+            Text("Untangle", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
+            Levels(state.chatThinkingUntangle, model::setChatThinkingUntangle)
+            Text("Decide", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
+            Levels(state.chatThinkingDecide, model::setChatThinkingDecide)
+            Text("Plan", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
+            Levels(state.chatThinkingPlan, model::setChatThinkingPlan)
+
+            Label("Background AI provider")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                model.backgroundProviders.forEach { (id, label) ->
+                    Chip(label, state.backgroundProvider == id) { model.setBackgroundProvider(id) }
+                }
+            }
+            if (state.backgroundProvider.isNotBlank()) {
+                if (state.backgroundProvider == "compat") {
+                    Label("Background base URL")
+                    Field(state.backgroundBaseUrl, model::setBackgroundBaseUrl)
+                }
+                Label("Background API key")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = bgKey,
+                        onValueChange = { bgKey = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text(if (state.backgroundKeySet) "Key set" else "Paste background key", color = clarity.muted) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        colors = fieldColors(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    SmallButton("Save", primary = true, enabled = bgKey.isNotBlank()) {
+                        model.pasteBackgroundKey(bgKey)
+                        bgKey = ""
+                    }
+                }
+                if (state.backgroundKeySet) {
+                    SmallButton("Remove background key", danger = true, modifier = Modifier.padding(top = 8.dp)) {
+                        model.clearBackgroundKey()
+                    }
+                }
+            }
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
-            Hint("For reflection, reviews and the monthly story.")
+            Hint("For reflection, reviews and the monthly story. Falls back to your chat provider if this fails.")
             Label("Weekly letter model")
             Field(state.letterModel, model::setLetterModel)
             Label("Weekly letter thinking")

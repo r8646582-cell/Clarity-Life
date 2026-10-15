@@ -55,6 +55,7 @@ class ChapterWriter @Inject constructor(
             return Outcome.NothingToDo
         }
         val endpoint = settings.backgroundEndpoint(json = false) ?: return Outcome.NothingToDo
+        val fallback = settings.fallbackBackgroundEndpoint(json = false)
         val job = when (val c = jobs.claim(q.key, TYPE, now, false, MAX_CHECKS)) {
             is JobClaims.Claim.Settled -> return if (c.status == "failed") Outcome.Failed("failed") else Outcome.NothingToDo
             is JobClaims.Claim.Run -> c.job
@@ -92,7 +93,7 @@ class ChapterWriter @Inject constructor(
             )
             // His own words: the quotes saved from the period and every message he wrote in it.
             val his = quotes.map { it.text } + dao.hisMessagesBetween(from, to)
-            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "chapter")
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "chapter", fallback = fallback)
             val checked = TextJobCheck.check("chapter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
             dao.insertChapter(
