@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "00000000000000000000000000000000",
+    "identityHash": "8b6bdb705940df7f46f25ccd897399e6",
     "entities": [
       {
         "tableName": "focus",
@@ -2505,7 +2505,8 @@
             "fieldPath": "calls",
             "columnName": "calls",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "tokensIn",
@@ -2632,7 +2633,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2d57b10505f58b1143580daafaef1678')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8b6bdb705940df7f46f25ccd897399e6')"
     ]
   }
 }
