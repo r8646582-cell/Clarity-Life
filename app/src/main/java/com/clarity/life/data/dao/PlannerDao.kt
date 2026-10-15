@@ -175,6 +175,10 @@ interface PlannerDao {
     @Query("SELECT * FROM checkin WHERE day_key >= :fromDay ORDER BY day_key")
     fun watchCheckinsFrom(fromDay: String): Flow<List<CheckinRow>>
 
+    /** Plan's check-ins: only its current targets' (PlanViewModel.targetsToRead), in day order. */
+    @Query("SELECT * FROM checkin WHERE target_id IN (:targetIds) ORDER BY day_key, id")
+    fun watchCheckinsOf(targetIds: List<Long>): Flow<List<CheckinRow>>
+
     /** The re-plan flag of the latest weekly review, which PLAN_STATE repeats until the next one. */
     @Query("SELECT replan_flag FROM review WHERE kind = 'week' ORDER BY period_start DESC LIMIT 1")
     suspend fun latestWeeklyReplanFlag(): Int?

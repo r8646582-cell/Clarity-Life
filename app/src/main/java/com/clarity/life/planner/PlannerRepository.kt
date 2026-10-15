@@ -47,6 +47,8 @@ class PlannerRepository @Inject constructor(
 
     fun checkinsFrom(day: LocalDate) = dao.watchCheckinsFrom(day.toString())
 
+    fun watchCheckinsOf(targetIds: List<Long>) = dao.watchCheckinsOf(targetIds)
+
     /** His day key now: the day boundary (midnight by default, a setting) applied in his time zone. */
     suspend fun today(now: Long): LocalDate = Planner.dayKey(
         Instant.ofEpochMilli(now).toString(),

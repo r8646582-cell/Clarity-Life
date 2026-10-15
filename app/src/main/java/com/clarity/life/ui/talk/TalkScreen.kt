@@ -90,7 +90,8 @@ fun TalkScreen(
     reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
-    val planState by planner.state.collectAsStateWithLifecycle()
+    // Only what the home shows (PlanViewModel.Home), not the whole tracker: the home no longer waits for it.
+    val planState by planner.home.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
     // "Plan with coach" and "Talk about this letter" ask for a new conversation of a given chat type. Only
     // the Talk screen that is on show takes the request, so the conversation opens here, already switched.
@@ -289,8 +290,8 @@ fun TalkScreen(
             } else if (home) {
                 TalkHome(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    plan = planState,
-                    planModel = planner,
+                    planDay = planState.planDay,
+                    hasPlan = planState.hasPlan,
                     latest = state.conversations.firstOrNull(),
                     hasKey = state.hasKey,
                     provider = providerName,

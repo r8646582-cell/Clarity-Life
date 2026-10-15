@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.clarity.life.data.entity.ConversationRow
 import com.clarity.life.data.entity.FocusRow
-import com.clarity.life.ui.plan.PlanViewModel
 import com.clarity.life.ui.theme.Bold
 import com.clarity.life.ui.theme.BoldCard
 import com.clarity.life.ui.theme.Kicker
@@ -49,8 +49,8 @@ import com.clarity.life.ui.theme.clarity
 @Composable
 fun TalkHome(
     modifier: Modifier,
-    plan: PlanViewModel.State,
-    planModel: PlanViewModel,
+    planDay: Long?,
+    hasPlan: Boolean,
     latest: ConversationRow?,
     hasKey: Boolean,
     provider: String,
@@ -62,6 +62,8 @@ fun TalkHome(
     onStart: (chatType: String, focusId: Long?) -> Unit,
     onOpen: (Long) -> Unit,
 ) {
+    // The start-up warm-up waits for this (FirstScreen), so loading the meaning model never slows the home.
+    LaunchedEffect(Unit) { com.clarity.life.FirstScreen.mark() }
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -77,7 +79,7 @@ fun TalkHome(
                     )
                     com.clarity.life.ui.theme.TextAction("New here? See how Clarity works", onClick = onOpenGuide)
                 }
-                planModel.planDay(plan)?.takeIf { plan.ready }?.let { day ->
+                planDay?.let { day ->
                     Text(
                         "Day $day of your plan.",
                         style = MaterialTheme.typography.headlineSmall,
@@ -96,7 +98,7 @@ fun TalkHome(
             latest?.takeIf { it.title.isNotBlank() }?.let { c ->
                 add(Start(Icons.Outlined.History, c.title, "Pick up where you left off") { onOpen(c.id) })
             }
-            if (plan.todayRows.isNotEmpty() || plan.goals.isNotEmpty()) {
+            if (hasPlan) {
                 add(Start(Icons.Outlined.CalendarMonth, "Look at my plan", "Plan and track") { onStart("plan", null) })
             }
             add(Start(Icons.Outlined.Psychology, "Something is on my mind", "Untangle") { onStart("untangle", null) })
