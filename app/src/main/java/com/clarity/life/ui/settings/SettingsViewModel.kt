@@ -52,6 +52,9 @@ class SettingsViewModel @Inject constructor(
         val testing: Boolean = false,
         val testLine: String? = null,
         val testOk: Boolean = false,
+        val testingBackground: Boolean = false,
+        val backgroundTestLine: String? = null,
+        val backgroundTestOk: Boolean = false,
         val version: String = "",
         val lastCrash: String? = null,
         val rebuilding: Boolean = false,
@@ -359,7 +362,7 @@ class SettingsViewModel @Inject constructor(
     fun setChatModel(value: String) = save(SettingsRepository.Keys.CHAT_MODEL, value) { copy(chatModel = value) }
 
     fun setBackgroundModel(value: String) =
-        save(SettingsRepository.Keys.BACKGROUND_MODEL, value) { copy(backgroundModel = value) }
+        save(SettingsRepository.Keys.BACKGROUND_MODEL, value) { copy(backgroundModel = value, backgroundTestLine = null) }
 
     fun setChatThinking(level: String) =
         save(SettingsRepository.Keys.CHAT_THINKING, level) { copy(chatThinking = level, testLine = null) }
@@ -385,6 +388,7 @@ class SettingsViewModel @Inject constructor(
                 backgroundProvider = id,
                 backgroundBaseUrl = bgUrl,
                 backgroundKeySet = keySet,
+                backgroundTestLine = null,
             )
             if (id == "gemini") {
                 val model = DefaultSettings.GEMINI_BACKGROUND_MODEL
@@ -400,12 +404,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setBackgroundBaseUrl(value: String) =
-        save(SettingsRepository.Keys.BACKGROUND_BASE_URL, value) { copy(backgroundBaseUrl = value) }
+        save(SettingsRepository.Keys.BACKGROUND_BASE_URL, value) { copy(backgroundBaseUrl = value, backgroundTestLine = null) }
 
     fun pasteBackgroundKey(value: String) {
         settings.setBackgroundKey(value)
         _state.value = _state.value.copy(
             backgroundKeySet = settings.hasBackgroundKey(_state.value.backgroundProvider),
+            backgroundTestLine = null,
         )
     }
 
@@ -413,6 +418,7 @@ class SettingsViewModel @Inject constructor(
         settings.clearBackgroundKey()
         _state.value = _state.value.copy(
             backgroundKeySet = settings.hasBackgroundKey(_state.value.backgroundProvider),
+            backgroundTestLine = null,
         )
     }
 
@@ -486,6 +492,24 @@ class SettingsViewModel @Inject constructor(
                 else -> openAi.test(endpoint)
             }
             _state.value = _state.value.copy(testing = false, testLine = result.detail, testOk = result.ok)
+        }
+    }
+
+    /** Test background connection: tests the background model with its key and base URL. */
+    fun testBackgroundConnection() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(testingBackground = true, backgroundTestLine = null)
+            val endpoint = settings.backgroundEndpoint(json = false)
+            val result: TestResult = when {
+                endpoint == null -> TestResult(false, "Paste your background API key first.")
+                endpoint.provider == "anthropic" -> anthropic.test(endpoint)
+                else -> openAi.test(endpoint)
+            }
+            _state.value = _state.value.copy(
+                testingBackground = false,
+                backgroundTestLine = result.detail,
+                backgroundTestOk = result.ok,
+            )
         }
     }
 

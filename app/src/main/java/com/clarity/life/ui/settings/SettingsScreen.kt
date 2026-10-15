@@ -174,6 +174,19 @@ fun SettingsScreen(
             Text("Plan", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
             Levels(state.chatThinkingPlan, model::setChatThinkingPlan)
 
+            Spacer(Modifier.height(10.dp))
+            com.clarity.life.ui.theme.PrimaryButton(if (state.testing) "Testing chat..." else "Test main connection") {
+                if (!state.testing) model.testConnection()
+            }
+            state.testLine?.let { line ->
+                Text(
+                    line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.testOk) clarity.text else clarity.danger,
+                    modifier = Modifier.padding(vertical = 4.dp),
+                )
+            }
+
             Label("Background AI provider")
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -234,25 +247,26 @@ fun SettingsScreen(
                 }
             }
             Hint("For reflection, reviews and the monthly story. Falls back to your chat provider if this fails.")
+
+            Spacer(Modifier.height(10.dp))
+            com.clarity.life.ui.theme.SecondaryButton(if (state.testingBackground) "Testing background..." else "Test background connection") {
+                if (!state.testingBackground) model.testBackgroundConnection()
+            }
+            state.backgroundTestLine?.let { line ->
+                Text(
+                    line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.backgroundTestOk) clarity.text else clarity.danger,
+                    modifier = Modifier.padding(vertical = 4.dp),
+                )
+            }
+
             Label("Weekly letter model")
             Field(state.letterModel, model::setLetterModel)
             Label("Weekly letter thinking")
             Levels(state.letterThinking, model::setLetterThinking)
             Hint("Typed freely: check names in the provider's docs.")
 
-            Spacer(Modifier.height(14.dp))
-            com.clarity.life.ui.theme.PrimaryButton(if (state.testing) "Testing" else "Test connection") {
-                if (!state.testing) model.testConnection()
-            }
-
-            state.testLine?.let { line ->
-                Text(
-                    line,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.testOk) clarity.text else clarity.danger,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-            }
             Hint("Changed a model? Run the test bench in Advanced before you rely on it.")
 
             Label("Your name")
