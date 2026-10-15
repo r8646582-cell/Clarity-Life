@@ -158,7 +158,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 6.dp),
                 ) {
-                    listOf("gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash").forEach { m ->
+                    listOf("gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash").forEach { m ->
                         Chip(m, state.chatModel == m) { model.setChatModel(m) }
                     }
                 }
@@ -241,7 +241,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 6.dp),
                 ) {
-                    listOf("gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash").forEach { m ->
+                    listOf("gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash").forEach { m ->
                         Chip(m, state.backgroundModel == m) { model.setBackgroundModel(m) }
                     }
                 }
