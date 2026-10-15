@@ -61,7 +61,7 @@ class CardSaveTest {
             search = search,
             planner = com.clarity.life.planner.PlannerRepository(db, settings),
         )
-        saver = CardSaver(db, settings, search, com.clarity.life.planner.PlannerRepository(db, settings))
+        saver = CardSaver(db, settings, search, com.clarity.life.planner.PlannerRepository(db, settings), com.clarity.life.promise.Reminders(context, db))
     }
 
     @After

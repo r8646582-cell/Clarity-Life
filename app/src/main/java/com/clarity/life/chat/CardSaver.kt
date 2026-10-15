@@ -40,7 +40,7 @@ class CardSaver @Inject constructor(
     private val settings: SettingsRepository,
     private val search: com.clarity.life.memory.SearchIndex,
     private val planner: com.clarity.life.planner.PlannerRepository,
-    private val reminders: com.clarity.life.promise.Reminders,
+    private val reminders: com.clarity.life.promise.Reminders? = null,
 ) {
 
     sealed interface Result {
@@ -194,7 +194,7 @@ class CardSaver @Inject constructor(
         val reason = if (dbStatus == "not_done") card.str("reason") else null
         db.promises().resolve(promiseId, StateMachines.move(StateMachines.PROMISE, p.status, dbStatus), reason, now)
         db.promises().get(promiseId)?.let { search.indexPromise(it) }
-        reminders.sync(promiseId, now)
+        reminders?.sync(promiseId, now)
         Result.Saved("promise_status:$promiseId")
     }
 

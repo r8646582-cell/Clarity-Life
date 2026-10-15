@@ -114,7 +114,7 @@ object TextCheck {
         return null
     }
 
-    fun findHisQuote(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): String? {
+    fun findHisQuote(quote: String, userMessages: List<String>, minChars: Int = 1): String? {
         val qNorm = trimEnds(norm(quote))
         if (qNorm.length < minChars) return null
 
@@ -133,8 +133,11 @@ object TextCheck {
         return null
     }
 
-    fun quoteIsHis(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): Boolean =
-        findHisQuote(quote, userMessages, minChars) != null
+    fun quoteIsHis(quote: String, userMessages: List<String>, minChars: Int = MIN_CHARS): Boolean {
+        val q = trimEnds(norm(quote))
+        if (q.length < minChars) return false
+        return findHisQuote(quote, userMessages, 1) != null
+    }
 
     fun verifiedQuotes(quotes: List<String>, userMessages: List<String>): List<String> =
         quotes.mapNotNull { q ->

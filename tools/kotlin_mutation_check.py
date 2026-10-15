@@ -47,8 +47,11 @@ MUTATIONS = [
 ]
 
 
+GRADLE = os.path.join(ROOT, "gradlew.bat" if os.name == "nt" else "gradlew")
+
+
 def gradle(test):
-    cmd = ["./gradlew", "--console=plain", "testDebugUnitTest", "--tests", test]
+    cmd = [GRADLE, "--console=plain", "testDebugUnitTest", "--tests", test]
     return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
 
 
@@ -56,7 +59,7 @@ def main():
     only = sys.argv[1:]  # optional: run only the entries whose file contains one of these words
     # First the tests as they are: a test that already fails would make every planted bug look caught.
     tests = sorted({m[3] for m in MUTATIONS if not only or any(w in m[0] for w in only)})
-    base = subprocess.run(["./gradlew", "--console=plain", "testDebugUnitTest"] + sum((["--tests", t] for t in tests), []),
+    base = subprocess.run([GRADLE, "--console=plain", "testDebugUnitTest"] + sum((["--tests", t] for t in tests), []),
                           cwd=ROOT, capture_output=True, text=True)
     if base.returncode != 0:
         print((base.stdout + base.stderr)[-6000:])
