@@ -51,8 +51,8 @@ android {
         applicationId = "com.clarity.life"
         minSdk = 26
         targetSdk = 35
-        versionCode = 18
-        versionName = "0.2.4"
+        versionCode = 19
+        versionName = "0.2.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             // ONNX Runtime and SQLCipher ship native code for four kinds of processor. Phones like the owner's

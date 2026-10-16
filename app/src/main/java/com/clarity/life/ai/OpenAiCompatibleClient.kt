@@ -152,10 +152,12 @@ class OpenAiCompatibleClient @Inject constructor(
         }
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
+    } catch (e: AiFailure) {
+        throw e
     } catch (e: IllegalArgumentException) {
         TestResult(false, "The base URL does not look right. It should start with https://")
     } catch (e: Exception) {
-        TestResult(false, "The test could not run (${e.javaClass.simpleName}).")
+        TestResult(false, e.message?.ifBlank { null } ?: "The test could not run (${e.javaClass.simpleName}).")
     }
 
     companion object {
@@ -176,18 +178,40 @@ class OpenAiCompatibleClient @Inject constructor(
             }
 
         /** One quiet, honest line. It never carries a key or a word of the conversation. */
-        fun friendly(e: AiFailure): String = when {
-            e.code == "http_401" || e.code == "http_403" -> "The provider refused the key. Check the API key."
-            e.code == "http_400" || e.code == "http_422" -> "The provider rejected the request. Check the model name."
-            e.code == "http_402" -> "The provider says the account has no balance left."
-            e.code == "http_404" -> "That address or model name was not found. Check the base URL and the model."
-            e.code == "http_429" -> "The provider is rate limiting. Try again in a moment."
-            e.code.startsWith("http_5") -> "The provider is having trouble. Try again in a moment."
-            e.code == "network" -> "No answer from the provider. Check the connection and the base URL."
-            e.code == "stream_gap" -> "The provider went quiet in the middle of the reply."
-            e.code == "provider_busy" -> "The provider is busy or down and did not start the reply. Try again later."
-            e.code == "stream_broken" -> "The connection dropped in the middle of the reply."
-            else -> "The provider could not complete the reply (${e.code})."
+        fun friendly(e: AiFailure): String {
+            val rawMsg = e.message.orEmpty()
+            val msg = rawMsg.lowercase()
+            return when {
+                msg.contains("api key") || msg.contains("api_key") || msg.contains("invalid key") ||
+                    e.code == "http_401" || e.code == "http_403" ->
+                    "The provider refused the key. Check the API key."
+
+                msg.contains("model") && (msg.contains("not found") || msg.contains("does not exist") || msg.contains("not supported")) ->
+                    "That model was not found. Check the model name."
+
+                e.code == "http_400" || e.code == "http_422" -> {
+                    if (rawMsg.isNotBlank() && rawMsg != "the provider reported an error" && rawMsg != "the provider refused the request") {
+                        "The provider rejected the request: $rawMsg"
+                    } else {
+                        "The provider rejected the request. Check the model name."
+                    }
+                }
+                e.code == "http_402" -> "The provider says the account has no balance left."
+                e.code == "http_404" -> "That address or model name was not found. Check the base URL and the model."
+                e.code == "http_429" -> "The provider is rate limiting. Try again in a moment."
+                e.code.startsWith("http_5") -> "The provider is having trouble. Try again in a moment."
+                e.code == "network" -> "No answer from the provider. Check the connection and the base URL."
+                e.code == "stream_gap" -> "The provider went quiet in the middle of the reply."
+                e.code == "provider_busy" -> "The provider is busy or down and did not start the reply. Try again later."
+                e.code == "stream_broken" -> "The connection dropped in the middle of the reply."
+                else -> {
+                    if (rawMsg.isNotBlank() && rawMsg != "the provider reported an error" && rawMsg != "the provider refused the request") {
+                        "The provider could not complete the reply: $rawMsg"
+                    } else {
+                        "The provider could not complete the reply (${e.code})."
+                    }
+                }
+            }
         }
     }
 }

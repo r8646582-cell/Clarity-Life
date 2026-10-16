@@ -382,7 +382,17 @@ class SettingsViewModel @Inject constructor(
     fun setBackgroundProvider(id: String) {
         viewModelScope.launch {
             settings.set(SettingsRepository.Keys.BACKGROUND_PROVIDER, id)
-            val bgUrl = settings.backgroundBaseUrl()
+            val url = when (id) {
+                "deepseek" -> DefaultSettings.BASE_URL
+                "gemini" -> DefaultSettings.GEMINI_BASE_URL
+                "anthropic" -> DefaultSettings.ANTHROPIC_BASE_URL
+                "compat" -> if (_state.value.backgroundBaseUrl.isNotBlank() && _state.value.backgroundBaseUrl != DefaultSettings.BASE_URL && _state.value.backgroundBaseUrl != DefaultSettings.GEMINI_BASE_URL && _state.value.backgroundBaseUrl != DefaultSettings.ANTHROPIC_BASE_URL) _state.value.backgroundBaseUrl else "https://"
+                else -> ""
+            }
+            if (url.isNotEmpty() || id.isEmpty()) {
+                settings.set(SettingsRepository.Keys.BACKGROUND_BASE_URL, url)
+            }
+            val bgUrl = if (id.isEmpty()) settings.backgroundBaseUrl() else url
             val keySet = settings.hasBackgroundKey(id)
             var next = _state.value.copy(
                 backgroundProvider = id,
@@ -396,6 +406,10 @@ class SettingsViewModel @Inject constructor(
                 next = next.copy(backgroundModel = model)
             } else if (id == "deepseek") {
                 val model = DefaultSettings.BACKGROUND_MODEL
+                settings.set(SettingsRepository.Keys.BACKGROUND_MODEL, model)
+                next = next.copy(backgroundModel = model)
+            } else if (id == "anthropic") {
+                val model = DefaultSettings.ANTHROPIC_BACKGROUND_MODEL
                 settings.set(SettingsRepository.Keys.BACKGROUND_MODEL, model)
                 next = next.copy(backgroundModel = model)
             }

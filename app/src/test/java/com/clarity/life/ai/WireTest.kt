@@ -176,6 +176,24 @@ class WireTest {
             "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             OpenAiWire.chatUrl("https://generativelanguage.googleapis.com/v1beta/openai"),
         )
+        assertEquals(
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            OpenAiWire.chatUrl("https://generativelanguage.googleapis.com/v1beta/openai/"),
+        )
+        assertEquals(
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            OpenAiWire.chatUrl("https://generativelanguage.googleapis.com/v1beta"),
+        )
+    }
+
+    @Test
+    fun googleGeminiErrorArrayIsParsed() {
+        val body = """[{"error":{"code":400,"message":"Please pass a valid API key","status":"INVALID_ARGUMENT"}}]"""
+        val failure = OpenAiWire.parseErrorBody(body)
+        assertEquals("400", failure.code)
+        assertEquals("Please pass a valid API key", failure.message)
+        val line = OpenAiCompatibleClient.friendly(AiFailure("http_400", failure.message))
+        assertEquals("The provider refused the key. Check the API key.", line)
     }
 
     // ---------- the Anthropic preset ----------

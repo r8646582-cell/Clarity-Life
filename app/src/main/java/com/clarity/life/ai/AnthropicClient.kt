@@ -126,10 +126,12 @@ class AnthropicClient @Inject constructor(
         }
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
+    } catch (e: AiFailure) {
+        throw e
     } catch (e: IllegalArgumentException) {
         TestResult(false, "The base URL does not look right. It should start with https://")
     } catch (e: Exception) {
-        TestResult(false, "The test could not run (${e.javaClass.simpleName}).")
+        TestResult(false, e.message?.ifBlank { null } ?: "The test could not run (${e.javaClass.simpleName}).")
     }
 
     companion object {

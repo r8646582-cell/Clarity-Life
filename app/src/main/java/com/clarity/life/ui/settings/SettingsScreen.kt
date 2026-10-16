@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
@@ -107,7 +108,7 @@ fun SettingsScreen(
             onReminders = onOpenReliable,
             onData = { openGroup = "Your data" },
         )
-        Group("Coach", "Provider, key, models, your name", Icons.Outlined.AutoAwesome, openGroup, { openGroup = it }) {
+        Group("Coach", "Main provider, API key, model and thinking", Icons.Outlined.AutoAwesome, openGroup, { openGroup = it }) {
             Label("Main provider")
             // Wraps to a second line on a narrow phone instead of breaking a name in half ("Anthrop / ic").
             FlowRow(
@@ -158,11 +159,21 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 6.dp),
                 ) {
-                    listOf("gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash").forEach { m ->
+                    com.clarity.life.settings.DefaultSettings.GEMINI_MODELS.forEach { m ->
+                        Chip(m, state.chatModel == m) { model.setChatModel(m) }
+                    }
+                }
+            } else if (state.provider == "deepseek") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(top = 6.dp),
+                ) {
+                    com.clarity.life.settings.DefaultSettings.DEEPSEEK_MODELS.forEach { m ->
                         Chip(m, state.chatModel == m) { model.setChatModel(m) }
                     }
                 }
             }
+
             Label("Chat thinking")
             Hint("Thinking level per chat type: Low is quick; High and Max are slower and more careful.")
             Text("Free talk", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
@@ -187,7 +198,20 @@ fun SettingsScreen(
                 )
             }
 
-            Label("Background AI provider")
+            Label("Weekly letter model")
+            Field(state.letterModel, model::setLetterModel)
+            Label("Weekly letter thinking")
+            Levels(state.letterThinking, model::setLetterThinking)
+            Hint("Typed freely: check names in the provider's docs.")
+
+            Hint("Changed a model? Run the test bench in Advanced before you rely on it.")
+
+            Label("Your name")
+            Field(state.userName, model::setUserName)
+            Hint("Optional. Only the coach's prompt uses it.")
+        }
+        Group("Background AI", "Separate model for reflection, reviews, and memories", Icons.Outlined.Psychology, openGroup, { openGroup = it }) {
+            Label("Background provider")
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -197,10 +221,9 @@ fun SettingsScreen(
                 }
             }
             if (state.backgroundProvider.isNotBlank()) {
-                if (state.backgroundProvider == "compat") {
-                    Label("Background base URL")
-                    Field(state.backgroundBaseUrl, model::setBackgroundBaseUrl)
-                }
+                Label("Background base URL")
+                Field(state.backgroundBaseUrl, model::setBackgroundBaseUrl)
+
                 Label("Background API key")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
@@ -224,32 +247,45 @@ fun SettingsScreen(
                         model.clearBackgroundKey()
                     }
                 }
+                Hint("Kept in the phone's secure keystore, never shown or logged.")
                 com.clarity.life.settings.DefaultSettings.keyPage(state.backgroundProvider)?.let { page ->
                     if (!state.backgroundKeySet) {
                         SmallButton("Get a key", modifier = Modifier.padding(top = 8.dp)) {
                             com.clarity.life.ui.talk.openPage(context, page)
                         }
+                        Hint("Opens the provider's site to create an API key.")
                     }
                 }
             } else {
                 Hint("Using your chat provider. Tap Google Gemini or OpenAI-style to use a separate free/cheap model.")
             }
+
             Label("Background model")
             Field(state.backgroundModel, model::setBackgroundModel)
-            if (state.backgroundProvider == "gemini") {
+            val effectiveBgProvider = if (state.backgroundProvider.isNotBlank()) state.backgroundProvider else state.provider
+            if (effectiveBgProvider == "gemini") {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 6.dp),
                 ) {
-                    listOf("gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash").forEach { m ->
+                    com.clarity.life.settings.DefaultSettings.GEMINI_MODELS.forEach { m ->
+                        Chip(m, state.backgroundModel == m) { model.setBackgroundModel(m) }
+                    }
+                }
+            } else if (effectiveBgProvider == "deepseek") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(top = 6.dp),
+                ) {
+                    com.clarity.life.settings.DefaultSettings.DEEPSEEK_MODELS.forEach { m ->
                         Chip(m, state.backgroundModel == m) { model.setBackgroundModel(m) }
                     }
                 }
             }
-            Hint("For reflection, reviews and the monthly story. Falls back to your chat provider if this fails.")
+            Hint("For reflection, reviews and memories. Falls back to your chat provider if this fails.")
 
             Spacer(Modifier.height(10.dp))
-            com.clarity.life.ui.theme.SecondaryButton(if (state.testingBackground) "Testing background..." else "Test background connection") {
+            com.clarity.life.ui.theme.PrimaryButton(if (state.testingBackground) "Testing background..." else "Test background connection") {
                 if (!state.testingBackground) model.testBackgroundConnection()
             }
             state.backgroundTestLine?.let { line ->
@@ -260,19 +296,6 @@ fun SettingsScreen(
                     modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
-
-            Label("Weekly letter model")
-            Field(state.letterModel, model::setLetterModel)
-            Label("Weekly letter thinking")
-            Levels(state.letterThinking, model::setLetterThinking)
-            Hint("Typed freely: check names in the provider's docs.")
-
-            Hint("Changed a model? Run the test bench in Advanced before you rely on it.")
-
-            Label("Your name")
-            Field(state.userName, model::setUserName)
-            Hint("Optional. Only the coach's prompt uses it.")
-
         }
         Group("Letters and your day", "Sunday letter, when your day ends, reminders", Icons.Outlined.MailOutline, openGroup, { openGroup = it }) {
             SwitchRow(

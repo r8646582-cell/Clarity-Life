@@ -94,10 +94,16 @@ object OpenAiWire {
     }
 
     /** The chat completions URL for a base URL that may end in /v1, /openai, /chat/completions, or a root. */
+    /** The chat completions URL for a base URL that may end in /v1, /openai, /chat/completions, or a root. */
     fun chatUrl(baseUrl: String): String {
-        val base = baseUrl.trimEnd('/')
+        val base = baseUrl.trim().trimEnd('/')
         return when {
             base.endsWith("/chat/completions") -> base
+            base.contains("generativelanguage.googleapis.com") -> {
+                if (base.endsWith("/openai")) "$base/chat/completions"
+                else if (base.endsWith("/v1beta")) "$base/openai/chat/completions"
+                else "$base/v1beta/openai/chat/completions"
+            }
             base.endsWith("/v1") || base.endsWith("/openai") -> "$base/chat/completions"
             else -> "$base/v1/chat/completions"
         }
@@ -124,12 +130,20 @@ object OpenAiWire {
     /** A non-streamed body (an error page, or a test call) read as the same kinds of event. */
     fun parseObject(root: JsonObject): Event {
         root["error"]?.let { error ->
-            val obj = error as? JsonObject
-            val code = obj?.get("code")?.jsonPrimitive?.contentOrNull
-                ?: obj?.get("type")?.jsonPrimitive?.contentOrNull
-                ?: "provider_error"
-            val message = obj?.get("message")?.jsonPrimitive?.contentOrNull ?: "the provider reported an error"
-            return Event.Failure(code, message)
+            when (error) {
+                is JsonObject -> {
+                    val code = error["code"]?.jsonPrimitive?.contentOrNull
+                        ?: error["type"]?.jsonPrimitive?.contentOrNull
+                        ?: error["status"]?.jsonPrimitive?.contentOrNull
+                        ?: "provider_error"
+                    val message = error["message"]?.jsonPrimitive?.contentOrNull ?: "the provider reported an error"
+                    return Event.Failure(code, message)
+                }
+                is JsonPrimitive -> {
+                    return Event.Failure("provider_error", error.content)
+                }
+                else -> Unit
+            }
         }
         val usage = (root["usage"] as? JsonObject)?.takeIf { it.isNotEmpty() }?.let { u ->
             val details = u["prompt_tokens_details"] as? JsonObject
@@ -169,7 +183,10 @@ object OpenAiWire {
     /** Reads a non-streamed error body, for the status codes that come back without a stream. */
     fun parseErrorBody(body: String): Event.Failure {
         val event = try {
-            parseObject(json.parseToJsonElement(body).jsonObject)
+            val element = json.parseToJsonElement(body)
+            val obj = (element as? JsonObject)
+                ?: (element as? kotlinx.serialization.json.JsonArray)?.firstOrNull() as? JsonObject
+            obj?.let { parseObject(it) }
         } catch (e: Exception) {
             null
         }

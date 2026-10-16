@@ -60,6 +60,9 @@ object DefaultSettings {
     const val GEMINI_LETTER_MODEL = "gemini-2.5-pro"
     const val GEMINI_KEY_PAGE = "https://aistudio.google.com/app/apikey"
 
+    val DEEPSEEK_MODELS = listOf(CHAT_MODEL, LETTER_MODEL)
+    val GEMINI_MODELS = listOf(GEMINI_CHAT_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash")
+
     /**
      * The page where each preset's key is made, opened in the phone's browser by "Get a key" (the app itself
      * sends nothing there). OpenAI-style servers differ, so they have none.
