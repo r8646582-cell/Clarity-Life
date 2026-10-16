@@ -32,7 +32,7 @@ class EmbeddingIndexer @Inject constructor(
     @ApplicationContext private val context: Context,
     private val db: ClarityDatabase,
     private val embedder: Embedder,
-    private val search: SearchIndex,
+    private val search: SearchIndex = SearchIndex(db, embedder),
 ) {
 
     /** Ask for the missing vectors to be made soon. Cheap to call after every message. */
