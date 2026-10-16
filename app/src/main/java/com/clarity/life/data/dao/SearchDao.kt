@@ -19,7 +19,7 @@ interface SearchDao {
      * sent, on every message he sends). The full-text index finds the few rows with this id first.
      */
     @Query(
-        "DELETE FROM search_doc WHERE rowid IN (SELECT rowid FROM search_doc WHERE search_doc MATCH 'ref_id:\"' || :refId || '\"') " +
+        "DELETE FROM search_doc WHERE rowid IN (SELECT rowid FROM search_doc WHERE search_doc MATCH 'ref_id:' || :refId) " +
             "AND kind = :kind AND ref_id = :refId",
     )
     suspend fun delete(kind: String, refId: String)
