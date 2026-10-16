@@ -331,9 +331,9 @@ class MemoryRepository @Inject constructor(
         // Nothing a job returns makes an entry confirmed, and words he did not confirm cannot keep his badge.
         val confirmed = if (existing != null && existing.value == op.value) existing.confirmed else 0
         val replaced = aChange && !op.verified && existing != null && existing.value != op.value && saidDay != null
-        if (replaced && existing != null && saidDay != null) {
+        if (replaced) {
             dao.insertProfilePast(
-                ProfilePastRow(key = op.key, value = existing.value, sinceDay = existing.sinceDay, untilDay = saidDay, createdAt = now),
+                ProfilePastRow(key = op.key, value = existing!!.value, sinceDay = existing.sinceDay, untilDay = saidDay!!, createdAt = now),
             )
         }
         val since = when {
@@ -455,8 +455,8 @@ class MemoryRepository @Inject constructor(
         if (notes.map { it.kind }.toSet().size != 1) return false
         if (closeToDeleted(op.text)) return false
         val conf = com.clarity.life.core.JobFields.CONF
-        val confidence = notes.map { it.confidence }.maxBy { conf.indexOf(it) }
-        val survivor = notes.minBy { it.id }
+        val confidence = notes.map { it.confidence }.maxByOrNull { conf.indexOf(it) } ?: "low"
+        val survivor = notes.minByOrNull { it.id } ?: return false
         val timesSeen = notes.sumOf { it.timesSeen }
         Values.requireTimesSeen(timesSeen)
         dao.updateNote(
@@ -482,8 +482,8 @@ class MemoryRepository @Inject constructor(
     }
 
     private suspend fun rewriteNote(op: JobOp.NoteRewrite): Boolean {
-        val n = dao.note(op.id)
-        if (!jobMayTouch(n) || n == null) return false
+        val n = dao.note(op.id) ?: return false
+        if (!jobMayTouch(n)) return false
         if (closeToDeleted(op.text)) return false
         dao.updateNote(n.copy(text = op.text))
         return true
@@ -497,7 +497,7 @@ class MemoryRepository @Inject constructor(
         val people = op.ids.map { dao.person(it) ?: return false }
         val named = dao.personNamed(op.name)
         if (named != null && named.id !in op.ids) return false
-        val survivor = people.minBy { it.id }
+        val survivor = people.minByOrNull { it.id } ?: return false
         for (p in people) if (p.id != survivor.id) dao.deletePerson(p.id)
         dao.updatePerson(
             survivor.copy(

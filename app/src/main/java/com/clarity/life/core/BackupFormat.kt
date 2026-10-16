@@ -339,7 +339,7 @@ object BackupFormat {
     fun fileName(local: java.time.LocalDateTime): String =
         "clarity-backup-%04d-%02d-%02d-%02d%02d.cbk".format(local.year, local.monthValue, local.dayOfMonth, local.hour, local.minute)
 
-    fun isBackupName(name: String): Boolean = Regex("^clarity-backup-\\d{4}-\\d{2}-\\d{2}-\\d{4}\\.cbk$").matches(name)
+    fun isBackupName(name: String): Boolean = Regex("^clarity-backup-\\d{4}-\\d{2}-\\d{2}-\\d{4}(?: \\(\\d+\\))?\\.cbk$").matches(name)
 
     /** Which files to delete so only the newest [keep] stay. Never called before the new file was read back. */
     fun toPrune(names: List<String>, keep: Int = 4): List<String> =
@@ -388,13 +388,17 @@ object BackupFormat {
         fun str(k: String) = obj.map[k]?.asStr ?: throw BadBackup("the header has no $k")
         if (str("kdf") != KDF) throw BadBackup("unknown key derivation")
         val b64 = Base64.getDecoder()
+        val salt = b64.decode(str("salt"))
+        val iv = b64.decode(str("iv"))
+        if (salt.size < SALT_BYTES) throw BadBackup("salt is too short")
+        if (iv.size != IV_BYTES) throw BadBackup("iv is invalid")
         return Header(
             format = num("format").toInt(),
             schema = num("schema").toInt(),
             createdAt = num("created_at").toLong(),
             iterations = num("iterations").toInt(),
-            salt = b64.decode(str("salt")),
-            iv = b64.decode(str("iv")),
+            salt = salt,
+            iv = iv,
             sha256 = str("sha256"),
         )
     }

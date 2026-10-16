@@ -270,4 +270,20 @@ class WireTest {
         assertEquals("high", body(base.copy(effort = "high"))["output_config"]!!.jsonObject["effort"]!!.jsonPrimitive.content)
         assertEquals("max", body(base.copy(effort = "max"))["output_config"]!!.jsonObject["effort"]!!.jsonPrimitive.content)
     }
+
+    @Test
+    fun emptyDataLineIsIgnored() {
+        assertEquals(OpenAiWire.Event.Ignore, OpenAiWire.parseLine("data:"))
+        assertEquals(OpenAiWire.Event.Ignore, OpenAiWire.parseLine("data: "))
+        assertEquals(OpenAiWire.Event.Ignore, OpenAiWire.parseLine("data:   \n"))
+    }
+
+    @Test
+    fun anthropicMessagesUrlHandlesVariousBases() {
+        assertEquals("https://api.anthropic.com/v1/messages", AnthropicWire.messagesUrl("https://api.anthropic.com"))
+        assertEquals("https://api.anthropic.com/v1/messages", AnthropicWire.messagesUrl("https://api.anthropic.com/"))
+        assertEquals("https://api.anthropic.com/v1/messages", AnthropicWire.messagesUrl("https://api.anthropic.com/v1"))
+        assertEquals("https://api.anthropic.com/v1/messages", AnthropicWire.messagesUrl("https://api.anthropic.com/v1/"))
+        assertEquals("https://api.anthropic.com/v1/messages", AnthropicWire.messagesUrl("https://api.anthropic.com/v1/messages"))
+    }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.isActive
 import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -51,67 +52,86 @@ class OpenAiCompatibleClient @Inject constructor(
                     .build(),
             )
 
-        val response = try {
-            // A cancelled reply closes its connection at once instead of waiting out the read timeout.
-            kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]?.invokeOnCompletion { call.cancelQuietly() }
-            call.execute()
-        } catch (e: IOException) {
-            throw AiFailure("network", "could not reach the provider", retryable = true, cause = e)
-        }
+        val cancelHandle = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]
+            ?.invokeOnCompletion { call.cancelQuietly() }
 
-        response.use {
-            if (!response.isSuccessful) {
-                val failure = OpenAiWire.parseErrorBody(response.body?.string().orEmpty())
-                throw AiFailure(
-                    code = "http_${response.code}",
-                    message = failure.message,
-                    // 408, 409, 425, 429 and the 5xx family are worth another try; the rest are not.
-                    retryable = response.code == 408 || response.code == 409 || response.code == 425 ||
-                        response.code == 429 || response.code >= 500,
-                )
-            }
-            val source = response.body?.source()
-                ?: throw AiFailure("empty_body", "the provider sent nothing back")
-            var usage: Usage? = null
-            var finish: String? = null
-            var ended = false
-            val quiet = QuietTimer(endpoint.readTimeoutS * 1000, System.currentTimeMillis())
-            while (true) {
-                val line = try {
-                    source.readUtf8Line()
-                } catch (e: InterruptedIOException) {
-                    throw AiFailure("stream_gap", "the provider stopped sending", retryable = true, cause = e)
-                } catch (e: IOException) {
-                    throw AiFailure("stream_broken", "the connection dropped", retryable = true, cause = e)
-                } ?: break
-                val event = OpenAiWire.parseLine(line)
-                if (event == OpenAiWire.Event.Ignore) {
-                    // A keep-alive, a blank line or a ping: not a piece of the reply (see QuietTimer).
-                    if (quiet.quietTooLong(System.currentTimeMillis())) throw QuietTimer.busy()
-                } else {
-                    quiet.piece(System.currentTimeMillis())
+        try {
+            val response = try {
+                call.execute()
+            } catch (e: IOException) {
+                if (!kotlinx.coroutines.currentCoroutineContext().isActive || call.isCanceled()) {
+                    throw kotlinx.coroutines.CancellationException("Call cancelled", e)
                 }
-                when (event) {
-                    is OpenAiWire.Event.Delta -> {
-                        event.thinking?.let { emit(ChatChunk.Thinking(it)) }
-                        event.text?.let { emit(ChatChunk.Text(it)) }
-                        event.finishReason?.let { finish = it }
-                        event.usage?.let { usage = merge(usage, it) }
+                throw AiFailure("network", "could not reach the provider", retryable = true, cause = e)
+            }
+
+            response.use {
+                if (!response.isSuccessful) {
+                    val failure = OpenAiWire.parseErrorBody(response.body?.string().orEmpty())
+                    throw AiFailure(
+                        code = "http_${response.code}",
+                        message = failure.message,
+                        // 408, 409, 425, 429 and the 5xx family are worth another try; the rest are not.
+                        retryable = response.code == 408 || response.code == 409 || response.code == 425 ||
+                            response.code == 429 || response.code >= 500,
+                    )
+                }
+                val source = response.body?.source()
+                    ?: throw AiFailure("empty_body", "the provider sent nothing back")
+                var usage: Usage? = null
+                var finish: String? = null
+                var ended = false
+                val quiet = QuietTimer(endpoint.readTimeoutS * 1000, System.currentTimeMillis())
+                while (true) {
+                    val line = try {
+                        source.readUtf8Line()
+                    } catch (e: InterruptedIOException) {
+                        if (!kotlinx.coroutines.currentCoroutineContext().isActive || call.isCanceled()) {
+                            throw kotlinx.coroutines.CancellationException("Stream cancelled", e)
+                        }
+                        throw AiFailure("stream_gap", "the provider stopped sending", retryable = true, cause = e)
+                    } catch (e: IOException) {
+                        if (!kotlinx.coroutines.currentCoroutineContext().isActive || call.isCanceled()) {
+                            throw kotlinx.coroutines.CancellationException("Stream cancelled", e)
+                        }
+                        throw AiFailure("stream_broken", "the connection dropped", retryable = true, cause = e)
+                    } ?: break
+                    val event = OpenAiWire.parseLine(line)
+                    if (event == OpenAiWire.Event.Ignore) {
+                        // A keep-alive, a blank line or a ping: not a piece of the reply (see QuietTimer).
+                        if (quiet.quietTooLong(System.currentTimeMillis())) throw QuietTimer.busy()
+                    } else {
+                        quiet.piece(System.currentTimeMillis())
                     }
+                    when (event) {
+                        is OpenAiWire.Event.Delta -> {
+                            event.thinking?.let { emit(ChatChunk.Thinking(it)) }
+                            event.text?.let { emit(ChatChunk.Text(it)) }
+                            event.finishReason?.let { finish = it }
+                            event.usage?.let { usage = merge(usage, it) }
+                        }
 
-                    is OpenAiWire.Event.Usage ->
-                        usage = merge(usage, event)
+                        is OpenAiWire.Event.Usage ->
+                            usage = merge(usage, event)
 
-                    is OpenAiWire.Event.Failure ->
-                        throw AiFailure(event.code, event.message, retryable = true)
+                        is OpenAiWire.Event.Failure -> {
+                            val nonRetryable = event.code in setOf(
+                                "authentication_error", "permission_error", "invalid_request_error",
+                                "not_found_error", "bad_json",
+                            )
+                            throw AiFailure(event.code, event.message, retryable = !nonRetryable)
+                        }
 
-                    OpenAiWire.Event.Done -> ended = true
-                    OpenAiWire.Event.Ignore -> Unit
+                        OpenAiWire.Event.Done -> ended = true
+                        OpenAiWire.Event.Ignore -> Unit
+                    }
                 }
+                // A stream that just stops (no end marker, no finish reason) is a broken reply, not a finished one.
+                if (!ended && finish == null) throw AiFailure("stream_broken", "the reply stopped before its end", retryable = true)
+                emit(ChatChunk.Finished(finish, usage))
             }
-            // A stream that just stops (no end marker, no finish reason) is a broken reply, not a finished one.
-            if (!ended && finish == null) throw AiFailure("stream_broken", "the reply stopped before its end", retryable = true)
-            emit(ChatChunk.Finished(finish, usage))
+        } finally {
+            cancelHandle?.dispose()
         }
     }.flowOn(Dispatchers.IO) // call.execute() blocks; on the main thread Android kills the app
 

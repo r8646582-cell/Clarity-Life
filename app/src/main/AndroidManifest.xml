@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Reminders ring at the exact minute. Android 13 and later: USE_EXACT_ALARM, granted on install for
          reminder apps. Android 12: SCHEDULE_EXACT_ALARM, granted by default. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- Settings, Keep reminders reliable: the button that asks to run without battery limits. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />

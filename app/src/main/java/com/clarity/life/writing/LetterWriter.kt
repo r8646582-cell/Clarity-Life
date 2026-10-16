@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.room.withTransaction
 import com.clarity.life.MainActivity
 import com.clarity.life.R
 import com.clarity.life.ai.AiFailure
@@ -128,17 +129,20 @@ class LetterWriter @Inject constructor(
             val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "letter")
             val checked = TextJobCheck.check("letter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
-            val inserted = dao.insertLetter(
-                LetterRow(
-                    periodStart = monday.toString(),
-                    periodEnd = sunday.toString(),
-                    title = checked.title,
-                    body = checked.body,
-                    readyAt = now,
-                    key = key,
-                ),
-            )
-            jobs.succeed(job, now)
+            val inserted = db.withTransaction {
+                val id = dao.insertLetter(
+                    LetterRow(
+                        periodStart = monday.toString(),
+                        periodEnd = sunday.toString(),
+                        title = checked.title,
+                        body = checked.body,
+                        readyAt = now,
+                        key = key,
+                    ),
+                )
+                jobs.succeed(job, now)
+                id
+            }
             // Only a letter really written now rings the Sunday alert (a second run's insert is ignored).
             if (inserted > 0) alert()
             return Outcome.Written
@@ -273,17 +277,19 @@ class LetterWriter @Inject constructor(
             val raw = call.text(endpoint, prompts.fill(prompts.text(prompt), values), today.toString().take(7), job = "letter")
             val checked = TextJobCheck.check("letter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
-            dao.insertLetter(
-                LetterRow(
-                    periodStart = first.toString(),
-                    periodEnd = last.toString(),
-                    title = checked.title,
-                    body = checked.body,
-                    readyAt = now,
-                    key = key,
-                ),
-            )
-            jobs.succeed(job, now)
+            db.withTransaction {
+                dao.insertLetter(
+                    LetterRow(
+                        periodStart = first.toString(),
+                        periodEnd = last.toString(),
+                        title = checked.title,
+                        body = checked.body,
+                        readyAt = now,
+                        key = key,
+                    ),
+                )
+                jobs.succeed(job, now)
+            }
             // No alert: the only letter notification is the optional Sunday one (CLAUDE.md rule 7). The card on
             // Talk and the dot on Plan show it.
             return Outcome.Written

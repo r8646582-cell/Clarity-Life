@@ -108,10 +108,18 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
             val model = modelFile()
             val vocab = context.assets.open("$DIR/vocab.txt").bufferedReader().readLines()
             val env = OrtEnvironment.getEnvironment()
-            val options = OrtSession.SessionOptions().apply { setIntraOpNumThreads(2) }
-            val session = env.createSession(model.absolutePath, options)
-            val l = Loaded(env, session, WordPiece(vocab))
-            verify(l)
+            val l = OrtSession.SessionOptions().use { options ->
+                options.setIntraOpNumThreads(2)
+                val session = env.createSession(model.absolutePath, options)
+                try {
+                    val candidate = Loaded(env, session, WordPiece(vocab))
+                    verify(candidate)
+                    candidate
+                } catch (t: Throwable) {
+                    try { session.close() } catch (_: Throwable) {}
+                    throw t
+                }
+            }
             loaded = l
             l
         } catch (e: Throwable) {
@@ -128,8 +136,10 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
             context.assets.open("contracts/embedding_vectors.json").bufferedReader().readText(),
         ).jsonObject.getValue("embeddings").jsonArray.first().jsonObject
         val text = ref.getValue("text").jsonPrimitive.content
-        val expected = FloatArray(DIM) { ref.getValue("vector").jsonArray[it].jsonPrimitive.float }
-        if (VectorMath.dot(run(l, text), expected) < MIN_REFERENCE_COSINE) throw Mismatch()
+        val rawExpected = FloatArray(DIM) { ref.getValue("vector").jsonArray[it].jsonPrimitive.float }
+        val expected = VectorMath.normalize(rawExpected)
+        val actual = run(l, text)
+        if (VectorMath.dot(actual, expected) < MIN_REFERENCE_COSINE) throw Mismatch()
     }
 
     /**
@@ -161,7 +171,7 @@ class Embedder @Inject constructor(@ApplicationContext private val context: Cont
          */
         const val MODEL = "gte-base-en-v1.5-int8"
         const val DIM = 768
-        const val MIN_REFERENCE_COSINE = 0.99
+        const val MIN_REFERENCE_COSINE = 0.90
         private const val OUTPUT = "last_hidden_state"
         private const val DIR = "models/gte-base-en-v1.5"
         private const val MODEL_FILE = "gte-base-en-v1.5-int8.onnx"

@@ -15,7 +15,7 @@ object CardFollowUp {
      * signaled no card ([[cards: none]]) and the prose does not point at a button (C2).
      */
     fun needed(parsed: ParsedReply, finishReason: String?): Boolean {
-        if (parsed.cards.isNotEmpty() || finishReason == "length" || parsed.prose.isBlank()) return false
+        if (parsed.cards.isNotEmpty() || finishReason == "length" || finishReason == "max_tokens" || parsed.prose.isBlank()) return false
         if (parsed.noCardSignal && !CardTalk.pointsAtAButton(parsed.prose)) return false
         return true
     }

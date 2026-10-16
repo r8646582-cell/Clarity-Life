@@ -131,9 +131,9 @@ class JobClaims @Inject constructor(private val db: ClarityDatabase) {
         save(job.copy(status = StateMachines.move(StateMachines.JOB, "running", "succeeded"), finishedAt = now))
 
     /** Nothing to say (no answers, no conversations): settled with no call made. */
-    suspend fun skip(key: String, type: String, now: Long) {
+    suspend fun skip(key: String, type: String, now: Long) = db.withTransaction {
         db.jobs().insertIfNew(JobRow(key = key, type = type, createdAt = now))
-        val row = db.jobs().byKey(key) ?: return
+        val row = db.jobs().byKey(key) ?: return@withTransaction
         if (row.status == "pending") save(row.copy(status = StateMachines.move(StateMachines.JOB, "pending", "skipped"), finishedAt = now))
     }
 

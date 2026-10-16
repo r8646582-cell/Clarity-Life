@@ -182,7 +182,7 @@ object PlanBlocks {
         val level = when {
             list.all { it.level == "rest" } -> "rest"
             list.any { it.level in Planner.DONE_LEVELS } -> list.filter { it.level in Planner.DONE_LEVELS }
-                .maxBy { LEVEL_ORDER.indexOf(it.level) }.level
+                .maxByOrNull { LEVEL_ORDER.indexOf(it.level) }!!.level
             else -> "not"
         }
         CheckIn(day, level, list.filter { it.level != "rest" }.sumOf { it.amount }, list.firstNotNullOfOrNull { it.reason })

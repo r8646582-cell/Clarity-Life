@@ -35,7 +35,15 @@ object AnthropicWire {
         else -> "low"
     }
 
-    fun messagesUrl(baseUrl: String): String = baseUrl.trimEnd('/') + "/v1/messages"
+    fun messagesUrl(baseUrl: String): String {
+        val base = baseUrl.trim().trimEnd('/')
+        return when {
+            base.endsWith("/v1/messages") -> base
+            base.endsWith("/messages") -> base
+            base.endsWith("/v1") -> "$base/messages"
+            else -> "$base/v1/messages"
+        }
+    }
 
     fun requestBody(endpoint: Endpoint, request: ChatRequest): String = buildJsonObject {
         put("model", endpoint.model)

@@ -86,8 +86,13 @@ class Reminders @Inject constructor(
     private fun set(promiseId: Long, at: Long) {
         val pending = alarmIntent(promiseId)
         if (exactAllowed()) {
-            // Exact, and allowed to ring while the phone dozes.
-            alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            try {
+                // Exact, and allowed to ring while the phone dozes.
+                alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            } catch (e: SecurityException) {
+                // Without the exact-alarm permission Android may ring a few minutes late; Settings says so.
+                alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            }
         } else {
             // Without the exact-alarm permission Android may ring a few minutes late; Settings says so.
             alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)

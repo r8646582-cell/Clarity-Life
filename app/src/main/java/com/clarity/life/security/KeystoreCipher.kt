@@ -57,6 +57,13 @@ class KeystoreCipher(private val alias: String) {
         return cipher.doFinal(all, IV_BYTES, all.size - IV_BYTES)
     }
 
+    /** Permanently deletes the key entry from the Android Keystore (e.g. on full erase). */
+    fun deleteKey() {
+        if (keyStore.containsAlias(alias)) {
+            keyStore.deleteEntry(alias)
+        }
+    }
+
     companion object {
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"

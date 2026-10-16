@@ -1,5 +1,6 @@
 package com.clarity.life.writing
 
+import androidx.room.withTransaction
 import com.clarity.life.ai.AiFailure
 import com.clarity.life.core.Chapters
 import com.clarity.life.core.Jv
@@ -130,19 +131,21 @@ class StoryWriter @Inject constructor(
                     },
                 ),
             )
-            dao.insertStory(
-                StoryRow(
-                    periodStart = month.atDay(1).toString(),
-                    periodEnd = month.atEndOfMonth().toString(),
-                    short = checked.short,
-                    thenQuoteId = checked.thenQuote,
-                    nowQuoteId = checked.nowQuote,
-                    overcameJson = overcame,
-                    createdAt = now,
-                    key = key,
-                ),
-            )
-            jobs.succeed(job, now)
+            db.withTransaction {
+                dao.insertStory(
+                    StoryRow(
+                        periodStart = month.atDay(1).toString(),
+                        periodEnd = month.atEndOfMonth().toString(),
+                        short = checked.short,
+                        thenQuoteId = checked.thenQuote,
+                        nowQuoteId = checked.nowQuote,
+                        overcameJson = overcame,
+                        createdAt = now,
+                        key = key,
+                    ),
+                )
+                jobs.succeed(job, now)
+            }
             return Outcome.Written
         } catch (e: CancellationException) {
             jobs.release(job)

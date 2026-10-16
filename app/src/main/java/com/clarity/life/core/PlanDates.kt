@@ -135,6 +135,7 @@ object PlanDates {
                     val targets = (fields["targets"]?.asList ?: emptyList()).map { item ->
                         val t = item.asObj?.map ?: throw BadCard("target item")
                         val weeks = t["weeks"]?.asNum?.toLong()
+                        if (weeks != null && (weeks < 1 || weeks > 52)) throw BadCard("weeks out of range")
                         val start = when {
                             "start" in t -> need(t["start"], "start")
                             stepEnd != null -> stepEnd!!.plusDays(1)
@@ -165,6 +166,8 @@ object PlanDates {
             }
         } catch (e: BadCard) {
             Checked.Bad(e.message ?: "bad")
+        } catch (e: java.time.DateTimeException) {
+            Checked.Bad("invalid date arithmetic")
         }
     }
 

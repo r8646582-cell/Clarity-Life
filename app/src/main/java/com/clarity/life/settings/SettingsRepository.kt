@@ -156,10 +156,16 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun backgroundApiKey(): String? =
-        secrets.backgroundApiKey()?.takeIf { it.isNotBlank() }
-            ?: secrets.apiKey(backgroundProvider())?.takeIf { it.isNotBlank() }
-            ?: secrets.apiKey(get(Keys.PROVIDER, DefaultSettings.PROVIDER))?.takeIf { it.isNotBlank() }
+    suspend fun backgroundApiKey(): String? {
+        secrets.backgroundApiKey()?.takeIf { it.isNotBlank() }?.let { return it }
+        val bgProvider = backgroundProvider()
+        val chatProvider = get(Keys.PROVIDER, DefaultSettings.PROVIDER)
+        secrets.apiKey(bgProvider)?.takeIf { it.isNotBlank() }?.let { return it }
+        if (bgProvider == chatProvider) {
+            secrets.apiKey(chatProvider)?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+        return null
+    }
 
     /**
      * Background jobs (C4): independent provider, key and model if configured; defaults to the chat ones.
@@ -168,7 +174,12 @@ class SettingsRepository @Inject constructor(
      */
     suspend fun backgroundEndpoint(json: Boolean): Endpoint? {
         val bgProvider = backgroundProvider()
-        val key = backgroundApiKey() ?: return null
+        val key = backgroundApiKey()
+        if (key == null) {
+            // If the separate background provider has no key set, fall back to the chat endpoint
+            val chat = chatEndpoint() ?: return null
+            return background(chat, chat.model, json)
+        }
         val base = Endpoint(
             provider = bgProvider,
             baseUrl = backgroundBaseUrl(),

@@ -23,10 +23,10 @@ class NoteVectors @Inject constructor(private val embedder: Embedder) {
 
     /** A unit vector for [text], or null while meaning search is off. Blocking: call it off the main thread. */
     fun of(text: String): FloatArray? {
-        synchronized(cache) { cache[text]?.let { return it } }
+        synchronized(cache) { cache[text]?.let { return it.copyOf() } }
         val v = embedder.embed(text) ?: return null
         synchronized(cache) { cache[text] = v }
-        return v
+        return v.copyOf()
     }
 
     companion object {

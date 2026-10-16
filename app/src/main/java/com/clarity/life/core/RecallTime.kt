@@ -172,12 +172,13 @@ object RecallTime {
                 }
             }
             "day_month", "month_day" -> {
-                val mword = if (name == "day_month") g.group("m") else g.group("m2")
-                val dnum = (if (name == "day_month") g.group("d") else g.group("d2")).toInt()
+                val mword = (if (name == "day_month") g.group("m") else g.group("m2")) ?: return null
+                val dstr = if (name == "day_month") g.group("d") else g.group("d2")
+                val dnum = dstr?.toIntOrNull() ?: return null
                 val yword = if (name == "day_month") g.opt("y") else g.opt("y2")
                 // "I may 2 hours" is not 2 May (DayCounts).
                 if (name == "month_day" && mword == "may" && yword == null) return null
-                val m = MONTHS.getValue(mword!!)
+                val m = MONTHS[mword] ?: return null
                 return try {
                     val d = if (yword != null) {
                         LocalDate.of(yword.toInt(), m, dnum)

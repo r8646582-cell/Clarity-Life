@@ -1,5 +1,6 @@
 package com.clarity.life.writing
 
+import androidx.room.withTransaction
 import com.clarity.life.ai.AiFailure
 import com.clarity.life.core.Jv
 import com.clarity.life.core.PlanBlocks
@@ -176,7 +177,10 @@ class ReviewWriter @Inject constructor(
                 val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_WEEKLY), values), month, job = "review", fallback = fallback)
                 val checked = TextJobCheck.check("review_weekly", raw, values.values.toList(), his)
                 if (!checked.ok) return failed(job, "check_failed", now)
-                dao.setNarrative(review.id, checked.body, "[]")
+                db.withTransaction {
+                    dao.setNarrative(review.id, checked.body, "[]")
+                    jobs.succeed(job, now)
+                }
             } else {
                 val weekly = dao.weeklyReviewsWithin(review.periodStart, review.periodEnd)
                     .filter { it.narrative.isNotBlank() }
@@ -211,9 +215,11 @@ class ReviewWriter @Inject constructor(
                         },
                     ),
                 )
-                dao.setNarrative(review.id, checked.headline + "\n\n" + checked.narrative, revisit)
+                db.withTransaction {
+                    dao.setNarrative(review.id, checked.headline + "\n\n" + checked.narrative, revisit)
+                    jobs.succeed(job, now)
+                }
             }
-            jobs.succeed(job, now)
             return Outcome.Written
         } catch (e: CancellationException) {
             jobs.release(job)

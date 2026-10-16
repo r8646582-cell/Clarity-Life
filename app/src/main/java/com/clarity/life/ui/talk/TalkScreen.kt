@@ -95,8 +95,8 @@ fun TalkScreen(
         onPauseOrDispose { }
     }
     var typeMenu by remember { mutableStateOf(false) }
-    var drawer by remember { mutableStateOf(false) }
-    var forgetting by remember { mutableStateOf<Long?>(null) }
+    var drawer by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var forgetting by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Long?>(null) }
     val listState = rememberLazyListState()
     // Whether the list follows new text to the bottom (see below).
     var follow by remember { mutableStateOf(true) }

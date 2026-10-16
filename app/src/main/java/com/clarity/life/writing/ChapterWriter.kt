@@ -6,6 +6,7 @@ import com.clarity.life.core.KnowText
 import com.clarity.life.core.PlanBlocks
 import com.clarity.life.core.ReviewFacts
 import com.clarity.life.core.TextJobCheck
+import androidx.room.withTransaction
 import com.clarity.life.data.ClarityDatabase
 import com.clarity.life.data.entity.ChapterRow
 import com.clarity.life.planner.PlannerRepository
@@ -96,10 +97,12 @@ class ChapterWriter @Inject constructor(
             val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT), values), today.toString().take(7), job = "chapter", fallback = fallback)
             val checked = TextJobCheck.check("chapter", raw, values.values.toList(), his)
             if (!checked.ok) return failed(job, "check_failed", now)
-            dao.insertChapter(
-                ChapterRow(periodStart = first, periodEnd = last, title = checked.title, body = checked.body, createdAt = now),
-            )
-            jobs.succeed(job, now)
+            db.withTransaction {
+                dao.insertChapter(
+                    ChapterRow(periodStart = first, periodEnd = last, title = checked.title, body = checked.body, createdAt = now),
+                )
+                jobs.succeed(job, now)
+            }
             return Outcome.Written
         } catch (e: CancellationException) {
             jobs.release(job)

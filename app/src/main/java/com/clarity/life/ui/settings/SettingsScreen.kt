@@ -41,12 +41,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clarity.life.ui.theme.clarity
 
@@ -64,12 +66,12 @@ fun SettingsScreen(
     model: SettingsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
-    var key by remember { mutableStateOf("") }
-    var bgKey by remember { mutableStateOf("") }
+    var key by rememberSaveable { mutableStateOf("") }
+    var bgKey by rememberSaveable { mutableStateOf("") }
     // One group open at a time; the health check opens the one a problem lives in.
-    var openGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var openGroup by rememberSaveable { mutableStateOf<String?>(null) }
     // No key yet (a new person, or "Paste my key" on Talk): Coach opens by itself, with the key box in view.
-    var autoOpened by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var autoOpened by rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(state.loaded) {
         if (state.loaded && !autoOpened) {
             autoOpened = true
@@ -80,6 +82,11 @@ fun SettingsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     fun notificationsOn() = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
     var notificationsAllowed by remember { mutableStateOf(notificationsOn()) }
+    LifecycleResumeEffect(Unit) {
+        notificationsAllowed = notificationsOn()
+        model.refresh()
+        onPauseOrDispose { }
+    }
     val askNotifications = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
     ) { notificationsAllowed = notificationsOn() }
@@ -417,9 +424,9 @@ fun SettingsScreen(
  */
 @Composable
 private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
-    var passphraseDialog by remember { mutableStateOf(false) }
-    var testDialog by remember { mutableStateOf(false) }
-    var confirmRestore by remember { mutableStateOf(false) }
+    var passphraseDialog by rememberSaveable { mutableStateOf(false) }
+    var testDialog by rememberSaveable { mutableStateOf(false) }
+    var confirmRestore by rememberSaveable { mutableStateOf(false) }
     val folder = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree(),
     ) { uri -> uri?.let(model::chooseFolder) }
@@ -429,7 +436,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     val exportTo = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip"),
     ) { uri -> uri?.let(model::export) }
-    var warnExport by remember { mutableStateOf(false) }
+    var warnExport by rememberSaveable { mutableStateOf(false) }
 
     Hint("Encrypted, automatic, to a folder you choose. Each backup is read back and checked before older ones are removed.")
     Hint(
@@ -474,7 +481,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
         if (!state.exporting) warnExport = true
     }
     state.exportLine?.let { Hint(it) }
-    var erasing by remember { mutableStateOf(false) }
+    var erasing by rememberSaveable { mutableStateOf(false) }
     com.clarity.life.ui.theme.DangerButton(if (state.erasing) "Erasing" else "Erase everything", Modifier.fillMaxWidth().padding(top = 8.dp)) {
         if (!state.erasing) erasing = true
     }
@@ -482,7 +489,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     state.eraseLine?.let { Hint(it) }
 
     if (erasing) {
-        var typed by remember { mutableStateOf("") }
+        var typed by rememberSaveable { mutableStateOf("") }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { if (!state.erasing) erasing = false },
             containerColor = clarity.surface,
@@ -535,7 +542,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     }
 
     if (testDialog) {
-        var typed by remember { mutableStateOf("") }
+        var typed by rememberSaveable { mutableStateOf("") }
         var answer by remember { mutableStateOf<String?>(null) }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { testDialog = false },
@@ -563,8 +570,8 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     }
 
     if (passphraseDialog) {
-        var first by remember { mutableStateOf("") }
-        var second by remember { mutableStateOf("") }
+        var first by rememberSaveable { mutableStateOf("") }
+        var second by rememberSaveable { mutableStateOf("") }
         var problem by remember { mutableStateOf<String?>(null) }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { passphraseDialog = false },
@@ -593,31 +600,33 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
     }
 
     if (state.restoreUri != null) {
-        var pass by remember { mutableStateOf("") }
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { if (!state.restoring) model.cancelRestore() },
-            containerColor = clarity.surface,
-            title = { Text("Restore this backup?", color = clarity.text) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Made ${state.restoreMade}. Restoring replaces everything on this phone with it.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = clarity.text,
-                    )
-                    SecretField(pass, "Its passphrase") { pass = it }
-                    state.restoreLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { confirmRestore = true }, enabled = pass.isNotEmpty() && !state.restoring) {
-                    Text(if (state.restoring) "Restoring" else "Restore", color = clarity.danger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { model.cancelRestore() }, enabled = !state.restoring) { Text("Cancel", color = clarity.text) }
-            },
-        )
+        var pass by rememberSaveable { mutableStateOf("") }
+        if (!confirmRestore) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { if (!state.restoring) model.cancelRestore() },
+                containerColor = clarity.surface,
+                title = { Text("Restore this backup?", color = clarity.text) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Made ${state.restoreMade}. Restoring replaces everything on this phone with it.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = clarity.text,
+                        )
+                        SecretField(pass, "Its passphrase") { pass = it }
+                        state.restoreLine?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = clarity.danger) }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { confirmRestore = true }, enabled = pass.isNotEmpty() && !state.restoring) {
+                        Text(if (state.restoring) "Restoring" else "Restore", color = clarity.danger)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { model.cancelRestore() }, enabled = !state.restoring) { Text("Cancel", color = clarity.text) }
+                },
+            )
+        }
         if (confirmRestore) {
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { confirmRestore = false },

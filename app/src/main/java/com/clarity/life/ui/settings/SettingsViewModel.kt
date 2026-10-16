@@ -108,6 +108,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { reload() }
     }
 
+    fun refresh() = viewModelScope.launch { reload() }
+
     private suspend fun reload() {
         val provider = settings.get(SettingsRepository.Keys.PROVIDER, DefaultSettings.PROVIDER)
         val bgProvider = settings.get(SettingsRepository.Keys.BACKGROUND_PROVIDER, DefaultSettings.BACKGROUND_PROVIDER)

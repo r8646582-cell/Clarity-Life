@@ -124,7 +124,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        leftAt = System.currentTimeMillis()
+        if (!locked) {
+            leftAt = System.currentTimeMillis()
+        }
     }
 
     override fun onRestart() {
@@ -132,6 +134,7 @@ class MainActivity : ComponentActivity() {
         // Decided at once from the last known setting, so the conversation never shows for a frame first.
         if (needsLock()) {
             locked = true
+            unlockedInProcess = false
             com.clarity.life.security.AppLock.ask(this) { unlock() }
         }
         // The lock setting may have changed in Settings while the app was open.

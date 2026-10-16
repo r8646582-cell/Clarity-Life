@@ -94,7 +94,6 @@ object OpenAiWire {
     }
 
     /** The chat completions URL for a base URL that may end in /v1, /openai, /chat/completions, or a root. */
-    /** The chat completions URL for a base URL that may end in /v1, /openai, /chat/completions, or a root. */
     fun chatUrl(baseUrl: String): String {
         val base = baseUrl.trim().trimEnd('/')
         return when {
@@ -118,6 +117,7 @@ object OpenAiWire {
         if (trimmed.isEmpty() || trimmed.startsWith(":")) return Event.Ignore
         if (!trimmed.startsWith("data:")) return Event.Ignore
         val payload = trimmed.removePrefix("data:").trim()
+        if (payload.isEmpty()) return Event.Ignore
         if (payload == "[DONE]") return Event.Done
         val root = try {
             json.parseToJsonElement(payload).jsonObject

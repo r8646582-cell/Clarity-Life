@@ -80,6 +80,7 @@ class SecretStore @Inject constructor(private val context: Context) {
     /** "Erase everything": the sealed secrets go too, so the old database can never be opened again. */
     fun eraseEverything() {
         prefs.edit().clear().commit()
+        cipher.deleteKey()
     }
 
     private fun apiKeyName(provider: String) = "api_key_$provider"

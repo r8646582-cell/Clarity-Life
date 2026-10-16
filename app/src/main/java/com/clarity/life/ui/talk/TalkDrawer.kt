@@ -66,7 +66,8 @@ internal fun ConversationsDrawer(
     dayOf: (Long) -> String,
 ) {
     var query by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
-    var renaming by remember { mutableStateOf<ConversationRow?>(null) }
+    var renamingId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Long?>(null) }
+    var renamingTitle by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     // A search left from last time would hide conversations he expects to see when he opens it again.
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onSearch("") } }
     Column(
@@ -170,7 +171,10 @@ internal fun ConversationsDrawer(
                         kind = state.focuses.firstOrNull { it.id == row.focusId }?.let { "Focus: ${it.name}" }
                             ?: CHAT_TYPES.firstOrNull { it.first == row.chatType }?.second ?: "Free talk",
                         onOpen = { onOpen(row.id) },
-                        onRename = { renaming = row },
+                        onRename = {
+                            renamingId = row.id
+                            renamingTitle = row.title
+                        },
                         onForget = { onForget(row.id) },
                     )
                 }
@@ -178,16 +182,15 @@ internal fun ConversationsDrawer(
         }
     }
 
-    renaming?.let { row ->
-        var title by remember(row.id) { mutableStateOf(row.title) }
+    renamingId?.let { id ->
         androidx.compose.material3.AlertDialog(
-            onDismissRequest = { renaming = null },
+            onDismissRequest = { renamingId = null },
             containerColor = clarity.surface,
             title = { Text("Rename", color = clarity.text) },
             text = {
                 OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it.take(TalkViewModel.MAX_TITLE_CHARS) },
+                    value = renamingTitle,
+                    onValueChange = { renamingTitle = it.take(TalkViewModel.MAX_TITLE_CHARS) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -201,11 +204,11 @@ internal fun ConversationsDrawer(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    onRename(row.id, title)
-                    renaming = null
-                }, enabled = title.isNotBlank()) { Text("Save", color = clarity.yellow) }
+                    onRename(id, renamingTitle)
+                    renamingId = null
+                }, enabled = renamingTitle.isNotBlank()) { Text("Save", color = clarity.yellow) }
             },
-            dismissButton = { TextButton(onClick = { renaming = null }) { Text("Cancel", color = clarity.text) } },
+            dismissButton = { TextButton(onClick = { renamingId = null }) { Text("Cancel", color = clarity.text) } },
         )
     }
 }
