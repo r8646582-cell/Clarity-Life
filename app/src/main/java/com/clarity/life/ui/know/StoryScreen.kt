@@ -27,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
@@ -166,6 +168,7 @@ fun StoryScreen(
         }
 
         if (s.helps.isNotEmpty() || s.strengths.isNotEmpty()) {
+            item { SectionTitle("Lessons & Insights") }
             if (s.helps.isNotEmpty()) item { NoteList("What helps you", s.helps, onProof) }
             if (s.strengths.isNotEmpty()) item { NoteList("What you're good at", s.strengths, onProof) }
         }
@@ -528,156 +531,255 @@ private const val SHOWN_NOTES = 3
  * written out under it (a tick when he confirmed it). The surest come first; after three, "Show N more". A row
  * opens its proof sheet over this page.
  */
+/**
+ * Synthesizes a cohesive narrative summary from verified notes.
+ */
+private fun synthesizeLessonsSummary(title: String, notes: List<NoteRow>): String {
+    if (notes.isEmpty()) return ""
+    val isStrength = title.contains("good at", ignoreCase = true) || notes.first().kind == "strength"
+    val cleaned = notes.map { it.text.trim().trimEnd('.') }
+    return if (isStrength) {
+        when (cleaned.size) {
+            1 -> "Your strongest verified capability is ${cleaned[0]}. This serves as a reliable personal anchor across your work and challenges."
+            2 -> "Across your sessions, your core strengths emerge around ${cleaned[0]}, backed by ${cleaned[1]}. When you lean into these together, you build natural momentum."
+            else -> "Across your journey, your core strengths center on ${cleaned[0]}. You consistently thrive when pairing this with ${cleaned[1]}, supported by ${cleaned[2]}."
+        }
+    } else {
+        when (cleaned.size) {
+            1 -> "What reliably protects your focus and state: ${cleaned[0]}. This has proven to be your most effective foundation."
+            2 -> "Your most reliable support system combines ${cleaned[0]} with ${cleaned[1]}. Together, these consistently keep you grounded and moving forward."
+            else -> "Your proven life anchors: you function at your best when prioritizing ${cleaned[0]}, backed by ${cleaned[1]} and ${cleaned[2]}."
+        }
+    }
+}
+
+/**
+ * What helps him, or what he is good at: a clean, collapsible folder dossier.
+ * Collapsed by default to prevent clutter over time. When tapped, it reveals
+ * a synthesized lessons summary, numbered takeaways, and clickable tag pills at the bottom.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoteList(title: String, notes: List<NoteRow>, onProof: (NoteRow) -> Unit) {
-    var expanded by rememberSaveable(title) { mutableStateOf(false) }
-    val primary = notes.firstOrNull() ?: return
-    val others = notes.drop(1)
+    var open by rememberSaveable(title) { mutableStateOf(false) }
+    if (notes.isEmpty()) return
+    val summaryText = synthesizeLessonsSummary(title, notes)
 
-    Column {
+    Column(
+        Modifier
+            .padding(horizontal = 20.dp, vertical = 6.dp)
+            .fillMaxWidth()
+            .background(clarity.surface, Bold.cardShape)
+            .border(
+                1.dp,
+                if (open) clarity.yellow.copy(alpha = 0.45f) else clarity.hairline,
+                Bold.cardShape,
+            ),
+    ) {
+        // Folder Header Row (always visible, tap to toggle)
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 4.dp),
+                .clickable(role = Role.Button) { open = !open }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            SectionTitle(title)
-            if (others.isNotEmpty()) {
-                Text(
-                    if (expanded) "Compact" else "View all (${notes.size})",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = clarity.yellow,
-                    modifier = Modifier
-                        .clickable { expanded = !expanded }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+            Box(
+                Modifier
+                    .size(42.dp)
+                    .background(
+                        if (open) clarity.yellow.copy(alpha = 0.16f) else clarity.raised,
+                        RoundedCornerShape(10.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (open) Icons.Outlined.FolderOpen else Icons.Outlined.Folder,
+                    contentDescription = null,
+                    tint = if (open) clarity.yellow else clarity.muted,
+                    modifier = Modifier.size(22.dp),
                 )
             }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = clarity.text,
+                )
+                Text(
+                    if (open) "Synthesized lessons & evidence" else "${notes.size} ${if (notes.size == 1) "lesson" else "lessons"} · Tap to open folder",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.muted,
+                )
+            }
+            Text(
+                "${notes.size}",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (open) clarity.ground else clarity.muted,
+                modifier = Modifier
+                    .background(if (open) clarity.yellow else clarity.raised, Bold.pillShape)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+            Icon(
+                if (open) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
+                contentDescription = if (open) "Close folder" else "Open folder",
+                tint = clarity.muted,
+            )
         }
 
-        if (expanded) {
+        // Inside the Folder (expanded view)
+        if (open) {
+            HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 16.dp))
+
             Column(
-                Modifier
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
-                    .fillMaxWidth()
-                    .background(clarity.surface, Bold.cardShape)
-                    .border(1.dp, clarity.hairline, Bold.cardShape),
+                Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                notes.forEachIndexed { i, n ->
-                    if (i > 0) HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clickable(role = Role.Button) { onProof(n) }
-                            .padding(start = 18.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(n.text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                if (n.confidence == "confirmed") {
-                                    Icon(Icons.Outlined.Check, contentDescription = "Confirmed by you", tint = clarity.green, modifier = Modifier.size(15.dp))
-                                }
-                                Text(
-                                    if (n.timesSeen == 1) "Seen once in your own words" else "Seen ${n.timesSeen} times in your own words",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = clarity.muted,
-                                )
-                            }
-                        }
-                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.controlOutline)
-                    }
-                }
-            }
-        } else {
-            Column(
-                Modifier
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
-                    .fillMaxWidth()
-                    .background(clarity.surface, Bold.cardShape)
-                    .border(1.dp, clarity.hairline, Bold.cardShape),
-            ) {
-                // Primary featured insight
-                Row(
+                // 1. Synthesized Summary Card
+                Column(
                     Modifier
                         .fillMaxWidth()
-                        .clickable(role = Role.Button) { onProof(primary) }
-                        .padding(start = 18.dp, end = 12.dp, top = 16.dp, bottom = if (others.isEmpty()) 16.dp else 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        .background(clarity.raised, RoundedCornerShape(12.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            primary.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = clarity.text,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            Icons.Outlined.AutoStories,
+                            contentDescription = null,
+                            tint = clarity.yellow,
+                            modifier = Modifier.size(16.dp),
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (primary.confidence == "confirmed") {
-                                Icon(Icons.Outlined.Check, contentDescription = "Confirmed by you", tint = clarity.green, modifier = Modifier.size(15.dp))
-                            }
+                        Text(
+                            "Synthesized Summary",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = clarity.yellow,
+                        )
+                    }
+                    Text(
+                        summaryText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = clarity.text,
+                        lineHeight = 22.sp,
+                    )
+                }
+
+                // 2. Individual Lessons List
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Core Lessons",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = clarity.muted,
+                    )
+                    notes.forEachIndexed { i, n ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button) { onProof(n) }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
                             Text(
-                                if (primary.timesSeen == 1) "Seen once in your own words" else "Seen ${primary.timesSeen} times in your own words",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = clarity.muted,
+                                "${i + 1}.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = clarity.yellow,
+                                modifier = Modifier.padding(top = 1.dp),
+                            )
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    n.text,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = clarity.text,
+                                    lineHeight = 21.sp,
+                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(top = 2.dp),
+                                ) {
+                                    if (n.confidence == "confirmed") {
+                                        Icon(
+                                            Icons.Outlined.Check,
+                                            contentDescription = "Confirmed by you",
+                                            tint = clarity.green,
+                                            modifier = Modifier.size(13.dp),
+                                        )
+                                        Text("Confirmed", style = MaterialTheme.typography.labelSmall, color = clarity.green)
+                                        Text("·", style = MaterialTheme.typography.labelSmall, color = clarity.muted)
+                                    }
+                                    Text(
+                                        if (n.timesSeen == 1) "Seen once in your words" else "Seen ${n.timesSeen} times in your words",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = clarity.muted,
+                                    )
+                                }
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                                contentDescription = "See proof",
+                                tint = clarity.controlOutline,
+                                modifier = Modifier.padding(top = 2.dp),
                             )
                         }
                     }
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.controlOutline)
                 }
 
-                // Bottom tag pills for all other notes
-                if (others.isNotEmpty()) {
-                    HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
-                    Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 14.dp)) {
-                        Text(
-                            "Also noticed",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = clarity.muted,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            others.forEach { n ->
-                                val confirmed = n.confidence == "confirmed"
-                                Row(
-                                    modifier = Modifier
-                                        .background(
-                                            if (confirmed) clarity.yellow.copy(alpha = 0.15f) else clarity.raised,
-                                            Bold.pillShape,
-                                        )
-                                        .border(
-                                            1.dp,
-                                            if (confirmed) clarity.yellow.copy(alpha = 0.4f) else clarity.hairline,
-                                            Bold.pillShape,
-                                        )
-                                        .clickable { onProof(n) }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    if (confirmed) {
-                                        Icon(
-                                            Icons.Outlined.Check,
-                                            contentDescription = null,
-                                            tint = clarity.green,
-                                            modifier = Modifier.size(12.dp),
-                                        )
-                                    }
-                                    Text(
-                                        n.text,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = clarity.text,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
+                // 3. Interactive Tag Pills at the Bottom
+                HorizontalDivider(color = clarity.hairline)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Tags (tap to see proof quotes)",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = clarity.muted,
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        notes.forEach { n ->
+                            val confirmed = n.confidence == "confirmed"
+                            Row(
+                                modifier = Modifier
+                                    .background(
+                                        if (confirmed) clarity.yellow.copy(alpha = 0.15f) else clarity.raised,
+                                        Bold.pillShape,
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (confirmed) clarity.yellow.copy(alpha = 0.4f) else clarity.hairline,
+                                        Bold.pillShape,
+                                    )
+                                    .clickable { onProof(n) }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            ) {
+                                if (confirmed) {
+                                    Icon(
+                                        Icons.Outlined.Check,
+                                        contentDescription = null,
+                                        tint = clarity.green,
+                                        modifier = Modifier.size(12.dp),
                                     )
                                 }
+                                Text(
+                                    n.text,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = clarity.text,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             }
                         }
                     }
