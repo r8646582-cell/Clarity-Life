@@ -528,38 +528,100 @@ private const val SHOWN_NOTES = 3
  * written out under it (a tick when he confirmed it). The surest come first; after three, "Show N more". A row
  * opens its proof sheet over this page.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoteList(title: String, notes: List<NoteRow>, onProof: (NoteRow) -> Unit) {
-    var all by rememberSaveable(title) { mutableStateOf(false) }
-    val shown = if (all) notes else notes.take(SHOWN_NOTES)
+    var expanded by rememberSaveable(title) { mutableStateOf(false) }
+    val primary = notes.firstOrNull() ?: return
+    val others = notes.drop(1)
+
     Column {
-        SectionTitle(title)
-        Column(
+        Row(
             Modifier
-                .padding(horizontal = 20.dp, vertical = 6.dp)
                 .fillMaxWidth()
-                .background(clarity.surface, Bold.cardShape)
-                .border(1.dp, clarity.hairline, Bold.cardShape),
+                .padding(horizontal = 20.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            shown.forEachIndexed { i, n ->
-                if (i > 0) HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
+            SectionTitle(title)
+            if (others.isNotEmpty()) {
+                Text(
+                    if (expanded) "Compact" else "View all (${notes.size})",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = clarity.yellow,
+                    modifier = Modifier
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
+
+        if (expanded) {
+            Column(
+                Modifier
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .fillMaxWidth()
+                    .background(clarity.surface, Bold.cardShape)
+                    .border(1.dp, clarity.hairline, Bold.cardShape),
+            ) {
+                notes.forEachIndexed { i, n ->
+                    if (i > 0) HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                            .clickable(role = Role.Button) { onProof(n) }
+                            .padding(start = 18.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(n.text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (n.confidence == "confirmed") {
+                                    Icon(Icons.Outlined.Check, contentDescription = "Confirmed by you", tint = clarity.green, modifier = Modifier.size(15.dp))
+                                }
+                                Text(
+                                    if (n.timesSeen == 1) "Seen once in your own words" else "Seen ${n.timesSeen} times in your own words",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = clarity.muted,
+                                )
+                            }
+                        }
+                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.controlOutline)
+                    }
+                }
+            }
+        } else {
+            Column(
+                Modifier
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .fillMaxWidth()
+                    .background(clarity.surface, Bold.cardShape)
+                    .border(1.dp, clarity.hairline, Bold.cardShape),
+            ) {
+                // Primary featured insight
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                        .clickable(role = Role.Button) { onProof(n) }
-                        .padding(start = 18.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
+                        .clickable(role = Role.Button) { onProof(primary) }
+                        .padding(start = 18.dp, end = 12.dp, top = 16.dp, bottom = if (others.isEmpty()) 16.dp else 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(n.text, style = MaterialTheme.typography.bodyLarge, color = clarity.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            primary.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = clarity.text,
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (n.confidence == "confirmed") {
+                            if (primary.confidence == "confirmed") {
                                 Icon(Icons.Outlined.Check, contentDescription = "Confirmed by you", tint = clarity.green, modifier = Modifier.size(15.dp))
                             }
                             Text(
-                                if (n.timesSeen == 1) "Seen once in your own words" else "Seen ${n.timesSeen} times in your own words",
+                                if (primary.timesSeen == 1) "Seen once in your own words" else "Seen ${primary.timesSeen} times in your own words",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = clarity.muted,
                             )
@@ -567,13 +629,60 @@ private fun NoteList(title: String, notes: List<NoteRow>, onProof: (NoteRow) -> 
                     }
                     Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = "See the proof", tint = clarity.controlOutline)
                 }
+
+                // Bottom tag pills for all other notes
+                if (others.isNotEmpty()) {
+                    HorizontalDivider(color = clarity.hairline, modifier = Modifier.padding(horizontal = 18.dp))
+                    Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 14.dp)) {
+                        Text(
+                            "Also noticed",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = clarity.muted,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            others.forEach { n ->
+                                val confirmed = n.confidence == "confirmed"
+                                Row(
+                                    modifier = Modifier
+                                        .background(
+                                            if (confirmed) clarity.yellow.copy(alpha = 0.15f) else clarity.raised,
+                                            Bold.pillShape,
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (confirmed) clarity.yellow.copy(alpha = 0.4f) else clarity.hairline,
+                                            Bold.pillShape,
+                                        )
+                                        .clickable { onProof(n) }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    if (confirmed) {
+                                        Icon(
+                                            Icons.Outlined.Check,
+                                            contentDescription = null,
+                                            tint = clarity.green,
+                                            modifier = Modifier.size(12.dp),
+                                        )
+                                    }
+                                    Text(
+                                        n.text,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = clarity.text,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
-        if (notes.size > SHOWN_NOTES) {
-            TextAction(
-                if (all) "Show fewer" else "Show ${notes.size - SHOWN_NOTES} more",
-                modifier = Modifier.padding(horizontal = 20.dp),
-            ) { all = !all }
         }
     }
 }

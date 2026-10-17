@@ -122,7 +122,7 @@ class HealthViewModel @Inject constructor(
         val heapUsedMb = (runtime.totalMemory() - runtime.freeMemory()) / 1_048_576L
         val heapMaxMb = runtime.maxMemory() / 1_048_576L
         val nativeMb = android.os.Debug.getNativeHeapAllocatedSize() / 1_048_576L
-        lines.add("Memory in use" to "$heapUsedMb MB heap ($nativeMb MB native, max $heapMaxMb MB)")
+        lines.add("Memory in use" to "$heapUsedMb MB / $heapMaxMb MB Java heap ($nativeMb MB native RAM)")
         com.clarity.life.core.AppPerformance.startupMs?.let {
             lines.add("Startup time" to "$it ms to first screen")
         }

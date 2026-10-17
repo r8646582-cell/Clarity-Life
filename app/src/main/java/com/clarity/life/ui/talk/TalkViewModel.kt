@@ -343,7 +343,7 @@ class TalkViewModel @Inject constructor(
         quietLine.value = null
         bus.fail(null)
         guarded {
-            val endpoint = chat.endpointForChat(state.value.chatType)
+            val endpoint = chat.endpointForChat(chatType.value)
             if (endpoint == null) {
                 hasKey.value = false
                 quietLine.value = "Add your API key in Settings, Coach, and this will send."
@@ -445,8 +445,16 @@ class TalkViewModel @Inject constructor(
     fun switchFromCard(cardId: Long) = tap(cardId) {
         val result = saver.switchMode(cardId, System.currentTimeMillis())
         // Into a focus the chat type stays; the dropdown shows the focus from the conversation row.
-        if (result is com.clarity.life.chat.CardSaver.Result.Saved && !result.ref.startsWith("mode:focus:")) {
-            chatType.value = result.ref.substringAfter(':')
+        if (result is com.clarity.life.chat.CardSaver.Result.Saved) {
+            if (!result.ref.startsWith("mode:focus:")) {
+                val to = result.ref.substringAfter(':')
+                chatType.value = to
+                val label = CHAT_TYPES.firstOrNull { it.first == to }?.second ?: to.replaceFirstChar { it.uppercase() }
+                send("Let's switch to $label.")
+            } else {
+                val focusName = result.ref.substringAfter("mode:focus:")
+                send("Let's focus on $focusName.")
+            }
         }
         result
     }

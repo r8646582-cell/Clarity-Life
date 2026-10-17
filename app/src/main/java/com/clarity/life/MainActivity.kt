@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
     private var locked by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.clarity.life.core.AppPerformance.markActivityCreate()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Locked from the first frame when the lock may be on; the setting is read straight after.

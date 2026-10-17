@@ -8,6 +8,8 @@ import android.os.SystemClock
  */
 object AppPerformance {
     private var processStartUptime: Long = SystemClock.uptimeMillis()
+    @Volatile
+    private var activityStartUptime: Long? = null
 
     @Volatile
     var startupMs: Long? = null
@@ -17,9 +19,16 @@ object AppPerformance {
         processStartUptime = SystemClock.uptimeMillis()
     }
 
+    fun markActivityCreate() {
+        if (activityStartUptime == null) {
+            activityStartUptime = SystemClock.uptimeMillis()
+        }
+    }
+
     fun markFirstScreen() {
         if (startupMs == null) {
-            startupMs = SystemClock.uptimeMillis() - processStartUptime
+            val start = activityStartUptime ?: processStartUptime
+            startupMs = (SystemClock.uptimeMillis() - start).coerceAtLeast(0)
         }
     }
 }

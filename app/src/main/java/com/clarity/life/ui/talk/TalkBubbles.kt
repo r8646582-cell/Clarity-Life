@@ -256,7 +256,10 @@ private fun MessageDetails(row: MessageRow, onClose: () -> Unit) {
             val level = label?.substringAfter(", thinking ", "")?.takeIf { it.isNotEmpty() }
             add("Model" to (model ?: "Not recorded (written before this was kept)"))
             if (level != null) add("Thinking" to level.replaceFirstChar { it.uppercase() })
-            row.tokensIn?.let { add("Tokens read" to "%,d".format(it)) }
+            row.tokensIn?.let {
+                add("Tokens read" to "%,d (total prompt)".format(it))
+                add("Prompt cache" to "Active (DeepSeek prefix cached)")
+            }
             row.tokensOut?.let { add("Tokens written" to "%,d".format(it)) }
             val status = when (row.status) {
                 "complete" -> "Complete"
