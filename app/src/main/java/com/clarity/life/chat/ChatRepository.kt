@@ -166,6 +166,29 @@ class ChatRepository @Inject constructor(
         id
     }
 
+    /**
+     * The offline queue: a message sent with no signal is kept as `pending` (waiting to send). It is not part of
+     * the conversation's history and not searchable until [flushPending] sends it.
+     */
+    suspend fun addPendingMessage(conversationId: Long, text: String, now: Long): Long {
+        StateMachines.requireStart(StateMachines.MESSAGE, "pending")
+        return messages.insert(
+            MessageRow(conversationId = conversationId, role = "user", content = text, createdAt = now, status = "pending"),
+        )
+    }
+
+    suspend fun pendingMessages(conversationId: Long): List<MessageRow> =
+        messages.ofConversation(conversationId).filter { it.role == "user" && it.status == "pending" }
+
+    /** The waiting messages are sent, in order: they become ordinary messages and are searchable at once. */
+    suspend fun flushPending(conversationId: Long) {
+        val offTheRecord = conversations.get(conversationId)?.offTheRecord == 1
+        for (row in pendingMessages(conversationId)) {
+            messages.setStatus(row.id, StateMachines.move(StateMachines.MESSAGE, "pending", "complete"))
+            if (!offTheRecord) search.indexHisMessage(row.id, row.content)
+        }
+    }
+
     /** OpenCoachReply: an empty row in state streaming, which the repair sweep can always settle. */
     suspend fun openCoachReply(conversationId: Long, now: Long, model: String?): Long {
         StateMachines.requireStart(StateMachines.MESSAGE, "streaming")

@@ -383,6 +383,18 @@ class TalkViewModel @Inject constructor(
                 conversationId.value
             }
             val now = System.currentTimeMillis()
+            // No signal: keep the message as "waiting to send" and let the queue send it when the network is
+            // back. No red error, and the words are never lost (docs/CLARITY-V2-BUILD-SPEC.md section 5).
+            if (!com.clarity.life.chat.Connectivity.isOnline(context)) {
+                chat.addPendingMessage(id, trimmed, now)
+                if (chat.conversations.get(id)?.title.isNullOrBlank()) {
+                    chat.rename(id, trimmed.take(com.clarity.life.memory.MemoryRepository.PLACEHOLDER_TITLE_CHARS))
+                }
+                com.clarity.life.chat.PendingSendWorker.enqueue(context, id)
+                return@guarded
+            }
+            // Back online with older messages still waiting: they go first, in order.
+            chat.flushPending(id)
             chat.addHisMessage(id, trimmed, now)
             // His message gets its meaning vector in the background, on the phone.
             indexer.schedule()

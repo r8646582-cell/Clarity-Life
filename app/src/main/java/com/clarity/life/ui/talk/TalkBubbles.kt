@@ -109,6 +109,14 @@ internal fun MessageBubble(
                 ) {
                     if (his) {
                         Text(row.content, style = MaterialTheme.typography.bodyLarge, color = clarity.ground)
+                        if (row.status == "pending") {
+                            Text(
+                                "Waiting to send",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = clarity.ground.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                     } else {
                         // The coach's presence dot beside its reply; it breathes while the reply is being written.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
