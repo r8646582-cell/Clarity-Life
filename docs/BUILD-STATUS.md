@@ -410,3 +410,12 @@ How the stage B, C and D sessions worked, so the next one does not relearn it:
   keys settle it. Each Sunday run is scheduled under a name that includes its time, so a run that schedules the
   next one never replaces (and cancels) itself.
 
+
+
+## Clarity v2 (6 November 2026)
+Stage 1 to 4 built on branch `claude/magical-albattani-arrwao`, verified by GitHub Actions only (nothing was run on a phone):
+- Stage 1: v2 context packet, persona and examples, one chat per day, Talk/Know/Letters, offline queue, background cap (12 a day), memory keeper under the venting rule, Know "Is this right?", "forget that".
+- Stage 2: working-on list (new tables `working_item`, `working_item_event`, chosen over reusing `goal`), 3-active cap, dates only from explicit dates in the owner's words, stale question once.
+- Stage 3 and 4: weekly, monthly and yearly letters in mirror style with facts counted by code; milestone letter when an item is done.
+- Not done: Stage 0 (the owner's 14-day test), the test-bench cases of spec section 11 (`prompts/testbench.md` still holds the v1 scenarios and its old block names), the optional reply-checker, the Stage 5 cleanup migration and dead-code deletion (needs the owner's approval after a verified backup restore), an emulator or phone run of any screen.
+- Decisions by the owner: no daily chat limit (6 Nov 2026).

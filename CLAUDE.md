@@ -4,17 +4,17 @@ You are building a private Android app for one person, its owner, who is a begin
 
 Read this file, then `docs/LIFE-SYSTEM.md` (the spec: scope is locked), then the files named below. If this file and the spec disagree, the spec wins; if the spec and a file in `contracts/` disagree, stop and ask the owner.
 
-## What the app is
-A lifetime life system: goals, plans, daily check-ins, patterns, conversations, held in an encrypted on-device database, with a coach (an AI) that talks. **The AI only talks. The app changes state only when the owner taps a button.** Three tabs (Talk, Plan, What I know) plus Settings. The UI follows the Bold mockups in `docs/mockups/` (start with its README; tokens also in spec section 2). Rebuild them in Compose; do not redesign them.
+## What the app is (v2, from `docs/CLARITY-V2-BUILD-SPEC.md`; where it disagrees with the rest of this file, it wins for the items in its section 2)
+One honest friend you talk to every day: one plain chat (no cards, no buttons in the chat, no chat types), an encrypted on-device database, a memory that quietly learns, and mirror-style letters. **The AI only talks.** State changes only through (a) the owner's tap, or (b) the **memory keeper**, a validated background applier, which only proposes (strength `guess` / item `unconfirmed`) and never deletes. Three tabs: **Talk, Know, Letters**, plus Settings (icon in the chat header). The UI follows `docs/mockups-v2/` (the older `docs/mockups/` Bold tokens still apply).
 
 ## Rules that never break (details in spec section 0 and 18)
-1. No hidden actions. AI output reaches the database only through (a) the owner tapping a card button, which runs a repository command, or (b) a validated background applier (reflection, gardening). Background jobs never create cards and never change goals, plans, targets or promises.
+1. No hidden actions (v2). AI output reaches the database only through (a) the owner's tap (That's right, Not quite, Delete, Forget, settings) or (b) the validated memory keeper (reflection) and gardening. The keeper may create or update notes, patterns and working-on items as proposals only, never deletes, never changes anything from venting, never sets a date code did not read from the owner's own words, and never makes a fourth item active. There are no cards.
 2. Code does all dates, day counts, pace and every number that is saved or shown as a fact. The AI receives finished facts and never replaces them. In conversation the coach may do simple rough sums on numbers it was given, shown and called an estimate (the owner's decision, 11 Oct 2026); it never counts days on a calendar or works out a date (the app gives day counts in NOW), and no number the model worked out is saved as an app fact.
 3. Fail closed at every AI boundary: bad cards, bad JSON, unverified quotes and numbers are dropped and logged without content; the prose still shows.
 4. Only their own words and actions are evidence. A coach claim never raises a note's confidence.
 5. Their deletions are final. A deleted note is never recreated.
 6. Nothing leaves the phone except calls to the configured AI provider. No accounts, analytics, crash-reporting SDKs, or logging of message content or keys. The manifest sets `android:allowBackup="false"` (Android's own cloud backup would copy the database off the phone); their backups are only the encrypted ones they choose.
-7. No streaks, badges or nagging. The only notifications are reminders they set by tapping a card, and the optional silent Sunday letter alert.
+7. No streaks, badges or nagging. The only notifications are the optional daily nudge (off by default) and the optional silent Sunday letter alert.
 8. Never `fallbackToDestructiveMigration`. Every schema change = a migration + a MigrationTest. A failed migration stops with an error and never wipes data.
 9. Nothing model-specific is hard-coded: provider, base URL, model names, embedding model and prompts are settings. Defaults live only in `DefaultSettings.kt`.
 10. English only. Real names stay. No crisis or help-line screens (the owner removed them on purpose); the coach persona has its own short safety rule.
@@ -35,6 +35,9 @@ Everything below already exists and passes (`bash tools/check_all.sh`). The Pyth
 | Database | `db/schema.sql`, `contracts/states.json` | Room entities and DAOs identical to the schema | `SchemaTest` (entities match), `StateMachineTest` (illegal transitions throw), `MigrationTest` |
 
 If you must change a contract, change the spec file, the vectors and the Kotlin together, run all checks, and tell the owner what changed and why. If a vector looks wrong, say so; do not edit it just to make a test pass. `tools/mutation_check.py` plants known bugs in the Python references and fails if the vectors miss any; when you fix a new class of bug, add a vector and a mutation for it.
+
+## v2 status (what is built, what is hidden)
+Built: v2 context packet (`contracts/context.md`), `persona.md` and the v2 prompts, one chat per day, the top line, offline queue (`pending` messages, `PendingSendWorker`), the memory keeper's working-on rules (`tools/working.py`, `WorkingRules.kt`), "forget that" (`tools/commands.py`), Know and Letters tabs, mirror-style letters with code-counted facts and a milestone letter, the hard background cap of 12 calls a day (`BackgroundBudget`), the optional daily nudge. There is **no chat limit** (the owner's decision, 6 Nov 2026): tokens are saved by the prompt cache, a 12,000-token history window, thinking off for background JSON and one reflection per idle period. Hidden but not yet deleted (Stage 5, with the owner's approval): the Plan screens, cards, planner, promises, reviews, chapters, story, old prompts (`cards.md`, `mode_*.md`, `review_*.md`, `brief_daily.md`, `chapter.md`, `story.md`, `card_followup.md`).
 
 ## Prompts
 `prompts/*.md` are bundled into the APK as assets and filled by code (`{{PLACEHOLDERS}}`). They are the coach's mind. You may change them only when the owner asks or approves, then run `python3 tools/check_prompts.py`, then the in-app test bench on the real model. Never inline prompt text in Kotlin. The in-app prompt editor must validate any override against `contracts/prompts.json` before saving and offer Reset to built-in.
