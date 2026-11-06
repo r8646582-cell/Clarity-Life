@@ -1,0 +1,667 @@
+{
+ "_comment": "Vectors for tools/working.py and WorkingRules.kt (docs/CLARITY-V2-BUILD-SPEC.md sections 6 and 7). Dates are YYYY-MM-DD.",
+ "cases": [
+  {
+   "name": "date: 'my exam is on 12 February' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "my exam is on 12 February",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: '12th of February' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "12th of February",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: 'February 12th 2027' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "February 12th 2027",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: 'exam 12 Feb 2027' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "exam 12 Feb 2027",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: '2027-02-12' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "2027-02-12",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: '8 november' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "8 november",
+    "today": "2026-11-06"
+   },
+   "expect": "2026-11-08"
+  },
+  {
+   "name": "date: '6 November' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "6 November",
+    "today": "2026-11-06"
+   },
+   "expect": "2026-11-06"
+  },
+  {
+   "name": "date: '5 November' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "5 November",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '5 November 2026' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "5 November 2026",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: 'next Friday' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "next Friday",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: 'end of the month' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "end of the month",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: 'in 3 weeks' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "in 3 weeks",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '12/02' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "12/02",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '30 February' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "30 February",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '12 February or 20 March' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "12 February or 20 March",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '12 Feb and also 12 February' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "12 Feb and also 12 February",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-02-12"
+  },
+  {
+   "name": "date: '' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: 'the 12th' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "the 12th",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: 'may 3' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "may 3",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-05-03"
+  },
+  {
+   "name": "date: 'I may finish by the 5th' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "I may finish by the 5th",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '2026-13-40' on 2026-11-06",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "2026-13-40",
+    "today": "2026-11-06"
+   },
+   "expect": null
+  },
+  {
+   "name": "date: '1 Jan' on 2026-12-31",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "1 Jan",
+    "today": "2026-12-31"
+   },
+   "expect": "2027-01-01"
+  },
+  {
+   "name": "date: '2 September' on 2026-11-06 (long past, so next year)",
+   "fn": "explicit_date",
+   "args": {
+    "quote": "2 September",
+    "today": "2026-11-06"
+   },
+   "expect": "2027-09-02"
+  },
+  {
+   "name": "propose: 0 active, deadline None",
+   "fn": "propose",
+   "args": {
+    "active_count": 0,
+    "deadline_quote": null,
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "active",
+    "confirmed": 0,
+    "deadline_state": "none",
+    "deadline_date": null,
+    "ask_tradeoff": false
+   }
+  },
+  {
+   "name": "propose: 2 active, deadline 'exam 12 February'",
+   "fn": "propose",
+   "args": {
+    "active_count": 2,
+    "deadline_quote": "exam 12 February",
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "active",
+    "confirmed": 0,
+    "deadline_state": "confirmed",
+    "deadline_date": "2027-02-12",
+    "ask_tradeoff": false
+   }
+  },
+  {
+   "name": "propose: 3 active, deadline 'exam 12 February'",
+   "fn": "propose",
+   "args": {
+    "active_count": 3,
+    "deadline_quote": "exam 12 February",
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "paused",
+    "confirmed": 0,
+    "deadline_state": "confirmed",
+    "deadline_date": "2027-02-12",
+    "ask_tradeoff": true
+   }
+  },
+  {
+   "name": "propose: 3 active, deadline None",
+   "fn": "propose",
+   "args": {
+    "active_count": 3,
+    "deadline_quote": null,
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "paused",
+    "confirmed": 0,
+    "deadline_state": "none",
+    "deadline_date": null,
+    "ask_tradeoff": true
+   }
+  },
+  {
+   "name": "propose: 1 active, deadline 'next Friday'",
+   "fn": "propose",
+   "args": {
+    "active_count": 1,
+    "deadline_quote": "next Friday",
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "active",
+    "confirmed": 0,
+    "deadline_state": "unclear",
+    "deadline_date": null,
+    "ask_tradeoff": false
+   }
+  },
+  {
+   "name": "propose: 2 active, deadline ''",
+   "fn": "propose",
+   "args": {
+    "active_count": 2,
+    "deadline_quote": "",
+    "today": "2026-11-06"
+   },
+   "expect": {
+    "status": "active",
+    "confirmed": 0,
+    "deadline_state": "none",
+    "deadline_date": null,
+    "ask_tradeoff": false
+   }
+  },
+  {
+   "name": "allowed: paused evidence=1 tap=False vent=False active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "paused",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 1
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: paused evidence=2 tap=False vent=False active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "paused",
+    "evidence_days": 2,
+    "tapped": false,
+    "venting": false,
+    "active_count": 1
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: paused evidence=1 tap=True vent=False active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "paused",
+    "evidence_days": 1,
+    "tapped": true,
+    "venting": false,
+    "active_count": 1
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: dropped evidence=1 tap=False vent=False active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "dropped",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 1
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: dropped evidence=3 tap=False vent=False active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "dropped",
+    "evidence_days": 3,
+    "tapped": false,
+    "venting": false,
+    "active_count": 1
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: dropped evidence=5 tap=True vent=True active=1",
+   "fn": "change_allowed",
+   "args": {
+    "change": "dropped",
+    "evidence_days": 5,
+    "tapped": true,
+    "venting": true,
+    "active_count": 1
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: done evidence=1 tap=False vent=False active=2",
+   "fn": "change_allowed",
+   "args": {
+    "change": "done",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 2
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: done evidence=1 tap=False vent=True active=2",
+   "fn": "change_allowed",
+   "args": {
+    "change": "done",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": true,
+    "active_count": 2
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: active evidence=1 tap=False vent=False active=2",
+   "fn": "change_allowed",
+   "args": {
+    "change": "active",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 2
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: active evidence=1 tap=False vent=False active=3",
+   "fn": "change_allowed",
+   "args": {
+    "change": "active",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 3
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: deadline evidence=1 tap=False vent=False active=3",
+   "fn": "change_allowed",
+   "args": {
+    "change": "deadline",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 3
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: progress evidence=1 tap=False vent=False active=3",
+   "fn": "change_allowed",
+   "args": {
+    "change": "progress",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": false,
+    "active_count": 3
+   },
+   "expect": true
+  },
+  {
+   "name": "allowed: deadline evidence=1 tap=False vent=True active=3",
+   "fn": "change_allowed",
+   "args": {
+    "change": "deadline",
+    "evidence_days": 1,
+    "tapped": false,
+    "venting": true,
+    "active_count": 3
+   },
+   "expect": false
+  },
+  {
+   "name": "allowed: renamed evidence=1 tap=True vent=False active=0",
+   "fn": "change_allowed",
+   "args": {
+    "change": "renamed",
+    "evidence_days": 1,
+    "tapped": true,
+    "venting": false,
+    "active_count": 0
+   },
+   "expect": false
+  },
+  {
+   "name": "stale: last 2026-10-16 asked False",
+   "fn": "is_stale",
+   "args": {
+    "last_mentioned_day": "2026-10-16",
+    "today": "2026-11-06",
+    "asked_stale": false
+   },
+   "expect": true
+  },
+  {
+   "name": "stale: last 2026-10-17 asked False",
+   "fn": "is_stale",
+   "args": {
+    "last_mentioned_day": "2026-10-17",
+    "today": "2026-11-06",
+    "asked_stale": false
+   },
+   "expect": false
+  },
+  {
+   "name": "stale: last 2026-10-15 asked False",
+   "fn": "is_stale",
+   "args": {
+    "last_mentioned_day": "2026-10-15",
+    "today": "2026-11-06",
+    "asked_stale": false
+   },
+   "expect": true
+  },
+  {
+   "name": "stale: last 2026-10-01 asked True",
+   "fn": "is_stale",
+   "args": {
+    "last_mentioned_day": "2026-10-01",
+    "today": "2026-11-06",
+    "asked_stale": true
+   },
+   "expect": false
+  },
+  {
+   "name": "stale: last 2026-11-06 asked False",
+   "fn": "is_stale",
+   "args": {
+    "last_mentioned_day": "2026-11-06",
+    "today": "2026-11-06",
+    "asked_stale": false
+   },
+   "expect": false
+  },
+  {
+   "name": "line: confirmed deadline with days left",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "active",
+     "confirmed": 1,
+     "deadline_state": "confirmed",
+     "deadline_date": "2027-02-12",
+     "size_text": "30 lectures",
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: active, confirmed, deadline 12 Feb 2027 (98 days left), size: 30 lectures, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "line: deadline today",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "active",
+     "confirmed": 1,
+     "deadline_state": "confirmed",
+     "deadline_date": "2026-11-06",
+     "size_text": "30 lectures",
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: active, confirmed, deadline 6 Nov 2026 (today), size: 30 lectures, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "line: deadline passed",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "active",
+     "confirmed": 1,
+     "deadline_state": "confirmed",
+     "deadline_date": "2026-11-04",
+     "size_text": "30 lectures",
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: active, confirmed, deadline 4 Nov 2026 (2 days ago), size: 30 lectures, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "line: one day left",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "active",
+     "confirmed": 1,
+     "deadline_state": "confirmed",
+     "deadline_date": "2026-11-07",
+     "size_text": "30 lectures",
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: active, confirmed, deadline 7 Nov 2026 (1 day left), size: 30 lectures, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "line: unclear deadline shows no day count (and a stray date is ignored)",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "active",
+     "confirmed": 0,
+     "deadline_state": "unclear",
+     "deadline_date": "2027-02-12",
+     "size_text": null,
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: active, unconfirmed, deadline: unknown, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "line: no deadline",
+   "fn": "context_line",
+   "args": {
+    "item": {
+     "name": "Accounting exam",
+     "status": "paused",
+     "confirmed": 1,
+     "deadline_state": "none",
+     "deadline_date": null,
+     "size_text": "30 lectures",
+     "origin_quote": "exam is 12 February",
+     "origin_day": "2026-11-01",
+     "last_mentioned_day": "2026-11-05"
+    },
+    "today": "2026-11-06"
+   },
+   "expect": "Accounting exam: paused, confirmed, deadline: unknown, size: 30 lectures, said on 1 Nov 2026: \"exam is 12 February\", last mentioned 5 Nov 2026."
+  },
+  {
+   "name": "top line: nothing active",
+   "fn": "top_line",
+   "args": {
+    "day": "2026-11-06",
+    "active_items": 0
+   },
+   "expect": "Friday 6 November"
+  },
+  {
+   "name": "top line: one",
+   "fn": "top_line",
+   "args": {
+    "day": "2026-11-06",
+    "active_items": 1
+   },
+   "expect": "Friday 6 November · Working on 1 thing"
+  },
+  {
+   "name": "top line: three",
+   "fn": "top_line",
+   "args": {
+    "day": "2026-11-06",
+    "active_items": 3
+   },
+   "expect": "Friday 6 November · Working on 3 things"
+  }
+ ]
+}
