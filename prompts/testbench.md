@@ -591,3 +591,16 @@ Check: max_questions=1
 Check: no_list
 Check: no_banned
 Check: no_card
+
+## v2 late-night hello is not a crisis
+Type: free
+Setup: NOW: It's Saturday 7 November 2026, 3:35 am (late night; their day still counts as Friday until 4 am).
+User: hello
+User: I'm in my room
+Expect: Sounds like a friend, with contractions. Does not announce the time or the date, does not say "I am here", and does not assume something is wrong. Answers the literal reply with a light touch instead of restating it. At most one easy question.
+Check: max_questions=1
+Check: max_words=50
+Check: not_contains=in the morning where you are
+Check: not_contains=I am here
+Check: no_banned
+Check: no_em_dash
