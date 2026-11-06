@@ -171,10 +171,12 @@ class CardSaveTest {
         val conv = chat.startConversation("plan", null, now)
         chat.addHisMessage(conv, "help me plan the lectures", now)
         val packet = chat.buildPacket(conv, "help me plan the lectures", now)
+        // v2: the chat request no longer carries PLAN_STATE; the card code keeps its own view of the plan until it is removed.
         val turn = packet.request.messages.last().content
-        assertTrue(turn, turn.contains("## PLAN_STATE") && turn.contains("Goal G$goal \"Clear the lectures\""))
-        assertTrue(packet.known.goals == setOf("G$goal"))
-        val review = packet.known.reviewOptions.first()
+        assertTrue(turn, !turn.contains("## PLAN_STATE"))
+        val known = com.clarity.life.core.PlanBlocks.known(planner.tracker(today), today)
+        assertTrue(known.goals == setOf("G$goal"))
+        val review = known.reviewOptions.first()
 
         val reply = chat.openCoachReply(conv, now, null)
         val raw = "Here is a first plan.\n" +
@@ -182,7 +184,7 @@ class CardSaveTest {
             "\"targets\":[{\"name\":\"Lectures\",\"unit\":\"lectures\",\"min\":1,\"target\":2,\"schedule\":\"daily\"}]," +
             "\"backlog\":[{\"name\":\"Lectures\",\"total\":40,\"unit\":\"lectures\",\"deadline\":\"${today.plusDays(40)}\"}]," +
             "\"review_date\":\"$review\"}]]"
-        assertEquals(1, chat.closeCoachReply(conv, reply, raw, "plan", packet.known, "stop", null, now).cardsOffered)
+        assertEquals(1, chat.closeCoachReply(conv, reply, raw, "plan", known, "stop", null, now).cardsOffered)
         assertEquals(0, count("target"))
         assertEquals(0, count("plan"))
 
@@ -201,9 +203,9 @@ class CardSaveTest {
         assertTrue(saver.savePlanCard(card.id, now) is CardSaver.Result.NotSaved)
         assertEquals(1, count("target"))
 
-        // The next message already sees the saved plan.
+        // v2: the next message does not carry plan facts.
         val next = chat.buildPacket(conv, "ok", now).request.messages.last().content
-        assertTrue(next, next.contains("Target T") && next.contains("\"Lectures\" (G$goal): minimum 1, target 2, daily."))
+        assertTrue(next, !next.contains("Target T"))
     }
 
     @Test
@@ -211,11 +213,12 @@ class CardSaveTest {
         val planner = com.clarity.life.planner.PlannerRepository(db, SettingsRepository(db.settings(), SecretStore(InstrumentationRegistry.getInstrumentation().targetContext)))
         val goal = planner.createGoal("Walk more", "health", "custom", null, now)
         val conv = chat.startConversation("plan", null, now)
-        val packet = chat.buildPacket(conv, "plan", now)
+        val today = planner.today(now)
+        val known = com.clarity.life.core.PlanBlocks.known(planner.tracker(today), today)
         val reply = chat.openCoachReply(conv, now, null)
         val raw = "Ok.\n[[suggest: {\"type\":\"plan\",\"title\":\"Walk\",\"goal\":\"G$goal\",\"rationale\":\"r\"," +
-            "\"targets\":[{\"name\":\"Walk\",\"target\":1,\"schedule\":\"daily\"}],\"review_date\":\"${packet.known.reviewOptions.first()}\"}]]"
-        chat.closeCoachReply(conv, reply, raw, "plan", packet.known, "stop", null, now)
+            "\"targets\":[{\"name\":\"Walk\",\"target\":1,\"schedule\":\"daily\"}],\"review_date\":\"${known.reviewOptions.first()}\"}]]"
+        chat.closeCoachReply(conv, reply, raw, "plan", known, "stop", null, now)
         planner.setGoalStatus(goal, "archived")
         val card = db.cards().recentOfConversation(conv, 9).single()
         assertTrue(saver.savePlanCard(card.id, now) is CardSaver.Result.NotSaved)
@@ -240,7 +243,8 @@ class CardSaveTest {
         chat.addHisMessage(conv, "what next", now + 3_000)
         val packet = chat.buildPacket(conv, "what next", now + 3_000)
         val turn = packet.request.messages.last().content
-        assertTrue(turn, turn.contains("note \"Mornings feel lighter\": saved (a card under one of your earlier replies, answered since)"))
+        // v2: no CARD_RESULTS block is sent any more.
+        assertTrue(turn, !turn.contains("CARD_RESULTS") && !turn.contains("answered since"))
     }
 }
 

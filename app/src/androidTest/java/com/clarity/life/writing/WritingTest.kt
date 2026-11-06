@@ -117,9 +117,12 @@ class WritingTest {
         )
         val conv = chat.startConversation("free", null, now, "letter", id)
         val packet = chat.buildPacket(conv, "about the letter", now)
-        assertTrue(packet.prefix.contains("## LETTER\nTitle: The evening kept winning\nThis week was about the hour."))
+        // v2: the letter rides in the final user turn, not in the frozen prefix.
+        val turn = packet.request.messages.last().content
+        assertTrue(turn.contains("## LETTER\nTitle: The evening kept winning\nThis week was about the hour."))
+        assertTrue(!packet.prefix.contains("## LETTER"))
         // an ordinary conversation has no LETTER block
         val other = chat.startConversation("free", null, now)
-        assertTrue(!chat.buildPacket(other, "hi", now).prefix.contains("## LETTER"))
+        assertTrue(!chat.buildPacket(other, "hi", now).request.messages.last().content.contains("## LETTER"))
     }
 }
