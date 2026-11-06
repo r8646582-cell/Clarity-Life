@@ -1,0 +1,172 @@
+{
+  "persona.md": {
+    "placeholders": [
+      "USER_NAME"
+    ],
+    "must_contain": [
+      "think privately",
+      "When a day falls apart",
+      "What they are working on",
+      "Same facts, same assessment",
+      "never say or imply that you did",
+      "NOW is the only truth",
+      "a mood, not a decision",
+      "which of them goes on pause",
+      "What you are given"
+    ],
+    "max_words": 3400
+  },
+  "examples.md": {
+    "placeholders": [
+      "USER_NAME"
+    ],
+    "must_contain": [
+      "INVENTED",
+      "A number it was not given",
+      "Claiming it saved something"
+    ],
+    "max_words": 2600
+  },
+  "reflection.md": {
+    "placeholders": [
+      "USER_NAME",
+      "SESSION_DATE",
+      "CONTEXT",
+      "PREVIOUS_SUMMARY",
+      "APP_FACTS",
+      "DELETED_NOTES",
+      "TRANSCRIPT"
+    ],
+    "must_contain": [
+      "only they are evidence",
+      "a mood is not a decision",
+      "ALREADY REFLECTED",
+      "Be stingy",
+      "Corrections win",
+      "in exactly this shape",
+      "Never set \"confirmed\"",
+      "\"venting\"",
+      "\"working_on\"",
+      "covers the WHOLE conversation"
+    ],
+    "max_words": 2800
+  },
+  "gardening.md": {
+    "placeholders": [
+      "USER_NAME",
+      "NOTES",
+      "PROFILE",
+      "PEOPLE",
+      "WORKING_ON",
+      "SUMMARIES"
+    ],
+    "must_contain": [
+      "NEVER change, merge or retire a note they edited",
+      "Never raise confidence",
+      "You never touch the list of what they are working on"
+    ],
+    "max_words": 1100
+  },
+  "summary_rollup.md": {
+    "placeholders": [
+      "USER_NAME",
+      "PERIOD_LABEL",
+      "SUMMARIES"
+    ],
+    "must_contain": [
+      "Never invent",
+      "Return ONLY the summary text"
+    ],
+    "max_words": 400
+  },
+  "letter_weekly.md": {
+    "placeholders": [
+      "USER_NAME",
+      "PERIOD_START",
+      "PERIOD_END",
+      "PROFILE",
+      "PEOPLE",
+      "NOTES",
+      "WORKING_ON",
+      "LETTER_FACTS",
+      "PREVIOUS_LETTER",
+      "RECENT_IDEAS",
+      "TRANSCRIPTS"
+    ],
+    "must_contain": [
+      "mirror",
+      "A mood is not a decision",
+      "numbers written in words",
+      "Special weeks"
+    ],
+    "max_words": 1500
+  },
+  "letter_monthly.md": {
+    "placeholders": [
+      "USER_NAME",
+      "PERIOD",
+      "PROFILE",
+      "NOTES",
+      "WORKING_ON",
+      "LETTER_FACTS",
+      "PREVIOUS_LETTER",
+      "WEEKLY_LETTERS",
+      "QUOTES"
+    ],
+    "must_contain": [
+      "mirror",
+      "A mood is not a decision",
+      "numbers written in words"
+    ],
+    "max_words": 1300
+  },
+  "letter_yearly.md": {
+    "placeholders": [
+      "USER_NAME",
+      "PERIOD",
+      "PROFILE",
+      "NOTES",
+      "WORKING_ON",
+      "LETTER_FACTS",
+      "PREVIOUS_LETTER",
+      "MONTHLY_LETTERS",
+      "QUOTES"
+    ],
+    "must_contain": [
+      "mirror",
+      "A mood is not a decision",
+      "numbers written in words"
+    ],
+    "max_words": 1300
+  },
+  "letter_milestone.md": {
+    "placeholders": [
+      "USER_NAME",
+      "ITEM_NAME",
+      "ITEM_OUTCOME",
+      "PROFILE",
+      "NOTES",
+      "ITEM_HISTORY",
+      "ITEM_QUOTES",
+      "ITEM_SUMMARIES",
+      "WORKING_ON"
+    ],
+    "must_contain": [
+      "journey",
+      "A mood is not a decision",
+      "numbers written in words"
+    ],
+    "max_words": 1200
+  },
+  "reply_check.md": {
+    "placeholders": [
+      "USER_NAME",
+      "REPLY",
+      "CONTEXT"
+    ],
+    "must_contain": [
+      "Return ONLY JSON"
+    ],
+    "max_words": 400
+  }
+}
