@@ -45,7 +45,7 @@ class WritingTest {
         planner = PlannerRepository(db, settings)
         val http = OkHttpClient()
         val prompts = PromptStore(context, db.promptOverrides())
-        val call = BackgroundCall(db, OpenAiCompatibleClient(http), AnthropicClient(http))
+        val call = BackgroundCall(db, OpenAiCompatibleClient(http), AnthropicClient(http), com.clarity.life.memory.BackgroundBudget(db, settings))
         reviews = ReviewWriter(db, settings, prompts, call, JobClaims(db), planner)
         letters = LetterWriter(context, db, settings, prompts, call, JobClaims(db), planner, reviews)
         chat = ChatRepository(

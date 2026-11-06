@@ -38,7 +38,7 @@ object ContextBuilder {
 
     const val PART2_BUDGET = 9000
     const val PART3_BUDGET = 4000
-    const val HISTORY_BUDGET = 24000
+    const val HISTORY_BUDGET = 12000
 
     /** The newest messages are always sent, even over budget. */
     const val HISTORY_MIN_KEEP = 6

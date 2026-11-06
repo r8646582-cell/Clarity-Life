@@ -20,7 +20,7 @@ MESSAGE_HEADER = "## MESSAGE"
 
 PART2_BUDGET = 9000      # tokens, estimated
 PART3_BUDGET = 4000
-HISTORY_BUDGET = 24000
+HISTORY_BUDGET = 12000
 HISTORY_MIN_KEEP = 6     # the newest messages are always sent, even over budget
 HISTORY_REFILL = 0.75    # when the window must move, move it until history is at most 75% of the budget,
                          # so it moves rarely and the cached prefix survives many turns

@@ -51,6 +51,7 @@ class ReflectionJob @Inject constructor(
     private val planner: com.clarity.life.planner.PlannerRepository,
     private val noteVectors: NoteVectors,
     private val search: SearchIndex,
+    private val budget: BackgroundBudget,
 ) {
 
     private suspend fun checkinFactsNow(): String {
@@ -308,6 +309,8 @@ class ReflectionJob @Inject constructor(
         request: ChatRequest,
         today: String,
     ): Pair<String, String?> {
+        // The hard daily cap on background calls (also counts retries and the fallback).
+        if (!budget.take()) throw com.clarity.life.ai.AiFailure("background_cap", "today's background budget is used up", retryable = false)
         val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
         val raw = StringBuilder()
         var finish: String? = null

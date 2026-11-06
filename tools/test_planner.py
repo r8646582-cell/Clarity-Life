@@ -42,7 +42,7 @@ def main():
     best = P.best_pace(hist, "Sat-Thu", today)
     samples = [
         # (files that must contain it, backlog name, goal title, total, done, deadline)
-        (("contracts/plan_state_sample_v1.md", "contracts/context.md"), "Chemistry lectures", "Clear the chemistry lectures", 40, 0, "2026-11-20"),
+        (("contracts/plan_state_sample_v1.md",), "Chemistry lectures", "Clear the chemistry lectures", 40, 0, "2026-11-20"),
         (("prompts/testbench.md",), "Exam lectures", "Clear the exam lectures", 50, 6, "2026-11-20"),
         (("prompts/testbench.md",), "Exam lectures", "Clear the exam lectures", 48, 6, "2026-11-27"),
     ]

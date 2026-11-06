@@ -26,6 +26,7 @@ class BackgroundCall @Inject constructor(
     private val db: ClarityDatabase,
     private val mainClient: OpenAiCompatibleClient,
     private val anthropicClient: AnthropicClient,
+    private val budget: com.clarity.life.memory.BackgroundBudget,
 ) {
     class CutOff : Exception("cut_off")
 
@@ -59,6 +60,8 @@ class BackgroundCall @Inject constructor(
     }
 
     private suspend fun execute(endpoint: Endpoint, prompt: String, month: String, job: String): String {
+        // The hard daily cap on background calls: nothing is sent when today's budget is spent.
+        if (!budget.take()) throw AiFailure("background_cap", "today's background budget is used up", retryable = false)
         val request = ChatRequest(system = "", messages = listOf(ChatMessage(ChatMessage.USER, prompt)))
         val client = if (endpoint.provider == "anthropic") anthropicClient else mainClient
         val out = StringBuilder()
