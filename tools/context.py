@@ -2,7 +2,7 @@
 contracts/context.md explains the why; contracts/context_vectors.json pins the behaviour.
 
 Layout of every chat request (cache-friendly: the longest stable prefix first):
-  system   = Part 1 (persona, examples)  +  Part 2 (frozen context blocks: PROFILE, PEOPLE, NOTES)
+  system   = Part 1 (persona, examples)  +  Part 2 (frozen context blocks: PROFILE, PEOPLE, NOTES, RECENT_SESSIONS)
   messages = the history window (user messages prefixed with their time stamp, escaped)
              + the new user message = Part 3 (volatile blocks) + "## MESSAGE" + his text
 Part 1 + Part 2 are built when the conversation starts and
@@ -13,8 +13,8 @@ Pure functions only. No Android, no clock, no database.
 """
 import math
 
-PART2_ORDER = ["PROFILE", "PEOPLE", "NOTES"]
-PART3_ORDER = ["NOW", "WORKING_ON", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER"]
+PART2_ORDER = ["PROFILE", "PEOPLE", "NOTES", "RECENT_SESSIONS"]
+PART3_ORDER = ["NOW", "WORKING_ON", "LAST_CHAT", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER"]
 NEVER_TRIM = {"NOW", "WORKING_ON", "EARLIER", "LETTER"}
 MESSAGE_HEADER = "## MESSAGE"
 

@@ -83,6 +83,12 @@ class ChatPacketBuilder(
                 (evidence[n.id] ?: emptyList()).map { MemoryBlocks.Evidence(it.kind, it.text, it.day, ago(it.day)) },
             )
         }
+        // The last few talks, so a new day's chat starts knowing yesterday's (persona: RECENT_SESSIONS).
+        val sessions = Spans.span("frozen: recent sessions read") { m.recentSessions(conversationId, MemoryBlocks.RECENT_SESSIONS) }.map { c ->
+            val day = Planner.dayKey(Instant.ofEpochMilli(c.lastAt).toString(), tz, boundary).toString()
+            val span = TimeFacts.span(Instant.ofEpochMilli(c.firstAt), Instant.ofEpochMilli(c.lastAt), tz)
+            MemoryBlocks.Session(day, c.title, c.summary, ago(day), span)
+        }
         return listOf(
             MemoryBlocks.profile(
                 m.profile().let { entries ->
@@ -97,6 +103,7 @@ class ChatPacketBuilder(
             MemoryBlocks.people(m.people().map { MemoryBlocks.Person(it.name, it.relation, it.notes, it.updatedAt) }),
             // Notes about what this conversation is about are the last to go when memory is large.
             Spans.span("frozen: NOTES chosen") { MemoryBlocks.notes(notes, MemoryBlocks.relevantNotes(notes, text)) },
+            MemoryBlocks.recentSessions(sessions),
         )
     }
 

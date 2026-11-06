@@ -15,13 +15,17 @@ object LastChat {
 
     /** Shown while the other conversation's last message is younger than this. */
     const val HOURS = 6L
+
+    /** v2 has one chat a day, so the one before is usually yesterday's: it stays in view this long. */
+    const val DAY_CHAT_HOURS = 36L
     const val MESSAGES = 8
     const val CHARS = 500
 
     data class Msg(val role: String, val text: String, val at: Long)
 
     /** True when a conversation whose last message was at [lastAt] still belongs in [now]'s request. */
-    fun fresh(lastAt: Long, now: Long): Boolean = now >= lastAt && now - lastAt < Duration.ofHours(HOURS).toMillis()
+    fun fresh(lastAt: Long, now: Long, hours: Long = HOURS): Boolean =
+        now >= lastAt && now - lastAt < Duration.ofHours(hours).toMillis()
 
     /**
      * [messages] oldest first: his and the coach's (finished or kept replies only). The header is never

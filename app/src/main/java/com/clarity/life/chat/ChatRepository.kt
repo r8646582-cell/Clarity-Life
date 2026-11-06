@@ -393,6 +393,19 @@ class ChatRepository @Inject constructor(
             add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary), com.clarity.life.core.DayCounts.lines(said, dayKey)))
             // What they are working on: written by code, a day count only for a confirmed deadline.
             add(Spans.span("packet: WORKING_ON") { com.clarity.life.memory.WorkingRepository(db).block(today, now) })
+            // The conversation before this one, word for word, while it is recent: its summary may not be written
+            // yet when a new day's chat starts, and this conversation's frozen memory would then never see it.
+            Spans.span("packet: last chat") {
+                db.memory().lastOtherConversation(conversationId)
+                    ?.takeIf { LastChat.fresh(it.lastAt, now, LastChat.DAY_CHAT_HOURS) }
+                    ?.let { other ->
+                        val said = messages.ofConversation(other.id).filter {
+                            it.role == "user" || it.status == "complete" || it.status == "interrupted"
+                        }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
+                        val block = LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary)
+                        if (block.items.isNotEmpty()) add(block)
+                    }
+            }
             packetBuilder.openedFromBlocks(conversation).forEach { add(it) }
             if (start > 0) add(Blocks.earlier(conversation.summary))
             val sent = MemoryBlocks.idsIn(prefix)

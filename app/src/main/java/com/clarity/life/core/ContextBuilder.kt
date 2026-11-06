@@ -31,8 +31,8 @@ data class HistoryMessage(val role: String, val content: String)
 data class TrimResult(val blocks: List<Block>, val dropped: Int, val overBudget: Boolean)
 
 object ContextBuilder {
-    val PART2_ORDER = listOf("PROFILE", "PEOPLE", "NOTES")
-    val PART3_ORDER = listOf("NOW", "WORKING_ON", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER")
+    val PART2_ORDER = listOf("PROFILE", "PEOPLE", "NOTES", "RECENT_SESSIONS")
+    val PART3_ORDER = listOf("NOW", "WORKING_ON", "LAST_CHAT", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER")
     val NEVER_TRIM = setOf("NOW", "WORKING_ON", "EARLIER", "LETTER")
     const val MESSAGE_HEADER = "## MESSAGE"
 
