@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The app with the phone's largest text (Max plan Phase 7): sets the emulator's font size to 2x, opens the app
-# and walks the three tabs and Settings, failing if the app crashes or a tab cannot be found. Runs in CI after
+# and walks the three tabs (Talk, Know, Letters) and Settings, failing if the app crashes or a tab cannot be found. Runs in CI after
 # tools/emulator_smoke.sh (which installs the app); puts the font size back at the end.
 set -u
 PKG=com.clarity.life
@@ -43,10 +43,10 @@ adb shell settings put system font_scale 2.0
 adb logcat -c
 adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
-dump; grep -q 'Hello' /tmp/ui.xml || { echo "LARGE TEXT: Talk home did not show"; finish 1; }
-echo "LARGE TEXT: Talk home showed"
-tap_text "Plan"; crashed
-tap_text "What I know"; crashed
+dump; grep -Eq '(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) [0-9]+ (January|February|March|April|May|June|July|August|September|October|November|December)' /tmp/ui.xml || { echo "LARGE TEXT: the date line did not show"; finish 1; }
+echo "LARGE TEXT: Talk showed its date line"
+tap_text "Know"; crashed
+tap_text "Letters"; crashed
 tap_text "Talk"; crashed
 tap_text "Settings"; crashed
 echo "LARGE TEXT: every tab and Settings opened with 2x text"
