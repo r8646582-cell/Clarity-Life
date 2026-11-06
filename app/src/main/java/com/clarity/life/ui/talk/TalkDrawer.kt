@@ -152,6 +152,12 @@ internal fun ConversationsDrawer(
                 (if (day != last) day else null).also { last = day } to row
             }
         }
+        Text(
+            "A new conversation starts each day by itself. What the coach learned carries over.",
+            style = MaterialTheme.typography.bodySmall,
+            color = clarity.muted,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
+        )
         LazyColumn(Modifier.fillMaxWidth().weight(1f).padding(top = 6.dp)) {
             items(rows, key = { it.second.id }) { (heading, row) ->
                 Column {
@@ -247,8 +253,10 @@ private fun DrawerRow(
                 maxLines = 2,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
+            // v2 has no kinds of chat: the time, then the first sentence of what the talk was about (mockups-v2).
+            val about = remember(row.summary) { row.summary.trim().split(Regex("(?<=[.!?])\\s")).firstOrNull().orEmpty() }
             Text(
-                "$kind · $time",
+                if (kind.isNotBlank() && kind != "Free talk") "$kind · $time" else if (about.isNotBlank()) "$time · $about" else time,
                 style = MaterialTheme.typography.bodySmall,
                 color = clarity.muted,
                 maxLines = 1,
