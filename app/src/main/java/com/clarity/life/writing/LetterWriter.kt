@@ -222,8 +222,9 @@ class LetterWriter @Inject constructor(
             }.joinToString("\n")
             val quotes = (listOf(item.originDay to item.originQuote) + events.filter { it.quote.isNotBlank() && !it.detail.startsWith("proposed:") }.map { it.day to it.quote })
                 .joinToString("\n") { (d, q) -> "${long(d)}: \"$q\"" }
+            val tzId = settings.timeZone()
             val summaries = dao.summarisedBetween(from, to).take(8)
-                .joinToString("\n") { "${TimeFacts.shortDay(TimeFacts.local(java.time.Instant.ofEpochMilli(it.startedAt), settings.timeZone()).toLocalDate())}: ${it.summary}" }
+                .joinToString("\n") { "${TimeFacts.shortDay(TimeFacts.local(java.time.Instant.ofEpochMilli(it.startedAt), tzId).toLocalDate())}: ${it.summary}" }
                 .ifBlank { "(none)" }
             val m = db.memory()
             val values = mapOf(
