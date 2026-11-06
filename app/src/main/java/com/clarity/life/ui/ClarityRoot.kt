@@ -25,7 +25,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clarity.life.ui.know.KnowScreen
-import com.clarity.life.ui.plan.PlanScreen
 import com.clarity.life.ui.settings.SettingsScreen
 import com.clarity.life.ui.talk.TalkScreen
 import com.clarity.life.ui.theme.clarity
@@ -33,8 +32,8 @@ import com.clarity.life.ui.theme.clarity
 /** The three tabs of the app, plus Settings, which is pushed on top rather than being a tab. */
 enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     Talk("talk", "Talk", Icons.Outlined.ChatBubbleOutline),
-    Plan("plan", "Plan", Icons.AutoMirrored.Outlined.ListAlt),
-    Know("know", "What I know", Icons.Outlined.AutoAwesome),
+    Know("know", "Know", Icons.Outlined.AutoAwesome),
+    Letters("letters", "Letters", Icons.AutoMirrored.Outlined.ListAlt),
 }
 
 const val SETTINGS_ROUTE = "settings"
@@ -49,21 +48,15 @@ fun ClarityRoot() {
     val current = entry?.destination
     val onTab = Tab.entries.any { tab -> current?.hierarchy?.any { it.route == tab.route } == true }
 
-    // A coral dot on the Plan tab while something there waits for him (spec section 2.2): a step for today or a
-    // due promise not answered yet, or a letter or review unread. It goes as soon as he answers.
+    // A coral dot on the Letters tab while a letter is unread.
     val reviews: com.clarity.life.ui.plan.ReviewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
-    val plan: com.clarity.life.ui.plan.PlanViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-    // The light view (today's answers only), so the tab bar never makes start-up read the whole tracker.
-    val planState by plan.home.collectAsStateWithLifecycle()
-    val promises: com.clarity.life.ui.plan.PromisesViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-    val promiseState by promises.state.collectAsStateWithLifecycle()
-    val planDot = com.clarity.life.ui.plan.Waiting.planTab(planState, promiseState, reviewState.unread)
+    val lettersDot = reviewState.letters.any { it.readAt == null && it.deletedAt == null }
     Scaffold(
         containerColor = clarity.ground,
         bottomBar = {
             if (onTab) {
-                ClarityTabBar(current?.hierarchy?.firstOrNull()?.route, planDot = planDot) { route -> nav.switchTab(route) }
+                ClarityTabBar(current?.hierarchy?.firstOrNull()?.route, lettersDot = lettersDot) { route -> nav.switchTab(route) }
             }
         },
     ) { padding ->
@@ -73,15 +66,12 @@ fun ClarityRoot() {
                     TalkScreen(
                         onOpenSettings = { nav.navigate(SETTINGS_ROUTE) },
                         onOpenGuide = { nav.navigate(GUIDE_ROUTE) },
-                        onOpenPromises = { nav.switchTab(Tab.Plan.route) },
-                        onOpenPlan = { nav.switchTab(Tab.Plan.route) },
+                        onOpenPromises = { nav.switchTab(Tab.Know.route) },
+                        onOpenPlan = { nav.switchTab(Tab.Know.route) },
                     )
                 }
-                composable(Tab.Plan.route) {
-                    PlanScreen(
-                        onPlanWithCoach = { nav.switchTab(Tab.Talk.route) },
-                        onTalk = { nav.switchTab(Tab.Talk.route) },
-                    )
+                composable(Tab.Letters.route) {
+                    com.clarity.life.ui.letters.LettersScreen(onTalk = { nav.switchTab(Tab.Talk.route) })
                 }
                 composable(Tab.Know.route) { KnowScreen(onTalk = { nav.switchTab(Tab.Talk.route) }) }
                 composable(SETTINGS_ROUTE) {
@@ -115,17 +105,17 @@ private fun androidx.navigation.NavHostController.switchTab(route: String) {
 }
 
 @Composable
-private fun ClarityTabBar(currentRoute: String?, planDot: Boolean, onSelect: (String) -> Unit) {
+private fun ClarityTabBar(currentRoute: String?, lettersDot: Boolean, onSelect: (String) -> Unit) {
     NavigationBar(containerColor = clarity.tabBar, contentColor = clarity.muted) {
         Tab.entries.forEach { tab ->
             NavigationBarItem(
                 selected = currentRoute == tab.route,
                 onClick = { onSelect(tab.route) },
                 icon = {
-                    if (tab == Tab.Plan && planDot) {
+                    if (tab == Tab.Letters && lettersDot) {
                         androidx.compose.material3.BadgedBox(
                             badge = { androidx.compose.material3.Badge(containerColor = clarity.coral) },
-                        ) { Icon(tab.icon, contentDescription = "Something is waiting for your answer") }
+                        ) { Icon(tab.icon, contentDescription = "A new letter is waiting") }
                     } else {
                         Icon(tab.icon, contentDescription = null)
                     }

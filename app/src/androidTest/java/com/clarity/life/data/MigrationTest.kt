@@ -310,6 +310,33 @@ class MigrationTest {
         db.close()
     }
 
+    @Test
+    fun version9To10KeepsEveryMessageAndCardAndAddsPendingAndWorkingItems() {
+        helper.createDatabase(TEST_DB, 9).apply {
+            execSQL("INSERT INTO conversation (id, title, started_at) VALUES (1, 'First', 1760000000000)")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at, status) VALUES (1, 1, 'user', 'hello', 1760000000000, 'complete')")
+            execSQL("INSERT INTO message (id, conversation_id, role, content, created_at, status) VALUES (2, 1, 'coach', 'hi', 1760000001000, 'interrupted')")
+            execSQL("INSERT INTO card (id, message_id, type, payload_json, created_at) VALUES (1, 2, 'note', '{}', 1760000002000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 10, true, Migrations.V9_TO_V10)
+        db.query("SELECT id, content, status FROM message ORDER BY id").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("hello", it.getString(1))
+            assertTrue(it.moveToNext())
+            assertEquals("interrupted", it.getString(2))
+        }
+        db.query("SELECT message_id FROM card WHERE id = 1").use {
+            assertTrue("the card is gone", it.moveToFirst())
+            assertEquals(2, it.getLong(0))
+        }
+        // the new state is allowed now, and the new tables exist
+        db.execSQL("INSERT INTO message (conversation_id, role, content, created_at, status) VALUES (1, 'user', 'later', 1760000003000, 'pending')")
+        db.execSQL("INSERT INTO usage_day (day, bg_calls) VALUES ('2026-11-06', 1)")
+        db.execSQL("INSERT INTO working_item (name, origin_quote, origin_day, last_mentioned_day, created_at, updated_at) VALUES ('Exam', 'exam in feb', '2026-11-06', '2026-11-06', 1, 1)")
+        db.close()
+    }
+
     // ---------- every old version, with real-looking rows, all the way to the newest (Max plan, Phase 1, step 5) ----------
 
     /** The rows of a sample backup in contracts/backups/ (bundled into the test assets), opened with the app's own code. */
@@ -446,6 +473,6 @@ class MigrationTest {
 
     companion object {
         private const val TEST_DB = "migration-test.db"
-        private const val DATABASE_VERSION = 9
+        private const val DATABASE_VERSION = 10
     }
 }

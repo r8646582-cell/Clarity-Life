@@ -27,9 +27,10 @@ object StateMachines {
         name = "message",
         table = "message",
         column = "status",
-        states = listOf("streaming", "complete", "interrupted", "failed"),
-        start = listOf("streaming", "complete"),
+        states = listOf("streaming", "complete", "interrupted", "failed", "pending"),
+        start = listOf("streaming", "complete", "pending"),
         transitions = mapOf(
+            "pending" to listOf("complete", "failed"),
             "streaming" to listOf("complete", "interrupted", "failed"),
             "interrupted" to listOf("streaming"),
             "failed" to listOf("streaming"),

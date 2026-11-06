@@ -18,7 +18,10 @@ object Values {
         "conversation.chat_type" to setOf("free", "untangle", "decide", "plan"),
         "conversation.opened_from" to setOf("letter", "review"),
         "message.role" to setOf("user", "coach"),
-        "message.status" to setOf("streaming", "complete", "interrupted", "failed"),
+        "message.status" to setOf("streaming", "complete", "interrupted", "failed", "pending"),
+        "working_item.status" to setOf("active", "paused", "done", "dropped"),
+        "working_item.deadline_state" to setOf("none", "unclear", "confirmed"),
+        "working_item_event.kind" to setOf("created", "confirmed", "status", "deadline", "progress", "renamed", "size", "asked_stale"),
         "goal.area" to setOf(
             "health", "studies", "relationships", "money", "habits", "mind", "meaning", "rest_joy", "general",
         ),

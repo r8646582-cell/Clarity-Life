@@ -48,7 +48,7 @@ import com.clarity.life.data.entity.TargetVersionRow
 import com.clarity.life.data.entity.UsageMonthRow
 
 /**
- * The whole database, version 8, exactly the 33 tables of db/schema.sql.
+ * The whole database, version 8, the 36 tables of db/schema.sql.
  *
  * Rules that never break here (CLAUDE.md rule 8): the schema is exported and committed, and every future
  * change is a written migration plus a MigrationTest. The destructive-migration escape hatch Room offers is
@@ -56,7 +56,7 @@ import com.clarity.life.data.entity.UsageMonthRow
  * failed migration stops with an error; it never wipes his years of data.
  */
 @Database(
-    version = 9,
+    version = 10,
     exportSchema = true,
     entities = [
         // chat
@@ -70,6 +70,8 @@ import com.clarity.life.data.entity.UsageMonthRow
         SearchDocRow::class, EmbeddingRow::class, ReflectionItemRow::class,
         // housekeeping
         SettingRow::class, PromptOverrideRow::class, ErrorLogRow::class, UsageMonthRow::class, JobRow::class,
+        // v2: the daily counter and what they are working on
+        UsageDayRow::class, WorkingItemRow::class, WorkingItemEventRow::class,
     ],
 )
 abstract class ClarityDatabase : RoomDatabase() {
@@ -89,6 +91,7 @@ abstract class ClarityDatabase : RoomDatabase() {
     abstract fun embeddings(): EmbeddingDao
     abstract fun story(): com.clarity.life.data.dao.StoryDao
     abstract fun brief(): com.clarity.life.data.dao.BriefDao
+    abstract fun working(): com.clarity.life.data.dao.WorkingDao
 
     companion object {
         const val NAME = "clarity.db"
@@ -103,6 +106,7 @@ abstract class ClarityDatabase : RoomDatabase() {
             Migrations.V6_TO_V7,
             Migrations.V7_TO_V8,
             Migrations.V8_TO_V9,
+            Migrations.V9_TO_V10,
         )
     }
 }

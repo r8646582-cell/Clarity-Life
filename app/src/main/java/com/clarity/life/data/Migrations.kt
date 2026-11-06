@@ -128,6 +128,53 @@ object Migrations {
         }
     }
 
+    /**
+     * Version 10 (Clarity v2): message.status may be 'pending' (waiting to send, no signal), the daily counter
+     * (usage_day) and what they are working on (working_item and working_item_event). The CHECK on
+     * message.status cannot be changed in place, so the table is copied with its rows and ids; the card rows
+     * that point at message ids keep pointing at the same ids (foreign keys are not enforced while a
+     * migration runs, and nothing is deleted).
+     */
+    val V9_TO_V10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE `message_v10` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`conversation_id` INTEGER NOT NULL, `role` TEXT NOT NULL, `content` TEXT NOT NULL, " +
+                    "`created_at` INTEGER NOT NULL, `status` TEXT NOT NULL DEFAULT 'complete', `model` TEXT, " +
+                    "`tokens_in` INTEGER, `tokens_out` INTEGER, " +
+                    "FOREIGN KEY(`conversation_id`) REFERENCES `conversation`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL(
+                "INSERT INTO `message_v10` (`id`, `conversation_id`, `role`, `content`, `created_at`, `status`, " +
+                    "`model`, `tokens_in`, `tokens_out`) SELECT `id`, `conversation_id`, `role`, `content`, " +
+                    "`created_at`, `status`, `model`, `tokens_in`, `tokens_out` FROM `message`",
+            )
+            db.execSQL("DROP TABLE `message`")
+            db.execSQL("ALTER TABLE `message_v10` RENAME TO `message`")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_message_conv` ON `message` (`conversation_id`, `id`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `usage_day` (`day` TEXT NOT NULL, `bg_calls` INTEGER NOT NULL DEFAULT 0, " +
+                    "`chat_messages` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`day`))",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `working_item` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`name` TEXT NOT NULL, `status` TEXT NOT NULL DEFAULT 'active', `confirmed` INTEGER NOT NULL DEFAULT 0, " +
+                    "`deadline_date` TEXT, `deadline_state` TEXT NOT NULL DEFAULT 'none', `size_text` TEXT, " +
+                    "`origin_quote` TEXT NOT NULL, `origin_day` TEXT NOT NULL, `last_mentioned_day` TEXT NOT NULL, " +
+                    "`asked_stale` INTEGER NOT NULL DEFAULT 0, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_working_item_status` ON `working_item` (`status`)")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `working_item_event` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`item_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `day` TEXT NOT NULL, " +
+                    "`quote` TEXT NOT NULL DEFAULT '', `detail` TEXT NOT NULL DEFAULT '', `created_at` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`item_id`) REFERENCES `working_item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `idx_working_item_event_item` ON `working_item_event` (`item_id`, `id`)")
+        }
+    }
+
     val V7_INDEXES = listOf(
         "CREATE INDEX IF NOT EXISTS `idx_conversation_started` ON `conversation` (`started_at`)",
         "CREATE INDEX IF NOT EXISTS `idx_message_status` ON `message` (`status`)",

@@ -46,7 +46,7 @@ CREATE TABLE message (
   role TEXT NOT NULL CHECK (role IN ('user','coach')),
   content TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'complete' CHECK (status IN ('streaming','complete','interrupted','failed')),
+  status TEXT NOT NULL DEFAULT 'complete' CHECK (status IN ('streaming','complete','interrupted','failed','pending')),  -- schema 10: pending = waiting to send (no signal)
   model TEXT,
   tokens_in INTEGER,
   tokens_out INTEGER
@@ -371,3 +371,39 @@ CREATE TABLE job (                     -- idempotence: one row per unit of backg
   finished_at INTEGER
 );
 CREATE INDEX idx_job_status ON job(status);                  -- schema 7: waiting and running jobs
+
+-- schema 10 (Clarity v2) ------------------------------------------------------------------------------------
+
+CREATE TABLE usage_day (               -- the hard cap on background AI calls per day (docs/CLARITY-V2-BUILD-SPEC.md section 5)
+  day TEXT PRIMARY KEY NOT NULL,       -- the local day_key, 2026-11-06 (the day ends at the day boundary)
+  bg_calls INTEGER NOT NULL DEFAULT 0, -- reflection, letters, gardening and their retries
+  chat_messages INTEGER NOT NULL DEFAULT 0  -- counted for Health only; there is no chat limit
+);
+
+CREATE TABLE working_item (            -- what they are working on: big things only, at most 3 active (spec section 6)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,                  -- their words
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','done','dropped')),
+  confirmed INTEGER NOT NULL DEFAULT 0 CHECK (confirmed IN (0,1)),
+  deadline_date TEXT,                  -- a day_key, only ever parsed by code from their own words
+  deadline_state TEXT NOT NULL DEFAULT 'none' CHECK (deadline_state IN ('none','unclear','confirmed')),
+  size_text TEXT,                      -- rough, their words ("30 lectures")
+  origin_quote TEXT NOT NULL,          -- the exact words that created it
+  origin_day TEXT NOT NULL,
+  last_mentioned_day TEXT NOT NULL,
+  asked_stale INTEGER NOT NULL DEFAULT 0 CHECK (asked_stale IN (0,1)),  -- the one "still on this?" question was asked
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX idx_working_item_status ON working_item(status);
+
+CREATE TABLE working_item_event (      -- every change, with their quote, so the old version is kept
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id INTEGER NOT NULL REFERENCES working_item(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('created','confirmed','status','deadline','progress','renamed','size','asked_stale')),
+  day TEXT NOT NULL,
+  quote TEXT NOT NULL DEFAULT '',
+  detail TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_working_item_event_item ON working_item_event(item_id, id);

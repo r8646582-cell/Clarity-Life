@@ -61,7 +61,7 @@ class SchemaTest {
             sqlTables.keys.sorted(),
             roomEntities.keys.sorted(),
         )
-        assertEquals("the spec says 33 tables", 33, sqlTables.size)
+        assertEquals("the spec says 36 tables (33 + usage_day, working_item, working_item_event)", 36, sqlTables.size)
     }
 
     @Test
