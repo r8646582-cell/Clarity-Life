@@ -318,8 +318,24 @@ fun SettingsScreen(
                 model.setSundayAlert(it)
                 if (it && android.os.Build.VERSION.SDK_INT >= 33) askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
             }
+            SwitchRow(
+                "Daily nudge",
+                "One quiet note at 19:00, only on a day you have not talked yet",
+                state.dailyNudge,
+            ) {
+                model.setDailyNudge(it)
+                if (it && android.os.Build.VERSION.SDK_INT >= 33) askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (state.backgroundPaused) {
+                Text(
+                    "Background work paused until tomorrow",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = clarity.muted,
+                    modifier = Modifier.padding(vertical = 4.dp),
+                )
+            }
             // On by default now, so he may never have been asked: say so plainly and offer the question here.
-            if (state.sundayAlert && !notificationsAllowed) {
+            if ((state.sundayAlert || state.dailyNudge) && !notificationsAllowed) {
                 Text(
                     "Notifications are off for Clarity, so the alert cannot show. Tap to allow them.",
                     style = MaterialTheme.typography.bodySmall,

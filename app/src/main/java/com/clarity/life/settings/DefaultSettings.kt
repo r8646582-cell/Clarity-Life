@@ -99,6 +99,9 @@ object DefaultSettings {
     // A phone that already saved the switch keeps what it saved.
     const val SUNDAY_ALERT_ON = true
 
+    /** The optional evening nudge (docs/CLARITY-V2-BUILD-SPEC.md rule 7): off until they turn it on. */
+    const val DAILY_NUDGE_ON = false
+
     /** Empty: the app ships for anyone. The person types a name in Settings, Coach, if they want one used. */
     const val USER_NAME = ""
     /** What fills {{USER_NAME}} while no name is set. */

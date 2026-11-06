@@ -28,6 +28,7 @@ class SettingsViewModel @Inject constructor(
     private val backups: com.clarity.life.backup.BackupRepository,
     private val exporter: com.clarity.life.backup.Exporter,
     private val eraser: com.clarity.life.data.Eraser,
+    private val budget: com.clarity.life.memory.BackgroundBudget,
 ) : ViewModel() {
 
     data class State(
@@ -62,6 +63,9 @@ class SettingsViewModel @Inject constructor(
         val dayBoundaryHour: Int = DefaultSettings.DAY_BOUNDARY_HOUR,
         val weeklyLetter: Boolean = true,
         val sundayAlert: Boolean = com.clarity.life.settings.DefaultSettings.SUNDAY_ALERT_ON,
+        val dailyNudge: Boolean = com.clarity.life.settings.DefaultSettings.DAILY_NUDGE_ON,
+        /** Today's background calls are used up (the hard cap): shown as a quiet line. */
+        val backgroundPaused: Boolean = false,
         /** Your data: where backups go, whether a passphrase is set, and the last backup's one line. */
         val backupFolder: String = "",
         val hasPassphrase: Boolean = false,
@@ -139,6 +143,8 @@ class SettingsViewModel @Inject constructor(
             dayBoundaryHour = settings.dayBoundaryHour(),
             weeklyLetter = settings.getBool(SettingsRepository.Keys.WEEKLY_LETTER_ON, DefaultSettings.WEEKLY_LETTER_ON),
             sundayAlert = settings.getBool(SettingsRepository.Keys.SUNDAY_ALERT_ON, DefaultSettings.SUNDAY_ALERT_ON),
+            dailyNudge = settings.getBool(SettingsRepository.Keys.DAILY_NUDGE_ON, DefaultSettings.DAILY_NUDGE_ON),
+            backgroundPaused = budget.paused(),
             backupFolder = folderName(settings.get(SettingsRepository.Keys.BACKUP_FOLDER, "")),
             hasPassphrase = backups.hasPassphrase(),
             backupLine = backupLine(),
@@ -303,6 +309,13 @@ class SettingsViewModel @Inject constructor(
     fun setWeeklyLetter(on: Boolean) = viewModelScope.launch {
         settings.setBool(SettingsRepository.Keys.WEEKLY_LETTER_ON, on)
         _state.value = _state.value.copy(weeklyLetter = on)
+    }
+
+    /** Daily nudge: one quiet evening note on a day with no chat. Off by default. */
+    fun setDailyNudge(on: Boolean) = viewModelScope.launch {
+        settings.setBool(SettingsRepository.Keys.DAILY_NUDGE_ON, on)
+        _state.value = _state.value.copy(dailyNudge = on)
+        com.clarity.life.chat.DailyNudge.ensure(context, settings)
     }
 
     /** Sunday alert: one silent notification when the letter is ready. */

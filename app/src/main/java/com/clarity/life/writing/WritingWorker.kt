@@ -98,6 +98,7 @@ class WritingScheduler @Inject constructor(
 ) {
     /** On app start: catch up on anything missed, and make sure next Sunday is scheduled. */
     suspend fun onStart(now: Long) {
+        com.clarity.life.chat.DailyNudge.ensure(context, settings)
         enqueue("writing-catch-up", 0, ExistingWorkPolicy.KEEP)
         scheduleNextSunday(now)
     }
