@@ -36,7 +36,7 @@ class WorkingRepository(private val db: ClarityDatabase) {
      * One line per live item (contracts/context.md). An item quiet for 21 days gets one extra line, once, so the
      * coach can ask "still on this?" a single time; the question is recorded as asked.
      */
-    suspend fun block(today: String, now: Long = System.currentTimeMillis()): Block {
+    suspend fun block(today: String, now: Long = System.currentTimeMillis(), record: Boolean = true): Block {
         val items = dao.live()
         if (items.isEmpty()) return Block("WORKING_ON", emptyList())
         val lines = mutableListOf<BlockItem>()
@@ -44,7 +44,7 @@ class WorkingRepository(private val db: ClarityDatabase) {
             lines.add(BlockItem(WorkingRules.contextLine(model(row), today), 0))
         }
         for (row in items) {
-            if (row.status == "active" && WorkingRules.isStale(row.lastMentionedDay, today, row.askedStale == 1)) {
+            if (record && row.status == "active" && WorkingRules.isStale(row.lastMentionedDay, today, row.askedStale == 1)) {
                 lines.add(BlockItem("Quiet for a while, not asked yet: ${row.name}. Ask once whether they are still on it.", 0))
                 dao.update(row.copy(askedStale = 1, updatedAt = now))
                 dao.insertEvent(WorkingItemEventRow(itemId = row.id, kind = "asked_stale", day = today, createdAt = now))

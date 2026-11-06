@@ -50,10 +50,6 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val retryLetter = inputData.getString(KEY_RETRY_LETTER)
         val retryPeriod = inputData.getString(KEY_RETRY_PERIOD_LETTER)
         try {
-            for (review in deps.reviews().catchUp(now)) {
-                val outcome = deps.reviews().writeNote(review.id, now, retry = review.id == retryReview)
-                if (outcome is ReviewWriter.Outcome.Retry) again = true
-            }
             val week = retryLetter?.let(LocalDate::parse) ?: deps.letters().dueWeek(now)
             if (week != null) {
                 val outcome = deps.letters().write(week, now, retry = retryLetter != null)
@@ -74,12 +70,12 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                 val outcome = deps.letters().writeYear(year, now, retry = retryYear != null)
                 if (outcome is LetterWriter.Outcome.Retry) again = true
             }
-            // The quarterly chapter, once the quarter is over (a no-op once it is written or skipped).
-            val chapter = deps.chapters().write(deps.chapters().dueQuarter(now), now)
-            if (chapter is ChapterWriter.Outcome.Retry) again = true
-            // The monthly story for Your story, once the month is over (a no-op once written or skipped).
-            val story = deps.stories().write(deps.stories().dueMonth(now), now)
-            if (story is StoryWriter.Outcome.Retry) again = true
+            // A finished item gets its milestone letter (one background call each, inside the daily cap).
+            for (id in deps.letters().milestonesDue()) {
+                val outcome = deps.letters().writeMilestone(id, now)
+                if (outcome is LetterWriter.Outcome.Retry) again = true
+            }
+            // v2 has no weekly reviews, chapters or story: they cost calls and nobody reads them.
             // Monthly memory gardening (and an extra tidy when a kind of note is full).
             if (deps.gardening().runDue(now) is GardeningJob.Outcome.Retry) again = true
         } finally {

@@ -211,18 +211,17 @@
     "PROFILE",
     "PEOPLE",
     "NOTES",
-    "REVIEW_FACTS",
-    "PLAN_STATE",
-    "FOCUS_SUMMARIES",
+    "WORKING_ON",
+    "LETTER_FACTS",
     "PREVIOUS_LETTER",
     "RECENT_IDEAS",
     "TRANSCRIPTS"
    ],
    "must_contain": [
-    "word for word",
-    "Do not say that anything was saved",
-    "never put it in quotation marks",
-    "numbers written in words"
+    "mirror",
+    "A mood is not a decision",
+    "numbers written in words",
+    "Special weeks"
    ],
    "max_words": 1500
   },
@@ -232,18 +231,18 @@
     "PERIOD",
     "PROFILE",
     "NOTES",
-    "REVIEW_FACTS",
-    "PLAN_STATE",
+    "WORKING_ON",
+    "LETTER_FACTS",
     "PREVIOUS_LETTER",
-    "WEEKLY_LETTERS"
+    "WEEKLY_LETTERS",
+    "QUOTES"
    ],
    "must_contain": [
-    "word for word",
-    "Do not say that anything was saved",
-    "never put it in quotation marks",
+    "mirror",
+    "A mood is not a decision",
     "numbers written in words"
    ],
-   "max_words": 1500
+   "max_words": 1300
   },
   "letter_yearly.md": {
    "placeholders": [
@@ -251,17 +250,18 @@
     "PERIOD",
     "PROFILE",
     "NOTES",
-    "PLAN_STATE",
+    "WORKING_ON",
+    "LETTER_FACTS",
     "PREVIOUS_LETTER",
-    "MONTHLY_LETTERS"
+    "MONTHLY_LETTERS",
+    "QUOTES"
    ],
    "must_contain": [
-    "word for word",
-    "Do not say that anything was saved",
-    "never put it in quotation marks",
+    "mirror",
+    "A mood is not a decision",
     "numbers written in words"
    ],
-   "max_words": 1500
+   "max_words": 1300
   },
   "brief_daily.md": {
    "placeholders": [

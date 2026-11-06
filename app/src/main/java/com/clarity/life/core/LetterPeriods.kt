@@ -27,6 +27,7 @@ object LetterPeriods {
     const val WEEK = "week"
     const val MONTH = "month"
     const val YEAR = "year"
+    const val MILESTONE = "milestone"
 
     fun monthKey(first: LocalDate) = "letter:month:${first.toString().take(7)}"
 
@@ -36,6 +37,7 @@ object LetterPeriods {
     fun kindOf(key: String): String = when {
         key.startsWith("letter:month:") -> MONTH
         key.startsWith("letter:year:") -> YEAR
+        key.startsWith("letter:milestone:") -> MILESTONE
         else -> WEEK
     }
 
@@ -43,6 +45,7 @@ object LetterPeriods {
     fun adjective(key: String): String = when (kindOf(key)) {
         MONTH -> "monthly"
         YEAR -> "yearly"
+        MILESTONE -> "milestone"
         else -> "weekly"
     }
 

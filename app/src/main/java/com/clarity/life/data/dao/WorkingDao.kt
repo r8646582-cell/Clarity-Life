@@ -42,6 +42,25 @@ interface WorkingDao {
     @Query("DELETE FROM working_item WHERE id = :id")
     suspend fun delete(id: Long)
 
+    /** Every change in a span of days, with the item's name, for the letters' facts and a finished item's history. */
+    @Query(
+        "SELECT e.id AS id, e.item_id AS itemId, e.kind AS kind, e.day AS day, e.quote AS quote, e.detail AS detail, " +
+            "e.created_at AS createdAt, i.name AS name FROM working_item_event e JOIN working_item i ON i.id = e.item_id " +
+            "WHERE e.day >= :from AND e.day <= :to ORDER BY e.id",
+    )
+    suspend fun eventsBetween(from: String, to: String): List<EventWithName>
+
+    data class EventWithName(
+        val id: Long,
+        val itemId: Long,
+        val kind: String,
+        val day: String,
+        val quote: String,
+        val detail: String,
+        val createdAt: Long,
+        val name: String,
+    )
+
     // ---- the daily counter (background cap) ----
 
     @Query("SELECT * FROM usage_day WHERE day = :day")

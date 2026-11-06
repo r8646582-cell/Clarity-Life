@@ -131,6 +131,13 @@ interface MessageDao {
         tokensOut: Long?,
     )
 
+    /** When each of their (sent, not waiting) messages was written in a span, off-the-record chats left out. */
+    @Query(
+        "SELECT created_at FROM message WHERE role = 'user' AND status != 'pending' AND created_at >= :from AND created_at < :to " +
+            "AND conversation_id IN (SELECT id FROM conversation WHERE off_the_record = 0) ORDER BY id",
+    )
+    suspend fun sentBetween(from: Long, to: Long): List<Long>
+
     @Query("SELECT COUNT(*) FROM message WHERE conversation_id = :conversationId AND role = 'user'")
     suspend fun countHisMessages(conversationId: Long): Int
 

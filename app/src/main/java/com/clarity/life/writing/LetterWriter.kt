@@ -106,8 +106,6 @@ class LetterWriter @Inject constructor(
             is JobClaims.Claim.Run -> c.job
         }
         try {
-            val review = reviews.ensure("week", monday, sunday, now)
-            val reviewFacts = review?.let { ReviewFacts.fromJson(it.factsJson)?.text } ?: "(none)"
             val today = planner.today(now)
             val m = db.memory()
             val values = mapOf(
@@ -117,9 +115,8 @@ class LetterWriter @Inject constructor(
                 "PROFILE" to m.profile().joinToString("\n") { "${it.key}: ${it.value}" }.ifBlank { "(none)" },
                 "PEOPLE" to m.people().joinToString("\n") { "${it.name} (${it.relation}): ${it.notes}" }.ifBlank { "(none)" },
                 "NOTES" to m.activeNotes().joinToString("\n") { "${it.kind}: ${it.text}" }.ifBlank { "(none)" },
-                "REVIEW_FACTS" to reviewFacts,
-                "PLAN_STATE" to PlanBlocks.planState(planner.tracker(today), today).items.joinToString("\n") { it.text },
-                "FOCUS_SUMMARIES" to dao.activeFocuses().joinToString("\n") { "${it.name}: ${it.summary.ifBlank { it.why }}" }.ifBlank { "(none)" },
+                "WORKING_ON" to workingOn(today),
+                "LETTER_FACTS" to letterFacts(monday, sunday, 7),
                 "PREVIOUS_LETTER" to (dao.letterBefore(WEEK_PREFIX, monday.toString())?.let { "${it.title}\n${it.body}" } ?: "(none)"),
                 "RECENT_IDEAS" to m.recentItems("idea", 20).joinToString("\n") { it.text }.ifBlank { "(none)" },
                 "TRANSCRIPTS" to LetterInput.transcripts(conversations),
@@ -178,11 +175,140 @@ class LetterWriter @Inject constructor(
     private suspend fun lettersOn() =
         settings.getBool(SettingsRepository.Keys.WEEKLY_LETTER_ON, com.clarity.life.settings.DefaultSettings.WEEKLY_LETTER_ON)
 
+    /** Items they finished that have no milestone letter yet (the letter is checked and skipped like any other). */
+    suspend fun milestonesDue(): List<Long> {
+        if (!lettersOn()) return emptyList()
+        return db.working().all().filter { it.status == "done" }.map { it.id }.filter { id ->
+            val key = MILESTONE_PREFIX + id
+            dao.letterByKey(key) == null && jobs.status(key)?.status.let { it == null || it == "pending" || it == "running" || it == "failed" }
+        }
+    }
+
+    /**
+     * The milestone letter for a finished item (docs/CLARITY-V2-BUILD-SPEC.md stage 4): what an honest friend would
+     * say after watching it from start to finish. The history, quotes and day counts are written by code; every quote
+     * must be the owner's own and every number one it was given.
+     */
+    suspend fun writeMilestone(itemId: Long, now: Long, retry: Boolean = false): Outcome {
+        val item = db.working().get(itemId) ?: return Outcome.NothingToDo
+        if (item.status != "done") return Outcome.NothingToDo
+        val key = MILESTONE_PREFIX + itemId
+        if (dao.letterByKey(key) != null) return Outcome.NothingToDo
+        val events = db.working().events(itemId)
+        val finished = events.lastOrNull { it.kind == "status" && it.detail == "done" } ?: return Outcome.NothingToDo
+        val endpoint = settings.letterEndpoint() ?: return Outcome.NothingToDo
+        val job = when (val c = jobs.claim(key, TYPE, now, retry, MAX_CHECKS)) {
+            is JobClaims.Claim.Settled -> return if (c.status == "failed") Outcome.Failed("failed") else Outcome.NothingToDo
+            is JobClaims.Claim.Run -> c.job
+        }
+        try {
+            val today = planner.today(now)
+            val zone = ZoneId.of(settings.timeZone())
+            val start = LocalDate.parse(item.originDay)
+            val end = LocalDate.parse(finished.day)
+            val from = start.atStartOfDay(zone).toInstant().toEpochMilli()
+            val to = end.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            fun long(day: String) = LocalDate.parse(day).format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH))
+            val history = buildList {
+                add("Started on ${long(item.originDay)}.")
+                for (e in events) {
+                    when {
+                        e.kind == "deadline" && e.detail != "unclear" -> add("${long(e.day)}: deadline set to ${long(e.detail)}.")
+                        e.kind == "progress" -> add("${long(e.day)}: you said you ${e.detail.trim().trimEnd('.')}.")
+                        e.kind == "status" && !e.detail.startsWith("proposed:") -> add("${long(e.day)}: ${e.detail}.")
+                    }
+                }
+                add("Days from start to finish: ${java.time.temporal.ChronoUnit.DAYS.between(start, end)}.")
+            }.joinToString("\n")
+            val quotes = (listOf(item.originDay to item.originQuote) + events.filter { it.quote.isNotBlank() && !it.detail.startsWith("proposed:") }.map { it.day to it.quote })
+                .joinToString("\n") { (d, q) -> "${long(d)}: \"$q\"" }
+            val summaries = dao.summarisedBetween(from, to).take(8)
+                .joinToString("\n") { "${TimeFacts.shortDay(TimeFacts.local(java.time.Instant.ofEpochMilli(it.startedAt), settings.timeZone()).toLocalDate())}: ${it.summary}" }
+                .ifBlank { "(none)" }
+            val m = db.memory()
+            val values = mapOf(
+                "USER_NAME" to settings.promptName(),
+                "ITEM_NAME" to item.name,
+                "ITEM_OUTCOME" to "finished",
+                "PROFILE" to m.profile().joinToString("\n") { "${it.key}: ${it.value}" }.ifBlank { "(none)" },
+                "NOTES" to m.activeNotes().joinToString("\n") { "${it.kind}: ${it.text}" }.ifBlank { "(none)" },
+                "ITEM_HISTORY" to history,
+                "ITEM_QUOTES" to quotes,
+                "ITEM_SUMMARIES" to summaries,
+                "WORKING_ON" to workingOn(today),
+            )
+            val his = dao.hisMessagesBetween(from, to) + dao.quotesWithin(start.toString(), end.toString()).map { it.text } +
+                events.map { it.quote } + item.originQuote
+            val raw = call.text(endpoint, prompts.fill(prompts.text(PROMPT_MILESTONE), values), today.toString().take(7), job = "letter")
+            val checked = TextJobCheck.check("letter", raw, values.values.toList(), his)
+            if (!checked.ok) return failed(job, "check_failed", now)
+            db.withTransaction {
+                dao.insertLetter(
+                    LetterRow(periodStart = start.toString(), periodEnd = end.toString(), title = checked.title, body = checked.body, readyAt = now, key = key),
+                )
+                jobs.succeed(job, now)
+            }
+            return Outcome.Written
+        } catch (e: CancellationException) {
+            jobs.release(job)
+            throw e
+        } catch (e: BackgroundCall.CutOff) {
+            return failed(job, "cut_off", now)
+        } catch (e: AiFailure) {
+            return failed(job, e.code, now)
+        } catch (e: Throwable) {
+            jobs.fail(job, AREA, "error_" + e.javaClass.simpleName, now, MAX_CHECKS)
+            return Outcome.Failed("error")
+        }
+    }
+
+    // ---------- v2 letter inputs, all counted or written by code ----------
+
+    /** WORKING_ON for a letter: the same lines the coach sees, without recording a "still on this?" question. */
+    private suspend fun workingOn(today: LocalDate): String =
+        com.clarity.life.memory.WorkingRepository(db).block(today.toString(), record = false).items
+            .joinToString("\n") { it.text }.ifBlank { "(none)" }
+
+    /** The owner's own words from the period, with their day, chosen from the quotes the keeper verified. */
+    private suspend fun quotes(first: LocalDate, last: LocalDate): String =
+        dao.quotesWithin(first.toString(), last.toString()).takeLast(12)
+            .joinToString("\n") { "${TimeFacts.shortDay(LocalDate.parse(it.saidDay))}: \"${it.text}\"" }.ifBlank { "(none)" }
+
+    /** The plain statements counted from the database for the period (core/LetterFacts.kt). */
+    private suspend fun letterFacts(first: LocalDate, last: LocalDate, totalDays: Int): String {
+        val tz = settings.timeZone()
+        val boundary = settings.dayBoundaryHour()
+        val zone = ZoneId.of(tz)
+        val from = first.atStartOfDay(zone).toInstant().toEpochMilli()
+        val to = last.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val rows = db.messages().sentBetween(from, to)
+        val days = rows.map { com.clarity.life.core.Planner.dayKey(java.time.Instant.ofEpochMilli(it).toString(), tz, boundary).toString() }
+        fun long(day: String) = LocalDate.parse(day).format(java.time.format.DateTimeFormatter.ofPattern("d MMMM", java.util.Locale.ENGLISH))
+        val events = db.working().eventsBetween(first.toString(), last.toString()).mapNotNull { e ->
+            when {
+                e.kind == "created" -> com.clarity.life.core.LetterFacts.Event("started", e.name, long(e.day))
+                e.kind == "status" && e.detail == "done" -> com.clarity.life.core.LetterFacts.Event("finished", e.name, long(e.day))
+                e.kind == "status" && e.detail == "paused" -> com.clarity.life.core.LetterFacts.Event("paused", e.name, long(e.day))
+                e.kind == "status" && e.detail == "dropped" -> com.clarity.life.core.LetterFacts.Event("dropped", e.name, long(e.day))
+                e.kind == "status" && e.detail == "active" -> com.clarity.life.core.LetterFacts.Event("resumed", e.name, long(e.day))
+                e.kind == "progress" && e.detail.isNotBlank() -> com.clarity.life.core.LetterFacts.Event("progress", e.name, long(e.day), e.detail)
+                else -> null
+            }
+        }
+        val notes = db.memory().activeNotes()
+        val newNotes = notes.count { it.firstSeen >= first.toString() && it.firstSeen <= last.toString() }
+        val again = notes.count {
+            it.firstSeen < first.toString() && it.lastSeen >= first.toString() && it.lastSeen <= last.toString() && it.timesSeen > 1
+        }
+        return com.clarity.life.core.LetterFacts.lines(
+            com.clarity.life.core.LetterFacts.Input(totalDays, days.toSet().size, rows.size, events, newNotes, again),
+        )
+    }
+
     /** The monthly letter for the month starting [first], written from that month's weekly letters. */
     suspend fun writeMonth(first: LocalDate, now: Long, retry: Boolean = false): Outcome {
         val last = first.plusMonths(1).minusDays(1)
         val weeks = dao.lettersEnding(WEEK_PREFIX, first.toString(), last.toString())
-        val review = dao.reviewByKey(ReviewTimes.monthKey(first))
         return writeFrom(
             key = LetterPeriods.monthKey(first),
             worth = LetterPeriods.worthMonth(weeks.size),
@@ -196,8 +322,9 @@ class LetterWriter @Inject constructor(
         ) { today ->
             mapOf(
                 "PERIOD" to LetterPeriods.monthName(first),
-                "REVIEW_FACTS" to (review?.let { ReviewFacts.fromJson(it.factsJson)?.text } ?: "(none)"),
-                "PLAN_STATE" to PlanBlocks.planState(planner.tracker(today), today).items.joinToString("\n") { it.text },
+                "WORKING_ON" to workingOn(today),
+                "LETTER_FACTS" to letterFacts(first, last, last.dayOfMonth),
+                "QUOTES" to quotes(first, last),
                 "PREVIOUS_LETTER" to (dao.letterBefore(MONTH_PREFIX, first.toString())?.let { "${it.title}\n${it.body}" } ?: "(none)"),
                 "WEEKLY_LETTERS" to weeks.joinToString("\n\n") {
                     val monday = LocalDate.parse(it.periodStart)
@@ -225,7 +352,9 @@ class LetterWriter @Inject constructor(
         ) { today ->
             mapOf(
                 "PERIOD" to year.toString(),
-                "PLAN_STATE" to PlanBlocks.planState(planner.tracker(today), today).items.joinToString("\n") { it.text },
+                "WORKING_ON" to workingOn(today),
+                "LETTER_FACTS" to letterFacts(first, last, last.dayOfYear),
+                "QUOTES" to quotes(first, last),
                 "PREVIOUS_LETTER" to (dao.letterBefore(YEAR_PREFIX, first.toString())?.let { "${it.title}\n${it.body}" } ?: "(none)"),
                 "MONTHLY_LETTERS" to months.joinToString("\n\n") {
                     LetterPeriods.source(LetterPeriods.monthName(LocalDate.parse(it.periodStart)), it.title, it.body)
@@ -377,6 +506,8 @@ class LetterWriter @Inject constructor(
         const val WEEK_PREFIX = "letter:week:"
         const val MONTH_PREFIX = "letter:month:"
         const val YEAR_PREFIX = "letter:year:"
+        const val MILESTONE_PREFIX = "letter:milestone:"
+        const val PROMPT_MILESTONE = "letter_milestone.md"
         const val CHANNEL = "weekly_letter"
 
         /** Shown in Android's notification settings; it names where the switch really is in Clarity. */
