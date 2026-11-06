@@ -23,7 +23,7 @@ class PromiseTextTest {
     fun theOpenLineIsTheOneTheTestBenchTeaches() {
         val line = PromiseText.openLine(p(4, "Study 1 hour at 8am", "2026-10-05T03:00:00Z"), lateNight, tz)
         assertEquals("P4 \"Study 1 hour at 8am\", due Monday 5 October, 8:00 am (in 1 day 7 hours).", line)
-        assertTrue(Vectors.readText("prompts/testbench.md").contains("OPEN_PROMISES: $line"))
+        assertTrue(Vectors.readText("contracts/plan_state_testbench_v1.md").contains("OPEN_PROMISES: $line"))
     }
 
     @Test

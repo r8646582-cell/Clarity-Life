@@ -18,7 +18,7 @@ class TimeFactsTest {
 
     @Test
     fun theNowSentenceMatchesTheSamplesInTheTestBench() {
-        val bench = Vectors.readText("prompts/testbench.md")
+        val bench = Vectors.readText("contracts/plan_state_testbench_v1.md")
 
         // 9:40 pm local, an ordinary evening.
         val night = TimeFacts.nowSentence(Instant.parse("2026-10-09T16:40:00Z"), tz, 4)
@@ -51,7 +51,7 @@ class TimeFactsTest {
         assertEquals("late night", TimeFacts.band(3, 0))
         assertEquals("morning", TimeFacts.band(4, 0))
         assertEquals("late night", TimeFacts.band(5, 6))
-        val bench = Vectors.readText("prompts/testbench.md")
+        val bench = Vectors.readText("contracts/plan_state_testbench_v1.md")
         val lateNight = TimeFacts.nowSentence(Instant.parse("2026-10-03T19:40:00Z"), tz, 0)
         // No "still counts as" note: with a midnight boundary it is already Sunday.
         assertEquals("It's Sunday 4 October 2026, 12:40 am (late night).", lateNight)

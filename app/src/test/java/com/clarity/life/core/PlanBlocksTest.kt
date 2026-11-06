@@ -50,7 +50,7 @@ class PlanBlocksTest {
         """.trimIndent()
         assertEquals(expected, text(PlanBlocks.planState(syllabus(), today)))
         // and every line is in the spec's own sample, word for word
-        val spec = Vectors.readText("contracts/context.md")
+        val spec = Vectors.readText("contracts/context_v1.md")
         for (line in expected.lines()) assertTrue(line, spec.contains(line))
     }
 
