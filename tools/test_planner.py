@@ -43,8 +43,8 @@ def main():
     samples = [
         # (files that must contain it, backlog name, goal title, total, done, deadline)
         (("contracts/plan_state_sample_v1.md",), "Chemistry lectures", "Clear the chemistry lectures", 40, 0, "2026-11-20"),
-        (("prompts/testbench.md",), "Exam lectures", "Clear the exam lectures", 50, 6, "2026-11-20"),
-        (("prompts/testbench.md",), "Exam lectures", "Clear the exam lectures", 48, 6, "2026-11-27"),
+        (("contracts/plan_state_testbench_v1.md",), "Exam lectures", "Clear the exam lectures", 50, 6, "2026-11-20"),
+        (("contracts/plan_state_testbench_v1.md",), "Exam lectures", "Clear the exam lectures", 48, 6, "2026-11-27"),
     ]
     for files, name, title, total, done, deadline in samples:
         left = P.days_left("Sat-Thu", today, deadline)

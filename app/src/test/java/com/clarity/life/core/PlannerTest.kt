@@ -66,8 +66,8 @@ class PlannerTest {
         val samples = listOf(
             Sample(listOf("contracts/plan_state_sample_v1.md"), "Chemistry lectures",
                 "Clear the chemistry lectures", 40.0, 0.0, "2026-11-20"),
-            Sample(listOf("prompts/testbench.md"), "Exam lectures", "Clear the exam lectures", 50.0, 6.0, "2026-11-20"),
-            Sample(listOf("prompts/testbench.md"), "Exam lectures", "Clear the exam lectures", 48.0, 6.0, "2026-11-27"),
+            Sample(listOf("contracts/plan_state_testbench_v1.md"), "Exam lectures", "Clear the exam lectures", 50.0, 6.0, "2026-11-20"),
+            Sample(listOf("contracts/plan_state_testbench_v1.md"), "Exam lectures", "Clear the exam lectures", 48.0, 6.0, "2026-11-27"),
         )
         val failures = mutableListOf<String>()
         for (s in samples) {
