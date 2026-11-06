@@ -107,12 +107,12 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
     val shownSection = sections.firstOrNull { it.name == section }
     if (shownSection != null && !searching) androidx.activity.compose.BackHandler { section = null }
     // The note to check: one the coach is not sure of yet, so he can confirm or correct it in one tap.
-    val toCheck = state.sections.flatMap { it.items }.firstOrNull { it.canConfirm }
+    val toCheck = state.working.firstOrNull { it.canConfirm } ?: state.sections.flatMap { it.items }.firstOrNull { it.canConfirm }
 
     LazyColumn(Modifier.fillMaxSize().background(clarity.ground)) {
         item {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("What I know", style = MaterialTheme.typography.displayLarge, color = clarity.text)
+                Text("Know", style = MaterialTheme.typography.displayLarge, color = clarity.text)
                 OutlinedTextField(
                     value = typed,
                     onValueChange = {
@@ -174,20 +174,6 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                 }
             }
             else -> {
-                item(key = "story") {
-                    com.clarity.life.ui.theme.CalmCard(
-                        Modifier.padding(horizontal = 20.dp, vertical = 8.dp).clickable { showStory = true },
-                        gap = 6,
-                    ) {
-                        Kicker("Your story", clarity.yellow)
-                        Text(
-                            "What you did, what you got through, and how you changed.",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = clarity.text,
-                        )
-                        Text("Open your story", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = clarity.yellow)
-                    }
-                }
                 if (toCheck != null) {
                     item(key = "check") {
                         BoldCard(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), gap = 12) {
@@ -206,6 +192,20 @@ fun KnowScreen(onTalk: () -> Unit = {}, model: KnowViewModel = hiltViewModel()) 
                                 SecondaryButton("Not quite", Modifier.weight(1f)) { editing = toCheck }
                             }
                         }
+                    }
+                }
+                if (state.working.isNotEmpty()) {
+                    item(key = "working-title") { SectionTitle("Working on") }
+                    items(state.working, key = { "w:" + it.ref.toString() }) { item ->
+                        KnowRow(
+                            item = item,
+                            expanded = expanded == item.ref,
+                            model = model,
+                            onProof = { proof = it },
+                            onExpand = { expanded = if (expanded == item.ref) null else item.ref },
+                            onEdit = { editing = item },
+                            onDelete = { deleting = item },
+                        )
                     }
                 }
                 item(key = "sections") {
@@ -519,8 +519,10 @@ private fun OutlineButton(text: String, color: Color, onClick: () -> Unit) {
 @Composable
 private fun EditDialog(item: Item, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
     val person = item.ref is Ref.Person
+    val working = item.ref is Ref.Working
     var first by remember(item.ref) { mutableStateOf(item.editValues.getOrElse(0) { "" }) }
     var second by remember(item.ref) { mutableStateOf(item.editValues.getOrElse(1) { "" }) }
+    var status by remember(item.ref) { mutableStateOf(if (item.label == "Paused") "paused" else "active") }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = clarity.surface,
@@ -530,11 +532,33 @@ private fun EditDialog(item: Item, onDismiss: () -> Unit, onSave: (String, Strin
                 OutlinedTextField(
                     value = first,
                     onValueChange = { first = it },
-                    label = { Text(if (person) "Who they are to you" else "In your words", color = clarity.muted) },
+                    label = { Text(if (person) "Who they are to you" else if (working) "Name" else "In your words", color = clarity.muted) },
                     colors = fieldColors(),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (person) {
+                if (working) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("active" to "Active", "paused" to "Paused", "done" to "Done", "dropped" to "Dropped").forEach { (value, label) ->
+                            androidx.compose.material3.FilterChip(
+                                selected = status == value,
+                                onClick = { status = value },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
+                    OutlinedTextField(
+                        value = second,
+                        onValueChange = { second = it },
+                        label = { Text("Deadline, like 2027-02-12 (or empty)", color = clarity.muted) },
+                        colors = fieldColors(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "A date you type here is yours, so it is kept as confirmed.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = clarity.muted,
+                    )
+                } else if (person) {
                     OutlinedTextField(
                         value = second,
                         onValueChange = { second = it },
@@ -555,7 +579,7 @@ private fun EditDialog(item: Item, onDismiss: () -> Unit, onSave: (String, Strin
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(first, second) }) { Text("Save", color = clarity.yellow) } },
+        confirmButton = { TextButton(onClick = { onSave(first, if (working) "$status|$second" else second) }) { Text("Save", color = clarity.yellow) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = clarity.text) } },
     )
 }

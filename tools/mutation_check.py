@@ -289,6 +289,7 @@ MUTATIONS = [
     ("working.py", "    if len(dates) != 1:\n        return None\n", "    if not dates:\n        return None\n", "test_working.py", "two dates in one quote picked one"),
     ("working.py", "state = \"confirmed\" if date else \"unclear\"", "state = \"confirmed\"", "test_working.py", "an unclear date shown as confirmed"),
     ("working.py", "    if item[\"deadline_state\"] == \"confirmed\" and item.get(\"deadline_date\"):", "    if item.get(\"deadline_date\"):", "test_working.py", "a day count shown for an unconfirmed deadline"),
+    ("commands.py", "    return \"forget\" if t in FORGET_PHRASES else None", "    return \"forget\" if t.startswith(\"forget\") else None", "test_commands.py", "any message starting with forget deletes"),
     ("promise_times.py", "            d = cal\n            sure_day = False\n", "            d = day_key + timedelta(days=offset)\n",
      "test_promise_times.py", "after midnight, tomorrow saved without asking"),
     ("promise_times.py", "    late = n.hour < max(boundary_hour, LATE_NIGHT_END)\n", "    late = n.hour < boundary_hour\n",

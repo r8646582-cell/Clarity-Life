@@ -1,0 +1,157 @@
+{
+ "_comment": "Vectors for tools/commands.py and ChatCommands.kt (docs/CLARITY-V2-BUILD-SPEC.md section 8).",
+ "cases": [
+  {
+   "name": "command: 'forget that'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget that"
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'Forget that'",
+   "fn": "match_command",
+   "args": {
+    "text": "Forget that"
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: '  FORGET THIS  '",
+   "fn": "match_command",
+   "args": {
+    "text": "  FORGET THIS  "
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'forget that note'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget that note"
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'forget this note.'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget this note."
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'Forget that!'",
+   "fn": "match_command",
+   "args": {
+    "text": "Forget that!"
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'forget   that'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget   that"
+   },
+   "expect": "forget"
+  },
+  {
+   "name": "command: 'forget that, please'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget that, please"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'forget that I said I hate maths'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget that I said I hate maths"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'what do you remember about Hina'",
+   "fn": "match_command",
+   "args": {
+    "text": "what do you remember about Hina"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'do you forget things?'",
+   "fn": "match_command",
+   "args": {
+    "text": "do you forget things?"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'forget'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'forget about it'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget about it"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'please forget that'",
+   "fn": "match_command",
+   "args": {
+    "text": "please forget that"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'forget thatnote'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget thatnote"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: ''",
+   "fn": "match_command",
+   "args": {
+    "text": ""
+   },
+   "expect": null
+  },
+  {
+   "name": "command: '   '",
+   "fn": "match_command",
+   "args": {
+    "text": "   "
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'forget that\\nnow'",
+   "fn": "match_command",
+   "args": {
+    "text": "forget that\nnow"
+   },
+   "expect": null
+  },
+  {
+   "name": "command: 'Forget that note,'",
+   "fn": "match_command",
+   "args": {
+    "text": "Forget that note,"
+   },
+   "expect": "forget"
+  }
+ ]
+}

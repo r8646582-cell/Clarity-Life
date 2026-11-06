@@ -177,6 +177,25 @@ class ChatRepository @Inject constructor(
         )
     }
 
+    /**
+     * "Forget that": the note to ask about. The one the coach just talked about (the most words in common with its
+     * last reply, at least two), otherwise the first note that "Is this right?" would show. Null when there is none.
+     */
+    suspend fun forgetTarget(conversationId: Long): com.clarity.life.data.entity.NoteRow? {
+        val notes = db.memory().activeNotes()
+        if (notes.isEmpty()) return null
+        fun words(t: String) = Regex("[a-z]{4,}").findAll(t.lowercase()).map { it.value }.toSet()
+        val reply = messages.ofConversation(conversationId).lastOrNull { it.role == "coach" && it.content.isNotBlank() }
+        if (reply != null) {
+            val said = words(reply.content)
+            val best = notes.map { it to words(it.text).count { w -> w in said } }.filter { it.second >= 2 }.maxByOrNull { it.second }
+            if (best != null) return best.first
+        }
+        return notes.filter { it.confidence != "confirmed" }
+            .sortedWith(compareByDescending<com.clarity.life.data.entity.NoteRow> { listOf("guess", "likely", "confirmed").indexOf(it.confidence) }.thenByDescending { it.lastSeen })
+            .firstOrNull()
+    }
+
     suspend fun pendingMessages(conversationId: Long): List<MessageRow> =
         messages.ofConversation(conversationId).filter { it.role == "user" && it.status == "pending" }
 

@@ -33,7 +33,16 @@ class KnowViewModel @Inject constructor(
     private val memory: MemoryRepository,
     private val requests: com.clarity.life.chat.TalkRequests,
     private val settings: com.clarity.life.settings.SettingsRepository,
+    private val db: com.clarity.life.data.ClarityDatabase,
 ) : ViewModel() {
+
+    private val workingRepo = com.clarity.life.memory.WorkingRepository(db)
+
+    private suspend fun today(): String {
+        val tz = settings.timeZone()
+        val boundary = settings.dayBoundaryHour()
+        return com.clarity.life.core.Planner.dayKey(java.time.Instant.now().toString(), tz, boundary).toString()
+    }
 
     /** The Focus page that is open, read when he opens it. */
     private val focusDetail = MutableStateFlow<MemoryRepository.FocusDetail?>(null)
@@ -63,6 +72,7 @@ class KnowViewModel @Inject constructor(
         data class Person(val id: Long) : Ref()
         data class Focus(val id: Long) : Ref()
         data class Chapter(val id: Long) : Ref()
+        data class Working(val id: Long) : Ref()
     }
 
     data class Item(
@@ -94,6 +104,8 @@ class KnowViewModel @Inject constructor(
     data class Section(val name: String, val items: List<Item>)
 
     data class State(
+        /** What they are working on (v2): active first, then paused. */
+        val working: List<Item> = emptyList(),
         val sections: List<Section> = emptyList(),
         val archive: List<Item> = emptyList(),
         val query: String = "",
@@ -122,8 +134,8 @@ class KnowViewModel @Inject constructor(
         memory.watchFocuses(),
     ) { notes, evidence, profile, people, focuses -> Memory(notes, evidence, profile.first, people, focuses = focuses, past = profile.second) }
 
-    val state: StateFlow<State> = combine(memoryFlow, memory.watchChapters(), query, quietLine) { m, chapters, q, line ->
-        build(m, chapters, q, line)
+    val state: StateFlow<State> = combine(memoryFlow, memory.watchChapters(), query, quietLine, db.working().watchLive()) { m, chapters, q, line, working ->
+        build(m, chapters, q, line, working)
     }.flowOn(kotlinx.coroutines.Dispatchers.Default) // rebuilt on every keystroke: never on the main thread
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
 
@@ -135,6 +147,7 @@ class KnowViewModel @Inject constructor(
         when (ref) {
             is Ref.Note -> memory.confirmNote(ref.id)
             is Ref.Profile -> memory.confirmProfile(ref.key)
+            is Ref.Working -> workingRepo.confirm(ref.id, today(), System.currentTimeMillis())
             else -> Unit
         }
     }
@@ -146,6 +159,17 @@ class KnowViewModel @Inject constructor(
             is Ref.Profile -> memory.editProfile(ref.key, text, now)
             is Ref.Person -> memory.editPerson(ref.id, text, second, now)
             is Ref.Focus -> memory.editFocusSummary(ref.id, text, now)
+            is Ref.Working -> {
+                // "status|date": the status they picked and the deadline they typed (YYYY-MM-DD), or empty.
+                val status = second.substringBefore('|').ifEmpty { "active" }
+                val date = second.substringAfter('|', "").trim()
+                if (date.isNotEmpty() && runCatching { java.time.LocalDate.parse(date) }.isFailure) {
+                    throw IllegalArgumentException("write the date like 2027-02-12, or leave it empty")
+                }
+                if (!workingRepo.edit(ref.id, text, status, date.ifEmpty { null }, today(), now)) {
+                    throw IllegalArgumentException("three things are already active, pause one first")
+                }
+            }
             else -> Unit
         }
     }
@@ -160,6 +184,7 @@ class KnowViewModel @Inject constructor(
             is Ref.Note -> memory.deleteNote(ref.id)
             is Ref.Profile -> memory.deleteProfile(ref.key)
             is Ref.Person -> memory.deletePerson(ref.id)
+            is Ref.Working -> workingRepo.delete(ref.id)
             else -> Unit
         }
     }
@@ -183,7 +208,7 @@ class KnowViewModel @Inject constructor(
 
     // ---------- building the sections ----------
 
-    private fun build(m: Memory, chapters: List<ChapterRow>, q: String, line: String?): State {
+    private fun build(m: Memory, chapters: List<ChapterRow>, q: String, line: String?, workingRows: List<com.clarity.life.data.entity.WorkingItemRow>): State {
         val evidence = m.evidence.groupBy { it.noteId }
         fun noteItem(n: NoteRow, label: String? = null): Item {
             val rows = evidence[n.id] ?: emptyList()
@@ -288,19 +313,38 @@ class KnowViewModel @Inject constructor(
             )
         }
 
+        val workingItems = workingRows.map { w ->
+            val deadline = if (w.deadlineState == "confirmed" && w.deadlineDate != null) {
+                "Deadline: " + KnowText.shortDay(w.deadlineDate)
+            } else {
+                "Deadline: not set yet"
+            }
+            Item(
+                ref = Ref.Working(w.id),
+                label = if (w.status == "active") "Active" else "Paused",
+                text = w.name,
+                grade = KnowText.grade(if (w.confirmed == 1) "confirmed" else "guess"),
+                confidence = if (w.confirmed == 1) "confirmed" else "guess",
+                seen = null,
+                evidence = listOf(deadline, "You said: \"${w.originQuote}\" (${KnowText.shortDay(w.originDay)})"),
+                canEdit = true,
+                canDelete = true,
+                canConfirm = w.confirmed == 0,
+                haystack = listOf(w.name, w.originQuote).joinToString("\n"),
+                editValues = listOf(w.name, (w.deadlineDate ?: "") ),
+            )
+        }
+
+        // v2 groups (docs/CLARITY-V2-BUILD-SPEC.md section 3): Patterns, About you, People. Threads are hidden
+        // here but still given to the coach.
         val sections = listOf(
-            Section("Profile", profile),
-            Section("Patterns", kind("pattern").map { noteItem(it) }),
-            // Strengths are shown under What helps, as "What you are good at" (spec section 10).
-            Section(
-                "What helps",
-                kind("what_helps", "strength").map { noteItem(it, if (it.kind == "strength") "What you are good at" else null) },
-            ),
-            Section("What does not help", kind("what_doesnt").map { noteItem(it) }),
-            Section("Open threads", kind("thread").map { noteItem(it) }),
+            Section("Patterns", kind("pattern", "what_helps", "what_doesnt").map { noteItem(it, when (it.kind) {
+                "what_helps" -> "What helps"
+                "what_doesnt" -> "What does not help"
+                else -> null
+            }) }),
+            Section("About you", profile + kind("strength").map { noteItem(it, "What you are good at") }),
             Section("People", people),
-            Section("Focuses", focuses),
-            Section("Chapters", chapterItems),
         )
         // The archive: retired notes, still searchable. Notes he deleted are never shown again.
         val archive = m.notes.filter { it.status == "retired" }.sortedByDescending { it.lastSeen }.map { noteItem(it) }
@@ -308,6 +352,7 @@ class KnowViewModel @Inject constructor(
         val needle = q.trim().lowercase()
         fun matches(i: Item) = needle.isEmpty() || i.haystack.lowercase().contains(needle)
         return State(
+            working = workingItems.filter(::matches),
             sections = sections.map { s -> s.copy(items = s.items.filter(::matches)) },
             archive = archive.filter(::matches),
             query = q,

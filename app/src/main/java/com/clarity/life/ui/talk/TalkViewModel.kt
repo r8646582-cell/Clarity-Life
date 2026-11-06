@@ -45,7 +45,24 @@ class TalkViewModel @Inject constructor(
     private val reminders: com.clarity.life.promise.Reminders,
     private val requests: com.clarity.life.chat.TalkRequests,
     private val working: com.clarity.life.data.dao.WorkingDao,
+    private val memory: com.clarity.life.memory.MemoryRepository,
 ) : ViewModel() {
+
+    /** "Forget that" asked for: the exact note, shown on a confirm sheet. Nothing is deleted until the tap. */
+    data class ForgetPrompt(val noteId: Long, val text: String)
+
+    private val _forget = MutableStateFlow<ForgetPrompt?>(null)
+    val forgetPrompt: StateFlow<ForgetPrompt?> = _forget
+
+    fun confirmForget() {
+        val p = _forget.value ?: return
+        _forget.value = null
+        guarded { memory.deleteNote(p.noteId) }
+    }
+
+    fun cancelForget() {
+        _forget.value = null
+    }
 
     /** The one quiet line at the top: today's date and, when there are any, how many things they are working on. */
     val topLine: StateFlow<String> = kotlinx.coroutines.flow.combine(
@@ -364,6 +381,18 @@ class TalkViewModel @Inject constructor(
         }
         quietLine.value = null
         bus.fail(null)
+        // A chat command is caught by code before anything is sent (docs/CLARITY-V2-BUILD-SPEC.md section 8).
+        if (com.clarity.life.core.ChatCommands.match(trimmed) == "forget") {
+            guarded {
+                val note = chat.forgetTarget(current)
+                if (note == null) {
+                    quietLine.value = "I am not sure which note you mean. Open Know and delete it there."
+                } else {
+                    _forget.value = ForgetPrompt(note.id, note.text)
+                }
+            }
+            return true
+        }
         guarded {
             val endpoint = chat.endpointForChat(chatType.value)
             if (endpoint == null) {

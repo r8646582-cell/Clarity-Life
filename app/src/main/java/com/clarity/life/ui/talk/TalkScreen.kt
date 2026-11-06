@@ -72,6 +72,22 @@ fun TalkScreen(
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     val topLine by model.topLine.collectAsStateWithLifecycle()
+    val forgetPrompt by model.forgetPrompt.collectAsStateWithLifecycle()
+    forgetPrompt?.let { p ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { model.cancelForget() },
+            containerColor = clarity.surface,
+            title = { Text("Forget this?", color = clarity.text) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("\u201c${p.text}\u201d", color = clarity.text)
+                    Text("A deletion is final. The coach will not see it again, and nothing like it will be noted again.", color = clarity.muted)
+                }
+            },
+            confirmButton = { TextButton(onClick = { model.confirmForget() }) { Text("Delete", color = clarity.danger) } },
+            dismissButton = { TextButton(onClick = { model.cancelForget() }) { Text("Cancel", color = clarity.text) } },
+        )
+    }
     // Only what the home shows (PlanViewModel.Home), not the whole tracker: the home no longer waits for it.
     val planState by planner.home.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
