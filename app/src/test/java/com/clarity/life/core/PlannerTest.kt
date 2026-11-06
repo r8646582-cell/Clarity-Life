@@ -64,7 +64,7 @@ class PlannerTest {
         val typical = Planner.typicalPace(history, "Sat-Thu", today)
         val best = Planner.bestPace(history, "Sat-Thu", today)
         val samples = listOf(
-            Sample(listOf("prompts/examples.md", "contracts/context.md"), "Chemistry lectures",
+            Sample(listOf("contracts/plan_state_sample_v1.md", "contracts/context.md"), "Chemistry lectures",
                 "Clear the chemistry lectures", 40.0, 0.0, "2026-11-20"),
             Sample(listOf("prompts/testbench.md"), "Exam lectures", "Clear the exam lectures", 50.0, 6.0, "2026-11-20"),
             Sample(listOf("prompts/testbench.md"), "Exam lectures", "Clear the exam lectures", 48.0, 6.0, "2026-11-27"),

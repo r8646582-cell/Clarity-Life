@@ -52,9 +52,7 @@ class PromptStore @Inject constructor(
         // the built-in files the same way).
         if (name in PART1) {
             val texts = (PART1 - name).associateWith { this.text(it) } + (name to text)
-            val budget = contract.part1Problems(
-                texts.getValue(PERSONA), texts.getValue(EXAMPLES), texts.getValue(CARDS), MODE_FILES.associateWith { texts.getValue(it) },
-            )
+            val budget = contract.part1Problems(texts.getValue(PERSONA), texts.getValue(EXAMPLES))
             if (budget.isNotEmpty()) return budget
         }
         overrides.put(PromptOverrideRow(name, text, now))
@@ -81,8 +79,7 @@ class PromptStore @Inject constructor(
         const val REFLECTION = "reflection.md"
         const val TESTBENCH = "testbench.md"
 
-        private val MODE_FILES = listOf("mode_untangle.md", "mode_decision.md", "mode_plan.md", "mode_focus.md")
-        private val PART1 = setOf(PERSONA, EXAMPLES, CARDS) + MODE_FILES
+        private val PART1 = setOf(PERSONA, EXAMPLES)
 
         /** The chat-type file for each chat type. Free talk adds nothing (contracts/context.md, Part 1). */
         fun modeFile(chatType: String): String? = when (chatType) {

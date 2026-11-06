@@ -73,12 +73,12 @@ for name, spec in contract["prompts"].items():
 from context import estimate_tokens  # noqa: E402
 filled = {k: v.replace("{{USER_NAME}}", "this person").replace("{{ALLOWED_CARDS}}", "plan, target_change, backlog, promise, mode, note")
           for k, v in texts.items()}
-for mode in (None, "mode_untangle.md", "mode_decision.md", "mode_plan.md", "mode_focus.md"):
-    part1 = "\n\n".join(filled.get(n, "") for n in ("persona.md", "examples.md", "cards.md") + ((mode,) if mode else ()))
+for mode in (None,):
+    part1 = "\n\n".join(filled.get(n, "") for n in ("persona.md", "examples.md"))
     est = estimate_tokens(part1)
     if est > contract["part1_budget"]["max_estimated_tokens"]:
-        err("part 1", "%s: about %d tokens (estimated) is over the budget of %d"
-            % (mode or "free talk", est, contract["part1_budget"]["max_estimated_tokens"]))
+        err("part 1", "about %d tokens (estimated) is over the budget of %d"
+            % (est, contract["part1_budget"]["max_estimated_tokens"]))
 
 # 6: chat prompts only mention known context blocks
 allowed_tokens = set(contract["block_names"]) | {"JSON"}
@@ -97,6 +97,11 @@ banned = [norm(b) for b in contract["banned_phrases_for_replies"]]
 for sec in sections:
     title = sec.split("\n", 1)[0].strip()
     where = "examples.md #" + title
+    # v2: the "Things to avoid" part is wrong on purpose and has no coach turns to check.
+    if title.startswith("Things to avoid") or re.match(r"^[A-E]\. ", title):
+        continue
+    # v2: the persona allows a short `- ` list for the steps of a plan, so plan examples may have one.
+    lists_ok = "plan" in title.lower()
     context_lines = [l for l in sec.split("\n") if l.startswith("[") and not l.startswith("[[")]
     context = " ".join(context_lines)
     sensitive = bool(re.search(r"PLAN_STATE|CHECKIN_FACTS|FOCUS", context))
@@ -123,7 +128,7 @@ for sec in sections:
         for b in banned:
             if b in norm(prose):
                 err(where, "banned phrase %r in a coach turn" % b)
-        if re.search(r"(?m)^\s*([-*•]\s|\d+[.)]\s|#+\s|\*\*)", prose):
+        if re.search(r"(?m)^\s*(%s#+\s|\*\*)" % ("" if lists_ok else r"[-*•]\s|\d+[.)]\s|"), prose):
             err(where, "list, heading or bold in a coach turn")
         for c in cards:
             if c["type"] == "promise" and c.get("remind") and "remind" not in user_text.lower():

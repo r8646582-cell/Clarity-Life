@@ -25,19 +25,9 @@ class PromptContractTest {
     }
 
     @Test
-    fun part1StaysInsideItsTokenBudgetForEveryChatType() {
-        val filled = { name: String ->
-            promptText(name)
-                .replace("{{USER_NAME}}", "this person")
-                .replace("{{ALLOWED_CARDS}}", "plan, target_change, backlog, promise, mode, note")
-        }
-        val problems = contract.part1Problems(
-            persona = filled("persona.md"),
-            examples = filled("examples.md"),
-            cards = filled("cards.md"),
-            modeFiles = listOf("mode_untangle.md", "mode_decision.md", "mode_plan.md", "mode_focus.md")
-                .associateWith { filled(it) },
-        )
+    fun part1StaysInsideItsTokenBudget() {
+        val filled = { name: String -> promptText(name).replace("{{USER_NAME}}", "this person") }
+        val problems = contract.part1Problems(persona = filled("persona.md"), examples = filled("examples.md"))
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
     }
 

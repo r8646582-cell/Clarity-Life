@@ -126,13 +126,12 @@ class ReflectionJob @Inject constructor(
                 mapOf(
                     "USER_NAME" to settings.promptName(),
                     "SESSION_DATE" to sessionDate(selection, tz, boundary),
-                    "CHAT_TYPE" to conversation.chatType + if (conversation.focusId != null) " (inside a focus)" else "",
                     "CONTEXT" to inputs.contextText,
-                    "FOCUS_SUMMARY" to inputs.focusSummary.ifBlank { "(none)" },
                     // A later reflection rewrites the summary, so it must see the one it replaces, or the
                     // start of a long conversation would fall out of it (and out of EARLIER).
                     "PREVIOUS_SUMMARY" to com.clarity.life.core.ContextBuilder.escape(conversation.summary).ifBlank { "(none yet)" },
-                    "CHECKIN_FACTS" to inputs.checkinFacts.ifBlank { "(none yet)" },
+                    // Counted by code once the working-on list exists (stage 2); until then there is nothing to give.
+                    "APP_FACTS" to "(none yet)",
                     "DELETED_NOTES" to ReflectionInput.deleted(inputs.deletedNotes),
                     "TRANSCRIPT" to ReflectionInput.transcript(selection, conversation.reflectedUpToMessageId, tz),
                 ),

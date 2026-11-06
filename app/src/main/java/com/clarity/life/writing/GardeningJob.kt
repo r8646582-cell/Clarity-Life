@@ -109,6 +109,8 @@ class GardeningJob @Inject constructor(
                 ),
                 "PROFILE" to GardeningInput.profile(profile),
                 "PEOPLE" to GardeningInput.people(people),
+                // The working-on list arrives with stage 2.
+                "WORKING_ON" to "(none yet)",
                 "SUMMARIES" to GardeningInput.summaries(sessions),
             )
             val raw = call.text(

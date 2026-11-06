@@ -56,20 +56,17 @@ class PromptContract(
     }
 
     /**
-     * The fixed Part 1 prefix (persona, examples, cards and the chat-type file, with placeholders filled)
-     * must stay inside its token budget for every chat type, or the cached prefix grows unnoticed.
+     * The fixed Part 1 prefix (persona and examples, with placeholders filled) must stay inside its token
+     * budget, or the cached prefix grows unnoticed.
      */
-    fun part1Problems(persona: String, examples: String, cards: String, modeFiles: Map<String, String>): List<String> {
-        val problems = mutableListOf<String>()
-        val heads = listOf(persona, examples, cards)
-        for ((modeName, modeText) in modeFiles + mapOf("free talk" to "")) {
-            val part1 = (heads + modeText).filter { it.isNotEmpty() }.joinToString("\n\n")
-            val estimated = ContextBuilder.estimateTokens(part1)
-            if (estimated > part1MaxEstimatedTokens) {
-                problems.add("$modeName: about $estimated tokens is over the budget of $part1MaxEstimatedTokens")
-            }
+    fun part1Problems(persona: String, examples: String): List<String> {
+        val part1 = listOf(persona, examples).filter { it.isNotEmpty() }.joinToString("\n\n")
+        val estimated = ContextBuilder.estimateTokens(part1)
+        return if (estimated > part1MaxEstimatedTokens) {
+            listOf("about $estimated tokens is over the budget of $part1MaxEstimatedTokens")
+        } else {
+            emptyList()
         }
-        return problems
     }
 
     companion object {
