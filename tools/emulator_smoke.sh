@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Drives the installed debug app on an emulator the way a person does: open Settings, paste a key, tap Save,
-# go back, send a chat message. Fails and prints the phone's crash log if the app dies. Runs only in CI,
+# go back, send a chat message, open Know and Letters. Fails and prints the phone's crash log if the app dies. Runs only in CI,
 # inside the emulator step (needs adb and python3).
 set -u
 PKG=com.clarity.life
@@ -50,9 +50,9 @@ adb logcat -c
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS 2>/dev/null
 adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
-# Talk opens on its home (spec section 2.1): a greeting, never a blank screen.
-dump; grep -q 'Hello[,.]' /tmp/ui.xml || { echo "SMOKE: Talk home did not show"; exit 1; }
-echo "SMOKE: Talk home showed"
+# v2 (docs/CLARITY-V2-BUILD-SPEC.md section 3): Talk opens with one quiet top line, the date, and no greeting.
+dump; grep -Eq '(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) [0-9]+ (January|February|March|April|May|June|July|August|September|October|November|December)' /tmp/ui.xml || { echo "SMOKE: the date line did not show"; exit 1; }
+echo "SMOKE: Talk showed its date line"
 
 tap content-desc "Settings" || exit 1; crashed
 # With no key saved, Settings opens the Coach group by itself (0.1.8). Tapping Coach then would fold it
@@ -72,37 +72,15 @@ tap content-desc "Back" || exit 1; crashed
 tap text "Talk to your coach" || exit 1
 adb shell input text "hello"; sleep 1
 tap content-desc "Send" || exit 1; sleep 10; crashed
+dump; grep -q 'hello' /tmp/ui.xml || { echo "SMOKE: the sent message is not on screen"; exit 1; }
 echo "SMOKE: sending a message survived"
-# Sending from home opened the conversation; Back returns to Talk home.
-tap content-desc "Back to Talk home" || exit 1; sleep 2; crashed
-dump; grep -q 'Start a conversation\|START A CONVERSATION' /tmp/ui.xml || { echo "SMOKE: Back did not return to Talk home"; exit 1; }
-echo "SMOKE: back to Talk home survived"
-tap text "What I know" || exit 1; sleep 3; crashed
-tap text "Open your story" || exit 1; sleep 3; crashed
-dump; grep -q 'Your story starts here\|The first pages\|Your story so far' /tmp/ui.xml || { echo "SMOKE: Your story did not open"; exit 1; }
-echo "SMOKE: Your story opened"
-adb shell input keyevent 4; sleep 2; crashed
+# Know: the groups of what the app has learned (v2: Patterns, About you, People).
+tap text "Know" || exit 1; sleep 3; crashed
 for i in 1 2 3; do dump; grep -q 'text="Patterns"' /tmp/ui.xml && break; adb shell input swipe 160 450 160 250 300; sleep 1; done
 tap text "Patterns" || exit 1; sleep 2; crashed
-echo "SMOKE: What I know survived"
-tap text "Plan" || exit 1; sleep 3; crashed
-tap text "Goals" || exit 1; crashed
-tap text "Write a goal" || exit 1; crashed
-tap class "" android.widget.EditText || exit 1
-adb shell input text "Pass%sthe%sexam"; sleep 1
-# Close the keyboard (Back only hides it), then scroll the form's Save into view.
-adb shell input keyevent 4; sleep 2; crashed
-for i in 1 2 3; do adb shell input swipe 160 400 160 150 300; sleep 1; done
-tap text "Save" || exit 1; sleep 3; crashed
-dump; grep -q "No goals yet" /tmp/ui.xml && { echo "SMOKE: the goal was not saved"; exit 1; }
-# back to the top of the list, where the new goal is
-for i in 1 2 3; do adb shell input swipe 160 120 160 320 300; sleep 1; done
-tap text "Pass the exam" || exit 1; sleep 2; crashed
-# With one goal, Goals opens it directly, with Edit at the top.
-dump; grep -q 'text="Edit"' /tmp/ui.xml || { echo "SMOKE: the goal page did not open"; exit 1; }
-echo "SMOKE: a goal was written and opened"
-tap text "Reviews" || exit 1; sleep 2; crashed
-tap text "Today" || exit 1; sleep 2; crashed
-echo "SMOKE: Plan, Goals, Reviews and Today survived"
-sed 's/></>\n</g' /tmp/ui.xml >/dev/null
+echo "SMOKE: Know survived"
+# Letters: one list, newest first; with none yet it says when the first comes.
+tap text "Letters" || exit 1; sleep 3; crashed
+dump; grep -q 'Your first letter comes on Sunday' /tmp/ui.xml || { echo "SMOKE: Letters did not open"; exit 1; }
+echo "SMOKE: Letters opened"
 exit 0

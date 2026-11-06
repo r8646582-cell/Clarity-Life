@@ -54,6 +54,8 @@ object Values {
         "note.edited_by_user",
         "profile_entry.confirmed",
         "review.replan_flag",
+        "working_item.confirmed",
+        "working_item.asked_stale",
     )
 
     class InvalidValue(message: String) : IllegalArgumentException(message)
