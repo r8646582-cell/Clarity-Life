@@ -77,8 +77,6 @@ class ContextBuilderTest {
             val p = ContextBuilder.buildPrefix(
                 args.str("persona"),
                 args.str("examples"),
-                args.str("cards"),
-                args.strOrNull("mode"),
                 blocks(args, "part2_blocks"),
             )
             json(mapOf("system" to p.system, "dropped" to p.dropped, "over_budget" to p.overBudget))
@@ -103,7 +101,6 @@ class ContextBuilderTest {
                 args.str("role"),
                 args.str("text"),
                 args.strOrNull("stamp"),
-                args["cards"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty(),
             )
             json(mapOf("role" to m.role, "content" to m.content))
         }

@@ -165,20 +165,13 @@ class ReplyService : Service() {
                 }
             }
             val chatType = chat.conversations.get(conversationId)?.chatType ?: "free"
-            // The card step: a reply with no valid card is followed by a JSON-mode request for the cards it offered.
-            val raw = chat.withCardFollowUp(
-                endpoint = endpoint,
-                request = packet.request,
-                raw = partial.toString(),
-                chatType = chatType,
-                known = packet.known,
-                finishReason = finishReason,
-                now = System.currentTimeMillis(),
-            )
-            val outcome = chat.closeCoachReply(
+            // v2 has no cards (docs/CLARITY-V2-BUILD-SPEC.md): no card step, and any card line the model writes
+            // anyway is cut from the text here, so nothing is ever offered or saved from a reply.
+            val prose = com.clarity.life.core.CardParser.parseReply(partial.toString(), chatType, packet.known).prose
+            chat.closeCoachReply(
                 conversationId = conversationId,
                 messageId = messageId,
-                raw = raw,
+                raw = prose,
                 chatType = chatType,
                 known = packet.known,
                 finishReason = finishReason,
@@ -186,9 +179,6 @@ class ReplyService : Service() {
                 now = System.currentTimeMillis(),
                 modelLabel = endpoint.label,
             )
-            // The coach said "tap below" and no button is there: say so, instead of leaving him to look for it.
-            com.clarity.life.core.CardTalk.missingLine(outcome.prose, outcome.cardsOffered, outcome.cardsDropped)
-                ?.let { bus.fail(it) }
         } catch (e: AiFailure) {
             if (partial.isNotEmpty()) {
                 chat.interruptCoachReply(messageId, partial.toString(), System.currentTimeMillis())

@@ -66,8 +66,8 @@ class TrimBlocksTest {
     fun aTenYearMemoryIsTrimmedTheSameWay() {
         val r = Random(9)
         val notes = Block("NOTES", List(400) { BlockItem("A note about ${text(r)}", 1 + it % 5) })
-        val sessions = Block("RECENT_SESSIONS", List(30) { BlockItem(text(r), 2) })
-        val blocks = listOf(Block("FLAGS", listOf(BlockItem("tough love: balanced", 0))), notes, sessions)
+        val people = Block("PEOPLE", List(30) { BlockItem(text(r), 2) })
+        val blocks = listOf(Block("PROFILE", listOf(BlockItem("Work (confirmed): Studying", 0))), people, notes)
         assertEquals(
             plainTrim(blocks, ContextBuilder.PART2_ORDER, ContextBuilder.PART2_BUDGET),
             ContextBuilder.trimBlocks(blocks, ContextBuilder.PART2_ORDER, ContextBuilder.PART2_BUDGET),

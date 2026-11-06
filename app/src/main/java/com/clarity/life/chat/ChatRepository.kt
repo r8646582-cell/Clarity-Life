@@ -309,11 +309,8 @@ class ChatRepository @Inject constructor(
             val last = all.lastOrNull { it.role == "user" || it.content.isNotBlank() }
             if (last?.role == "user" && last.content == newText) all.filter { it.id < last.id } else all
         }
-        // The cards each reply offered go back into the history as card lines (contracts/context.md), so the
-        // coach sees that a reply which pointed at a button really carried one, and keeps sending them.
-        val offered = cards.ofConversation(conversationId).groupBy({ it.messageId }, { it.payloadJson })
         val stored = before
-            .filter { it.role == "user" || (it.role == "coach" && (it.content.isNotBlank() || offered[it.id] != null)) }
+            .filter { it.role == "user" || (it.role == "coach" && it.content.isNotBlank()) }
         val history = stored.map { row ->
             ContextBuilder.historyMessage(
                 role = row.role,
@@ -325,7 +322,6 @@ class ChatRepository @Inject constructor(
                 } else {
                     null
                 },
-                cards = if (row.role == "coach") offered[row.id].orEmpty() else emptyList(),
             )
         }
         val counts = history.map { ContextBuilder.estimateTokens(it.content) }
@@ -336,32 +332,14 @@ class ChatRepository @Inject constructor(
         }
         val window = history.drop(start).map { com.clarity.life.ai.ChatMessage(it.role, it.content) }
 
-        // Read with every message, so a plan saved or a check-in answered a minute ago is already here.
         val dayKey = java.time.LocalDate.parse(today)
-        val tracker = Spans.span("packet: plan tracker") { planner.tracker(dayKey) }
-        val tracking = tracker.goals.isNotEmpty() || tracker.targets.isNotEmpty() || tracker.backlogs.isNotEmpty()
         val part3 = buildList {
             // Day counts to the dates he mentioned, newest message first: the coach never counts days itself.
             val said = listOf(newText) + stored.filter { it.role == "user" }.takeLast(20).reversed().map { it.content }
             add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary), com.clarity.life.core.DayCounts.lines(said, dayKey)))
-            // In a plan chat PLAN_STATE is always there, so even with nothing tracked yet the coach has the
-            // review options a first plan card needs; elsewhere it comes only once something is tracked.
-            if (tracking || conversation.chatType == "plan") add(Spans.span("packet: PLAN_STATE") { PlanBlocks.planState(tracker, dayKey) })
-            add(Spans.span("packet: OPEN_PROMISES") { packetBuilder.openPromises(now, tz) })
-            add(Spans.span("packet: CHECKIN_FACTS") { PlanBlocks.checkinFacts(tracker, dayKey) })
-            val results = Spans.span("packet: CARD_RESULTS") { packetBuilder.cardResultLines(conversationId) }
-            if (results.isNotEmpty()) add(Blocks.cardResults(results))
+            // WORKING_ON arrives with stage 2 (contracts/context.md); until then the block is simply absent.
+            packetBuilder.openedFromBlocks(conversation).forEach { add(it) }
             if (start > 0) add(Blocks.earlier(conversation.summary))
-            // The conversation he was just in, word for word, while it is fresh: its summary may not be written
-            // yet, and this conversation's frozen memory would then never see it (contracts/context.md).
-            Spans.span("packet: last chat") {
-                db.memory().lastOtherConversation(conversationId)?.takeIf { LastChat.fresh(it.lastAt, now) }?.let { other ->
-                    val said = messages.ofConversation(other.id).filter {
-                        it.role == "user" || it.status == "complete" || it.status == "interrupted"
-                    }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
-                    add(LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary))
-                }
-            }
             val sent = MemoryBlocks.idsIn(prefix)
             val leftOut = Spans.span("packet: notes left out") { db.memory().activeNotes().filter { it.id !in sent } }
             // Matches from his other conversations and the records he keeps, searched with the new message, the
@@ -404,7 +382,7 @@ class ChatRepository @Inject constructor(
             prefix = prefix,
             prefixDay = today,
             historyStartId = conversation.historyStartId,
-            known = PlanBlocks.known(tracker, dayKey, focusIds(), db.promises().open().map { "P${it.id}" }.toSet()),
+            known = KnownIds(),
             droppedItems = turn.dropped,
             overBudget = turn.overBudget,
             windowMoved = start > firstIndex && start < stored.size,
@@ -413,30 +391,10 @@ class ChatRepository @Inject constructor(
 
     private suspend fun buildPrefix(conversation: ConversationRow, text: String): String {
         val name = settings.promptName()
-        val allowed = CardParser.CHAT_TYPES[conversation.chatType]?.joinToString(", ").orEmpty()
         val persona = prompts.fill(prompts.text(PromptStore.PERSONA), mapOf("USER_NAME" to name))
         val examples = prompts.fill(prompts.text(PromptStore.EXAMPLES), mapOf("USER_NAME" to name))
-        val cardsPrompt = prompts.fill(
-            prompts.text(PromptStore.CARDS),
-            mapOf("USER_NAME" to name, "ALLOWED_CARDS" to allowed),
-        )
-        // Inside a focus the selected chat type still applies (spec section 2.1: the cards are "the same as the
-        // type currently selected"), so its file is sent too, then the focus file. Before, the focus file
-        // replaced it: a Plan and track chat inside a focus kept its plan cards but lost the planning method.
-        val modeFiles = listOfNotNull(
-            PromptStore.modeFile(conversation.chatType),
-            if (conversation.focusId != null) PromptStore.modeFile("focus") else null,
-        )
-        val mode = modeFiles.map { prompts.text(it) }.joinToString("\n\n").ifEmpty { null }
-        val part2 = listOf(
-            Blocks.flags(
-                toughLove = settings.get(SettingsRepository.Keys.TOUGH_LOVE, "balanced"),
-                listenOnly = settings.getBool(SettingsRepository.Keys.LISTEN_ONLY, false),
-                chatType = conversation.chatType,
-                offTheRecord = conversation.offTheRecord == 1,
-            ),
-        ) + packetBuilder.focusBlocks(conversation) + Spans.span("frozen: memory blocks") { packetBuilder.memoryBlocks(conversation.id, text) } + packetBuilder.openedFromBlocks(conversation)
-        val built = Spans.span("frozen: system message assembled") { Blocks.systemMessage(persona, examples, cardsPrompt, mode, part2) }
+        val part2 = Spans.span("frozen: memory blocks") { packetBuilder.memoryBlocks(conversation.id, text) }
+        val built = Spans.span("frozen: system message assembled") { Blocks.systemMessage(persona, examples, part2) }
         if (built.overBudget) {
             db.diagnostics().log(
                 ErrorLogRow(at = 0, area = "chat", code = "context_over_budget", detail = ""),

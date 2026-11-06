@@ -78,10 +78,8 @@ object Blocks {
     fun systemMessage(
         persona: String,
         examples: String,
-        cards: String,
-        mode: String?,
         part2: List<Block>,
-    ) = ContextBuilder.buildPrefix(persona, examples, cards, mode, part2)
+    ) = ContextBuilder.buildPrefix(persona, examples, part2)
 
     fun userTurn(part3: List<Block>, text: String) = ContextBuilder.buildUserTurn(part3, text)
 

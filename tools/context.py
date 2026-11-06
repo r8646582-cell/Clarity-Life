@@ -2,23 +2,20 @@
 contracts/context.md explains the why; contracts/context_vectors.json pins the behaviour.
 
 Layout of every chat request (cache-friendly: the longest stable prefix first):
-  system   = Part 1 (persona, examples, cards, chat-type file)  +  Part 2 (frozen context blocks)
+  system   = Part 1 (persona, examples)  +  Part 2 (frozen context blocks: PROFILE, PEOPLE, NOTES)
   messages = the history window (user messages prefixed with their time stamp, escaped)
              + the new user message = Part 3 (volatile blocks) + "## MESSAGE" + his text
-Part 1 + Part 2 are built when the conversation starts (and again only when he switches the chat type) and
+Part 1 + Part 2 are built when the conversation starts and
 are stored in conversation.prefix_json, so they are byte-identical for every request in the conversation and
-the provider's prefix cache works (contracts/context.md lists the few events that rebuild them). Part 1 alone is identical across conversations of the same chat type.
+the provider's prefix cache works (contracts/context.md lists the few events that rebuild them). Part 1 alone is identical across all conversations.
 
 Pure functions only. No Android, no clock, no database.
 """
 import math
 
-PART2_ORDER = ["FLAGS", "PROFILE", "PEOPLE", "NOTES", "FOCUS", "CHAPTERS", "RECENT_SESSIONS", "IDEAS_RECENT",
-               "LETTER", "REVIEW"]
-PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
-               "RELEVANT_PAST", "NEW_NOTES"]
-NEVER_TRIM = {"FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
-              "CARD_RESULTS"}
+PART2_ORDER = ["PROFILE", "PEOPLE", "NOTES"]
+PART3_ORDER = ["NOW", "WORKING_ON", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER"]
+NEVER_TRIM = {"NOW", "WORKING_ON", "EARLIER", "LETTER"}
 MESSAGE_HEADER = "## MESSAGE"
 
 PART2_BUDGET = 9000      # tokens, estimated
@@ -88,9 +85,9 @@ def trim_blocks(blocks, order, budget):
     return blocks, dropped, False
 
 
-def build_prefix(persona, examples, cards, mode, part2_blocks):
-    """System message: Part 1 then Part 2. mode is None for free talk."""
-    part1 = "\n\n".join(t for t in (persona, examples, cards, mode) if t)
+def build_prefix(persona, examples, part2_blocks):
+    """System message: Part 1 (persona, examples) then Part 2."""
+    part1 = "\n\n".join(t for t in (persona, examples) if t)
     kept, dropped, over = trim_blocks(part2_blocks, PART2_ORDER, PART2_BUDGET)
     part2 = _render(kept, PART2_ORDER)
     return {"system": part1 + ("\n\n" + part2 if part2 else ""), "dropped": dropped, "over_budget": over}
@@ -117,19 +114,11 @@ def build_user_turn(part3_blocks, text):
     return {"content": (blocks + "\n\n" if blocks else "") + body, "dropped": dropped, "over_budget": over}
 
 
-def history_message(role, text, stamp=None, cards=None):
+def history_message(role, text, stamp=None):
     """A stored message as it is sent again later. His messages carry the stamp the app wrote, for example
-    [Fri 9 Oct, 21:40]. Coach messages go as they were shown, escaped, and then the cards that reply offered
-    are put back as card lines, from the stored, already validated card JSON. Without them the coach reads its
-    own past replies as "tap it below" with no card line, copies that, and stops sending cards. A stored card
-    that holds a bracket pair is left out rather than escaped, so a card line is never mangled."""
+    [Fri 9 Oct, 21:40]. Coach messages go as they were shown, escaped. There are no cards in v2."""
     if role == "user":
         return {"role": "user", "content": "[%s] %s" % (stamp, escape(text)) if stamp else escape(text)}
     if role == "coach":
-        lines = [escape(text)] if text.strip() else []
-        for payload in cards or []:
-            if "[[" in payload or "]]" in payload or "\n" in payload or "\r" in payload:
-                continue
-            lines.append("[[suggest: %s]]" % payload)
-        return {"role": "assistant", "content": "\n".join(lines)}
+        return {"role": "assistant", "content": escape(text)}
     raise ContextError("bad role")

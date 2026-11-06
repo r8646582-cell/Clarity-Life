@@ -129,23 +129,15 @@ class BenchRunner @Inject constructor(
 
     /** One scenario, the way a chat builds it, with only its own Setup lines as context. */
     private suspend fun replyTo(s: TestBench.Scenario, endpoint: com.clarity.life.ai.Endpoint): String {
-        val chatType = if (s.type == "focus") "free" else s.type ?: "free"
         val name = settings.promptName()
-        val tough = s.flags.firstOrNull { it.startsWith("tough_love=") }?.substringAfter('=') ?: "balanced"
         val blocks = s.setup.groupBy({ it.first }, { it.second }).map { (n, lines) -> Block(n, lines.map { BlockItem(it, 0) }) }
-        val part2 = listOf(Blocks.flags(tough, "listen_only" in s.flags, chatType, offTheRecord = true)) +
-            blocks.filter { it.name in ContextBuilder.PART2_ORDER }
+        val part2 = blocks.filter { it.name in ContextBuilder.PART2_ORDER }
         val part3 = blocks.filter { it.name in ContextBuilder.PART3_ORDER }
         val unknown = blocks.map { it.name }.filter { it !in ContextBuilder.PART2_ORDER && it !in ContextBuilder.PART3_ORDER }
         if (unknown.isNotEmpty()) throw com.clarity.life.core.ContextError("unknown block ${unknown.first()}")
         val system = Blocks.systemMessage(
             persona = prompts.fill(prompts.text(PromptStore.PERSONA), mapOf("USER_NAME" to name)),
             examples = prompts.fill(prompts.text(PromptStore.EXAMPLES), mapOf("USER_NAME" to name)),
-            cards = prompts.fill(
-                prompts.text(PromptStore.CARDS),
-                mapOf("USER_NAME" to name, "ALLOWED_CARDS" to CardParser.CHAT_TYPES[chatType].orEmpty().joinToString(", ")),
-            ),
-            mode = PromptStore.modeFile(s.type ?: "free")?.let { prompts.text(it) },
             part2 = part2,
         ).system
         val history = s.prior.map { (role, text) ->

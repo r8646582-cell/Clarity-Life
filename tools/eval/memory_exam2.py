@@ -36,6 +36,16 @@ import retrieval as rv  # noqa: E402  (tools/retrieval.py, the retrieval referen
 import recall_time as rt  # noqa: E402  (tools/recall_time.py, periods and outcomes)
 import context as ctx  # noqa: E402  (tools/context.py, the context packet reference)
 
+# This exam measures the memory layout the exam data was built for (v1: chapters, recent sessions, last chat).
+# The v2 packet in tools/context.py has fewer blocks, so the exam keeps its own copy of the v1 orders and
+# never-trim set. It is a fixed yardstick for retrieval quality, not a copy of the live packet.
+V1_PART2_ORDER = ["FLAGS", "PROFILE", "PEOPLE", "NOTES", "FOCUS", "CHAPTERS", "RECENT_SESSIONS", "IDEAS_RECENT",
+                  "LETTER", "REVIEW"]
+V1_PART3_ORDER = ["NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
+                  "RELEVANT_PAST", "NEW_NOTES"]
+ctx.NEVER_TRIM = set(ctx.NEVER_TRIM) | {"FLAGS", "FOCUS", "REVIEW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
+                                        "CARD_RESULTS"}
+
 TZ = timezone(timedelta(hours=5))
 PHASE2 = True  # False measures the 0.1.12 baseline (search only)
 PHASE3 = True  # False: PROFILE without the replaced values (before Max plan Phase 3)
@@ -366,7 +376,7 @@ def run(hybrid):
     now = h["now"]
     index = Index(h, hybrid)
 
-    seen2, dropped2 = trimmed_ids(part2(h, now), ctx.PART2_ORDER, ctx.PART2_BUDGET)
+    seen2, dropped2 = trimmed_ids(part2(h, now), V1_PART2_ORDER, ctx.PART2_BUDGET)
     plan_items, plan_ids = plan_state(h)
     prom_items, prom_ids = open_promises(h, now)
     ck_items, ck_ids = checkin_facts(h, now)
@@ -418,7 +428,7 @@ def run(hybrid):
             {"name": "RELEVANT_PAST", "items": rp_items, "ids": rp_ids},
         ]
         part3 = [b for b in part3 if b["items"]]
-        seen3, dropped3 = trimmed_ids(part3, ctx.PART3_ORDER, ctx.PART3_BUDGET)
+        seen3, dropped3 = trimmed_ids(part3, V1_PART3_ORDER, ctx.PART3_BUDGET)
         dropped3_total += dropped3
         seen = seen2 | seen3
         # A retired note is only seen through search.

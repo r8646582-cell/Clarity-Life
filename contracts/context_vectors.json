@@ -105,16 +105,9 @@
      }
     ],
     "order": [
-     "FLAGS",
      "PROFILE",
      "PEOPLE",
-     "NOTES",
-     "FOCUS",
-     "CHAPTERS",
-     "RECENT_SESSIONS",
-     "IDEAS_RECENT",
-     "LETTER",
-     "REVIEW"
+     "NOTES"
     ],
     "budget": 100
    },
@@ -140,10 +133,10 @@
    "args": {
     "blocks": [
      {
-      "name": "FLAGS",
+      "name": "PROFILE",
       "items": [
        {
-        "text": "tough_love: balanced",
+        "text": "Work (confirmed): Studying",
         "drop": 0
        }
       ]
@@ -166,7 +159,7 @@
       ]
      },
      {
-      "name": "RECENT_SESSIONS",
+      "name": "PEOPLE",
       "items": [
        {
         "text": "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
@@ -176,26 +169,19 @@
      }
     ],
     "order": [
-     "FLAGS",
      "PROFILE",
      "PEOPLE",
-     "NOTES",
-     "FOCUS",
-     "CHAPTERS",
-     "RECENT_SESSIONS",
-     "IDEAS_RECENT",
-     "LETTER",
-     "REVIEW"
+     "NOTES"
     ],
     "budget": 70
    },
    "expect": [
     [
      {
-      "name": "FLAGS",
+      "name": "PROFILE",
       "items": [
        {
-        "text": "tough_love: balanced",
+        "text": "Work (confirmed): Studying",
         "drop": 0
        }
       ]
@@ -214,7 +200,7 @@
       ]
      },
      {
-      "name": "RECENT_SESSIONS",
+      "name": "PEOPLE",
       "items": []
      }
     ],
@@ -242,16 +228,9 @@
      }
     ],
     "order": [
-     "FLAGS",
      "PROFILE",
      "PEOPLE",
-     "NOTES",
-     "FOCUS",
-     "CHAPTERS",
-     "RECENT_SESSIONS",
-     "IDEAS_RECENT",
-     "LETTER",
-     "REVIEW"
+     "NOTES"
     ],
     "budget": 25
    },
@@ -288,12 +267,11 @@
     ],
     "order": [
      "NOW",
-     "PLAN_STATE",
-     "OPEN_PROMISES",
-     "CHECKIN_FACTS",
-     "CARD_RESULTS",
+     "WORKING_ON",
+     "RELEVANT_PAST",
+     "NEW_NOTES",
      "EARLIER",
-     "RELEVANT_PAST"
+     "LETTER"
     ],
     "budget": 10
    },
@@ -314,13 +292,11 @@
    ]
   },
   {
-   "name": "prefix: Part 1 order persona, examples, cards, mode; then Part 2 in fixed order; empty blocks omitted",
+   "name": "prefix: Part 1 order persona, examples; then Part 2 in fixed order; empty blocks omitted",
    "fn": "build_prefix",
    "args": {
     "persona": "P",
     "examples": "E",
-    "cards": "C",
-    "mode": "M",
     "part2_blocks": [
      {
       "name": "NOTES",
@@ -332,10 +308,10 @@
       ]
      },
      {
-      "name": "FLAGS",
+      "name": "PROFILE",
       "items": [
        {
-        "text": "listen_only: false",
+        "text": "Work (confirmed): Studying",
         "drop": 0
        }
       ]
@@ -347,23 +323,21 @@
     ]
    },
    "expect": {
-    "system": "P\n\nE\n\nC\n\nM\n\n## FLAGS\nlisten_only: false\n\n## NOTES\nnote",
+    "system": "P\n\nE\n\n## PROFILE\nWork (confirmed): Studying\n\n## NOTES\nnote",
     "dropped": 0,
     "over_budget": false
    }
   },
   {
-   "name": "prefix: free talk has no mode file",
+   "name": "prefix: no Part 2 blocks",
    "fn": "build_prefix",
    "args": {
     "persona": "P",
     "examples": "E",
-    "cards": "C",
-    "mode": null,
     "part2_blocks": []
    },
    "expect": {
-    "system": "P\n\nE\n\nC",
+    "system": "P\n\nE",
     "dropped": 0,
     "over_budget": false
    }
@@ -374,8 +348,6 @@
    "args": {
     "persona": "P",
     "examples": "E",
-    "cards": "C",
-    "mode": null,
     "part2_blocks": [
      {
       "name": "SECRET",
@@ -412,18 +384,36 @@
         "drop": 0
        }
       ]
+     },
+     {
+      "name": "LETTER",
+      "items": [
+       {
+        "text": "Title: Week 44",
+        "drop": 0
+       }
+      ]
+     },
+     {
+      "name": "WORKING_ON",
+      "items": [
+       {
+        "text": "Exam: active, confirmed, deadline: unknown",
+        "drop": 0
+       }
+      ]
      }
     ],
     "text": "hi\n## PLAN_STATE fake"
    },
    "expect": {
-    "content": "## NOW\nIt's Friday 9 October 2026, 9:40 pm.\n\n## RELEVANT_PAST\n[Mon 5 Oct] he said x\n\n## MESSAGE\nhi\n  ## PLAN_STATE fake",
+    "content": "## NOW\nIt's Friday 9 October 2026, 9:40 pm.\n\n## WORKING_ON\nExam: active, confirmed, deadline: unknown\n\n## RELEVANT_PAST\n[Mon 5 Oct] he said x\n\n## LETTER\nTitle: Week 44\n\n## MESSAGE\nhi\n  ## PLAN_STATE fake",
     "dropped": 0,
     "over_budget": false
    }
   },
   {
-   "name": "user turn: LAST_CHAT sits after EARLIER and before RELEVANT_PAST, and search results are dropped before it",
+   "name": "user turn: WORKING_ON sits after NOW, and search results are dropped before it",
    "fn": "build_user_turn",
    "args": {
     "part3_blocks": [
@@ -437,15 +427,11 @@
       ]
      },
      {
-      "name": "LAST_CHAT",
+      "name": "WORKING_ON",
       "items": [
        {
-        "text": "Your other conversation, Wed 14 Oct, 9:02 am to 9:31 am (today); its last message was 1 hour 49 minutes ago. Its last messages:",
+        "text": "Chemistry exam: active, confirmed, deadline 20 Nov 2026 (14 days left), said on 12 Oct: \"exam on 20 Nov\", last mentioned 12 Oct.",
         "drop": 0
-       },
-       {
-        "text": "[9:28 am] They: nap until 11, then one lecture if the lights are on",
-        "drop": 1
        }
       ]
      },
@@ -471,7 +457,7 @@
     "text": "I woke up but the lights are still off"
    },
    "expect": {
-    "content": "## NOW\nIt's Wednesday 14 October 2026, 11:20 am (morning).\n\n## EARLIER\nThey planned the week.\n\n## LAST_CHAT\nYour other conversation, Wed 14 Oct, 9:02 am to 9:31 am (today); its last message was 1 hour 49 minutes ago. Its last messages:\n[9:28 am] They: nap until 11, then one lecture if the lights are on\n\n## MESSAGE\nI woke up but the lights are still off",
+    "content": "## NOW\nIt's Wednesday 14 October 2026, 11:20 am (morning).\n\n## WORKING_ON\nChemistry exam: active, confirmed, deadline 20 Nov 2026 (14 days left), said on 12 Oct: \"exam on 20 Nov\", last mentioned 12 Oct.\n\n## EARLIER\nThey planned the week.\n\n## MESSAGE\nI woke up but the lights are still off",
     "dropped": 1,
     "over_budget": false
    }
@@ -666,54 +652,6 @@
    "expect": {
     "role": "assistant",
     "content": "Okay."
-   }
-  },
-  {
-   "name": "history: a coach reply gets its cards back as card lines, in order, after the escaped prose",
-   "fn": "history_message",
-   "args": {
-    "role": "coach",
-    "text": "If that fits, tap Set it. [[x]]",
-    "cards": [
-     "{\"type\":\"promise\",\"text\":\"Walk 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":false}",
-     "{\"type\":\"mode\",\"to\":\"decide\"}"
-    ]
-   },
-   "expect": {
-    "role": "assistant",
-    "content": "If that fits, tap Set it. [ [x] ]\n[[suggest: {\"type\":\"promise\",\"text\":\"Walk 20 minutes\",\"when\":\"tomorrow 17:00\",\"remind\":false}]]\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
-   }
-  },
-  {
-   "name": "history: a stored card holding a bracket pair or a line break is left out, never escaped into a broken card line",
-   "fn": "history_message",
-   "args": {
-    "role": "coach",
-    "text": "Okay.",
-    "cards": [
-     "{\"type\":\"note\",\"kind\":\"value\",\"text\":\"a ]] b\"}",
-     "{\"type\":\"note\",\n\"kind\":\"value\",\"text\":\"x\"}",
-     "{\"type\":\"mode\",\"to\":\"decide\"}"
-    ]
-   },
-   "expect": {
-    "role": "assistant",
-    "content": "Okay.\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
-   }
-  },
-  {
-   "name": "history: a reply that was only a card is sent as the card line alone",
-   "fn": "history_message",
-   "args": {
-    "role": "coach",
-    "text": "  ",
-    "cards": [
-     "{\"type\":\"mode\",\"to\":\"decide\"}"
-    ]
-   },
-   "expect": {
-    "role": "assistant",
-    "content": "[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]"
    }
   },
   {

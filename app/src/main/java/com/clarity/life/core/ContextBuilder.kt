@@ -31,18 +31,9 @@ data class HistoryMessage(val role: String, val content: String)
 data class TrimResult(val blocks: List<Block>, val dropped: Int, val overBudget: Boolean)
 
 object ContextBuilder {
-    val PART2_ORDER = listOf(
-        "FLAGS", "PROFILE", "PEOPLE", "NOTES", "FOCUS", "CHAPTERS", "RECENT_SESSIONS", "IDEAS_RECENT",
-        "LETTER", "REVIEW",
-    )
-    val PART3_ORDER = listOf(
-        "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS", "CARD_RESULTS", "EARLIER", "LAST_CHAT",
-        "RELEVANT_PAST", "NEW_NOTES",
-    )
-    val NEVER_TRIM = setOf(
-        "FLAGS", "FOCUS", "LETTER", "REVIEW", "NOW", "PLAN_STATE", "OPEN_PROMISES", "CHECKIN_FACTS",
-        "CARD_RESULTS",
-    )
+    val PART2_ORDER = listOf("PROFILE", "PEOPLE", "NOTES")
+    val PART3_ORDER = listOf("NOW", "WORKING_ON", "RELEVANT_PAST", "NEW_NOTES", "EARLIER", "LETTER")
+    val NEVER_TRIM = setOf("NOW", "WORKING_ON", "EARLIER", "LETTER")
     const val MESSAGE_HEADER = "## MESSAGE"
 
     const val PART2_BUDGET = 9000
@@ -193,15 +184,13 @@ object ContextBuilder {
         return TrimResult(snapshot(), dropped, false)
     }
 
-    /** The system message: Part 1 then Part 2. [mode] is null for free talk. */
+    /** The system message: Part 1 (persona, examples) then Part 2. */
     fun buildPrefix(
         persona: String,
         examples: String,
-        cards: String,
-        mode: String?,
         part2Blocks: List<Block>,
     ): Prefix {
-        val part1 = listOfNotNull(persona, examples, cards, mode)
+        val part1 = listOfNotNull(persona, examples)
             .filter { it.isNotEmpty() }
             .joinToString("\n\n")
         val trimmed = trimBlocks(part2Blocks, PART2_ORDER, PART2_BUDGET)
@@ -246,23 +235,12 @@ object ContextBuilder {
 
     /**
      * A stored message as it is sent again later. His messages carry the stamp the app wrote when he sent it
-     * ([Fri 9 Oct, 21:40]). Coach messages go as they were shown, escaped, and then the cards that reply offered
-     * are put back as card lines, from the stored, already validated card JSON ([cards], in order). Without them
-     * the coach reads its own past replies as "tap it below" with no card line, copies that, and stops sending
-     * cards. A stored card that holds a bracket pair or a line break is left out, so a card line is never mangled.
+     * ([Fri 9 Oct, 21:40]). Coach messages go as they were shown, escaped. There are no cards in v2.
      */
-    fun historyMessage(role: String, text: String, stamp: String? = null, cards: List<String> = emptyList()): HistoryMessage =
+    fun historyMessage(role: String, text: String, stamp: String? = null): HistoryMessage =
         when (role) {
             "user" -> HistoryMessage("user", if (stamp != null) "[$stamp] ${escape(text)}" else escape(text))
-            "coach" -> {
-                val lines = mutableListOf<String>()
-                if (text.isNotBlank()) lines.add(escape(text))
-                for (payload in cards) {
-                    if (payload.contains("[[") || payload.contains("]]") || payload.contains('\n') || payload.contains('\r')) continue
-                    lines.add("[[suggest: $payload]]")
-                }
-                HistoryMessage("assistant", lines.joinToString("\n"))
-            }
+            "coach" -> HistoryMessage("assistant", escape(text))
             else -> throw ContextError("bad role")
         }
 }
