@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Conversations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#0F0E13;color:#F5F3F8;font-family:'Instrument Sans',system-ui,sans-serif;display:flex;flex-direction:column">
+  <header style="flex:none;height:64px;padding:12px 8px 0 8px;box-sizing:border-box;display:flex;align-items:center;gap:4px">
+    <a href="Main.dc.html" aria-label="Back to Talk" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:#F5F3F8"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <h1 style="margin:0;font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px">Conversations.</h1>
+  </header>
+  <main style="flex:1;min-height:0;padding:12px 20px 0 20px;display:flex;flex-direction:column;gap:6px;overflow:hidden">
+    <div style="position:relative">
+      <svg style="position:absolute;left:16px;top:14px" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#A9A4B6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input type="text" aria-label="Search conversations" placeholder="Search everything you said" style="width:100%;height:48px;box-sizing:border-box;border-radius:14px;border:1px solid #2D2A36;background:#1A1820;color:#F5F3F8;padding:0 16px 0 44px;font-size:16px;font-family:inherit">
+    </div>
+    <div style="margin-top:14px;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#A9A4B6">TODAY</div>
+    <a href="Offline.dc.html" style="min-height:64px;padding:8px 0;box-sizing:border-box;border-bottom:1px solid #2D2A36;display:flex;flex-direction:column;justify-content:center;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">Friday 6 November</span><span style="font-size:13px;color:#A9A4B6">10:42</span></div>
+      <div style="font-size:14px;color:#A9A4B6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Slept badly. Starting with the easy lecture.</div>
+    </a>
+    <div style="margin-top:14px;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#A9A4B6">THIS WEEK</div>
+    <a href="TalkTriage.dc.html" style="min-height:64px;padding:8px 0;box-sizing:border-box;border-bottom:1px solid #2D2A36;display:flex;flex-direction:column;justify-content:center;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">A day that went wrong</span><span style="font-size:13px;color:#A9A4B6">Wed</span></div>
+      <div style="font-size:14px;color:#A9A4B6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The tax lecture looked hard, so you bailed.</div>
+    </a>
+    <a href="TalkLimit.dc.html" style="min-height:64px;padding:8px 0;box-sizing:border-box;border-bottom:1px solid #2D2A36;display:flex;flex-direction:column;justify-content:center;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">A fourth thing</span><span style="font-size:13px;color:#A9A4B6">Tue</span></div>
+      <div style="font-size:14px;color:#A9A4B6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Which of the three goes on pause?</div>
+    </a>
+    <div style="margin-top:14px;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#A9A4B6">EARLIER</div>
+    <a href="TalkPlan.dc.html" style="min-height:64px;padding:8px 0;box-sizing:border-box;border-bottom:1px solid #2D2A36;display:flex;flex-direction:column;justify-content:center;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">Plan for FAR</span><span style="font-size:13px;color:#A9A4B6">25 Oct</span></div>
+      <div style="font-size:14px;color:#A9A4B6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Exam 12 February. A normal day and a minimum day.</div>
+    </a>
+    <a href="TalkPlan.dc.html" style="min-height:64px;padding:8px 0;box-sizing:border-box;border-bottom:1px solid #2D2A36;display:flex;flex-direction:column;justify-content:center;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">Flat after the mock exam</span><span style="font-size:13px;color:#A9A4B6">28 Oct</span></div>
+      <div style="font-size:14px;color:#A9A4B6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">A bad result is a day, not a verdict.</div>
+    </a>
+
+    <div style="margin-top:auto;padding-bottom:6px;font-size:13px;color:#A9A4B6;line-height:1.4">A new conversation starts each day by itself. Your memory carries over. Press and hold one to forget it. Forgetting also removes what was learned only from it.</div>
+  </main>
+  <div style="flex:none;padding:10px 20px 24px 20px">
+    <a href="Main.dc.html" style="height:52px;border-radius:14px;background:#FFD23F;color:#0F0E13;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
