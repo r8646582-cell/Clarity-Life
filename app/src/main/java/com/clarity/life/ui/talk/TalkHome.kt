@@ -64,50 +64,11 @@ fun TalkHome(
 ) {
     // The start-up warm-up waits for this (FirstScreen), so loading the meaning model never slows the home.
     LaunchedEffect(Unit) { com.clarity.life.FirstScreen.mark() }
+    // v2: no greeting and no suggestion buttons (docs/CLARITY-V2-BUILD-SPEC.md section 3). Before the first
+    // message of the day there is only the key setup (until a key is saved) and a new letter's "Read it" card.
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            Column(Modifier.padding(start = 8.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(greeting(userName), style = MaterialTheme.typography.displayLarge, color = clarity.text)
-                // The very first visit: one line on what this is, gone once there is a conversation.
-                if (latest == null) {
-                    Text(
-                        "Your coach is here for anything: a goal, a hard day, a choice. It remembers what matters " +
-                            "and helps you keep your plans. Nothing is saved unless you tap to save it.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = clarity.muted,
-                        modifier = Modifier.padding(top = 6.dp, end = 8.dp),
-                    )
-                    com.clarity.life.ui.theme.TextAction("New here? See how Clarity works", onClick = onOpenGuide)
-                }
-                planDay?.let { day ->
-                    Text(
-                        "Day $day of your plan.",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontStyle = FontStyle.Italic,
-                        color = clarity.muted,
-                    )
-                }
-            }
-        }
         if (!hasKey) item(key = "setup") { SetupCard(provider, onSetUp) }
         item { letterCard() }
-        item {
-            Kicker("Start a conversation", modifier = Modifier.padding(start = 8.dp, top = 16.dp))
-        }
-        val starts = buildList {
-            latest?.takeIf { it.title.isNotBlank() }?.let { c ->
-                add(Start(Icons.Outlined.History, c.title, "Pick up where you left off") { onOpen(c.id) })
-            }
-            if (hasPlan) {
-                add(Start(Icons.Outlined.CalendarMonth, "Look at my plan", "Plan and track") { onStart("plan", null) })
-            }
-            add(Start(Icons.Outlined.Psychology, "Something is on my mind", "Untangle") { onStart("untangle", null) })
-            focuses.firstOrNull()?.let { f ->
-                add(Start(Icons.Outlined.TrackChanges, f.name, "Focus") { onStart("free", f.id) })
-            }
-            add(Start(Icons.Outlined.CalendarMonth, "Help me decide something", "Decide") { onStart("decide", null) })
-        }.take(3)
-        starts.forEach { s -> item { StartRow(s) } }
         item { Spacer(Modifier.height(12.dp)) }
     }
 }

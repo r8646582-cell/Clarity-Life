@@ -71,6 +71,7 @@ fun TalkScreen(
     reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
+    val topLine by model.topLine.collectAsStateWithLifecycle()
     // Only what the home shows (PlanViewModel.Home), not the whole tracker: the home no longer waits for it.
     val planState by planner.home.collectAsStateWithLifecycle()
     val reviewState by reviews.state.collectAsStateWithLifecycle()
@@ -182,73 +183,16 @@ fun TalkScreen(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
-            if (home) {
-                HomeTopBar(
-                    date = if (planState.ready) planner.longDay(planState.today) else "",
-                    onDrawer = { drawer = !drawer },
-                    onGuide = onOpenGuide,
-                    onSettings = onOpenSettings,
-                )
-            } else {
-                Row(
-                    Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { drawer = false; model.home() }) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back to Talk home", tint = clarity.text)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            state.conversations.firstOrNull { it.id == state.conversationId }?.title?.takeIf { it.isNotBlank() }
-                                ?: "New conversation",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = clarity.text,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        )
-                        Box {
-                            Row(
-                                Modifier.clickable { typeMenu = true }.padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    state.focuses.firstOrNull { it.id == state.focusId }?.name
-                                        ?: CHAT_TYPES.firstOrNull { it.first == state.chatType }?.second ?: "Free talk",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = clarity.muted,
-                                )
-                                Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
-                            }
-                            DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
-                                CHAT_TYPES.forEach { (id, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = {
-                                            typeMenu = false
-                                            model.switchChatType(id)
-                                        },
-                                    )
-                                }
-                                // One entry per active focus (spec section 2.1); the conversation joins it.
-                                state.focuses.forEach { f ->
-                                    DropdownMenuItem(
-                                        text = { Text(f.name) },
-                                        onClick = {
-                                            typeMenu = false
-                                            model.switchToFocus(f.id)
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    IconButton(onClick = { drawer = !drawer }) {
-                        Icon(Icons.Outlined.Menu, contentDescription = "Conversations", tint = clarity.text)
-                    }
-                }
-                androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
-            }
-
+            // v2: the same slim bar at the top of every day's chat: one quiet line (date and what they are working
+            // on; tapping it opens Know), the conversations list and Settings. No chat types, no greeting.
+            HomeTopBar(
+                date = topLine,
+                onDrawer = { drawer = !drawer },
+                onGuide = onOpenGuide,
+                onSettings = onOpenSettings,
+                onDate = onOpenPlan,
+            )
+            androidx.compose.material3.HorizontalDivider(color = clarity.hairline)
 
             // On Talk home the quiet line sits at the top. In a conversation it goes under the last reply instead
             // (below), so it is read with the reply it is about and never covers the words as they scroll.
@@ -438,7 +382,7 @@ fun TalkScreen(
  * function is already very large, and growing it made Android's verifier reject the compiled screen.
  */
 @Composable
-private fun HomeTopBar(date: String, onDrawer: () -> Unit, onGuide: () -> Unit, onSettings: () -> Unit) {
+private fun HomeTopBar(date: String, onDrawer: () -> Unit, onGuide: () -> Unit, onSettings: () -> Unit, onDate: () -> Unit) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
         Text(
             date,
@@ -446,7 +390,7 @@ private fun HomeTopBar(date: String, onDrawer: () -> Unit, onGuide: () -> Unit, 
             color = clarity.muted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 104.dp),
+            modifier = Modifier.padding(horizontal = 104.dp).clickable(onClick = onDate),
         )
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onDrawer) {

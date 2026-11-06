@@ -92,6 +92,18 @@ class ChatRepository @Inject constructor(
     }
 
     /**
+     * v2, one chat a day: today's ordinary conversation, if there is one. A new local day (it starts at the
+     * day boundary, 04:00 by default) has none, so the first message of that day starts a new conversation and
+     * memory stays shared. Never a conversation opened from a letter, and never an off-the-record one.
+     */
+    suspend fun todaysConversation(now: Long): Long? {
+        val tz = settings.timeZone()
+        val boundary = settings.dayBoundaryHour()
+        val day = Planner.dayKey(Instant.ofEpochMilli(now).toString(), tz, boundary)
+        return conversations.latestSince(com.clarity.life.core.DayChat.dayStartMillis(day, boundary, tz))?.id
+    }
+
+    /**
      * SwitchChatType: the history stays, and the next reply follows the new type (spec section 2.1). Picking
      * one of the plain types also takes the conversation out of a focus it was in.
      */

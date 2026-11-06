@@ -71,4 +71,6 @@ object DatabaseModule {
     @Provides fun repairDao(db: ClarityDatabase): RepairDao = db.repair()
 
     @Provides fun memoryDao(db: ClarityDatabase): MemoryDao = db.memory()
+
+    @Provides fun workingDao(db: ClarityDatabase): com.clarity.life.data.dao.WorkingDao = db.working()
 }

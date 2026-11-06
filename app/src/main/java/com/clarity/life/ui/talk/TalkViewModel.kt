@@ -44,7 +44,23 @@ class TalkViewModel @Inject constructor(
     private val saver: com.clarity.life.chat.CardSaver,
     private val reminders: com.clarity.life.promise.Reminders,
     private val requests: com.clarity.life.chat.TalkRequests,
+    private val working: com.clarity.life.data.dao.WorkingDao,
 ) : ViewModel() {
+
+    /** The one quiet line at the top: today's date and, when there are any, how many things they are working on. */
+    val topLine: StateFlow<String> = kotlinx.coroutines.flow.combine(
+        working.watchLive(),
+        settings.watchDay(),
+        kotlinx.coroutines.flow.flow {
+            while (true) {
+                emit(System.currentTimeMillis())
+                kotlinx.coroutines.delay(60_000)
+            }
+        },
+    ) { items, d, now ->
+        val day = com.clarity.life.core.Planner.dayKey(java.time.Instant.ofEpochMilli(now).toString(), d.timeZone, d.boundaryHour)
+        com.clarity.life.core.DayChat.topLine(day, items.count { it.status == "active" })
+    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), "")
 
     data class State(
         val conversationId: Long = 0,
@@ -176,8 +192,14 @@ class TalkViewModel @Inject constructor(
                 timeZone = settings.timeZone()
                 boundaryHour = settings.dayBoundaryHour()
                 hasKey.value = settings.chatEndpoint() != null
-                // Talk opens on its home (spec section 2.1): no conversation is open until he starts or picks
-                // one, and the home is never blank. The newest conversation is one tap away there.
+                // v2, one chat a day: Talk opens on today's conversation when there is one; otherwise on the
+                // empty home, and the first message starts it.
+                chat.todaysConversation(System.currentTimeMillis())?.let { id ->
+                    if (conversationId.value == 0L) {
+                        conversationId.value = id
+                        chatType.value = "free"
+                    }
+                }
             } finally {
                 opened.complete(Unit)
             }
@@ -349,9 +371,15 @@ class TalkViewModel @Inject constructor(
                 quietLine.value = "Add your API key in Settings, Coach, and this will send."
                 return@guarded
             }
-            // Typed on Talk home: it starts a free-talk conversation (spec section 2.1).
+            // v2, one chat a day: typed on the empty home, it goes into today's conversation, or starts it.
             val id = if (current != 0L) current else {
-                start("free")
+                val today = chat.todaysConversation(System.currentTimeMillis())
+                if (today != null) {
+                    conversationId.value = today
+                    chatType.value = "free"
+                } else {
+                    start("free")
+                }
                 conversationId.value
             }
             val now = System.currentTimeMillis()

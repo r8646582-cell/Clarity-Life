@@ -48,6 +48,10 @@ interface ConversationDao {
     @Query("SELECT * FROM conversation WHERE id = :id")
     suspend fun get(id: Long): ConversationRow?
 
+    /** v2, one chat a day: the newest ordinary (not opened from a letter) conversation started since [since]. */
+    @Query("SELECT * FROM conversation WHERE started_at >= :since AND opened_from IS NULL AND off_the_record = 0 ORDER BY id DESC LIMIT 1")
+    suspend fun latestSince(since: Long): ConversationRow?
+
     @Query("SELECT * FROM conversation WHERE id = :id")
     fun watch(id: Long): Flow<ConversationRow?>
 
