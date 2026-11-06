@@ -186,6 +186,19 @@ class ReflectionJob @Inject constructor(
                     save(job.copy(status = StateMachines.move(StateMachines.JOB, "running", "succeeded"), finishedAt = now))
                     return Outcome.AlreadyDone
                 }
+            // v2: what they are working on (rules in WorkingRules). Never breaks the reflection: a failure here is logged.
+            try {
+                WorkingRepository(db).applyKeeper(
+                    rawText,
+                    said.map { WorkingRepository.Said(it.text, it.day) },
+                    today,
+                    now,
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log(now, "working_failed", e.javaClass.simpleName)
+            }
             val dropped = result.dropped.size + applied.skipped
             if (dropped > 0) log(now, "items_dropped", "n=$dropped")
             return Outcome.Done(applied.applied, dropped)

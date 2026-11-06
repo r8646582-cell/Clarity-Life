@@ -372,7 +372,8 @@ class ChatRepository @Inject constructor(
             // Day counts to the dates he mentioned, newest message first: the coach never counts days itself.
             val said = listOf(newText) + stored.filter { it.role == "user" }.takeLast(20).reversed().map { it.content }
             add(Blocks.now(TimeFacts.nowSentence(Instant.ofEpochMilli(now), tz, boundary), com.clarity.life.core.DayCounts.lines(said, dayKey)))
-            // WORKING_ON arrives with stage 2 (contracts/context.md); until then the block is simply absent.
+            // What they are working on: written by code, a day count only for a confirmed deadline.
+            add(Spans.span("packet: WORKING_ON") { com.clarity.life.memory.WorkingRepository(db).block(today, now) })
             packetBuilder.openedFromBlocks(conversation).forEach { add(it) }
             if (start > 0) add(Blocks.earlier(conversation.summary))
             val sent = MemoryBlocks.idsIn(prefix)
