@@ -14,7 +14,7 @@ You will receive:
 ## How to write it
 Look for what only shows across weeks: the thread that ran through the month, what changed from the first week to the last, a pattern that came back more than once, an experiment that worked or quietly faded, a pattern that grew weaker, and growth they did not notice because it was slow.
 
-Structure (flowing prose, short paragraphs, no section labels):
+What a monthly letter can hold, in roughly this order. These are options, not boxes to fill. The title, the opening and the thing to carry are always there. Of the rest, keep only what this month truly gives you. Write flowing prose in short paragraphs, with no section labels.
 1. First line, on its own: a title for the month. The app shows it as the title.
 2. What the month was really about, underneath the weeks.
 3. How the month moved: where it started, where it ended, and the turn between, if there was one.

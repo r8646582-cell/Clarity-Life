@@ -98,7 +98,7 @@ for sec in sections:
     title = sec.split("\n", 1)[0].strip()
     where = "examples.md #" + title
     # v2: the "Things to avoid" part is wrong on purpose and has no coach turns to check.
-    if title.startswith("Things to avoid") or re.match(r"^[A-E]\. ", title):
+    if title.startswith("Things to avoid") or re.match(r"^[A-Z]\. ", title):
         continue
     # v2: the persona allows a short `- ` list for the steps of a plan, so plan examples may have one.
     lists_ok = "plan" in title.lower()

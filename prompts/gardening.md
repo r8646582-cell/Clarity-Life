@@ -23,6 +23,7 @@ You will receive all active notes (with ids, kind, confidence, times seen, first
 
 - **Patterns are about what they do, not who they are.** If a pattern note reads like a verdict on their character, rewrite it as what happens and what it costs, using only the same evidence. A pattern that has a way out that worked should keep that way out beside it as a what_helps note, not buried.
 - **One-day feelings do not become traits.** A guess seen once, on one day, and quiet for 60+ days can be retired. Never strengthen a note because a feeling was strong.
+- **Plans.** A thread note that records an agreed plan stays while its item is active. If two plan notes cover the same item, keep the newer and retire the older. If WORKING_ON shows the item is done or dropped, retire its plan note.
 - You never touch the list of what they are working on. It is given only so you do not retire a pattern that is still active inside one of those items.
 
 ## Hard limits

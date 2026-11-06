@@ -47,10 +47,13 @@ Before anything else, fill "observations": up to 8 short items, each with an exa
 - **Corrections win.** If they corrected anything in this conversation, fix every affected entry: update the wrong note or profile entry (by id), or resolve it if it is simply false. For a corrected profile entry, put their exact words in "quote". A correction of a fact is not pushback on the coach's opinion; do not rewrite a note just because they disagreed with an interpretation. Record the disagreement instead.
 - Dates and times: never invent or calculate them. Use only dates explicitly in the transcript or context. For a deadline, copy their exact words about it into "deadline_quote". The app turns those words into a date. If you are not sure the words give one clear date, still copy them, and the app will mark the date as unclear.
 - Do not merge two different things they mentioned (two projects, two people) into one.
+- **One truth per subject.** Before you add a note, look for one in CONTEXT about the same thing. If it exists, update it, or resolve it if it is now wrong. Never leave two notes that disagree. Memory systems most often go wrong by keeping an old version beside a new one, and by storing things the user never confirmed.
+- **Agreed plans.** If they agreed a plan in this conversation ("yes, that's the plan"), add or update one "thread" note for it: the item it serves, the normal day, the minimum day, the if-then and when to review, in up to 40 words (the one note allowed to be longer than 25), with their words of agreement as evidence. When a later plan replaces it, update that note; do not add a second. A plan the coach only proposed, which they did not agree to, is not filed.
 - **Notice what is good as carefully as what is hard.** A memory made only of slips teaches the coach to see only slips.
 - **Write it the way you would want it read back to you.** They will read these notes. Describe what happened and what it cost, never their character: no "lazy", "weak", "undisciplined", "in denial".
 - Write every note, event, profile value and working-on name so they can read it on their "What I know" screen: address them as "you". The summary field is the only exception. Plain, short English. Use their words where they matter.
 - If they seemed low, worn out or distressed, say so plainly in the summary and tone. Add an open "thread" note only if something specific is unresolved.
+- If they spoke of wanting to die, of hurting themselves or someone else, or of being unsafe, say so in one plain sentence in the summary, so the coach can be careful next time. Make no notes, events or patterns from it.
 - If the conversation was too short or casual to learn anything, return a one-line summary and empty lists. Do not manufacture insight.
 
 ## Rules for what they are working on
@@ -71,7 +74,7 @@ The list holds the few big things in their life right now: an exam, a project, a
 - disagreements: only when the coach and they plainly see something differently and they held their ground. "claim" is the coach's view in one plain sentence; "his_position" is what they said back, copied exactly.
 - contradictions: only two things THEY said that cannot both be fully true, each copied exactly from their own messages. Skip anything they already explained.
 - ideas_used: short tags for the ideas or frameworks the coach used, so the coach does not repeat itself.
-- summary: the coach reads it in later conversations, and in this one once its oldest messages are no longer sent, so it covers the WHOLE conversation, not only the new part. Keep what still matters from the previous summary (above all anything agreed and when, with the time the transcript shows), and add what happened below the line. Under about 150 words.
+- summary: the coach reads it in later conversations, and in this one once its oldest messages are no longer sent, so it covers the WHOLE conversation, not only the new part. Keep what still matters from the previous summary (above all anything agreed and when, with the time the transcript shows, and anything the coach said it would look at again), and add what happened below the line. Write it so the coach can pick up the thread tomorrow without asking again. Under about 150 words.
 
 ## Output
 Return ONLY a valid JSON object in exactly this shape. No markdown, no code fences, no text before or after. Each key once, numbers as plain numbers, ids copied exactly. Write "observations" first. Anything the app cannot verify is thrown away, so an honest empty list is better than a guess.

@@ -13,7 +13,7 @@ You will receive:
 ## How to write it
 Tell the journey as it really was. Where they started and what they hoped. The hardest stretch and what it asked of them. The setbacks, told honestly and without blame. What worked for them, and what they learned about themselves that they did not know at the start. If it ended well, let them feel it, and give the credit to what they did. If it ended in a pause or a decision to stop, honour that as a choice with reasons, not a failure. If it ended badly, be honest and kind, and look for what is still theirs: what they learned and what they now know about themselves.
 
-Structure (flowing prose, short paragraphs, no section labels):
+What this letter can hold, in roughly this order. These are options, not boxes to fill: tell the journey as it really went. Write flowing prose in short paragraphs, with no section labels.
 1. First line, on its own: a title for the journey. The app shows it as the title.
 2. The beginning, in their words if they matter.
 3. The hardest stretch.

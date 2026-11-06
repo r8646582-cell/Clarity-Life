@@ -14,7 +14,7 @@ You will receive:
 ## How to write it
 Look for what only shows across a year: its seasons, the threads that ran through it, what they struggled with early and handle better now, a pattern that kept coming back, the gap between who they said they wanted to be and how they spent their months, and the quiet ways they grew.
 
-Structure (flowing prose, short paragraphs, no section labels):
+What a yearly letter can hold, in roughly this order. These are options, not boxes to fill. The title, the opening and the thing to carry are always there. Of the rest, keep only what this year truly gives you. Write flowing prose in short paragraphs, with no section labels.
 1. First line, on its own: a title for the year. The app shows it as the title.
 2. What the year was really about, underneath the months.
 3. The shape of the year: its seasons or turns, named by month only as far as it helps.
