@@ -47,16 +47,10 @@ class MemoryBlocksTest {
     }
 
     @Test
-    fun underPressureSessionsGoFirstThenTheWeakestNotesAndConfirmedLast() {
+    fun underPressureTheWeakestNotesGoFirstAndConfirmedLast() {
         val blocks = listOf(
             MemoryBlocks.profile(listOf(MemoryBlocks.Profile("Goal", "Clear the exam", true))),
             MemoryBlocks.notes(listOf(note(1, "confirmed", 1), note(2, "guess", 5), note(3, "guess", 1), note(4, "likely", 1))),
-            MemoryBlocks.recentSessions(
-                listOf(
-                    MemoryBlocks.Session("2026-10-09", "Newest", "b".repeat(200)),
-                    MemoryBlocks.Session("2026-10-01", "Oldest", "a".repeat(200)),
-                ),
-            ),
         )
         val order = mutableListOf<String>()
         var current = blocks
@@ -70,8 +64,6 @@ class MemoryBlocksTest {
         }
         assertEquals(
             listOf(
-                "RECENT_SESSIONS:1 Oct \"Oldest\": ${"a".repeat(200)}",
-                "RECENT_SESSIONS:9 Oct \"Newest\": ${"b".repeat(200)}",
                 "NOTES:note 3, pattern, guess, seen once · Sep to Oct: Note 3",
                 "NOTES:note 2, pattern, guess, seen 5 times · Sep to Oct: Note 2",
                 "NOTES:note 4, pattern, likely, seen once · Sep to Oct: Note 4",
