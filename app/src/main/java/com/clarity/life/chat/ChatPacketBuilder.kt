@@ -4,6 +4,7 @@ import com.clarity.life.core.Block
 import com.clarity.life.core.BlockItem
 import com.clarity.life.core.CardTalk
 import com.clarity.life.core.FocusBlock
+import com.clarity.life.core.LastChat
 import com.clarity.life.core.MemoryBlocks
 import com.clarity.life.core.Planner
 import com.clarity.life.core.PromiseText
@@ -104,7 +105,24 @@ class ChatPacketBuilder(
             // Notes about what this conversation is about are the last to go when memory is large.
             Spans.span("frozen: NOTES chosen") { MemoryBlocks.notes(notes, MemoryBlocks.relevantNotes(notes, text)) },
             MemoryBlocks.recentSessions(sessions),
+            lastChat(conversationId, tz, boundary),
         )
+    }
+
+    /**
+     * LAST_CHAT: the conversation before this one, word for word, while it is recent. With one chat a day it is
+     * yesterday's and no longer changes, so it is frozen with the prefix: cached, not paid for on every message.
+     * Its summary may not be written yet when today's chat starts, which is why the words themselves are sent.
+     */
+    private suspend fun lastChat(conversationId: Long, tz: String, boundary: Int): Block {
+        val now = System.currentTimeMillis()
+        val other = db.memory().lastOtherConversation(conversationId)
+            ?.takeIf { LastChat.fresh(it.lastAt, now, LastChat.DAY_CHAT_HOURS) }
+            ?: return Block("LAST_CHAT", emptyList())
+        val said = messages.ofConversation(other.id).filter {
+            it.role == "user" || it.status == "complete" || it.status == "interrupted"
+        }.map { LastChat.Msg(it.role, it.content, it.createdAt) }
+        return LastChat.block(other.title, other.firstAt, other.lastAt, said, now, tz, boundary)
     }
 
     /**
