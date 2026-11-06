@@ -45,7 +45,10 @@ import com.clarity.life.data.entity.StoryRow
 import com.clarity.life.data.entity.BriefRow
 import com.clarity.life.data.entity.TargetRow
 import com.clarity.life.data.entity.TargetVersionRow
+import com.clarity.life.data.entity.UsageDayRow
 import com.clarity.life.data.entity.UsageMonthRow
+import com.clarity.life.data.entity.WorkingItemEventRow
+import com.clarity.life.data.entity.WorkingItemRow
 
 /**
  * The whole database, version 8, the 36 tables of db/schema.sql.
