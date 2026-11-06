@@ -51,8 +51,8 @@ android {
         applicationId = "com.clarity.life"
         minSdk = 26
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.0.0"
+        versionCode = 24
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             // ONNX Runtime and SQLCipher ship native code for four kinds of processor. Phones like the owner's
@@ -77,8 +77,9 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // The CI emulator is x86_64; only the debug build is run there.
-            ndk { abiFilters += "x86_64" }
+            // The CI emulator is x86_64; a real phone is arm64-v8a. Both are kept, or the debug build installs on
+            // the emulator but cannot run (or even install) on the owner's phone.
+            ndk { abiFilters += listOf("x86_64", "arm64-v8a") }
         }
         release {
             isMinifyEnabled = true
