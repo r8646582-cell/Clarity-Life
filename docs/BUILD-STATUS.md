@@ -419,3 +419,10 @@ Stage 1 to 4 built on branch `claude/magical-albattani-arrwao`, verified by GitH
 - Stage 3 and 4: weekly, monthly and yearly letters in mirror style with facts counted by code; milestone letter when an item is done.
 - Not done: Stage 0 (the owner's 14-day test), the test-bench cases of spec section 11 (`prompts/testbench.md` still holds the v1 scenarios and its old block names), the optional reply-checker, the Stage 5 cleanup migration and dead-code deletion (needs the owner's approval after a verified backup restore), an emulator or phone run of any screen.
 - Decisions by the owner: no daily chat limit (6 Nov 2026).
+
+## 1.0.2 (7 November 2026)
+- Prompts v2.1 and the owner's voice brief (wise, plain words, contractions, honest both ways, length follows the question); test bench gains the v2 cases.
+- RECENT_SESSIONS (frozen) and LAST_CHAT (volatile, 36 hours) are sent again: v2's one-chat-a-day packet had dropped both, so a new day started blind. Contract, Python reference and Kotlin orders changed together.
+- Guide, conversations list and Settings text rewritten for v2.
+- Still not done: an emulator or phone run of the new screens by the builder (CI runs the emulator walk-through), the optional reply-checker, the Stage 5 cleanup.
+
