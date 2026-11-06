@@ -182,15 +182,9 @@ fun SettingsScreen(
             }
 
             Label("Chat thinking")
-            Hint("Thinking level per chat type: Low is quick; High and Max are slower and more careful.")
-            Text("Free talk", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
+            Hint("How hard the coach thinks before it answers: Low is quick; High and Max are slower and more careful.")
+            // v2 has one kind of chat, so one level (the old per-chat-type levels are kept in settings, unused).
             Levels(state.chatThinkingFree, model::setChatThinkingFree)
-            Text("Untangle", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
-            Levels(state.chatThinkingUntangle, model::setChatThinkingUntangle)
-            Text("Decide", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
-            Levels(state.chatThinkingDecide, model::setChatThinkingDecide)
-            Text("Plan", style = MaterialTheme.typography.labelMedium, color = clarity.muted, modifier = Modifier.padding(top = 4.dp))
-            Levels(state.chatThinkingPlan, model::setChatThinkingPlan)
 
             Spacer(Modifier.height(10.dp))
             com.clarity.life.ui.theme.PrimaryButton(if (state.testing) "Testing chat..." else "Test main connection") {
@@ -205,11 +199,11 @@ fun SettingsScreen(
                 )
             }
 
-            Label("Weekly letter model")
+            Label("Letter model")
             Field(state.letterModel, model::setLetterModel)
-            Label("Weekly letter thinking")
+            Label("Letter thinking")
             Levels(state.letterThinking, model::setLetterThinking)
-            Hint("Typed freely: check names in the provider's docs.")
+            Hint("Writes every letter: weekly, monthly, yearly and when you finish something. Typed freely: check names in the provider's docs.")
 
             Hint("Changed a model? Run the test bench in Advanced before you rely on it.")
 
@@ -217,7 +211,7 @@ fun SettingsScreen(
             Field(state.userName, model::setUserName)
             Hint("Optional. Only the coach's prompt uses it.")
         }
-        Group("Background AI", "Separate model for reflection, reviews, and memories", Icons.Outlined.Psychology, openGroup, { openGroup = it }) {
+        Group("Background AI", "Separate model for what the coach learns after each talk", Icons.Outlined.Psychology, openGroup, { openGroup = it }) {
             Label("Background provider")
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -289,7 +283,7 @@ fun SettingsScreen(
                     }
                 }
             }
-            Hint("For reflection, reviews and memories. Falls back to your chat provider if this fails.")
+            Hint("For memory: what the coach learns after each talk. Falls back to your chat provider if this fails.")
 
             Spacer(Modifier.height(10.dp))
             com.clarity.life.ui.theme.PrimaryButton(if (state.testingBackground) "Testing background..." else "Test background connection") {
@@ -368,7 +362,7 @@ fun SettingsScreen(
                 if (state.dayBoundaryHour == 0) {
                     "Like a calendar: a new day starts at midnight."
                 } else {
-                    "For late nights: until ${state.dayBoundaryHour} am, a check-in still counts for the day before."
+                    "For late nights: until ${state.dayBoundaryHour} am you are still in the day before, and today's chat keeps going."
                 },
             )
             Row(
@@ -513,7 +507,7 @@ private fun YourData(state: SettingsViewModel.State, model: SettingsViewModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Every conversation, goal, check-in, promise, note, letter and setting on this phone is " +
+                        "Every conversation, note, letter, everything you are working on, and every setting on this phone is " +
                             "deleted, with your API key and backup passphrase. It cannot be undone. Backups in your " +
                             "folder stay, and can be restored with their passphrase. Clarity closes when it is done.",
                         style = MaterialTheme.typography.bodyMedium,
