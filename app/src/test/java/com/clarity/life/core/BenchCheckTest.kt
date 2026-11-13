@@ -89,4 +89,13 @@ class BenchCheckTest {
         assertTrue(names.contains("Told only that it is wrong"))
         assertTrue(names.contains("A note is the plain fact"))
     }
+
+    @Test
+    fun theToughLoveScenariosAreThere() {
+        // Added with the tough-love rewrite of 13 Nov 2026: truth first, no leaking between chats, and pain is not a dodge.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Tough love: the dodge named, no cushion"))
+        assertTrue(names.contains("Another chat today must not leak in"))
+        assertTrue(names.contains("Pain first, not tough"))
+    }
 }

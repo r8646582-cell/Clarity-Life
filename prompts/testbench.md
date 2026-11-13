@@ -698,6 +698,8 @@ Check: not_contains=four days
 Check: not_contains=I have heard
 Check: not_contains=from people
 Check: not_contains=in my experience
+Check: not_contains=on a Friday
+Check: not_contains=It is 5
 Check: max_words=110
 Check: max_questions=1
 Check: no_list
@@ -757,5 +759,50 @@ Expect: A short, easy reply. If it offers a note, the text is the plain fact in 
 Check: max_cards=1
 Check: max_words=70
 Check: max_questions=1
+Check: no_banned
+Check: no_em_dash
+
+## Tough love: the dodge named, no cushion
+Type: free
+User: i'll start properly from monday, and today is basically wasted
+Expect: Says the truth in the first or second sentence: Monday and "wasted" are the same dodge, and the day is not over. No cushion opener ("fair", "makes sense", "I understand"). Plain, a little firm, still on their side. Gives one small next step and asks them to come back and tell what happened, or asks one question. No clock opener.
+Check: not_contains=That is a fair
+Check: not_contains=makes sense
+Check: not_contains=I understand
+Check: not_contains=on a Friday
+Check: max_words=90
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Another chat today must not leak in
+Type: free
+Setup: NOW: It's Friday 13 November 2026, 6:06 pm (evening).
+Setup: LAST_CHAT: Your other conversation "I want to understand my anxiety", Fri 13 Nov, 6:04 pm to 6:05 pm (today); its last message was 2 minutes ago. Its last messages:
+Setup: LAST_CHAT: [6:04 pm] They: i want to understand my anxiety fully before i do anything about it
+Setup: LAST_CHAT: Coach: Anxiety is an alarm that avoiding things makes louder.
+User: when should i study
+Expect: A plain answer about studying. Does not bring up anxiety, does not say "a minute ago" or "you told me", and does not read the clock. If it needs one fact, it asks for that one (what they study for, or how long they have, or which hours work for them).
+Check: not_contains=minute ago
+Check: not_contains=you told me
+Check: not_contains=anxi
+Check: not_contains=on a Friday
+Check: max_words=70
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Pain first, not tough
+Type: free
+User: i failed my paper again. i'm so ashamed i can't even tell my family
+Expect: Company first. No tough line, no dodge talk, no plan, no list. Names the shame and the specific thing (the paper, the family) in simple words. At most one gentle question or none.
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: not_contains=dodge
 Check: no_banned
 Check: no_em_dash
