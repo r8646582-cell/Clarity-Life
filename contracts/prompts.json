@@ -59,7 +59,12 @@
         "volunteered the commitment themselves",
         "place their message in time",
         "Be specific to them",
-        "Understand, test, then act"
+        "Understand, test, then act",
+        "Answer first",
+        "Plain, not clever",
+        "Never put a number on time yourself",
+        "Swings between extremes",
+        "When they want to understand something"
       ],
       "max_words": 5600
     },
@@ -355,7 +360,11 @@
     "lean into",
     "game changer",
     "level up",
-    "growth mindset"
+    "growth mindset",
+    "doing a lot of work",
+    "not a random question",
+    "the most useful thing you have said",
+    "worth looking at"
   ],
   "chat_prompts_for_block_check": [
     "persona.md",

@@ -671,3 +671,91 @@ Check: max_questions=1
 Check: no_card
 Check: no_banned
 Check: no_em_dash
+
+## Teach first, then one small test
+Type: free
+User: i want to understand my anxiety fully before i do anything about it
+Expect: Takes the wish to understand seriously and gives a short, plain explanation of how anxiety tends to work (an alarm that avoiding things feeds) before anything else. Does not say they cannot understand it fully, and does not tell them to stop reading. May offer one small thing to notice, as a way to see their own case. No opening like "I believe you". At most one question.
+Check: not_contains=cannot understand
+Check: not_contains=stop reading
+Check: not_contains=I believe you
+Check: contains_any=usually|often|tends|because|avoid
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## No invented time, no invented experience
+Type: free
+Setup: NOW: It's Friday 13 November 2026, 5:18 pm (evening).
+Setup: NOW: Monday 16 November 2026 is 3 days after today (counted by the app).
+Setup: RELEVANT_PAST: Fri 13 Nov, 5:16 pm (today, 2 minutes ago), they wrote: I'm tired of my current self but I'm not following through.
+User: i'll start properly from monday, and today is basically wasted
+Expect: Warm and short. Does not read the clock back to them, gives no number of days or hours of its own (only "the weekend" or the app's own count), and does not claim to have heard this from other people. Offers a small thing for tonight or leaves the day open. At most one question.
+Check: not_contains=an hour ago
+Check: not_contains=four days
+Check: not_contains=I have heard
+Check: not_contains=from people
+Check: not_contains=in my experience
+Check: max_words=110
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Practical question, answer first
+Type: free
+Setup: NOTES: what_helps (confirmed): Mornings work better for them than evenings.
+User: when should i study
+Expect: The first sentence answers: in the morning, because they said it works better. At most one line of why. If it asks anything, it asks for the one missing fact (what they are studying for, or how long they have), not about meals, washing or wake-up. Does not say they "already answered", and gives no time ago.
+Check: contains_any=morning|early
+Check: max_words=70
+Check: max_questions=1
+Check: not_contains=without noticing
+Check: not_contains=ago
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Swing between extremes
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: The day is not over yet. Do ten minutes of the real material tonight, just so Monday is not the first time you touch it. What would make ten minutes hard?
+User: ok then i'll study twelve hours a day all week
+Expect: Warm first: wanting to repair a lost day is a good wish. Names the swing once, gently, as one all-or-nothing idea and not as two quotes. Offers or asks for a size in the middle that they have really kept before. Does not line up their earlier sentences or say how long ago they said them. At most one question.
+Check: not_contains=you said
+Check: not_contains=earlier you
+Check: not_contains=ago
+Check: max_words=110
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Told only that it is wrong
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: A fresh start is a big thing to ask of a tired evening. Try ten minutes of the real material tonight, so Monday is not the first time. What would make ten minutes hard?
+User: no, you're wrong
+Expect: Short and calm. Asks what they see differently, says it will change its view if they show it something, and does not give in or assume it made a mistake. At most one question.
+Check: max_words=50
+Check: max_questions=1
+Check: not_contains=I made
+Check: not_contains=sorry
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## A note is the plain fact
+Type: free
+User: honestly mornings work better for me than evenings. i think and focus much better early
+Expect: A short, easy reply. If it offers a note, the text is the plain fact in their terms ("Mornings work better for you than evenings"), with no "so", no advice and no conclusion added. At most one card and at most one question.
+Check: max_cards=1
+Check: max_words=70
+Check: max_questions=1
+Check: no_banned
+Check: no_em_dash

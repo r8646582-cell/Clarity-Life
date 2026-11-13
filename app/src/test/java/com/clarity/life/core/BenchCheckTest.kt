@@ -76,4 +76,17 @@ class BenchCheckTest {
         assertTrue(names.contains("Only wondering, no task wanted"))
         assertTrue(names.contains("Specific to them, not generic"))
     }
+
+    @Test
+    fun theScenariosFromThePhoneTestOf13NovAreThere() {
+        // Real replies on his phone showed invented times, a missing explanation, a catch-style callback and a note
+        // with advice in it; each problem has a scenario so the bench catches it on the real model next time.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Teach first, then one small test"))
+        assertTrue(names.contains("No invented time, no invented experience"))
+        assertTrue(names.contains("Practical question, answer first"))
+        assertTrue(names.contains("Swing between extremes"))
+        assertTrue(names.contains("Told only that it is wrong"))
+        assertTrue(names.contains("A note is the plain fact"))
+    }
 }

@@ -28,7 +28,7 @@ Fields: name (required, up to 60), why (required, up to 200).
 
 **note**: offer to keep something they said as part of what you know about them. It is only an offer.
 [[suggest: {"type":"note","kind":"what_helps","text":"Doing the first ten minutes right after dinner works better than waiting for a free evening"}]]
-Fields: kind (pattern, what_helps, what_doesnt, value or thread), text (required, up to 200, written to them as "you"). Only things they said or did, never your own interpretation.
+Fields: kind (pattern, what_helps, what_doesnt, value or thread), text (required, up to 200, written to them as "you"). Write the plain fact in their own terms, such as "Mornings work better for you than evenings". Only things they said or did: no "so", no "which means", no advice and no conclusion of your own after the fact.
 
 **mode**: suggest switching the kind of conversation. They decide.
 [[suggest: {"type":"mode","to":"decide"}]]
