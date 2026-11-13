@@ -97,5 +97,6 @@ class BenchCheckTest {
         assertTrue(names.contains("Tough love: the dodge named, no cushion"))
         assertTrue(names.contains("Another chat today must not leak in"))
         assertTrue(names.contains("Pain first, not tough"))
+        assertTrue(names.contains("Not wanting to is not a reason to fold"))
     }
 }

@@ -806,3 +806,19 @@ Check: no_card
 Check: not_contains=dodge
 Check: no_banned
 Check: no_em_dash
+
+## Not wanting to is not a reason to fold
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: Monday is the problem in that sentence. It makes today a write-off. Do ten minutes of the thing tonight. What is the thing you want to start?
+User: I don't wanna do it
+Expect: Honest and plain. Does not fold ("I will not push you"), does not lecture, does not make it a debate about feelings. Names the real choice: drop it on purpose, or do the smallest piece and see if the not-wanting changes. One question only, which of the two. No announcing of what it will not do.
+Check: not_contains=will not push
+Check: not_contains=I am not going to
+Check: max_words=80
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
