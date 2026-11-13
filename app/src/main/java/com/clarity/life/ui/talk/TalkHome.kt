@@ -49,8 +49,6 @@ import com.clarity.life.ui.theme.clarity
 @Composable
 fun TalkHome(
     modifier: Modifier,
-    planDay: Long?,
-    hasPlan: Boolean,
     latest: ConversationRow?,
     hasKey: Boolean,
     provider: String,
@@ -58,7 +56,6 @@ fun TalkHome(
     onSetUp: () -> Unit,
     onOpenGuide: () -> Unit,
     focuses: List<FocusRow>,
-    letterCard: @Composable () -> Unit,
     onStart: (chatType: String, focusId: Long?) -> Unit,
     onOpen: (Long) -> Unit,
 ) {
@@ -72,34 +69,22 @@ fun TalkHome(
                 if (latest == null) {
                     Text(
                         "Your coach is here for anything: a goal, a hard day, a choice. It remembers what matters " +
-                            "and helps you keep your plans. Nothing is saved unless you tap to save it.",
+                            "over time, and you can see and change everything it knows under What I know.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = clarity.muted,
                         modifier = Modifier.padding(top = 6.dp, end = 8.dp),
                     )
                     com.clarity.life.ui.theme.TextAction("New here? See how Clarity works", onClick = onOpenGuide)
                 }
-                planDay?.let { day ->
-                    Text(
-                        "Day $day of your plan.",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontStyle = FontStyle.Italic,
-                        color = clarity.muted,
-                    )
-                }
             }
         }
         if (!hasKey) item(key = "setup") { SetupCard(provider, onSetUp) }
-        item { letterCard() }
         item {
             Kicker("Start a conversation", modifier = Modifier.padding(start = 8.dp, top = 16.dp))
         }
         val starts = buildList {
             latest?.takeIf { it.title.isNotBlank() }?.let { c ->
                 add(Start(Icons.Outlined.History, c.title, "Pick up where you left off") { onOpen(c.id) })
-            }
-            if (hasPlan) {
-                add(Start(Icons.Outlined.CalendarMonth, "Look at my plan", "Plan and track") { onStart("plan", null) })
             }
             add(Start(Icons.Outlined.Psychology, "Something is on my mind", "Untangle") { onStart("untangle", null) })
             focuses.firstOrNull()?.let { f ->

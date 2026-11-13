@@ -34,8 +34,6 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface Deps {
-        fun reviews(): ReviewWriter
-        fun letters(): LetterWriter
         fun chapters(): ChapterWriter
         fun stories(): StoryWriter
         fun gardening(): GardeningJob
@@ -46,34 +44,10 @@ class WritingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val deps = EntryPointAccessors.fromApplication(applicationContext, Deps::class.java)
         val now = System.currentTimeMillis()
         var again = false
-        val retryReview = inputData.getLong(KEY_RETRY_REVIEW, -1L)
-        val retryLetter = inputData.getString(KEY_RETRY_LETTER)
-        val retryPeriod = inputData.getString(KEY_RETRY_PERIOD_LETTER)
         try {
-            for (review in deps.reviews().catchUp(now)) {
-                val outcome = deps.reviews().writeNote(review.id, now, retry = review.id == retryReview)
-                if (outcome is ReviewWriter.Outcome.Retry) again = true
-            }
-            val week = retryLetter?.let(LocalDate::parse) ?: deps.letters().dueWeek(now)
-            if (week != null) {
-                val outcome = deps.letters().write(week, now, retry = retryLetter != null)
-                if (outcome is LetterWriter.Outcome.Retry) again = true
-            }
-            // The monthly letter (from the month's weekly letters), then the yearly one (from the monthly letters).
-            val retryMonth = retryPeriod?.takeIf { it.startsWith(LetterWriter.MONTH_PREFIX) }
-                ?.let { LocalDate.parse(it.removePrefix(LetterWriter.MONTH_PREFIX) + "-01") }
-            val month = retryMonth ?: deps.letters().dueMonth(now)
-            if (month != null) {
-                val outcome = deps.letters().writeMonth(month, now, retry = retryMonth != null)
-                if (outcome is LetterWriter.Outcome.Retry) again = true
-            }
-            val retryYear = retryPeriod?.takeIf { it.startsWith(LetterWriter.YEAR_PREFIX) }
-                ?.removePrefix(LetterWriter.YEAR_PREFIX)?.toIntOrNull()
-            val year = retryYear ?: deps.letters().dueYear(now)
-            if (year != null) {
-                val outcome = deps.letters().writeYear(year, now, retry = retryYear != null)
-                if (outcome is LetterWriter.Outcome.Retry) again = true
-            }
+            // Weekly reviews and the weekly, monthly and yearly letters are no longer written: the Plan tab,
+            // where they were read, was removed on 13 Nov 2026 (the owner's decision), and writing them would
+            // only spend AI tokens on text nobody can open.
             // The quarterly chapter, once the quarter is over (a no-op once it is written or skipped).
             val chapter = deps.chapters().write(deps.chapters().dueQuarter(now), now)
             if (chapter is ChapterWriter.Outcome.Retry) again = true
