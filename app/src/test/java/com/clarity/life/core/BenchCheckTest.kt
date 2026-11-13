@@ -69,8 +69,34 @@ class BenchCheckTest {
     }
 
     @Test
-    fun theSyllabusScenarioIsThere() {
-        val bench = TestBench.parse(Vectors.readText("prompts/testbench.md"))
-        assertTrue(bench.any { "syllabus" in it.name.lowercase() || it.setup.any { s -> "40" in s.second } })
+    fun theScenariosForTheCoachsNewBehaviourAreThere() {
+        // The planner and its syllabus scenario were removed on 13 Nov 2026; these three guard the new voice.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Understand first, then a small test"))
+        assertTrue(names.contains("Only wondering, no task wanted"))
+        assertTrue(names.contains("Specific to them, not generic"))
+    }
+
+    @Test
+    fun theScenariosFromThePhoneTestOf13NovAreThere() {
+        // Real replies on his phone showed invented times, a missing explanation, a catch-style callback and a note
+        // with advice in it; each problem has a scenario so the bench catches it on the real model next time.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Teach first, then one small test"))
+        assertTrue(names.contains("No invented time, no invented experience"))
+        assertTrue(names.contains("Practical question, answer first"))
+        assertTrue(names.contains("Swing between extremes"))
+        assertTrue(names.contains("Told only that it is wrong"))
+        assertTrue(names.contains("A note is the plain fact"))
+    }
+
+    @Test
+    fun theToughLoveScenariosAreThere() {
+        // Added with the tough-love rewrite of 13 Nov 2026: truth first, no leaking between chats, and pain is not a dodge.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Tough love: the dodge named, no cushion"))
+        assertTrue(names.contains("Another chat today must not leak in"))
+        assertTrue(names.contains("Pain first, not tough"))
+        assertTrue(names.contains("Not wanting to is not a reason to fold"))
     }
 }

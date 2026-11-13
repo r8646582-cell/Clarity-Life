@@ -16,8 +16,8 @@ MAIN = "app/src/main/java/com/clarity/life/"
 
 # (file under MAIN, exact text, planted bug, test class pattern, what the bug would mean for the owner)
 MUTATIONS = [
-    ("core/CardParser.kt", "if (cards.size >= MAX_CARDS) {", "if (cards.size > MAX_CARDS) {",
-     "com.clarity.life.core.CardParserTest", "a reply offering one card more than allowed"),
+    # 13 Nov 2026: the mutation on the three-card cap was retired. Only three card types are allowed now and a
+    # reply may hold one of each, so the cap can never be reached and no test can see a bug in it.
     ("core/TextCheck.kt", "if (q.length < minChars) return false", "if (q.length < 1) return false",
      "com.clarity.life.core.TextCheckTest", "a two-letter scrap accepted as their own words"),
     ("core/ContextBuilder.kt", 'if (stripped.startsWith("## ") || stripped == "##") "  $line" else line', "line",

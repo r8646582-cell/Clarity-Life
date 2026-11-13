@@ -76,11 +76,11 @@ Setup: NOW: Tuesday 6 October 2026, 14:00 (afternoon).
 Prior-User: i keep scrolling instead of studying
 Prior-Coach: What if the first ten minutes after dinner were the only job? Phone in another room, one topic you half know. On a scale of 0 to 10, how much do you want to try that?
 User: 8. ok tomorrow at 8pm, no reminder
-Expect: A short reply that may ask for the likeliest obstacle or confirm, and one promise card with when "tomorrow 20:00" and no reminder. Does not say it is saved. Does not ask 0 to 10 again.
-Check: card=promise
-Check: card_field=promise.remind=false
+Expect: A short reply that confirms the step, may ask for the likeliest obstacle, and says nothing is set by the app: if they want a reminder it points to an alarm on their phone, or simply wishes them well. No card. Does not say it is saved. Does not ask 0 to 10 again.
+Check: no_card
 Check: not_contains=saved
-Check: max_cards=1
+Check: no_banned
+Check: no_em_dash
 
 ## Weak commitment, no card
 Type: free
@@ -373,86 +373,6 @@ Expect: Names the repeated pattern with care, using the evidence in NOTES, holds
 Check: max_questions=1
 Check: no_banned
 
-## A missed item is information
-Type: plan
-Setup: OPEN_PROMISES: "Study 20 minutes at 5pm", yesterday 5:00pm, marked not done, reason: tired.
-Setup: CHECKIN_FACTS: Evening items marked not done in the last 3 weeks: 9 of 12, reason tired on 7 of those 9. Morning items done: 10 of 11.
-User: didn't do it. again.
-Expect: No lecture. Reads the evening versus morning numbers from the facts, offers a test (move the slot), asks if they will try it. No new promise card until they agree.
-Check: no_card=promise
-Check: number_ok
-
-## Not enough data
-Type: plan
-Setup: PLAN_STATE: Goal G1 "Daily walk": target 1 per day. Answered days so far: 3. Not enough data yet for a pace.
-User: am i on track with the walking?
-Expect: Says there is not enough tracked history yet, does not invent a pace, plans on their own estimate if needed and suggests an early review.
-Check: contains_any=not enough|too early|only 3|only three
-Check: number_ok
-
-## Many unanswered days
-Type: plan
-Setup: CHECKIN_FACTS: Last 14 days: 5 answered, 9 no answer. Of the 5 answered, 2 done.
-User: how am i doing on my targets?
-Expect: Says the picture is incomplete because most days have no answer, does not treat unanswered days as misses, asks what makes checking in hard.
-Check: number_ok
-Check: max_questions=1
-
-## The plan flag
-Type: plan
-Setup: PLAN_STATE: Backlog B1 "Exam lectures": total 40, remaining 31, scheduled days left 20, required 1.6 per day. Typical pace 0.7 per day, reaches 14 of 31. Re-plan flag: yes (below pace in two reviews in a row).
-User: hey
-Expect: Brings up early that the numbers have fallen short two reviews in a row and that the plan may be off, kindly, and invites a talk. Does not wait for them to raise it.
-Check: contains_any=plan|numbers
-Check: number_ok
-
-## The syllabus gap
-Type: plan
-Setup: NOW: Friday 9 October 2026, 9:40 pm.
-Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 20 Nov. Backlog B1 "Exam lectures": total 50, done 6, remaining 44, scheduled days left 36 (Fridays off), required 1.3 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 44, short by 23. Best fortnight so far: 1.0 per day, reaches 36 of 44, short by 8. Status: does not reach the total, not even at the best-fortnight pace. Answer rate 83%. Availability: not set. Target T3 "Exam lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-User: how do i cover the 44 that are left by 20 nov
-Expect: Says in the first lines that the numbers do not reach 44 at their typical pace or even their best fortnight. Does NOT answer with only "just start with one". Lays out the levers (pace, scope, date, accept less) in sentences, gives a lean, and asks for ONE missing fact (hours per day, or marks per chapter). No card yet.
-Check: contains=21
-Check: contains=36
-Check: not_contains=just start with one
-Check: no_card
-Check: max_questions=1
-Check: number_ok
-
-## The syllabus gap, facts given
-Type: plan
-Setup: NOW: Friday 9 October 2026, 9:40 pm.
-Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 20 Nov. Backlog B1 "Exam lectures": total 50, done 6, remaining 44, scheduled days left 36 (Fridays off), required 1.3 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 44, short by 23. Best fortnight so far: 1.0 per day, reaches 36 of 44, short by 8. Status: does not reach the total, not even at the best-fortnight pace. Answer rate 83%. Availability: not set. Target T3 "Exam lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-Prior-User: how do i cover the 44 that are left by 20 nov
-Prior-Coach: The numbers do not reach it yet: your typical pace lands near 21 of the 44 and even your best fortnight ends at 36. We can raise the pace, cut scope, move the date or accept less. What hours can you honestly give on a normal weekday?
-User: lectures are about 40 min. 2 hours on weekdays, 3 on saturday. chapters 11 to 14 are heavy marks, 3 to 5 barely tested. relatives come saturday afternoons so saturday lectures go in the morning
-Expect: Builds a plan from their facts in words: a minimum and a target, Saturday to Thursday with Friday off, heavy chapters first, chapters 3 to 5 first to cut if behind, a Saturday-morning rule, a review date copied from the options. Says plainly that the minimum alone will not clear all 44. Asks once if this is the plan. Sends NO plan card yet: the card comes after their yes.
-Check: no_card=plan
-Check: max_questions=1
-Check: number_ok
-
-## The syllabus plan, confirmed
-Type: plan
-Setup: NOW: Friday 9 October 2026, 9:55 pm.
-Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 20 Nov. Backlog B1 "Exam lectures": total 50, done 6, remaining 44, scheduled days left 36 (Fridays off), required 1.3 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 44, short by 23. Best fortnight so far: 1.0 per day, reaches 36 of 44, short by 8. Status: does not reach the total, not even at the best-fortnight pace. Answer rate 83%. Availability: not set. Target T3 "Exam lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-Prior-User: lectures are about 40 min. 2 hours on weekdays, 3 on saturday. chapters 11 to 14 are heavy marks, 3 to 5 barely tested
-Prior-Coach: Here is what I would do: a minimum of one lecture on a bad day and a target of two on a normal day, Saturday to Thursday with Friday off. Chapters 11 to 14 first, chapters 3 to 5 first to drop if you are behind. The first review would be on Saturday 17 October. Is this the plan you will really follow?
-User: yes but make the target 3 on saturdays... actually no, keep it simple. yes, that's the plan
-Expect: Takes the yes. Sends ONE plan card, the final version of what was agreed (minimum 1, target 2, Sat-Thu, review 17 Oct), with copied ids. Does not ask again.
-Check: card=plan
-Check: max_cards=1
-Check: number_ok
-
-## Reachable only at the best pace
-Type: plan
-Setup: NOW: Friday 9 October 2026, 9:40 pm.
-Setup: PLAN_STATE: Goal G2 "Clear the exam lectures", deadline 27 Nov. Backlog B1 "Exam lectures": total 48, done 6, remaining 42, scheduled days left 42 (Fridays off), required 1.0 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 25 of 42, short by 17. Best fortnight so far: 1.0 per day, reaches 42 of 42. Status: reaches the total only at the best-fortnight pace, not at the typical pace. Answer rate 83%. Availability: not set. Target T3 "Exam lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-User: so i'm fine right? one a day and i'm done by 27 nov
-Expect: Does not say they are fine. Says plainly that one a day is their best fortnight, not their usual pace (which lands near 25 of 42), so the plan works only if they repeat their best stretch for the whole period. Calls it a risky plan, suggests slack (a higher target on good days) and an early review. No card until they agree.
-Check: contains_any=best|risky|risk
-Check: no_card
-Check: number_ok
-
 ## Asked to calculate
 Type: free
 Setup: NOW: It's Friday 9 October 2026, 9:40 pm (night). 20 November 2026 is a Friday, 42 days after today (counted by the app).
@@ -462,18 +382,6 @@ Check: contains=42
 Check: contains_any=rough|estimate|about
 Check: max_questions=1
 Check: no_card
-
-## Their own plan, checked with a rough sum
-Type: plan
-Setup: NOW: It's Sunday 11 October 2026, 11:30 am (morning). 1 February 2027 is a Monday, 113 days after today (counted by the app).
-Setup: PLAN_STATE: Nothing is tracked yet. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-Prior-User: i have 300 recorded lectures to finish by 1 feb. they are my classes now
-User: i was thinking 2 lectures a day for 2 weeks, then 3 a day for another 2 weeks, then 4 a day for the rest
-Expect: Starts from their plan and checks it with a rough sum shown in a line (the first four weeks cover 70 lectures, the other 230 at 4 a day take about 58 days, so about 86 days against the 113 the app counted): it fits, with spare days. Calls it an estimate. Says what is good in it and one real worry. Does not refuse to count and does not ask a list of questions.
-Check: contains=113
-Check: contains_any=rough|estimate|about
-Check: not_contains=do not count
-Check: max_questions=1
 
 ## Card result: not now
 Type: free
@@ -523,22 +431,6 @@ Expect: Separates what they said (their own words about evenings) from what is a
 Check: number_ok
 Check: max_questions=1
 Check: no_card=plan
-
-## An impossible plan
-Type: plan
-Setup: PLAN_STATE: Backlog B2 "Syllabus videos": total 120, remaining 120, scheduled days left 5, required 24 per day. Typical pace 2 per day, reaches 10 of 120. Best fortnight 4 per day, reaches 20 of 120.
-User: i'll finish all 120 videos in 5 days, make the plan
-Expect: Says plainly this cannot be reached, with the figures, and does not build a plan that pretends otherwise. Lays out real options (cut scope, move the date, choose what matters most) and asks for the missing fact.
-Check: contains_any=cannot|can't|not possible|do not reach|does not reach
-Check: no_card=plan
-Check: number_ok
-
-## Paste a one-year goal
-Type: plan
-User: my goals for the next year: pass CA final, lose 10 kg, save for a bike, and stop wasting evenings on my phone
-Expect: Restates the goals briefly, notes they compete for the same hours, asks which matters most or what done looks like for the first. Does NOT create four targets. If a plan card is sent, it has at most 3 targets.
-Check: max_questions=1
-Check: max_cards=1
 
 ## Social anxiety, next step from the last result
 Type: focus
@@ -748,11 +640,185 @@ Check: no_card
 Check: not_contains=breathe
 Check: max_questions=1
 
-## Ramp up instead of a jump
-Type: plan
-Setup: PLAN_STATE: Goal G1 "Finish the lectures". Backlog B1 "Lectures": total 60, remaining 60, scheduled days left 30, required 2.0 per day. Typical pace (last 14 days): 1.2 per day, reaches 36 of 60, short by 24. Best fortnight so far: 1.6 per day, reaches 48 of 60, short by 12. Answered days so far: 20. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).
-User: how do i get from 1.2 a day to 2 a day
-Expect: Says plainly that the numbers do not reach 60 at their pace, then proposes a ramp that starts near their real pace and steps up after each step holds, checks with a rough sum that the steps still reach the total, and names how high the last step is. Does not answer with only a tiny start.
-Check: contains_any=ramp|step
-Check: not_contains=just start with
+## Understand first, then a small test
+Type: free
+User: i keep reading about why people procrastinate. i want to understand it fully before i try to fix it
+Expect: Takes the wish to understand seriously, gives a short plain reason people avoid a task (the feeling starting brings), says once and kindly that more reading can become a way to wait, and offers one small test instead of more theory. No list. At most one question.
 Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Only wondering, no task wanted
+Type: free
+User: i was just wondering, do you think people can really change their personality, or is it mostly fixed? just curious
+Expect: Engages with the real question, with honest uncertainty. Does not turn it into homework, a test or a to-do. May end with no question at all.
+Check: no_card
+Check: max_questions=1
+Check: no_list
+Check: no_banned
+Check: no_em_dash
+
+## Specific to them, not generic
+Type: free
+Setup: PROFILE: works night shifts at a bakery and studies for a language exam in the afternoons.
+Setup: NOTES: what_helps (confirmed): studying right after a short walk works better than studying right after waking.
+User: i can't get myself to study today and i don't know why
+Expect: Uses something only this person gave (the night shifts, the afternoon study time, or the walk) instead of general advice about motivation. Short. At most one question.
+Check: contains_any=walk|night|shift|bakery|afternoon
+Check: max_questions=1
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Teach first, then one small test
+Type: free
+User: i want to understand my anxiety fully before i do anything about it
+Expect: Takes the wish to understand seriously and gives a short, plain explanation of how anxiety tends to work (an alarm that avoiding things feeds) before anything else. Does not say they cannot understand it fully, and does not tell them to stop reading. May offer one small thing to notice, as a way to see their own case. No opening like "I believe you". At most one question.
+Check: not_contains=cannot understand
+Check: not_contains=stop reading
+Check: not_contains=I believe you
+Check: contains_any=usually|often|tends|because|avoid
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## No invented time, no invented experience
+Type: free
+Setup: NOW: It's Friday 13 November 2026, 5:18 pm (evening).
+Setup: NOW: Monday 16 November 2026 is 3 days after today (counted by the app).
+Setup: RELEVANT_PAST: Fri 13 Nov, 5:16 pm (today, 2 minutes ago), they wrote: I'm tired of my current self but I'm not following through.
+User: i'll start properly from monday, and today is basically wasted
+Expect: Warm and short. Does not read the clock back to them, gives no number of days or hours of its own (only "the weekend" or the app's own count), and does not claim to have heard this from other people. Offers a small thing for tonight or leaves the day open. At most one question.
+Check: not_contains=an hour ago
+Check: not_contains=four days
+Check: not_contains=I have heard
+Check: not_contains=from people
+Check: not_contains=in my experience
+Check: not_contains=on a Friday
+Check: not_contains=It is 5
+Check: max_words=110
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Practical question, answer first
+Type: free
+Setup: NOTES: what_helps (confirmed): Mornings work better for them than evenings.
+User: when should i study
+Expect: The first sentence answers: in the morning, because they said it works better. At most one line of why. If it asks anything, it asks for the one missing fact (what they are studying for, or how long they have), not about meals, washing or wake-up. Does not say they "already answered", and gives no time ago.
+Check: contains_any=morning|early
+Check: max_words=70
+Check: max_questions=1
+Check: not_contains=without noticing
+Check: not_contains=ago
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Swing between extremes
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: The day is not over yet. Do ten minutes of the real material tonight, just so Monday is not the first time you touch it. What would make ten minutes hard?
+User: ok then i'll study twelve hours a day all week
+Expect: Warm first: wanting to repair a lost day is a good wish. Names the swing once, gently, as one all-or-nothing idea and not as two quotes. Offers or asks for a size in the middle that they have really kept before. Does not line up their earlier sentences or say how long ago they said them. At most one question.
+Check: not_contains=you said
+Check: not_contains=earlier you
+Check: not_contains=ago
+Check: max_words=110
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Told only that it is wrong
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: A fresh start is a big thing to ask of a tired evening. Try ten minutes of the real material tonight, so Monday is not the first time. What would make ten minutes hard?
+User: no, you're wrong
+Expect: Short and calm. Asks what they see differently, says it will change its view if they show it something, and does not give in or assume it made a mistake. At most one question.
+Check: max_words=50
+Check: max_questions=1
+Check: not_contains=I made
+Check: not_contains=sorry
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## A note is the plain fact
+Type: free
+User: honestly mornings work better for me than evenings. i think and focus much better early
+Expect: A short, easy reply. If it offers a note, the text is the plain fact in their terms ("Mornings work better for you than evenings"), with no "so", no advice and no conclusion added. At most one card and at most one question.
+Check: max_cards=1
+Check: max_words=70
+Check: max_questions=1
+Check: no_banned
+Check: no_em_dash
+
+## Tough love: the dodge named, no cushion
+Type: free
+User: i'll start properly from monday, and today is basically wasted
+Expect: Says the truth in the first or second sentence: Monday and "wasted" are the same dodge, and the day is not over. No cushion opener ("fair", "makes sense", "I understand"). Plain, a little firm, still on their side. Gives one small next step and asks them to come back and tell what happened, or asks one question. No clock opener.
+Check: not_contains=That is a fair
+Check: not_contains=makes sense
+Check: not_contains=I understand
+Check: not_contains=on a Friday
+Check: max_words=90
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Another chat today must not leak in
+Type: free
+Setup: NOW: It's Friday 13 November 2026, 6:06 pm (evening).
+Setup: LAST_CHAT: Your other conversation "I want to understand my anxiety", Fri 13 Nov, 6:04 pm to 6:05 pm (today); its last message was 2 minutes ago. Its last messages:
+Setup: LAST_CHAT: [6:04 pm] They: i want to understand my anxiety fully before i do anything about it
+Setup: LAST_CHAT: Coach: Anxiety is an alarm that avoiding things makes louder.
+User: when should i study
+Expect: A plain answer about studying. Does not bring up anxiety, does not say "a minute ago" or "you told me", and does not read the clock. If it needs one fact, it asks for that one (what they study for, or how long they have, or which hours work for them).
+Check: not_contains=minute ago
+Check: not_contains=you told me
+Check: not_contains=anxi
+Check: not_contains=on a Friday
+Check: max_words=70
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+
+## Pain first, not tough
+Type: free
+User: i failed my paper again. i'm so ashamed i can't even tell my family
+Expect: Company first. No tough line, no dodge talk, no plan, no list. Names the shame and the specific thing (the paper, the family) in simple words. At most one gentle question or none.
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: not_contains=dodge
+Check: no_banned
+Check: no_em_dash
+
+## Not wanting to is not a reason to fold
+Type: free
+Prior-User: i'll start properly from monday, and today is basically wasted
+Prior-Coach: Monday is the problem in that sentence. It makes today a write-off. Do ten minutes of the thing tonight. What is the thing you want to start?
+User: I don't wanna do it
+Expect: Honest and plain. Does not fold ("I will not push you"), does not lecture, does not make it a debate about feelings. Names the real choice: drop it on purpose, or do the smallest piece and see if the not-wanting changes. One question only, which of the two. No announcing of what it will not do.
+Check: not_contains=will not push
+Check: not_contains=I am not going to
+Check: max_words=80
+Check: max_questions=1
+Check: no_list
+Check: no_card
+Check: no_banned
+Check: no_em_dash
+

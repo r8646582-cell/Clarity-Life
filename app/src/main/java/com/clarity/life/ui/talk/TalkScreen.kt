@@ -64,18 +64,11 @@ import kotlinx.coroutines.launch
 fun TalkScreen(
     onOpenSettings: () -> Unit,
     onOpenGuide: () -> Unit = {},
-    onOpenPromises: () -> Unit = {},
-    onOpenPlan: () -> Unit = onOpenPromises,
     model: TalkViewModel = hiltViewModel(),
-    planner: com.clarity.life.ui.plan.PlanViewModel = hiltViewModel(),
-    reviews: com.clarity.life.ui.plan.ReviewsViewModel = hiltViewModel(),
 ) {
     val state by model.state.collectAsStateWithLifecycle()
-    // Only what the home shows (PlanViewModel.Home), not the whole tracker: the home no longer waits for it.
-    val planState by planner.home.collectAsStateWithLifecycle()
-    val reviewState by reviews.state.collectAsStateWithLifecycle()
-    // "Plan with coach" and "Talk about this letter" ask for a new conversation of a given chat type. Only
-    // the Talk screen that is on show takes the request, so the conversation opens here, already switched.
+    // A request from another screen for a new conversation of a given chat type. Only the Talk screen that is
+    // on show takes the request, so the conversation opens here, already switched.
     val doorway by model.doorway.collectAsStateWithLifecycle()
     LaunchedEffect(doorway) {
         if (doorway != null) model.takeDoorway()
@@ -122,9 +115,9 @@ fun TalkScreen(
             startFocus = model::startFocus,
             switchMode = model::switchFromCard,
             notNow = model::dismissCard,
-            openPromises = { reviews.showSection("Promises"); onOpenPromises() },
+            openPromises = {},
             savePlan = model::savePlanCard,
-            openPlan = { reviews.showSection("Goals"); onOpenPlan() },
+            openPlan = {},
             focusName = model::focusName,
             logCheckin = model::logCheckin,
             updatePromiseStatus = model::updatePromiseStatus,
@@ -184,7 +177,7 @@ fun TalkScreen(
         Column(Modifier.fillMaxSize().background(clarity.ground).imePadding()) {
             if (home) {
                 HomeTopBar(
-                    date = if (planState.ready) planner.longDay(planState.today) else "",
+                    date = longDay(model.today()),
                     onDrawer = { drawer = !drawer },
                     onGuide = onOpenGuide,
                     onSettings = onOpenSettings,
@@ -220,7 +213,9 @@ fun TalkScreen(
                                 Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = clarity.muted)
                             }
                             DropdownMenu(expanded = typeMenu, onDismissRequest = { typeMenu = false }) {
-                                CHAT_TYPES.forEach { (id, label) ->
+                                // "Plan and track" is gone from the menu (the Plan tab was removed); an old
+                                // conversation of that type still opens and keeps its label.
+                                CHAT_TYPES.filter { it.first != "plan" }.forEach { (id, label) ->
                                     DropdownMenuItem(
                                         text = { Text(label) },
                                         onClick = {
@@ -268,15 +263,13 @@ fun TalkScreen(
                 }
             }
 
-            if (home && !(state.loaded && planState.ready && userName != null)) {
+            if (home && !(state.loaded && userName != null)) {
                 // Still reading the database (a moment after opening the app): an empty space, not a home
                 // drawn from empty values that then jumps to the real one.
                 Spacer(Modifier.fillMaxWidth().weight(1f))
             } else if (home) {
                 TalkHome(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    planDay = planState.planDay,
-                    hasPlan = planState.hasPlan,
                     latest = state.conversations.firstOrNull(),
                     hasKey = state.hasKey,
                     provider = providerName,
@@ -284,11 +277,6 @@ fun TalkScreen(
                     onSetUp = onOpenSettings,
                     onOpenGuide = onOpenGuide,
                     focuses = state.focuses,
-                    letterCard = {
-                        // The letter card, only while a new weekly letter is unread (spec section 2.1). Due promises
-                        // and today's steps are on Plan, with a dot on its tab (the owner's decision, 14 Oct 2026).
-                        com.clarity.life.ui.plan.LetterCard(reviewState, reviews, onRead = onOpenPlan)
-                    },
                     onStart = { type, focusId -> follow = true; model.startFromHome(type, focusId) },
                     onOpen = { id -> follow = true; model.open(id) },
                 )
@@ -427,11 +415,13 @@ fun TalkScreen(
     }
 }
 
-/**
- * The conversations drawer (spec section 2.1, docs/mockups/Drawer.dc.html): a panel from the left with New,
- * a search box (titles and summaries), every conversation newest first under yellow day headings, the open
- * one lit, and a ⋯ button on each row for Rename and Forget.
- */
+/** "Friday 13 November": the date shown at the top of Talk home. English only, as the whole app is. */
+private fun longDay(d: java.time.LocalDate): String {
+    val day = d.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+    val month = d.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+    return "$day ${d.dayOfMonth} $month"
+}
+
 /**
  * Talk home's top bar: Conversations on the left, the guide and Settings on the right, and the date centred on
  * the screen, not between one icon on the left and two on the right. Kept out of [TalkScreen] on purpose: that
