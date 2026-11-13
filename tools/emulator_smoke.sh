@@ -85,24 +85,6 @@ adb shell input keyevent 4; sleep 2; crashed
 for i in 1 2 3; do dump; grep -q 'text="Patterns"' /tmp/ui.xml && break; adb shell input swipe 160 450 160 250 300; sleep 1; done
 tap text "Patterns" || exit 1; sleep 2; crashed
 echo "SMOKE: What I know survived"
-tap text "Plan" || exit 1; sleep 3; crashed
-tap text "Goals" || exit 1; crashed
-tap text "Write a goal" || exit 1; crashed
-tap class "" android.widget.EditText || exit 1
-adb shell input text "Pass%sthe%sexam"; sleep 1
-# Close the keyboard (Back only hides it), then scroll the form's Save into view.
-adb shell input keyevent 4; sleep 2; crashed
-for i in 1 2 3; do adb shell input swipe 160 400 160 150 300; sleep 1; done
-tap text "Save" || exit 1; sleep 3; crashed
-dump; grep -q "No goals yet" /tmp/ui.xml && { echo "SMOKE: the goal was not saved"; exit 1; }
-# back to the top of the list, where the new goal is
-for i in 1 2 3; do adb shell input swipe 160 120 160 320 300; sleep 1; done
-tap text "Pass the exam" || exit 1; sleep 2; crashed
-# With one goal, Goals opens it directly, with Edit at the top.
-dump; grep -q 'text="Edit"' /tmp/ui.xml || { echo "SMOKE: the goal page did not open"; exit 1; }
-echo "SMOKE: a goal was written and opened"
-tap text "Reviews" || exit 1; sleep 2; crashed
-tap text "Today" || exit 1; sleep 2; crashed
-echo "SMOKE: Plan, Goals, Reviews and Today survived"
+echo "SMOKE: Talk and What I know survived (the Plan tab was removed on 13 Nov 2026)"
 sed 's/></>\n</g' /tmp/ui.xml >/dev/null
 exit 0
