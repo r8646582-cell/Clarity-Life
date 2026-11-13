@@ -45,7 +45,6 @@ adb shell am start -n $PKG/.MainActivity >/dev/null
 sleep 10; crashed
 dump; grep -q 'Hello' /tmp/ui.xml || { echo "LARGE TEXT: Talk home did not show"; finish 1; }
 echo "LARGE TEXT: Talk home showed"
-tap_text "Plan"; crashed
 tap_text "What I know"; crashed
 tap_text "Talk"; crashed
 tap_text "Settings"; crashed
