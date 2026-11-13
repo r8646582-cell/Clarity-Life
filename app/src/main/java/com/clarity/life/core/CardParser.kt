@@ -74,12 +74,18 @@ object CardParser {
 
     val CARD_TYPES = listOf("promise", "plan", "target_change", "backlog", "focus", "note", "mode", "checkin", "promise_status")
 
-    /** Which cards each chat type may show (spec section 5). The app drops any card a type does not allow. */
+    /**
+     * Which cards each chat type may show. The app drops any card a type does not allow. 13 Nov 2026 (owner's
+     * decision): there is no planner, promise or reminder any more, so the coach may only suggest a note, a
+     * chat-type switch or a focus. The other card types are still known to the parser (an old stored card
+     * still reads) but no chat type allows them. "plan" stays a key only so an old conversation of that type
+     * still works. Must equal CHAT_TYPES in tools/cards.py; the vectors prove it.
+     */
     val CHAT_TYPES = mapOf(
-        "free" to listOf("promise", "focus", "mode", "note", "checkin", "promise_status"),
+        "free" to listOf("focus", "mode", "note"),
         "untangle" to listOf("mode", "note"),
-        "decide" to listOf("promise", "mode", "note", "checkin", "promise_status"),
-        "plan" to listOf("plan", "target_change", "backlog", "promise", "mode", "note", "checkin", "promise_status"),
+        "decide" to listOf("mode", "note"),
+        "plan" to listOf("mode", "note"),
     )
 
     const val MAX_CARDS = 3

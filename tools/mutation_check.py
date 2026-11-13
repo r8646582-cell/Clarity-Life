@@ -122,13 +122,11 @@ MUTATIONS = [
      "every chunk sealed with the same nonce"),
     ("cards.py", "if not opts:", "if False:", "test_cards.py", "plan card accepted without review options"),
     ("cards.py", 'limit = 2 if t == "promise" else 1', "limit = 2", "test_cards.py", "two plans in one reply"),
-    ("cards.py", "if not math.isfinite(v) or abs(v) > MAX_NUMBER:", "if False:", "test_cards.py", "NaN or huge numbers"),
+    # 13 Nov 2026: five mutations on plan, check-in and promise-status card fields were retired. Those card
+    # types are no longer allowed in any chat type (so no test can see a bug in their validation); the
+    # validators themselves are deleted in a later cleanup step.
     ("cards.py", 'if "[[" in l or "]]" in l:', "if False:", "test_cards.py", "raw markers shown in prose"),
     ("cards.py", "object_pairs_hook=_no_duplicate_keys, ", "", "test_cards.py", "duplicate JSON keys"),
-    ("cards.py", 'out["amount"] = _num(card, "amount", minimum=0.0)', 'out["amount"] = 1.0', "test_cards.py",
-     "checkin without valid amount accepted"),
-    ("cards.py", "if st not in PROMISE_STATUSES:", "if False:", "test_cards.py",
-     "bad promise status accepted"),
     ("planner.py", "return min(remaining, round_down(raw, step))", "return min(remaining, round_half_up(raw, step))",
      "test_planner.py", "projection rounded in the plan's favour"),
     ("planner.py", "return math.ceil(x / step - EPS) * step", "return round_half_up(x, step)", "test_planner.py",
@@ -187,9 +185,6 @@ MUTATIONS = [
      "days before a plan existed counted as unanswered (0% on day one)"),
     ("planner.py", "        checkins = [c for c in checkins if d(c[\"day\"]) >= d(start)]\n", "        pass\n", "test_planner.py",
      "best fortnight counts check-ins from before the plan"),
-    ("cards.py", "if not 1 <= w <= MAX_WEEKS:", "if False:", "test_cards.py", "a ramp step of 0 or 53 weeks accepted"),
-    ("cards.py", "if \"end\" in out:\n            raise Bad(\"weeks and end together\")", "if False:\n            pass",
-     "test_cards.py", "a step with both weeks and an end accepted"),
     ("plan_dates.py", "                elif step_end is not None:\n", "                elif False:\n", "test_plan_dates.py",
      "ramp steps all start today instead of one after another"),
     ("plan_dates.py", "timedelta(days=7 * item[\"weeks\"] - 1)", "timedelta(days=7 * item[\"weeks\"])", "test_plan_dates.py",

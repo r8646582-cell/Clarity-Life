@@ -15,7 +15,7 @@ import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
 sys.path.insert(0, HERE)
-from cards import parse_reply, CARD_TYPES  # noqa: E402
+from cards import parse_reply, CARD_TYPES, CHAT_TYPES  # noqa: E402
 
 errors = []
 
@@ -141,8 +141,10 @@ cards_md = texts.get("cards.md", "")
 if re.search(r"`\[\[suggest:", cards_md):
     err("cards.md", "a sample card is wrapped in backticks; the parser throws that form away")
 samples = re.findall(r"(?m)^\[\[suggest: .*\]\]$", cards_md)
-if len(samples) < len(CARD_TYPES):
-    err("cards.md", "%d sample card lines, expected one per type (%d)" % (len(samples), len(CARD_TYPES)))
+# one sample for each card type that some chat type still allows (the removed types have no sample)
+allowed_types = sorted({t for types in CHAT_TYPES.values() for t in types})
+if len(samples) < len(allowed_types):
+    err("cards.md", "%d sample card lines, expected one per allowed type (%d: %s)" % (len(samples), len(allowed_types), ", ".join(allowed_types)))
 for sample in samples:
     ok = False
     for ct in ("free", "untangle", "decide", "plan"):

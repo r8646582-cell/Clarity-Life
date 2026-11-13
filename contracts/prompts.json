@@ -57,7 +57,9 @@
         "CARD_RESULTS",
         "use the weekday name",
         "volunteered the commitment themselves",
-        "place their message in time"
+        "place their message in time",
+        "Be specific to them",
+        "Understand, test, then act"
       ],
       "max_words": 5600
     },
@@ -67,22 +69,15 @@
         "ALLOWED_CARDS"
       ],
       "must_contain": [
-        "promise",
-        "plan",
-        "target_change",
-        "backlog",
         "focus",
         "note",
         "mode",
-        "checkin",
-        "promise_status",
         "Nothing is saved until",
         "At most three cards",
-        "remind (true only if they asked",
         "No code fences",
         "CARD_RESULTS"
       ],
-      "max_words": 1800
+      "max_words": 1200
     },
     "card_followup.md": {
       "placeholders": [

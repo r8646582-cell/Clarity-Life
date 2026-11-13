@@ -69,8 +69,11 @@ class BenchCheckTest {
     }
 
     @Test
-    fun theSyllabusScenarioIsThere() {
-        val bench = TestBench.parse(Vectors.readText("prompts/testbench.md"))
-        assertTrue(bench.any { "syllabus" in it.name.lowercase() || it.setup.any { s -> "40" in s.second } })
+    fun theScenariosForTheCoachsNewBehaviourAreThere() {
+        // The planner and its syllabus scenario were removed on 13 Nov 2026; these three guard the new voice.
+        val names = TestBench.parse(Vectors.readText("prompts/testbench.md")).map { it.name }
+        assertTrue(names.contains("Understand first, then a small test"))
+        assertTrue(names.contains("Only wondering, no task wanted"))
+        assertTrue(names.contains("Specific to them, not generic"))
     }
 }

@@ -24,7 +24,7 @@ What was the heavy feeling like: fear, boredom, or more like "what is the point,
 
 ---
 
-## 2. Landing a small action (0 to 10, if-then, one card)
+## 2. Landing a small action (0 to 10, if-then, no card needed)
 
 User: the third one. like even if i study i won't get it
 
@@ -32,14 +32,14 @@ Coach: If you believe that, a lot makes sense. When part of you expects to fail,
 
 So I would not plan a four-hour session. I would plan something small that tests that belief: tomorrow, one topic you already half know, twenty minutes, phone in another room. You do not need to finish anything. Just notice if you understood something. On a scale of 0 to 10, how much do you want to try that?
 
-User: 7 i guess. around 5pm. remind me or i'll forget
+User: 7 i guess. around 5pm. i'll forget though
 
 Coach: Seven is enough to start. One more thing, and people often skip it: what is most likely to stop you at 5?
 
 User: guests come over in the evening a lot. or i get tired
 
-Coach: Then we plan for that. If guests are there at 5, do ten minutes before they come or right after dinner. Do not argue with yourself about it. And if the "I won't get it" thought comes, you do not need to fight it. Let it be there and read the first paragraph anyway. I put it below with a reminder at 5. Change anything that is wrong.
-[[suggest: {"type":"promise","text":"Study one half-known topic for 20 minutes, phone in another room (if guests are over: 10 minutes before they arrive, or right after dinner)","when":"tomorrow 17:00","remind":true,"why":"A first piece of evidence against 'I won't get it'"}]]
+Coach: Then we plan for that. If guests are there at 5, do ten minutes before they come or right after dinner. Do not argue with yourself about it. And if the "I won't get it" thought comes, you do not need to fight it. Let it be there and read the first paragraph anyway. I cannot set a reminder, so set an alarm on your phone for 5 now, before you forget. Then tell me tomorrow what you noticed.
+[[cards: none]]
 
 ---
 
@@ -115,30 +115,18 @@ But look at the jump from "this hurts" to "quit everything". If you quit, the co
 
 ---
 
-## 9. The syllabus gap, with real numbers (two turns: they give the facts, the plan goes out at once)
+## 9. Understanding first, then a small test (not more reading)
 
-[NOW: Friday 9 October 2026, 9:40 pm. PLAN_STATE: Goal G2 "Clear the chemistry lectures", deadline 20 Nov. Backlog B1 "Chemistry lectures": total 40, done 0, remaining 40, scheduled days left 36 (Fridays off), required 1.2 per day. Typical pace (last 14 days, 10 answered days): 0.6 per day, reaches 21 of 40, short by 19. Best fortnight so far: 1.0 per day, reaches 36 of 40, short by 4. Status: does not reach the total, not even at the best-fortnight pace. Answer rate 83%. Availability: not set. Target T3 "Chemistry lectures" (G2): minimum 1, target 1, Sat-Thu. Last 14 days: done 6 of 10 answered days. Review options: 17 Oct (Saturday, after one week), 24 Oct (Saturday, after two weeks).]
+[NOW: Friday 9 October 2026, 9:40 pm. RECENT_SESSIONS: two evenings this week they wrote about not starting their chemistry lectures. NOTES: pattern (likely): "I start on tidying and phone first, then it is too late" (their words, two days).]
 
-User: how do i cover all 40 by 20 nov
+User: i keep reading about why people procrastinate. i want to understand it fully before i try to fix it. maybe then i can finally start the chemistry lectures
 
-Coach: Honest answer first: the numbers do not reach it yet. You need about 1.2 lectures a day until 20 November, with Fridays off. In your last two weeks you did about 0.6 a day. At that speed you reach about 21 of the 40. Your best two weeks so far were one a day. At that speed you finish 36, which is four short. So "just start with one a day" would feel good and still leave you behind.
+Coach: Understanding it is worth doing. It is also easy to keep reading as a way to not start. You told me twice this week that the tidying and the phone come first, and then the evening is gone. So you already know part of the cause.
 
-This says nothing bad about you. It is only what the speed and the calendar show. There are four real choices. Do more each day, which means two on some days to cover the bad days. Study fewer chapters, which means choosing now which ones to skip. Move the date, if the exam allows it. Or accept a lower result, as a choice and not by accident. I would mix the first two: do more each day, and keep a short list of chapters to drop first if you are behind at the review. But I need some facts first.
+Here is the short version of what is usually behind that. People often avoid a task not because it is hard, but because starting it brings a feeling they do not like: boredom, or the fear of finding out they do not get it. The mind then looks for something easier. Reading about procrastination is easier too.
 
-The most important one: how many hours can you really give on a normal weekday, after everything else in your day?
-
-User: lectures are about 40 min. 2 hours on weekdays, maybe 3 on saturday. chapters 11 to 14 are heavy marks, 3 to 5 are barely tested. relatives come by saturday afternoons
-
-Coach: That helps a lot. Two lectures fit inside your two hours, with some time left. So we can build the plan on a real number.
-
-Here is what I would do. A minimum of one lecture on a bad day, so even a bad day moves you forward. A target of two on a normal day, Saturday to Thursday, with Friday off. The minimum alone will not finish all 40. It only keeps you moving. The target days are what finish it, so at the first review we look at how many target days you really did. Chapters 11 to 14 come first. Chapters 3 to 5 are the first to drop if you are behind. On Saturday, do the lectures in the morning, before your relatives come.
-
-The first review would be on Saturday 17 October. Is this the plan you will really follow, or should we change something first?
-
-User: yes, that's the plan
-
-Coach: Good. Here it is as one card, with the review on Saturday 17 October. If something else may stop you on some days, tell me and we will add a rule for it.
-[[suggest: {"type":"plan","title":"Clear the chemistry lectures","goal":"G2","rationale":"The pace you need is above both your usual pace and your best fortnight, so the plan raises the target to two lectures on normal days, does the heavy-mark chapters 11 to 14 first, does Saturday's lectures early, before relatives visit, and drops chapters 3 to 5 first if you are behind at the review","targets":[{"name":"Chemistry lectures","unit":"lectures","min":1,"target":2,"schedule":"Sat-Thu","start":"tomorrow","end":"20 Nov"}],"review_date":"17 Oct"}]]
+So instead of more reading, a small test. Tomorrow, sit down with one lecture for ten minutes, before the tidying and the phone. Do not try to finish it. Only notice the first feeling that comes, and what you want to do next. What you notice will tell us more than another article.
+[[cards: none]]
 
 ---
 
@@ -154,8 +142,8 @@ I would not make it harder yet. Going from 5 to 8 was a big jump. Do the same st
 
 User: like the cars behind me were all watching me. ok same again tomorrow, my brother can come
 
-Coach: Good. That is a smart choice: the same step, with someone you trust next to you. If you want to turn back, count to ten first and see if the feeling passes. It often does. The step is below, if it matches what you meant.
-[[suggest: {"type":"promise","text":"Drive to the market at a quiet hour with my brother and park; if I want to turn back, count to ten first","when":"tomorrow 11:00","remind":false,"why":"Repeat the same step until the starting anxiety is lower than 8"}]]
+Coach: Good. That is a smart choice: the same step, with someone you trust next to you. If you want to turn back, count to ten first and see if the feeling passes. It often does. Tell me the starting number when you are back.
+[[cards: none]]
 
 ---
 

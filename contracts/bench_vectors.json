@@ -59,10 +59,10 @@
    "expect": false
   },
   {
-   "name": "card=promise needs an accepted card",
+   "name": "card=note needs an accepted card",
    "scenario": "free",
-   "check": "card=promise",
-   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "check": "card=note",
+   "reply": "Good.\n[[suggest: {\"type\":\"note\",\"kind\":\"value\",\"text\":\"Family first\"}]]",
    "expect": true
   },
   {
@@ -73,14 +73,14 @@
    "expect": false
   },
   {
-   "name": "card=plan passes with ids and review date from the setup",
+   "name": "card=mode passes in the plan chat type",
    "scenario": "plan",
-   "check": "card=plan",
-   "reply": "Here.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"17 Oct\"}]]",
+   "check": "card=mode",
+   "reply": "Here.\n[[suggest: {\"type\":\"mode\",\"to\":\"decide\"}]]",
    "expect": true
   },
   {
-   "name": "card=plan fails with a review date that was not offered",
+   "name": "card=plan always fails: the type was removed",
    "scenario": "plan",
    "check": "card=plan",
    "reply": "Here.\n[[suggest: {\"type\":\"plan\",\"title\":\"Lectures\",\"goal\":\"G2\",\"rationale\":\"r\",\"targets\":[{\"name\":\"L\",\"target\":2,\"min\":1,\"schedule\":\"Sat-Thu\"}],\"review_date\":\"18 Oct\"}]]",
@@ -103,8 +103,8 @@
   {
    "name": "focus scenarios use the free-talk card list",
    "scenario": "focus",
-   "check": "card=promise",
-   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "check": "card=focus",
+   "reply": "Good.\n[[suggest: {\"type\":\"focus\",\"name\":\"Driving again\",\"why\":\"Stay with it\"}]]",
    "expect": true
   },
   {
@@ -201,21 +201,21 @@
   {
    "name": "card_field checks a field of the accepted card",
    "scenario": "free",
-   "check": "card_field=promise.remind=false",
-   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":false}]]",
+   "check": "card_field=note.kind=\"value\"",
+   "reply": "Good.\n[[suggest: {\"type\":\"note\",\"kind\":\"value\",\"text\":\"Family first\"}]]",
    "expect": true
   },
   {
    "name": "card_field fails when the field differs",
    "scenario": "free",
-   "check": "card_field=promise.remind=false",
-   "reply": "Good.\n[[suggest: {\"type\":\"promise\",\"text\":\"Study\",\"when\":\"tomorrow 20:00\",\"remind\":true}]]",
+   "check": "card_field=note.kind=\"pattern\"",
+   "reply": "Good.\n[[suggest: {\"type\":\"note\",\"kind\":\"value\",\"text\":\"Family first\"}]]",
    "expect": false
   },
   {
    "name": "card_field fails when there is no such card",
    "scenario": "free",
-   "check": "card_field=promise.remind=false",
+   "check": "card_field=note.kind=\"value\"",
    "reply": "Good.",
    "expect": false
   }

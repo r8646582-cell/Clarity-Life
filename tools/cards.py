@@ -17,11 +17,15 @@ import re
 from planner import parse_schedule, PlannerError  # one schedule grammar for cards and planner
 
 CARD_TYPES = ["promise", "plan", "target_change", "backlog", "focus", "note", "mode", "checkin", "promise_status"]
+# 13 Nov 2026 (owner's decision): the app has no planner, promises or reminders any more, so the coach may only
+# suggest a note, a chat-type switch or a focus. The other card types are still known to the parser (so an old
+# stored card still reads) but no chat type allows them, so any such card is dropped. "plan" stays a key only so
+# that an old conversation of that type still works.
 CHAT_TYPES = {
-    "free": ["promise", "focus", "mode", "note", "checkin", "promise_status"],
+    "free": ["focus", "mode", "note"],
     "untangle": ["mode", "note"],
-    "decide": ["promise", "mode", "note", "checkin", "promise_status"],
-    "plan": ["plan", "target_change", "backlog", "promise", "mode", "note", "checkin", "promise_status"],
+    "decide": ["mode", "note"],
+    "plan": ["mode", "note"],
 }
 MAX_CARDS = 3
 MAX_NUMBER = 100000        # no target, minimum or total is ever this large; bigger means a broken card

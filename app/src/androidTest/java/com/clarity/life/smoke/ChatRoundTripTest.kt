@@ -55,8 +55,7 @@ class ChatRoundTripTest {
             assertTrue(packet.request.messages.last().content.endsWith("I keep putting off my chemistry revision."))
 
             val raw = "That sounds heavy. What is the first small thing?\n" +
-                "[[suggest: {\"type\":\"promise\",\"text\":\"Study for 20 minutes\",\"when\":\"tomorrow 17:00\"," +
-                "\"remind\":true,\"why\":\"A first piece of evidence\"}]]"
+                "[[suggest: {\"type\":\"note\",\"kind\":\"what_helps\",\"text\":\"Starting with twenty minutes works for you\"}]]"
             val outcome = chat.closeCoachReply(
                 conversationId = id,
                 messageId = coachId,
